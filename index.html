@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión Albergue - V.2.0.0 (Usuarios)</title>
+    <title>Gestión Albergue - V.2.1.0 (Roles)</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; max-width: 1000px; margin: 0 auto; padding: 20px; background-color: #f0f2f5; color: #333; }
         .card { background: white; padding: 25px; margin-bottom: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
@@ -21,14 +21,20 @@
         .row { display: flex; gap: 10px; }
         .col { flex: 1; }
         
-        /* Roles y Etiquetas */
+        /* Badges */
         .role-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.8em; font-weight: bold; text-transform: uppercase; margin-left: 10px; }
         .role-super_admin { background: #6f42c1; color: white; }
         .role-admin { background: #dc3545; color: white; }
         .role-avanzado { background: #ffc107; color: #333; }
         .role-medio { background: #17a2b8; color: white; }
 
-        /* Listas */
+        /* Lista de Albergues */
+        .albergue-item { border: 1px solid #ddd; padding: 15px; border-radius: 8px; margin-bottom: 10px; background: #fff; display: flex; justify-content: space-between; align-items: center; transition: box-shadow 0.2s; }
+        .albergue-item:hover { box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .albergue-info h4 { margin: 0 0 5px 0; color: #007bff; }
+        .albergue-stats { font-size: 0.9em; color: #666; }
+
+        /* Listas Personas */
         .person-card { border-left: 5px solid #ccc; padding: 10px 15px; background: #f8f9fa; margin-bottom: 10px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; }
         .status-espera { border-left-color: #ffc107; }
         .status-ingresado { border-left-color: #28a745; }
@@ -39,12 +45,13 @@
         .bed-free { background-color: #d4edda; color: #155724; border-color: #c3e6cb; }
         .bed-busy { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; opacity: 0.8; }
 
-        /* Version Tag */
         .version-tag { position: fixed; bottom: 10px; right: 10px; background: rgba(0, 0, 0, 0.05); color: #999; padding: 5px 10px; border-radius: 5px; font-size: 0.75em; pointer-events: none; font-family: monospace; }
         
-        /* Modal Overlay */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; justify-content: center; align-items: center; }
         .modal-content { background: white; width: 90%; max-width: 500px; padding: 25px; border-radius: 12px; max-height: 85vh; overflow-y: auto; }
+        
+        .capacity-badge { background: #e9ecef; color: #495057; padding: 5px 10px; border-radius: 20px; font-weight: bold; font-size: 0.9em; display: inline-block; margin-left: 10px; }
+        .capacity-full { background: #f8d7da; color: #721c24; }
 
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -52,23 +59,16 @@
 </head>
 <body>
 
-    <div class="version-tag">V.2.0.0 (Auth)</div>
+    <div class="version-tag">V.2.1.0 (Sin Códigos)</div>
 
     <div id="login-screen" class="card">
-        <h1 style="text-align:center;">🔐 Acceso Seguro</h1>
-        <p style="text-align:center; color:#666;">Sistema de Gestión de Albergues</p>
-        
-        <label>Correo Electrónico:</label>
-        <input type="email" id="login-email" placeholder="usuario@organizacion.com">
-        
-        <label>Contraseña:</label>
-        <input type="password" id="login-pass" placeholder="********">
-        
-        <button onclick="iniciarSesion()">Iniciar Sesión</button>
-        
-        <div id="first-run-alert" class="hidden" style="margin-top:20px; padding:10px; background:#e2e3e5; border-radius:5px; text-align:center;">
-            <small>⚠️ No hay usuarios detectados. El primero que crees será <strong>Super Admin</strong>.</small>
-            <button class="secondary" onclick="mostrarRegistroInicial()" style="margin-top:10px;">Crear Primer Usuario</button>
+        <h1 style="text-align:center;">🔐 Acceso Sistema</h1>
+        <div style="max-width:400px; margin:0 auto;">
+            <label>Correo:</label>
+            <input type="email" id="login-email">
+            <label>Contraseña:</label>
+            <input type="password" id="login-pass">
+            <button onclick="iniciarSesion()">Iniciar Sesión</button>
         </div>
     </div>
 
@@ -77,84 +77,65 @@
             <h2>Hola, <span id="user-name-display">Usuario</span></h2>
             <button class="danger" onclick="cerrarSesion()" style="width:auto; padding:5px 15px;">Salir</button>
         </div>
-        <p>Tu rol: <span id="user-role-badge" class="role-badge">Cargando...</span></p>
+        <p>Tu rol: <span id="user-role-badge" class="role-badge">...</span></p>
 
         <hr>
 
         <div id="section-admin-users" class="hidden">
-            <h3>👥 Gestión de Usuarios</h3>
-            <div class="row">
-                <button class="secondary" onclick="abrirCrearUsuario()">+ Crear Nuevo Usuario</button>
-            </div>
-            <br>
+            <h3>👥 Gestión Usuarios</h3>
+            <button class="secondary" onclick="abrirCrearUsuario()" style="width:auto;">+ Nuevo Usuario</button>
+            <hr style="border-top: 1px dashed #ccc; margin-top:20px;">
         </div>
 
-        <div id="section-albergues">
-            <h3>🏥 Albergues</h3>
-            
-            <div id="btn-crear-albergue-container">
-                <button class="success" onclick="mostrarCrearAlbergue()">+ Crear Nuevo Albergue</button>
-            </div>
+        <h3>🏥 Albergues Disponibles</h3>
+        
+        <div id="btn-crear-albergue-container" class="hidden" style="margin-bottom:15px;">
+            <button class="success" onclick="mostrarCrearAlbergue()">+ Crear Nuevo Albergue</button>
+        </div>
 
-            <label>Acceder a un albergue existente (Código):</label>
-            <div class="row">
-                <input type="text" id="access-code" placeholder="Código Admin o Visita">
-                <button onclick="entrarAlbergue()" style="margin-top:8px;">Entrar</button>
-            </div>
+        <div id="lista-albergues">
+            <p>Cargando albergues...</p>
         </div>
     </div>
 
     <div id="modal-crear-usuario" class="modal-overlay hidden">
         <div class="modal-content">
-            <h3>Registrar Nuevo Usuario</h3>
-            <label>Correo:</label>
-            <input type="email" id="new-user-email">
-            <label>Contraseña:</label>
-            <input type="password" id="new-user-pass">
-            <label>Nombre:</label>
-            <input type="text" id="new-user-name">
-            
+            <h3>Nuevo Usuario</h3>
+            <label>Correo:</label> <input type="email" id="new-user-email">
+            <label>Contraseña:</label> <input type="password" id="new-user-pass">
+            <label>Nombre:</label> <input type="text" id="new-user-name">
             <label>Rol:</label>
-            <select id="new-user-role">
-                </select>
-
-            <button class="success" onclick="crearUsuario()">Crear Usuario</button>
+            <select id="new-user-role"></select>
+            <button class="success" onclick="crearUsuario()">Crear</button>
             <button class="secondary" onclick="cerrarModalUsuario()">Cancelar</button>
         </div>
     </div>
 
     <div id="create-albergue-screen" class="card hidden">
-        <h2>Crear Nuevo Albergue</h2>
+        <h2>Nuevo Albergue</h2>
+        <label>Nombre del Albergue (Identificador):</label>
+        <input type="text" id="create-nombre" placeholder="Ej: Pabellón Municipal">
         <label>Capacidad Inicial:</label>
         <input type="number" id="create-camas" value="50">
-        <button class="success" onclick="generarAlbergue()">Confirmar</button>
+        <button class="success" onclick="generarAlbergue()">Crear</button>
         <button class="secondary" onclick="volverMenu()">Cancelar</button>
-    </div>
-
-    <div id="codes-screen" class="card hidden">
-        <h2 style="color:green;">Albergue Creado</h2>
-        <div style="background:#eee; padding:15px; border-radius:8px;">
-            <p><strong>ADMIN:</strong> <span id="new-admin-code"></span></p>
-            <p><strong>VISITA:</strong> <span id="new-visitor-code"></span></p>
-        </div>
-        <button onclick="volverMenu()">Volver al Menú</button>
     </div>
 
     <div id="app-screen" class="card hidden">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h3>Gestión Albergue</h3>
-            <button onclick="volverMenu()" style="width:auto; background:#6c757d; padding:5px 15px;">Volver</button>
+            <h3 id="app-title">Albergue</h3>
+            <button onclick="volverMenu()" style="width:auto; background:#6c757d; padding:5px 15px;">Volver al Menú</button>
         </div>
         
         <div class="capacity-badge" id="capacity-container">
              🛏️ <span id="ocupacion-count">0</span> / <span id="capacidad-total">0</span>
-             <button id="btn-edit-capacidad" class="hidden" onclick="editarCapacidad()" style="padding:0 5px;">✏️</button>
+             <button id="btn-edit-capacidad" onclick="editarCapacidad()" style="padding:0 5px;">✏️</button>
         </div>
 
-        <div id="admin-tools" class="hidden">
+        <div id="admin-tools">
             <hr>
             <details>
-                <summary style="cursor:pointer; color:#007bff;">📲 Ver QR</summary>
+                <summary style="cursor:pointer; color:#007bff;">📲 Ver QR Público</summary>
                 <div id="qrcode" style="margin-top:10px;"></div>
             </details>
             <h4>➕ Añadir Manual</h4>
@@ -187,13 +168,22 @@
         </div>
     </div>
 
+    <div id="public-register-screen" class="card hidden">
+        <h2 style="color: #007bff;">📝 Auto-Registro</h2>
+        <p>Rellena tus datos para entrar en la sala de espera.</p>
+        <label>Nombre:</label><input type="text" id="public-nombre">
+        <label>DNI:</label><input type="text" id="public-dni">
+        <label>Fecha Nacimiento:</label><input type="date" id="public-nacimiento">
+        <button class="success" onclick="publicoGuardarPrefiliacion()">Enviar</button>
+    </div>
+
     <script type="module">
-        import { initializeApp, getApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, setDoc, query, where, getDocs, doc, updateDoc, onSnapshot, orderBy, arrayUnion, getDoc } 
         from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
-        // CONFIGURACIÓN
+        // CONFIG
         const firebaseConfig = {
             apiKey: "AIzaSyAzfEMwMd6M1VgvV0tJn7RS63RJghLE5UI",
             authDomain: "albergues-temporales.firebaseapp.com",
@@ -203,121 +193,92 @@
             appId: "1:489999184108:web:32b9b580727f83158075c9"
         };
 
-        // INICIALIZACIÓN
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // ESTADO GLOBAL
-        let currentUserData = null; // { email, role, uid }
+        let currentUserData = null;
         let currentAlbergueId = null;
         let totalCapacidad = 0;
         let ocupacionActual = 0;
         let camasOcupadas = {};
+        let unsubscribeAlbergue = null;
+        let unsubscribePersonas = null;
         
-        // Variables temporales UI
+        // variables temp
         window.personaSeleccionadaId = null;
 
-        // --- 1. GESTIÓN DE SESIÓN ---
-
-        // Verificar si es la primera vez (no hay usuarios)
-        async function verificarInicio() {
-            const q = query(collection(db, "usuarios"));
-            const snapshot = await getDocs(q);
-            if (snapshot.empty) {
-                document.getElementById('first-run-alert').classList.remove('hidden');
+        // --- INICIO ---
+        window.onload = async () => {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('public_id')) {
+                currentAlbergueId = params.get('public_id');
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('public-register-screen').classList.remove('hidden');
             }
-        }
-        verificarInicio(); // Ejecutar al cargar
-
-        window.mostrarRegistroInicial = () => {
-             // Abre el modal pero forzando rol Super Admin
-             document.getElementById('modal-crear-usuario').classList.remove('hidden');
-             const select = document.getElementById('new-user-role');
-             select.innerHTML = '<option value="super_admin">Super Administrador (Primer Usuario)</option>';
         };
 
         window.iniciarSesion = async () => {
-            const email = document.getElementById('login-email').value;
-            const pass = document.getElementById('login-pass').value;
             try {
-                await signInWithEmailAndPassword(auth, email, pass);
-                // El listener onAuthStateChanged manejará la redirección
+                await signInWithEmailAndPassword(auth, 
+                    document.getElementById('login-email').value, 
+                    document.getElementById('login-pass').value
+                );
             } catch (e) { alert("Error: " + e.message); }
         };
 
-        window.cerrarSesion = () => {
-            signOut(auth);
-            location.reload();
-        };
+        window.cerrarSesion = () => { signOut(auth); location.reload(); };
 
-        // LISTENER DE AUTH
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                // Usuario logueado, obtenemos su rol de Firestore
-                const docRef = doc(db, "usuarios", user.uid);
-                const docSnap = await getDoc(docRef);
-                
-                if (docSnap.exists()) {
-                    currentUserData = docSnap.data();
-                    currentUserData.uid = user.uid;
-                    configurarInterfazPorRol();
-                } else {
-                    alert("Usuario autenticado pero sin registro de rol en base de datos.");
-                    signOut(auth);
+                const snap = await getDoc(doc(db, "usuarios", user.uid));
+                if (snap.exists()) {
+                    currentUserData = { ...snap.data(), uid: user.uid };
+                    configurarDashboard();
                 }
+            } else {
+                if(!document.getElementById('public-register-screen').classList.contains('hidden')) return;
+                document.getElementById('login-screen').classList.remove('hidden');
+                document.getElementById('main-menu').classList.add('hidden');
             }
         });
 
-        function configurarInterfazPorRol() {
+        function configurarDashboard() {
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('main-menu').classList.remove('hidden');
-            
             document.getElementById('user-name-display').innerText = currentUserData.nombre;
-            const badge = document.getElementById('user-role-badge');
-            badge.innerText = currentUserData.rol.replace('_', ' ').toUpperCase();
-            badge.className = `role-badge role-${currentUserData.rol}`;
-
-            // LOGICA DE PERMISOS
+            
             const rol = currentUserData.rol;
+            const badge = document.getElementById('user-role-badge');
+            badge.innerText = rol.replace('_', ' ').toUpperCase();
+            badge.className = `role-badge role-${rol}`;
 
-            // 1. Gestión de Usuarios (Solo Super y Admin)
-            if (rol === 'super_admin' || rol === 'admin') {
+            // PERMISOS
+            if (['super_admin', 'admin'].includes(rol)) {
                 document.getElementById('section-admin-users').classList.remove('hidden');
             }
-
-            // 2. Crear Albergues (Super, Admin, Avanzado)
-            if (rol === 'medio') {
-                document.getElementById('btn-crear-albergue-container').classList.add('hidden');
+            if (['super_admin', 'admin', 'avanzado'].includes(rol)) {
+                document.getElementById('btn-crear-albergue-container').classList.remove('hidden');
             }
+
+            cargarListaAlbergues();
         }
 
-        // --- 2. CREACIÓN DE USUARIOS (TRUCO SECONDARY APP) ---
-        
+        // --- GESTIÓN USUARIOS ---
         window.abrirCrearUsuario = () => {
-            const modal = document.getElementById('modal-crear-usuario');
             const select = document.getElementById('new-user-role');
             select.innerHTML = "";
             const rol = currentUserData.rol;
-
-            // Lógica de qué roles puedes crear
-            if (rol === 'super_admin') {
-                select.innerHTML += '<option value="super_admin">Super Administrador</option>';
-                select.innerHTML += '<option value="admin">Administrador</option>';
-                select.innerHTML += '<option value="avanzado">Usuario Avanzado</option>';
-                select.innerHTML += '<option value="medio">Usuario Medio</option>';
-            } else if (rol === 'admin') {
-                select.innerHTML += '<option value="admin">Administrador</option>';
-                select.innerHTML += '<option value="avanzado">Usuario Avanzado</option>';
-                select.innerHTML += '<option value="medio">Usuario Medio</option>';
-            }
             
-            modal.classList.remove('hidden');
+            if(rol === 'super_admin') {
+                ['super_admin', 'admin', 'avanzado', 'medio'].forEach(r => select.add(new Option(r.toUpperCase(), r)));
+            } else if(rol === 'admin') {
+                ['admin', 'avanzado', 'medio'].forEach(r => select.add(new Option(r.toUpperCase(), r)));
+            }
+            document.getElementById('modal-crear-usuario').classList.remove('hidden');
         };
 
-        window.cerrarModalUsuario = () => {
-            document.getElementById('modal-crear-usuario').classList.add('hidden');
-        };
+        window.cerrarModalUsuario = () => document.getElementById('modal-crear-usuario').classList.add('hidden');
 
         window.crearUsuario = async () => {
             const email = document.getElementById('new-user-email').value;
@@ -325,144 +286,124 @@
             const nombre = document.getElementById('new-user-name').value;
             const rol = document.getElementById('new-user-role').value;
 
-            if(!email || !pass || !nombre) return alert("Rellena todo");
-
             try {
-                // TRUCO: Si usas auth.createUser... te desconecta a ti y loguea al nuevo.
-                // Solución: Usar una segunda "App" de Firebase temporal.
-                
-                // 1. Inicializar app secundaria (sin nombre específico, Firebase le da uno interno)
-                const secondaryApp = initializeApp(firebaseConfig, "Secondary");
-                const secondaryAuth = getAuth(secondaryApp);
-
-                // 2. Crear usuario en la app secundaria
-                const userCredential = await createUserWithEmailAndPassword(secondaryAuth, email, pass);
-                const uidNuevo = userCredential.user.uid;
-
-                // 3. Guardar rol en Firestore (usando la instancia db principal, que ya tiene permisos)
-                await setDoc(doc(db, "usuarios", uidNuevo), {
-                    email: email,
-                    nombre: nombre,
-                    rol: rol,
-                    fechaCreacion: new Date()
-                });
-
-                // 4. Logout de la app secundaria para limpiar memoria
-                await signOut(secondaryAuth);
-                
-                alert(`Usuario ${email} creado correctamente con rol ${rol}`);
+                const tempApp = initializeApp(firebaseConfig, "Temp");
+                const tempAuth = getAuth(tempApp);
+                const uc = await createUserWithEmailAndPassword(tempAuth, email, pass);
+                await setDoc(doc(db, "usuarios", uc.user.uid), { email, nombre, rol, fecha: new Date() });
+                await signOut(tempAuth);
+                alert("Usuario creado");
                 cerrarModalUsuario();
-
-            } catch (e) {
-                alert("Error al crear usuario: " + e.message);
-            }
+            } catch (e) { alert(e.message); }
         };
 
-        // --- 3. GESTIÓN DE ALBERGUES ---
+        // --- LISTA ALBERGUES ---
+        function cargarListaAlbergues() {
+            const listDiv = document.getElementById('lista-albergues');
+            // Escuchar colección de albergues
+            onSnapshot(collection(db, "albergues"), (snap) => {
+                listDiv.innerHTML = "";
+                if (snap.empty) listDiv.innerHTML = "<p>No hay albergues creados.</p>";
+                
+                snap.forEach(d => {
+                    const alb = d.data();
+                    const div = document.createElement('div');
+                    div.className = "albergue-item";
+                    div.innerHTML = `
+                        <div class="albergue-info">
+                            <h4>${alb.nombre || 'Albergue sin nombre'}</h4>
+                            <span class="albergue-stats">Capacidad: ${alb.capacidad || 0} camas</span>
+                        </div>
+                        <button onclick="entrarAlbergue('${d.id}')">Gestionar</button>
+                    `;
+                    listDiv.appendChild(div);
+                });
+            });
+        }
 
-        window.volverMenu = () => {
-            document.getElementById('create-albergue-screen').classList.add('hidden');
-            document.getElementById('codes-screen').classList.add('hidden');
-            document.getElementById('app-screen').classList.add('hidden');
-            document.getElementById('main-menu').classList.remove('hidden');
-            // Detener listeners si fuera necesario (aquí simplificado)
-            location.reload(); // Recarga simple para limpiar listeners de albergues
-        };
-
+        // --- CREAR ALBERGUE ---
         window.mostrarCrearAlbergue = () => {
             document.getElementById('main-menu').classList.add('hidden');
             document.getElementById('create-albergue-screen').classList.remove('hidden');
         };
 
         window.generarAlbergue = async () => {
-            const adminCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-            const visitorCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-            const capacidad = document.getElementById('create-camas').value;
-
-            try {
-                await addDoc(collection(db, "albergues"), {
-                    adminCode, visitorCode, capacidad: parseInt(capacidad),
-                    creadoPor: currentUserData.email,
-                    fecha: new Date()
-                });
-                document.getElementById('create-albergue-screen').classList.add('hidden');
-                document.getElementById('codes-screen').classList.remove('hidden');
-                document.getElementById('new-admin-code').innerText = adminCode;
-                document.getElementById('new-visitor-code').innerText = visitorCode;
-            } catch (e) { alert(e.message); }
+            const nombre = document.getElementById('create-nombre').value;
+            const cap = document.getElementById('create-camas').value;
+            if(!nombre) return alert("Pon un nombre");
+            
+            await addDoc(collection(db, "albergues"), {
+                nombre: nombre,
+                capacidad: parseInt(cap),
+                creadoPor: currentUserData.email,
+                fecha: new Date()
+            });
+            window.volverMenu();
         };
 
-        window.entrarAlbergue = async () => {
-            const code = document.getElementById('access-code').value.trim().toUpperCase();
-            if(!code) return;
-
-            // Busca el albergue
-            let q = query(collection(db, "albergues"), where("adminCode", "==", code));
-            let snapshot = await getDocs(q);
-            let mode = 'admin'; // Por defecto si tiene codigo admin
-
-            if(snapshot.empty) {
-                q = query(collection(db, "albergues"), where("visitorCode", "==", code));
-                snapshot = await getDocs(q);
-                mode = 'visita';
-            }
-
-            if(!snapshot.empty) {
-                const docData = snapshot.docs[0];
-                currentAlbergueId = docData.id;
-                cargarAlbergue(mode);
-            } else {
-                alert("Código no encontrado");
-            }
+        window.volverMenu = () => {
+            // Limpiar listeners
+            if(unsubscribeAlbergue) unsubscribeAlbergue();
+            if(unsubscribePersonas) unsubscribePersonas();
+            
+            document.getElementById('create-albergue-screen').classList.add('hidden');
+            document.getElementById('app-screen').classList.add('hidden');
+            document.getElementById('main-menu').classList.remove('hidden');
         };
 
-        function cargarAlbergue(mode) {
+        // --- DENTRO DEL ALBERGUE ---
+        window.entrarAlbergue = (id) => {
+            currentAlbergueId = id;
             document.getElementById('main-menu').classList.add('hidden');
             document.getElementById('app-screen').classList.remove('hidden');
-
-            // Determinar permisos efectivos (Combinación de Rol Usuario + Código usado)
-            // Si eres Medio pero usas código Admin, puedes editar.
-            // Si eres Super Admin, siempre puedes editar (lógica a futuro, por ahora respetamos código).
             
-            const puedeEditar = (mode === 'admin' && currentUserData.rol !== 'medio') || currentUserData.rol === 'super_admin'; 
-
-            if(puedeEditar) {
-                document.getElementById('admin-tools').classList.remove('hidden');
-                document.getElementById('btn-edit-capacidad').classList.remove('hidden');
-            } else {
-                document.getElementById('admin-tools').classList.add('hidden');
-                document.getElementById('btn-edit-capacidad').classList.add('hidden');
-            }
-
-            // Listeners (Igual que V1.2.0)
-            onSnapshot(doc(db, "albergues", currentAlbergueId), (d) => {
-                totalCapacidad = d.data().capacidad || 0;
-                actualizarUI();
+            // Cargar datos
+            unsubscribeAlbergue = onSnapshot(doc(db, "albergues", id), (d) => {
+                const data = d.data();
+                document.getElementById('app-title').innerText = data.nombre;
+                totalCapacidad = data.capacidad || 0;
+                actualizarContadores();
+                generarQR();
             });
 
-            const q = query(collection(db, "albergues", currentAlbergueId, "personas"), orderBy("fechaRegistro", "desc"));
-            onSnapshot(q, (snap) => {
-                const listE = document.getElementById('list-espera');
-                const listD = document.getElementById('list-dentro');
-                listE.innerHTML = ""; listD.innerHTML = "";
-                let cE = 0, cD = 0;
+            const q = query(collection(db, "albergues", id, "personas"), orderBy("fechaRegistro", "desc"));
+            unsubscribePersonas = onSnapshot(q, (snap) => {
+                const lE = document.getElementById('list-espera');
+                const lD = document.getElementById('list-dentro');
+                lE.innerHTML = ""; lD.innerHTML = "";
+                let cE=0, cD=0;
                 camasOcupadas = {};
 
-                snap.forEach(docS => {
-                    const p = docS.data();
-                    p.id = docS.id;
-                    const card = crearCard(p, puedeEditar);
-                    if(p.estado === 'espera') { listE.appendChild(card); cE++; }
-                    else { listD.appendChild(card); cD++; if(p.cama) camasOcupadas[p.cama] = p.nombre; }
+                snap.forEach(ds => {
+                    const p = ds.data(); p.id = ds.id;
+                    const card = crearCard(p);
+                    if(p.estado === 'espera') { lE.appendChild(card); cE++; }
+                    else { lD.appendChild(card); cD++; if(p.cama) camasOcupadas[p.cama] = p.nombre; }
                 });
                 document.getElementById('count-espera').innerText = cE;
                 document.getElementById('count-ingresados').innerText = cD;
                 ocupacionActual = cD;
-                actualizarUI();
+                actualizarContadores();
             });
+        };
+
+        function crearCard(p) {
+            const div = document.createElement('div');
+            div.className = `person-card status-${p.estado}`;
+            let btn = "";
+            
+            // Asumimos que todos los roles que pueden ENTRAR pueden gestionar
+            if(p.estado === 'espera') {
+                btn = `<button class="success" onclick="window.asignarCama('${p.id}')">Ingresar</button>`;
+            } else {
+                btn = `<span>🛏️ ${p.cama}</span>`;
+            }
+            
+            div.innerHTML = `<div><strong>${p.nombre}</strong><br><small>${p.dni}</small></div><div>${btn}</div>`;
+            return div;
         }
 
-        function actualizarUI() {
+        function actualizarContadores() {
             document.getElementById('ocupacion-count').innerText = ocupacionActual;
             document.getElementById('capacidad-total').innerText = totalCapacidad;
             const badge = document.getElementById('capacity-container');
@@ -470,32 +411,18 @@
             else badge.classList.remove('capacity-full');
         }
 
-        function crearCard(p, editable) {
-            const div = document.createElement('div');
-            div.className = `person-card status-${p.estado}`;
-            let btn = "";
-            if(editable) {
-                if(p.estado === 'espera') btn = `<button class="success" onclick="window.asignarCama('${p.id}', '${p.nombre}')">Ingresar</button>`;
-                else btn = `<span>🛏️ ${p.cama}</span>`; // Simplificado para este ejemplo
-            } else {
-                btn = p.estado === 'espera' ? 'En cola' : `🛏️ ${p.cama}`;
-            }
-            div.innerHTML = `<div><strong>${p.nombre}</strong><br><small>${p.dni}</small></div><div>${btn}</div>`;
-            return div;
-        }
-
-        // --- FUNCIONES EXTRA (Simplificadas para V2.0) ---
-        window.asignarCama = (id, nombre) => {
+        // --- ASIGNACIÓN CAMAS ---
+        window.asignarCama = (id) => {
             window.personaSeleccionadaId = id;
             const grid = document.getElementById('grid-camas');
             grid.innerHTML = "";
             for(let i=1; i<=totalCapacidad; i++) {
-                const num = i.toString();
-                const ocupado = camasOcupadas[num];
+                const n = i.toString();
+                const ocup = camasOcupadas[n];
                 const d = document.createElement('div');
-                d.className = `bed-box ${ocupado ? 'bed-busy' : 'bed-free'}`;
-                d.innerText = num;
-                if(!ocupado) d.onclick = () => guardarIngreso(num);
+                d.className = `bed-box ${ocup ? 'bed-busy' : 'bed-free'}`;
+                d.innerText = n;
+                if(!ocup) d.onclick = () => guardarIngreso(n);
                 grid.appendChild(d);
             }
             document.getElementById('modal-cama').classList.remove('hidden');
@@ -509,16 +436,43 @@
         }
 
         window.editarCapacidad = async () => {
-            const n = prompt("Capacidad:");
+            // Solo permitido si tienes rol adecuado (validación simple frontend)
+            if(currentUserData.rol === 'medio') return alert("Tu rol no permite editar capacidad.");
+            const n = prompt("Nueva capacidad:", totalCapacidad);
             if(n) await updateDoc(doc(db, "albergues", currentAlbergueId), { capacidad: parseInt(n) });
         };
-        
+
+        // --- EXTRAS ---
         window.adminPrefiliarManual = async () => {
             const nombre = document.getElementById('admin-nombre').value;
             const dni = document.getElementById('admin-dni').value;
-            if(nombre) await addDoc(collection(db, "albergues", currentAlbergueId, "personas"), { nombre, dni, estado:'espera', fechaRegistro: new Date() });
+            if(nombre) {
+                await addDoc(collection(db, "albergues", currentAlbergueId, "personas"), {
+                    nombre, dni, estado: 'espera', fechaRegistro: new Date()
+                });
+                document.getElementById('admin-nombre').value = "";
+                document.getElementById('admin-dni').value = "";
+            }
         };
 
+        window.publicoGuardarPrefiliacion = async () => {
+            const nombre = document.getElementById('public-nombre').value;
+            const dni = document.getElementById('public-dni').value;
+            if(nombre) {
+                await addDoc(collection(db, "albergues", currentAlbergueId, "personas"), {
+                    nombre, dni, estado: 'espera', fechaRegistro: new Date(), origen: 'qr'
+                });
+                alert("Registrado correctamente");
+                document.getElementById('public-nombre').value = "";
+                document.getElementById('public-dni').value = "";
+            }
+        };
+
+        function generarQR() {
+            const url = window.location.href.split('?')[0] + `?public_id=${currentAlbergueId}`;
+            document.getElementById("qrcode").innerHTML = "";
+            new QRCode(document.getElementById("qrcode"), { text: url, width: 128, height: 128 });
+        }
     </script>
 </body>
 </html>

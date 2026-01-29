@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Albergue - V.1.0.0</title>
+    <title>Gestión Albergue - V.1.1.0</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; background-color: #f0f2f5; color: #333; }
         .card { background: white; padding: 25px; margin-bottom: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
@@ -14,7 +14,7 @@
         button:hover { background-color: #0056b3; }
         button.secondary { background-color: #6c757d; }
         button.success { background-color: #28a745; }
-        button.warning { background-color: #ffc107; color: #333; }
+        button.danger { background-color: #dc3545; }
         
         .hidden { display: none !important; }
         .row { display: flex; gap: 10px; }
@@ -23,35 +23,56 @@
         .status-espera { border-left-color: #ffc107; }
         .status-ingresado { border-left-color: #28a745; }
         
-        /* Contador de camas */
-        .capacity-badge {
-            background: #e9ecef; color: #495057; padding: 5px 10px; border-radius: 20px; font-weight: bold; font-size: 0.9em; display: inline-block; margin-left: 10px;
-        }
+        /* Badges */
+        .capacity-badge { background: #e9ecef; color: #495057; padding: 5px 10px; border-radius: 20px; font-weight: bold; font-size: 0.9em; display: inline-block; margin-left: 10px; }
         .capacity-full { background: #f8d7da; color: #721c24; }
 
-        /* ETIQUETA DE VERSIÓN */
-        .version-tag {
-            position: fixed;
-            bottom: 10px;
-            right: 10px;
-            background: rgba(0, 0, 0, 0.05);
-            color: #999;
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-size: 0.75em;
-            pointer-events: none; /* Para que no moleste al hacer clic */
-            font-family: monospace;
-        }
+        /* VERSION TAG */
+        .version-tag { position: fixed; bottom: 10px; right: 10px; background: rgba(0, 0, 0, 0.05); color: #999; padding: 5px 10px; border-radius: 5px; font-size: 0.75em; pointer-events: none; font-family: monospace; }
 
         #qr-code-container { text-align: center; padding: 20px; background: white; margin-top: 20px; display: flex; flex-direction: column; align-items: center; }
         label { font-weight: 600; font-size: 0.9em; color: #555; }
+
+        /* --- NUEVOS ESTILOS PARA EL SELECTOR DE CAMAS (MODAL) --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.5); z-index: 1000;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background: white; width: 90%; max-width: 600px; max-height: 80vh;
+            padding: 20px; border-radius: 12px; overflow-y: auto;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        .bed-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+            gap: 10px; margin-top: 20px;
+        }
+        .bed-box {
+            height: 60px; display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            border-radius: 8px; font-weight: bold; cursor: pointer;
+            border: 2px solid transparent; transition: transform 0.1s;
+        }
+        .bed-box:hover { transform: scale(1.05); }
+        
+        .bed-free {
+            background-color: #d4edda; color: #155724; border-color: #c3e6cb;
+        }
+        .bed-busy {
+            background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; cursor: not-allowed; opacity: 0.8;
+        }
+        .bed-number { font-size: 1.2em; }
+        .bed-user { font-size: 0.6em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
 
-    <div class="version-tag">V.1.0.0</div>
+    <div class="version-tag">V.1.1.0</div>
 
     <div id="login-screen" class="card">
         <h1>🏥 Gestión de Albergue</h1>
@@ -76,7 +97,7 @@
             <p><strong>🔑 ADMIN:</strong> <span id="new-admin-code" style="font-family:monospace; font-size:1.2em;"></span></p>
             <p><strong>👁️ VISITA:</strong> <span id="new-visitor-code" style="font-family:monospace; font-size:1.2em;"></span></p>
         </div>
-        <p style="color:red; font-size:0.9em;">Anota los códigos. No se volverán a mostrar.</p>
+        <p style="color:red; font-size:0.9em;">Anota los códigos.</p>
         <button onclick="location.reload()">Ir al Login</button>
     </div>
 
@@ -140,12 +161,28 @@
         <button onclick="exportarExcel()" class="secondary">📊 Descargar Excel</button>
     </div>
 
+    <div id="modal-cama" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3>Selecciona una cama</h3>
+            <p>Elige una cama verde para asignar a <strong id="modal-person-name"></strong>.</p>
+            
+            <div class="row" style="margin-bottom:10px;">
+                <div style="display:flex; align-items:center; gap:5px;"><div style="width:20px; height:20px; background:#d4edda; border:1px solid #c3e6cb;"></div> Libre</div>
+                <div style="display:flex; align-items:center; gap:5px; margin-left:15px;"><div style="width:20px; height:20px; background:#f8d7da; border:1px solid #f5c6cb;"></div> Ocupada</div>
+            </div>
+
+            <div id="grid-camas" class="bed-grid">
+                </div>
+            
+            <button onclick="cerrarModalCama()" class="secondary" style="margin-top:20px;">Cancelar</button>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
         import { getFirestore, collection, addDoc, query, where, getDocs, doc, updateDoc, onSnapshot, orderBy } 
         from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
-        // CONFIGURACIÓN (Tu proyecto real)
         const firebaseConfig = {
             apiKey: "AIzaSyAzfEMwMd6M1VgvV0tJn7RS63RJghLE5UI",
             authDomain: "albergues-temporales.firebaseapp.com",
@@ -158,12 +195,20 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        // Variables Globales
         let currentAlbergueId = null;
         let currentRole = null;
         let totalCapacidad = 0;
         let ocupacionActual = 0;
+        
+        // Mapa de camas ocupadas: { "1": "Juan Perez", "2": "Maria..." }
+        let camasOcupadas = {}; 
+        
+        // Persona seleccionada para ingresar
+        window.personaSeleccionadaId = null;
+        window.personaSeleccionadaNombre = null;
 
-        // ONLOAD: Verificar modo público
+        // --- INICIO ---
         window.onload = async () => {
             const params = new URLSearchParams(window.location.search);
             const publicId = params.get('public_id');
@@ -180,7 +225,6 @@
             document.getElementById('create-screen').classList.remove('hidden');
         };
 
-        // --- 1. CREAR CON CAPACIDAD ---
         window.generarAlbergue = async () => {
             const adminCode = Math.random().toString(36).substring(2, 8).toUpperCase();
             const visitorCode = Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -188,21 +232,15 @@
 
             try {
                 await addDoc(collection(db, "albergues"), {
-                    adminCode: adminCode,
-                    visitorCode: visitorCode,
-                    capacidad: parseInt(capacidad),
-                    fechaCreacion: new Date()
+                    adminCode, visitorCode, capacidad: parseInt(capacidad), fechaCreacion: new Date()
                 });
                 document.getElementById('create-screen').classList.add('hidden');
                 document.getElementById('codes-screen').classList.remove('hidden');
                 document.getElementById('new-admin-code').innerText = adminCode;
                 document.getElementById('new-visitor-code').innerText = visitorCode;
-            } catch (e) {
-                alert("Error: " + e.message);
-            }
+            } catch (e) { alert("Error: " + e.message); }
         };
 
-        // --- 2. ENTRAR ---
         window.entrar = async () => {
             const code = document.getElementById('access-code').value.trim().toUpperCase();
             if (!code) return;
@@ -222,12 +260,9 @@
                 currentAlbergueId = docSnap.id;
                 currentRole = role;
                 iniciarDashboard();
-            } else {
-                alert("Código incorrecto");
-            }
+            } else { alert("Código incorrecto"); }
         };
 
-        // --- 3. DASHBOARD ---
         function iniciarDashboard() {
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('app-screen').classList.remove('hidden');
@@ -239,14 +274,14 @@
                 generarQR();
             }
 
-            // ESCUCHAR DATOS DEL ALBERGUE (Para cambios en capacidad)
+            // Listener Albergue (Capacidad)
             onSnapshot(doc(db, "albergues", currentAlbergueId), (docSnap) => {
                 const data = docSnap.data();
                 totalCapacidad = data.capacidad || 0;
                 actualizarContadores();
             });
 
-            // ESCUCHAR PERSONAS
+            // Listener Personas
             const personasRef = collection(db, "albergues", currentAlbergueId, "personas");
             const q = query(personasRef, orderBy("fechaRegistro", "desc"));
 
@@ -258,6 +293,7 @@
 
                 let countEspera = 0;
                 let countIngresados = 0;
+                camasOcupadas = {}; // Reiniciar mapa de ocupación
 
                 snapshot.forEach((docSnap) => {
                     const p = docSnap.data();
@@ -270,6 +306,8 @@
                     } else {
                         listaDentro.appendChild(card);
                         countIngresados++;
+                        // Registrar cama ocupada
+                        if(p.cama) camasOcupadas[p.cama] = p.nombre;
                     }
                 });
 
@@ -283,94 +321,108 @@
         function actualizarContadores() {
             document.getElementById('ocupacion-count').innerText = ocupacionActual;
             document.getElementById('capacidad-total').innerText = totalCapacidad;
-            
             const badge = document.getElementById('capacity-container');
-            if (ocupacionActual >= totalCapacidad) {
-                badge.classList.add('capacity-full');
-            } else {
-                badge.classList.remove('capacity-full');
-            }
+            if (ocupacionActual >= totalCapacidad) badge.classList.add('capacity-full');
+            else badge.classList.remove('capacity-full');
         }
 
-        // --- TARJETAS DE PERSONAS ---
         function crearTarjetaPersona(p, id) {
             const div = document.createElement('div');
             div.className = `person-card status-${p.estado}`;
-            
             let contenidoDerecha = "";
             
             if (p.estado === 'espera') {
                 if (currentRole === 'admin') {
-                    contenidoDerecha = `<button class="success" style="padding:5px 10px;" onclick="window.ingresarPersona('${id}')">Ingresar ➡️</button>`;
+                    contenidoDerecha = `<button class="success" style="padding:5px 10px;" onclick="window.abrirModalCama('${id}', '${p.nombre}')">Ingresar ➡️</button>`;
                 } else {
                     contenidoDerecha = `<span style="color:#856404;">En cola</span>`;
                 }
             } else {
-                // Ya está dentro
                 contenidoDerecha = `<strong>🛏️ ${p.cama || '?'}</strong>`;
             }
 
             div.innerHTML = `
-                <div>
-                    <strong>${p.nombre}</strong> <br>
-                    <small>DNI: ${p.dni}</small>
-                </div>
+                <div><strong>${p.nombre}</strong> <br> <small>${p.dni}</small></div>
                 <div>${contenidoDerecha}</div>
             `;
             return div;
         }
 
-        // --- 4. ACCIONES LÓGICAS ---
-
-        // A. Ingresar Persona (Asignar Cama)
-        window.ingresarPersona = async (idPersona) => {
+        // --- LÓGICA DE SELECCIÓN DE CAMA (VISUAL) ---
+        window.abrirModalCama = (idPersona, nombrePersona) => {
             if (ocupacionActual >= totalCapacidad) {
-                if(!confirm("⚠️ ¡El albergue está LLENO! ¿Quieres forzar el ingreso?")) return;
+                if(!confirm("⚠️ El albergue está lleno. ¿Seguro que quieres buscar hueco?")) return;
             }
 
-            // Pedir número de cama
-            const cama = prompt(`Asignar Cama (Total disponibles: ${totalCapacidad - ocupacionActual}) \nIntroduce número o identificador:`);
+            window.personaSeleccionadaId = idPersona;
+            window.personaSeleccionadaNombre = nombrePersona;
+            document.getElementById('modal-person-name').innerText = nombrePersona;
             
-            if (cama) {
-                const personaRef = doc(db, "albergues", currentAlbergueId, "personas", idPersona);
-                try {
-                    await updateDoc(personaRef, {
-                        estado: 'ingresado',
-                        cama: cama,
-                        fechaIngreso: new Date()
-                    });
-                } catch (e) {
-                    alert("Error: " + e.message);
+            // Generar Grid
+            const grid = document.getElementById('grid-camas');
+            grid.innerHTML = "";
+
+            for (let i = 1; i <= totalCapacidad; i++) {
+                const numCama = i.toString();
+                const ocupante = camasOcupadas[numCama];
+                
+                const div = document.createElement('div');
+                div.className = `bed-box ${ocupante ? 'bed-busy' : 'bed-free'}`;
+                
+                let htmlContent = `<span class="bed-number">${numCama}</span>`;
+                if(ocupante) {
+                    htmlContent += `<span class="bed-user" title="${ocupante}">${ocupante.split(' ')[0]}</span>`;
+                    div.title = "Ocupada por: " + ocupante;
+                    div.onclick = () => alert(`Esta cama está ocupada por ${ocupante}`);
+                } else {
+                    htmlContent += `<span class="bed-user">Libre</span>`;
+                    div.onclick = () => asignarCama(numCama);
                 }
+
+                div.innerHTML = htmlContent;
+                grid.appendChild(div);
             }
+
+            document.getElementById('modal-cama').classList.remove('hidden');
         };
 
-        // B. Editar Capacidad Total
+        window.cerrarModalCama = () => {
+            document.getElementById('modal-cama').classList.add('hidden');
+            window.personaSeleccionadaId = null;
+        };
+
+        async function asignarCama(numCama) {
+            if(!confirm(`¿Asignar cama ${numCama} a ${window.personaSeleccionadaNombre}?`)) return;
+
+            const personaRef = doc(db, "albergues", currentAlbergueId, "personas", window.personaSeleccionadaId);
+            try {
+                await updateDoc(personaRef, {
+                    estado: 'ingresado',
+                    cama: numCama,
+                    fechaIngreso: new Date()
+                });
+                cerrarModalCama();
+            } catch (e) { alert("Error: " + e.message); }
+        }
+
+        // --- OTRAS FUNCIONES ---
         window.editarCapacidad = async () => {
             const nuevaCap = prompt("Nuevo número total de camas:", totalCapacidad);
             if (nuevaCap && !isNaN(nuevaCap)) {
-                try {
-                    await updateDoc(doc(db, "albergues", currentAlbergueId), {
-                        capacidad: parseInt(nuevaCap)
-                    });
-                } catch (e) {
-                    alert("Error: " + e.message);
-                }
+                await updateDoc(doc(db, "albergues", currentAlbergueId), { capacidad: parseInt(nuevaCap) });
             }
         };
 
-        // C. Funciones de Registro
         window.publicoGuardarPrefiliacion = async () => {
             const nombre = document.getElementById('public-nombre').value;
             const dni = document.getElementById('public-dni').value;
             const nac = document.getElementById('public-nacimiento').value;
             if (!nombre || !dni) return alert("Falta nombre o DNI");
-
             try {
                 await addDoc(collection(db, "albergues", currentAlbergueId, "personas"), {
                     nombre, dni, nacimiento: nac, estado: 'espera', origen: 'qr', fechaRegistro: new Date()
                 });
-                alert("Registrado. Espere su turno.");
+                alert("Registrado.");
                 document.getElementById('public-nombre').value = "";
                 document.getElementById('public-dni').value = "";
             } catch (e) { alert("Error: " + e.message); }
@@ -381,7 +433,6 @@
             const dni = document.getElementById('admin-dni').value;
             const nac = document.getElementById('admin-nacimiento').value;
             if (!nombre) return alert("Falta nombre");
-
             try {
                 await addDoc(collection(db, "albergues", currentAlbergueId, "personas"), {
                     nombre, dni, nacimiento: nac, estado: 'espera', origen: 'manual', fechaRegistro: new Date()

@@ -3,15 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión Albergue - V.6.1.0 (Seguridad y Ocultos)</title>
+    <title>Gestión Albergue - V.6.2.0 (Permisos Strict)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
 
-    <div class="version-tag">V.6.1.0</div>
+    <div class="version-tag">V.6.2.0</div>
 
     <div id="login-screen" class="">
         <div class="card">
@@ -59,9 +60,9 @@
                     <h2><i class="fa-solid fa-tools"></i> Mantenimiento</h2>
                     <div id="container-ver-ocultos" class="hidden">
                         <label class="toggle-switch">
-                            <input type="checkbox" class="toggle-input" id="check-ver-ocultos" onchange="cargarAlberguesMantenimiento()">
+                            <input type="checkbox" class="toggle-input" id="check-ver-ocultos" onchange="window.cargarAlberguesMantenimiento()">
                             <span class="toggle-slider"></span>
-                            <span style="font-size:0.9rem; font-weight:600;">Mostrar Ocultos</span>
+                            <span style="font-size:0.9rem; font-weight:600; margin-left:10px;">Mostrar Ocultos</span>
                         </label>
                     </div>
                 </div>
@@ -154,28 +155,36 @@
         window.personaSeleccionadaId=null; window.personaEnGestion=null; window.modoCambioCama=false; window.modoMapaGeneral=false;
         let listaFamiliaresTemp=[], adminFamiliaresTemp=[], albergueEdicionId=null;
 
-        // AUTH & ROLES
+        // AUTH & NAV
         window.onload=()=>{const p=new URLSearchParams(window.location.search);if(p.get('public_id')){currentAlbergueId=p.get('public_id');document.getElementById('login-screen').classList.add('hidden');document.getElementById('public-register-screen').classList.remove('hidden');}};
         window.iniciarSesion=async()=>{try{await signInWithEmailAndPassword(auth,document.getElementById('login-email').value,document.getElementById('login-pass').value);}catch(e){alert(e.message);}};
         window.cerrarSesion=()=>{signOut(auth);location.reload();};
         onAuthStateChanged(auth,async(u)=>{if(u){const s=await getDoc(doc(db,"usuarios",u.uid));if(s.exists()){currentUserData={...s.data(),uid:u.uid};document.getElementById('login-screen').classList.add('hidden');document.getElementById('app-shell').classList.remove('hidden');configurarDashboard();navegar('gestion-albergues');}}else if(document.getElementById('public-register-screen').classList.contains('hidden')){document.getElementById('app-shell').classList.add('hidden');document.getElementById('login-screen').classList.remove('hidden');}});
         
+        window.navegar=(p)=>{
+            ['screen-usuarios','screen-gestion-albergues','screen-mantenimiento','screen-operativa'].forEach(id=>document.getElementById(id).classList.add('hidden'));
+            if(unsubscribeUsers)unsubscribeUsers();if(unsubscribeAlberguesActivos)unsubscribeAlberguesActivos();if(unsubscribeAlberguesMto)unsubscribeAlberguesMto();if(unsubscribePersonas)unsubscribePersonas();
+            document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+            if(p==='usuarios'){cargarUsuarios();document.getElementById('screen-usuarios').classList.remove('hidden');document.getElementById('nav-users').classList.add('active');}
+            else if(p==='gestion-albergues'){cargarAlberguesActivos();document.getElementById('screen-gestion-albergues').classList.remove('hidden');document.getElementById('nav-albergues').classList.add('active');}
+            else if(p==='mantenimiento'){window.cargarAlberguesMantenimiento();document.getElementById('screen-mantenimiento').classList.remove('hidden');document.getElementById('nav-mto').classList.add('active');}
+            else if(p==='operativa'){document.getElementById('screen-operativa').classList.remove('hidden');document.getElementById('nav-albergues').classList.add('active');}
+        };
+
         function configurarDashboard(){
             document.getElementById('user-name-display').innerText=currentUserData.nombre;const r=currentUserData.rol;
             document.getElementById('user-role-badge').innerText=r.toUpperCase(); document.getElementById('user-role-badge').className=`role-badge role-${r}`;
             const u=document.getElementById('nav-users'),m=document.getElementById('nav-mto');
             if(['super_admin','admin'].includes(r))u.classList.remove('disabled');else u.classList.add('disabled');
             if(['super_admin','admin','avanzado'].includes(r))m.classList.remove('disabled');else m.classList.add('disabled');
-            
-            // Mostrar switch ocultos solo a Super Admin
             if(r==='super_admin') document.getElementById('container-ver-ocultos').classList.remove('hidden');
         }
 
-        // CREAR USUARIO (PERMISOS)
+        // --- CREAR USUARIO (PERMISOS CORREGIDOS) ---
         window.abrirCrearUsuario=()=>{
             const sel=document.getElementById('new-user-role'); sel.innerHTML=""; const r=currentUserData.rol;
             if(r==='super_admin'){['super_admin','admin','avanzado','medio'].forEach(o=>sel.add(new Option(o.toUpperCase(),o)));}
-            else if(r==='admin'){['avanzado','medio'].forEach(o=>sel.add(new Option(o.toUpperCase(),o)));} // Admin can't create Admin
+            else if(r==='admin'){['avanzado','medio'].forEach(o=>sel.add(new Option(o.toUpperCase(),o)));}
             document.getElementById('modal-crear-usuario').classList.remove('hidden');
         };
         window.crearUsuario=async()=>{
@@ -183,15 +192,13 @@
             try{const tApp=initializeApp(firebaseConfig,"Temp");const tAuth=getAuth(tApp);const uc=await createUserWithEmailAndPassword(tAuth,e,p);await setDoc(doc(db,"usuarios",uc.user.uid),{email:e,nombre:n,rol:r,fecha:new Date()});await signOut(tAuth);alert("Creado");document.getElementById('modal-crear-usuario').classList.add('hidden');}catch(er){alert(er.message);}
         };
 
-        // --- MANTENIMIENTO (ELIMINAR + OCULTAR) ---
+        // --- MANTENIMIENTO (LOGICA V6.2) ---
         window.cargarAlberguesMantenimiento = () => {
             const c=document.getElementById('mto-container');
             const showHidden = document.getElementById('check-ver-ocultos') ? document.getElementById('check-ver-ocultos').checked : false;
-            
-            // Query básica por nombre. El filtrado de 'oculto' se hará en cliente o query compuesta
-            let q = query(collection(db,"albergues"), orderBy("nombre"));
-            
-            unsubscribeAlberguesMto=onSnapshot(q,s=>{
+            const isSuper = currentUserData.rol === 'super_admin';
+
+            unsubscribeAlberguesMto=onSnapshot(query(collection(db,"albergues"),orderBy("nombre")),s=>{
                 c.innerHTML="";
                 const addDiv=document.createElement('div'); addDiv.className="mto-card add-new"; addDiv.onclick=()=>abrirModalAlbergue();
                 addDiv.innerHTML=`<div style="text-align:center;"><i class="fa-solid fa-circle-plus"></i><h3>Nuevo Albergue</h3></div>`;
@@ -199,11 +206,8 @@
                 
                 s.forEach(d=>{
                     const a=d.data();
-                    // Filtro de Ocultos
-                    if(a.oculto && !showHidden) return; // Si está oculto y no quiero verlos, skip
-                    if(!a.oculto && showHidden) return; // Si quiero ver ocultos, mostrar SOLO ocultos? O todos? Usualmente todos. Pero para limpiar vista, dejemos solo ocultos si check.
-                    // Mejor: Checkbox "Mostrar Ocultos" -> Muestra Todo. Checkbox Off -> Muestra solo no ocultos.
-                    if(a.oculto && !showHidden) return;
+                    // VISIBILITY FILTER
+                    if (a.oculto && (!isSuper || !showHidden)) return;
 
                     const l=a.columnas?`${a.columnas} cols`: "Auto"; const arch=!a.activo;
                     const div=document.createElement('div'); 
@@ -212,14 +216,13 @@
                     let btns = `<button class="secondary" onclick="abrirModalAlbergue('${d.id}')">✏️</button>
                                 <button class="${arch?'success':'warning'}" onclick="cambiarEstadoAlbergue('${d.id}',${!a.activo})">${arch?'Activar':'Archivar'}</button>`;
                     
-                    // Botón Eliminar
-                    btns += `<button class="danger" onclick="eliminarAlbergue('${d.id}')" title="Eliminar definitivamente"><i class="fa-solid fa-trash"></i></button>`;
-
-                    // Botón Ocultar (Solo SuperAdmin y si está Archivado)
-                    if(currentUserData.rol === 'super_admin' && arch) {
-                        const label = a.oculto ? 'Mostrar' : 'Ocultar';
-                        const icon = a.oculto ? 'fa-eye' : 'fa-eye-slash';
-                        btns += `<button class="dark" onclick="toggleOcultarAlbergue('${d.id}', ${!a.oculto})" title="${label}"><i class="fa-solid ${icon}"></i></button>`;
+                    // Solo SuperAdmin puede eliminar y ocultar
+                    if (isSuper) {
+                        btns += `<button class="danger" onclick="eliminarAlbergue('${d.id}')" title="Eliminar definitivamente"><i class="fa-solid fa-trash"></i></button>`;
+                        if (arch) {
+                            const icon = a.oculto ? 'fa-eye' : 'fa-eye-slash';
+                            btns += `<button class="dark" onclick="toggleOcultarAlbergue('${d.id}', ${!a.oculto})" title="Ocultar/Mostrar"><i class="fa-solid ${icon}"></i></button>`;
+                        }
                     }
 
                     div.innerHTML=`<div><h3>${a.nombre}</h3><div class="mto-info">🛏️ Cap: <strong>${a.capacidad}</strong><br>📐 <strong>${l}</strong><br>
@@ -232,38 +235,19 @@
         };
 
         window.eliminarAlbergue = async (id) => {
-            if(!confirm("⚠️ ¡PELIGRO! ⚠️\n\nSe eliminarán TODOS los datos de este albergue y TODAS las fichas de personas registradas en él.\n\nEsta acción NO se puede deshacer.\n\n¿Estás seguro?")) return;
-            
+            if(!confirm("⚠️ PELIGRO: Se borrará el albergue y TODAS las personas dentro.\n\n¿Estás seguro?")) return;
             try {
-                // 1. Borrar subcolección 'personas' (Manually looping because client SDK can't delete collection)
-                const qP = query(collection(db, "albergues", id, "personas"));
-                const snapP = await getDocs(qP);
-                const batch = writeBatch(db);
-                
-                // Firestore batches limit 500 ops. Si hay muchas, mejor loop simple.
-                // Usaremos loop simple para asegurar.
-                const promises = snapP.docs.map(doc => deleteDoc(doc.ref));
-                await Promise.all(promises);
-
-                // 2. Borrar documento albergue
-                await deleteDoc(doc(db, "albergues", id));
-                alert("Albergue y datos eliminados correctamente.");
-            } catch (e) {
-                alert("Error al eliminar: " + e.message);
-            }
+                const qP = query(collection(db, "albergues", id, "personas")); const snapP = await getDocs(qP);
+                const promises = snapP.docs.map(doc => deleteDoc(doc.ref)); await Promise.all(promises);
+                await deleteDoc(doc(db, "albergues", id)); alert("Eliminado.");
+            } catch(e) { alert("Error: " + e.message); }
         };
+        window.toggleOcultarAlbergue = async (id, est) => { await updateDoc(doc(db, "albergues", id), { oculto: est }); };
 
-        window.toggleOcultarAlbergue = async (id, estado) => {
-            await updateDoc(doc(db, "albergues", id), { oculto: estado });
-        };
-
-        // ... (RESTO DE FUNCIONES IGUAL QUE V5.1) ...
-        window.navegar=(p)=>{['screen-usuarios','screen-gestion-albergues','screen-mantenimiento','screen-operativa'].forEach(id=>document.getElementById(id).classList.add('hidden'));if(unsubscribeUsers)unsubscribeUsers();if(unsubscribeAlberguesActivos)unsubscribeAlberguesActivos();if(unsubscribeAlberguesMto)unsubscribeAlberguesMto();if(unsubscribePersonas)unsubscribePersonas();document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));if(p==='usuarios'){cargarUsuarios();document.getElementById('screen-usuarios').classList.remove('hidden');document.getElementById('nav-users').classList.add('active');}else if(p==='gestion-albergues'){cargarAlberguesActivos();document.getElementById('screen-gestion-albergues').classList.remove('hidden');document.getElementById('nav-albergues').classList.add('active');}else if(p==='mantenimiento'){window.cargarAlberguesMantenimiento();document.getElementById('screen-mantenimiento').classList.remove('hidden');document.getElementById('nav-mto').classList.add('active');}else if(p==='operativa'){document.getElementById('screen-operativa').classList.remove('hidden');document.getElementById('nav-albergues').classList.add('active');}};
+        // --- RESTO FUNCIONES (NO CAMBIAN) ---
         window.abrirModalAlbergue=async(id=null)=>{albergueEdicionId=id; document.getElementById('modal-albergue').classList.remove('hidden');if(id){document.getElementById('mto-modal-title').innerText="Editar";const s=await getDoc(doc(db,"albergues",id));const d=s.data();document.getElementById('mto-nombre').value=d.nombre;document.getElementById('mto-capacidad').value=d.capacidad;document.getElementById('mto-columnas').value=d.columnas||8;}else{document.getElementById('mto-modal-title').innerText="Nuevo";document.getElementById('mto-nombre').value="";document.getElementById('mto-capacidad').value="";document.getElementById('mto-columnas').value="8";}};
         window.guardarAlbergue=async()=>{const n=document.getElementById('mto-nombre').value;const c=parseInt(document.getElementById('mto-capacidad').value);const cols=parseInt(document.getElementById('mto-columnas').value)||8;if(!n||!c)return alert("Faltan datos");if(albergueEdicionId)await updateDoc(doc(db,"albergues",albergueEdicionId),{nombre:n,capacidad:c,columnas:cols});else await addDoc(collection(db,"albergues"),{nombre:n,capacidad:c,columnas:cols,activo:true,fecha:new Date()});document.getElementById('modal-albergue').classList.add('hidden');};
         window.cambiarEstadoAlbergue=async(i,s)=>await updateDoc(doc(db,"albergues",i),{activo:s});
-        
-        // UTILS
         window.formatearFecha=(i)=>{let v=i.value.replace(/\D/g,'').slice(0,8);if(v.length>=5)i.value=`${v.slice(0,2)}/${v.slice(2,4)}/${v.slice(4)}`;else if(v.length>=3)i.value=`${v.slice(0,2)}/${v.slice(2)}`;else i.value=v;};
         window.verificarMenor=(p)=>{const t=document.getElementById(`${p}-tipo-doc`).value;const i=document.getElementById(`${p}-doc-num`);if(t==='MENOR'){i.value="MENOR-SIN-DNI";i.disabled=true;i.classList.remove('input-error');if(document.getElementById(`${p}-doc-error`))document.getElementById(`${p}-doc-error`).style.display='none';}else{i.disabled=false;if(i.value==="MENOR-SIN-DNI")i.value="";}};
         window.validarEdad=(p)=>{const f=document.getElementById(`${p}-fecha`).value;const e=document.getElementById(`${p}-fecha-error`);const t=document.getElementById(`${p}-tipo-doc`).value;if(f.length!==10){if(e)e.style.display='none';return true;}const [d,m,a]=f.split('/').map(Number);const nac=new Date(a,m-1,d);const hoy=new Date();let ed=hoy.getFullYear()-nac.getFullYear();if(hoy<new Date(hoy.getFullYear(),m-1,d))ed--;if(t==='MENOR'&&ed>=16){if(e){e.innerText=">16 requiere DNI";e.style.display='block';}return false;}if(e)e.style.display='none';return true;};
@@ -271,15 +255,12 @@
         window.abrirModalVincularFamilia=()=>{document.getElementById('modal-vincular-familia').classList.remove('hidden');document.getElementById('search-vincular').value="";document.getElementById('resultados-vincular').innerHTML="";};
         window.buscarParaVincular=()=>{const txt=document.getElementById('search-vincular').value.toLowerCase();const res=document.getElementById('resultados-vincular');res.innerHTML="";if(txt.length<2){res.style.display='none';return;}const hits=listaPersonasCache.filter(p=>p.id!==window.personaEnGestion.id && (p.nombre.toLowerCase().includes(txt)||(p.docNum&&p.docNum.toLowerCase().includes(txt))));if(hits.length===0){res.innerHTML="<div class='search-item' style='color:#999;'>No hay coincidencias.</div>";}else{res.style.display='block';hits.forEach(p=>{const d=document.createElement('div');d.className='search-item';d.innerHTML=`Unir a: <strong>${p.nombre}</strong>`;d.onclick=()=>vincularAFamilia(p);res.appendChild(d);});}};
         window.vincularAFamilia=async(target)=>{if(!confirm(`¿Unir a ${window.personaEnGestion.nombre} con ${target.nombre}?`))return;let tid=target.familiaId;if(!tid){tid=new Date().getTime().toString()+"-LEGACY";await updateDoc(doc(db,"albergues",currentAlbergueId,"personas",target.id),{familiaId:tid});}await updateDoc(doc(db,"albergues",currentAlbergueId,"personas",window.personaEnGestion.id),{familiaId:tid,rolFamilia:'MIEMBRO'});document.getElementById('modal-vincular-familia').classList.add('hidden');alert("Vinculado.");};
-        window.cambiarPestana=(t)=>{document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));if(t==='prefiliacion'){document.getElementById('btn-tab-pref').classList.add('active');document.getElementById('tab-prefiliacion').classList.add('active');limpiarFormulario('man');adminFamiliaresTemp=[];actualizarListaFamiliaresAdminUI();document.getElementById('panel-gestion-persona').classList.add('hidden');}else{document.getElementById('btn-tab-fil').classList.add('active');document.getElementById('tab-filiacion').classList.add('active');document.getElementById('buscador-persona').value="";document.getElementById('resultados-busqueda').style.display='none';}};
-        function limpiarFormulario(p){['nombre','ap1','ap2','doc-num','fecha','tel'].forEach(f=>document.getElementById(`${p}-${f}`).value="");document.getElementById(`${p}-doc-num`).classList.remove('input-error');document.getElementById(`${p}-doc-num`).disabled=false;document.getElementById(`${p}-tipo-doc`).value="DNI";}
-        function getDatosFormulario(p){return{nombre:document.getElementById(`${p}-nombre`).value,ap1:document.getElementById(`${p}-ap1`).value,ap2:document.getElementById(`${p}-ap2`).value,tipoDoc:document.getElementById(`${p}-tipo-doc`).value,docNum:document.getElementById(`${p}-doc-num`).value,fechaNac:document.getElementById(`${p}-fecha`).value,telefono:document.getElementById(`${p}-tel`).value};}
         window.abrirModalFamiliar=()=>{limpiarFormulario('fam');document.getElementById('modal-add-familiar').classList.remove('hidden');document.getElementById('fam-tipo-doc').value="MENOR";verificarMenor('fam');};window.cerrarModalFamiliar=()=>document.getElementById('modal-add-familiar').classList.add('hidden');window.guardarFamiliarEnLista=()=>{if(!validarDocumento('fam')||!validarEdad('fam'))return alert("Datos inválidos");const d=getDatosFormulario('fam');if(!d.nombre)return alert("Nombre obligatorio");listaFamiliaresTemp.push(d);actualizarListaFamiliaresUI();cerrarModalFamiliar();};function actualizarListaFamiliaresUI(){const d=document.getElementById('lista-familiares-ui');d.innerHTML="";if(listaFamiliaresTemp.length===0){d.innerHTML='<p style="color:#999;font-style:italic;">Ninguno.</p>';return;}listaFamiliaresTemp.forEach((f,i)=>{d.innerHTML+=`<div class="fam-item"><div><strong>${f.nombre}</strong></div><button class="danger" style="margin:0;padding:2px 8px;width:auto;" onclick="borrarFamiliarTemp(${i})">X</button></div>`;});}window.borrarFamiliarTemp=(i)=>{listaFamiliaresTemp.splice(i,1);actualizarListaFamiliaresUI();};
         window.publicoGuardarTodo=async()=>{if(!validarDocumento('pub')||!validarEdad('pub'))return alert("Revise titular");const p=getDatosFormulario('pub');if(!p.nombre||!p.docNum)return alert("Datos inc.");const famId=new Date().getTime().toString();await addDoc(collection(db,"albergues",currentAlbergueId,"personas"),{...p,estado:'espera',fechaRegistro:new Date(),origen:'qr',familiaId:famId,rolFamilia:'TITULAR'});for(const f of listaFamiliaresTemp)await addDoc(collection(db,"albergues",currentAlbergueId,"personas"),{...f,estado:'espera',fechaRegistro:new Date(),origen:'qr',familiaId:famId,rolFamilia:'MIEMBRO'});document.getElementById('public-form-container').classList.add('hidden');document.getElementById('public-success-msg').classList.remove('hidden');};
         window.abrirModalFamiliarAdmin=()=>{limpiarFormulario('adm-fam');document.getElementById('modal-admin-add-familiar').classList.remove('hidden');document.getElementById('adm-fam-tipo-doc').value="MENOR";verificarMenor('adm-fam');};window.cerrarModalFamiliarAdmin=()=>document.getElementById('modal-admin-add-familiar').classList.add('hidden');window.guardarFamiliarAdmin=()=>{if(!validarDocumento('adm-fam')||!validarEdad('adm-fam'))return alert("Datos inválidos");const d=getDatosFormulario('adm-fam');if(!d.nombre)return alert("Nombre obligatorio");adminFamiliaresTemp.push(d);actualizarListaFamiliaresAdminUI();cerrarModalFamiliarAdmin();};function actualizarListaFamiliaresAdminUI(){const d=document.getElementById('admin-lista-familiares-ui');d.innerHTML="";if(adminFamiliaresTemp.length===0){d.innerHTML='<p style="color:#999;font-style:italic;">Ninguno.</p>';return;}adminFamiliaresTemp.forEach((f,i)=>{d.innerHTML+=`<div class="fam-item"><div><strong>${f.nombre} ${f.ap1}</strong> <small>(${f.docNum})</small></div><button class="danger" style="margin:0;padding:2px 8px;width:auto;" onclick="borrarFamiliarAdminTemp(${i})">X</button></div>`;});}window.borrarFamiliarAdminTemp=(i)=>{adminFamiliaresTemp.splice(i,1);actualizarListaFamiliaresAdminUI();};
         window.adminPrefiliarManual=async()=>{if(!validarEdad('man')||!validarDocumento('man'))return alert("Datos titular inválidos");const t=getDatosFormulario('man');if(!t.nombre)return alert("Falta nombre titular");const famId=new Date().getTime().toString();await addDoc(collection(db,"albergues",currentAlbergueId,"personas"),{...t,estado:'espera',fechaRegistro:new Date(),origen:'manual',familiaId:famId,rolFamilia:'TITULAR'});for(const f of adminFamiliaresTemp){await addDoc(collection(db,"albergues",currentAlbergueId,"personas"),{...f,estado:'espera',fechaRegistro:new Date(),origen:'manual',familiaId:famId,rolFamilia:'MIEMBRO'});}alert("Familia Registrada");limpiarFormulario('man');adminFamiliaresTemp=[];actualizarListaFamiliaresAdminUI();};
         function cargarUsuarios(){const c=document.getElementById('lista-usuarios-container');unsubscribeUsers=onSnapshot(query(collection(db,"usuarios"),orderBy("nombre")),s=>{c.innerHTML="";s.forEach(d=>{const u=d.data();c.innerHTML+=`<div class="list-item"><strong>${u.nombre}</strong></div>`;});});}
-        function cargarAlberguesActivos(){const c=document.getElementById('lista-albergues-activos');unsubscribeAlberguesActivos=onSnapshot(query(collection(db,"albergues"),where("activo","==",true)),s=>{c.innerHTML="";s.forEach(d=>{const a=d.data();c.innerHTML+=`<div class="mto-card" style="cursor:pointer;" onclick="entrarAlbergue('${d.id}')"><h3>${a.nombre}</h3><div class="mto-info">🛏️ Cap: <strong>${a.capacidad}</strong></div></div>`;});});}
+        function cargarAlberguesActivos(){const c=document.getElementById('lista-albergues-activos');unsubscribeAlberguesActivos=onSnapshot(query(collection(db,"albergues"),where("activo","==",true)),s=>{c.innerHTML="";s.forEach(d=>{const a=d.data();if(a.oculto && currentUserData.rol !== 'super_admin') return;c.innerHTML+=`<div class="mto-card" style="cursor:pointer;" onclick="entrarAlbergue('${d.id}')"><h3>${a.nombre}</h3><div class="mto-info">🛏️ Cap: <strong>${a.capacidad}</strong></div></div>`;});});}
         window.entrarAlbergue=(id)=>{currentAlbergueId=id;navegar('operativa');onSnapshot(doc(db,"albergues",id),d=>{currentAlbergueData=d.data();document.getElementById('app-title').innerText=currentAlbergueData.nombre;totalCapacidad=currentAlbergueData.capacidad||0;actualizarContadores();generarQR();});unsubscribePersonas=onSnapshot(query(collection(db,"albergues",id,"personas"),orderBy("fechaRegistro","desc")),s=>{listaPersonasCache=[];let c=0;camasOcupadas={};s.forEach(ds=>{const p=ds.data();p.id=ds.id;listaPersonasCache.push(p);if(p.estado!=='espera'){c++;if(p.cama)camasOcupadas[p.cama]=p.nombre;}});ocupacionActual=c;actualizarContadores();if(window.personaEnGestion){const upd=listaPersonasCache.find(u=>u.id===window.personaEnGestion.id);if(upd)seleccionarPersona(upd);}});};
         function actualizarContadores(){document.getElementById('ocupacion-count').innerText=ocupacionActual;document.getElementById('capacidad-total').innerText=totalCapacidad;}
         window.buscarPersonaEnAlbergue=()=>{const i=document.getElementById('buscador-persona').value.toLowerCase();const r=document.getElementById('resultados-busqueda');if(i.length<2){r.style.display='none';return;}const h=listaPersonasCache.filter(p=>(p.nombre+" "+p.ap1+" "+p.docNum).toLowerCase().includes(i));r.innerHTML="";if(h.length>0){r.style.display='block';h.forEach(p=>{const d=document.createElement('div');d.className='search-item';d.innerHTML=`<strong>${p.nombre} ${p.ap1||''} ${p.ap2||''}</strong> <span class="search-details">📄 ${p.docNum||'Sin Doc'} | 📞 ${p.telefono||'Sin Tlf'}</span>`;d.onclick=()=>{seleccionarPersona(p);r.style.display='none';document.getElementById('buscador-persona').value="";};r.appendChild(d);});}else r.style.display='none';};

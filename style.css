@@ -38,21 +38,20 @@ body { background-color: var(--bg-body); color: var(--text-main); height: 100vh;
 .main-content { margin-top: 140px; padding: 30px; max-width: 1200px; margin-left: auto; margin-right: auto; width: 100%; flex: 1; }
 
 /* --- COMPONENTES --- */
-.card { background: var(--surface); padding: 30px; border-radius: var(--radius); box-shadow: var(--shadow-md); margin-bottom: 20px; animation: slideUp 0.3s ease; }
+.card { background: var(--surface); padding: 30px; border-radius: var(--radius); box-shadow: var(--shadow-md); margin-bottom: 20px; animation: slideUp 0.3s ease; position: relative; }
 @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-/* STICKY HEADER (NUEVO V.6.5.2) */
+/* STICKY HEADER (FIJO) */
 .sticky-header {
     position: sticky;
     top: 130px; /* Header 60 + Nav 70 */
     z-index: 80;
     background: var(--surface);
     /* Romper padding del card padre */
-    margin: -30px -30px 20px -30px;
-    padding: 30px 30px 10px 30px;
+    margin: -30px -30px 0 -30px;
+    padding: 30px 30px 20px 30px;
     border-bottom: 1px solid #e2e8f0;
     border-radius: var(--radius) var(--radius) 0 0;
-    transition: box-shadow 0.3s;
 }
 
 h2, h3 { color: var(--text-main); margin-bottom: 20px; font-weight: 700; }
@@ -118,7 +117,7 @@ button.dark { background: #334155; color: white; }
 
 #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%); display: flex; align-items: center; justify-content: center; z-index: 1000; }
 #login-screen .card { width: 100%; max-width: 400px; text-align: center; }
-.tabs { display: flex; background: #e2e8f0; padding: 5px; border-radius: 50px; margin-bottom: 25px; }
+.tabs { display: flex; background: #e2e8f0; padding: 5px; border-radius: 50px; margin-bottom: 0; }
 .tab-btn { flex: 1; padding: 12px; border-radius: 50px; border: none; font-weight: 600; color: var(--text-light); cursor: pointer; background: transparent; }
 .tab-btn.active { background: white; color: var(--primary); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
 .search-results { background: white; border: 1px solid #e2e8f0; border-radius: 0 0 12px 12px; max-height: 200px; overflow-y: auto; margin-top: -15px; margin-bottom: 20px; }

@@ -1,5 +1,92 @@
-// Your web app's Firebase configuration
-const firebaseConfig = {
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Albergue Temporal</title>
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background-color: #f4f4f9; }
+        .card { background: white; padding: 20px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        h1, h2 { color: #333; }
+        input, button, textarea { width: 100%; padding: 10px; margin-top: 10px; box-sizing: border-box; }
+        button { background-color: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; }
+        button:hover { background-color: #0056b3; }
+        button.secondary { background-color: #6c757d; }
+        button.success { background-color: #28a745; }
+        .hidden { display: none; }
+        .status-box { padding: 10px; background: #e9ecef; border-radius: 4px; margin-top: 10px; font-family: monospace; }
+        label { font-weight: bold; display: block; margin-top: 15px; }
+        .rojo { color: red; }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+
+    <div id="login-screen" class="card">
+        <h1>🏥 Acceso al Albergue</h1>
+        <p>Introduce tu código de acceso (Admin o Visitante) para entrar, o crea un nuevo albergue.</p>
+        
+        <input type="text" id="access-code" placeholder="Introduce el código aquí...">
+        <button onclick="entrar()">Entrar al Albergue</button>
+        
+        <hr>
+        <button class="secondary" onclick="mostrarCrear()">Crear Nuevo Albergue</button>
+    </div>
+
+    <div id="create-screen" class="card hidden">
+        <h2>Crear Nuevo Albergue</h2>
+        <p>Se generarán dos códigos automáticamente.</p>
+        <button class="success" onclick="generarAlbergue()">Confirmar y Generar Códigos</button>
+        <button class="secondary" onclick="volverInicio()">Cancelar</button>
+    </div>
+
+    <div id="codes-screen" class="card hidden">
+        <h2 style="color: green;">¡Albergue Creado!</h2>
+        <p>Guarda estos códigos muy bien. No se volverán a mostrar.</p>
+        <div class="status-box">
+            <p><strong>🔑 Código ADMIN (Escritura):</strong> <span id="new-admin-code"></span></p>
+            <p><strong>👁️ Código VISITA (Solo Lectura):</strong> <span id="new-visitor-code"></span></p>
+        </div>
+        <p class="rojo">Copia los códigos antes de continuar.</p>
+        <button onclick="location.reload()">Volver al Inicio</button>
+    </div>
+
+    <div id="app-screen" class="card hidden">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2 id="albergue-title">Panel de Control</h2>
+            <button onclick="location.reload()" style="width: auto; background: #dc3545;">Salir</button>
+        </div>
+        <p>Conectado como: <strong id="user-role"></strong></p>
+
+        <div id="form-container">
+            <label>Ocupación Actual / Camas Libres:</label>
+            <input type="text" id="dato-ocupacion" placeholder="Ej: 10 libres de 50">
+
+            <label>Novedades / Bitácora:</label>
+            <textarea id="dato-bitacora" rows="4" placeholder="Escribe aquí las novedades..."></textarea>
+            
+            <label>Necesidades Urgentes:</label>
+            <input type="text" id="dato-necesidades" placeholder="Ej: Faltan mantas, agua...">
+            
+            <button id="btn-guardar" onclick="guardarDatos()" class="success">💾 Guardar Cambios</button>
+        </div>
+
+        <div id="read-only-container" class="hidden">
+            <h3>Estado Actual:</h3>
+            <div class="status-box" id="display-data">Cargando datos...</div>
+        </div>
+
+        <hr>
+        <button onclick="exportarExcel()" style="background-color: #217346;">📊 Descargar Informe Excel</button>
+    </div>
+
+    <script type="module">
+        // Importamos las funciones necesarias de Firebase v9
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, query, where, getDocs, doc, updateDoc, onSnapshot } 
+        from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
   apiKey: "AIzaSyAzfEMwMd6M1VgvV0tJn7RS63RJghLE5UI",
   authDomain: "albergues-temporales.firebaseapp.com",
   projectId: "albergues-temporales",
@@ -7,3 +94,162 @@ const firebaseConfig = {
   messagingSenderId: "489999184108",
   appId: "1:489999184108:web:32b9b580727f83158075c9"
 };
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Variables globales
+        let currentDocId = null;
+        let currentRole = null; // 'admin' o 'visitor'
+
+        // Funciones para moverse por las pantallas
+        window.mostrarCrear = () => {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('create-screen').classList.remove('hidden');
+        };
+
+        window.volverInicio = () => {
+            document.getElementById('create-screen').classList.add('hidden');
+            document.getElementById('login-screen').classList.remove('hidden');
+        };
+
+        // --- 1. FUNCIÓN PARA CREAR ALBERGUE ---
+        window.generarAlbergue = async () => {
+            const adminCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+            const visitorCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+
+            try {
+                // Guardamos en Firebase
+                const docRef = await addDoc(collection(db, "albergues"), {
+                    adminCode: adminCode,
+                    visitorCode: visitorCode,
+                    ocupacion: "Sin datos",
+                    bitacora: "Albergue iniciado.",
+                    necesidades: "Ninguna por ahora",
+                    fechaCreacion: new Date()
+                });
+
+                // Mostramos los códigos al usuario
+                document.getElementById('create-screen').classList.add('hidden');
+                document.getElementById('codes-screen').classList.remove('hidden');
+                document.getElementById('new-admin-code').innerText = adminCode;
+                document.getElementById('new-visitor-code').innerText = visitorCode;
+
+            } catch (e) {
+                alert("Error al crear: " + e.message);
+                console.error(e);
+            }
+        };
+
+        // --- 2. FUNCIÓN PARA ENTRAR (LOGIN) ---
+        window.entrar = async () => {
+            const code = document.getElementById('access-code').value.trim().toUpperCase();
+            if (!code) return alert("Escribe un código");
+
+            // Buscamos si es Admin
+            const qAdmin = query(collection(db, "albergues"), where("adminCode", "==", code));
+            const snapshotAdmin = await getDocs(qAdmin);
+
+            if (!snapshotAdmin.empty) {
+                configurarSesion(snapshotAdmin.docs[0], 'admin');
+                return;
+            }
+
+            // Si no es Admin, buscamos si es Visitante
+            const qVisitor = query(collection(db, "albergues"), where("visitorCode", "==", code));
+            const snapshotVisitor = await getDocs(qVisitor);
+
+            if (!snapshotVisitor.empty) {
+                configurarSesion(snapshotVisitor.docs[0], 'visitor');
+                return;
+            }
+
+            alert("Código no válido. Inténtalo de nuevo.");
+        };
+
+        // Configura la pantalla según el rol
+        function configurarSesion(documento, rol) {
+            currentDocId = documento.id;
+            currentRole = rol;
+
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('app-screen').classList.remove('hidden');
+            document.getElementById('user-role').innerText = rol === 'admin' ? "ADMINISTRADOR (Edición)" : "VISITANTE (Solo lectura)";
+            
+            // Si es visitante, bloqueamos la edición visualmente
+            if (rol === 'visitor') {
+                document.getElementById('form-container').classList.add('hidden');
+                document.getElementById('read-only-container').classList.remove('hidden');
+            }
+
+            // ESCUCHAR CAMBIOS EN TIEMPO REAL
+            // Esto sustituye a MQTT. Cuando la base de datos cambie, esto se ejecuta solo.
+            onSnapshot(doc(db, "albergues", currentDocId), (doc) => {
+                const data = doc.data();
+                actualizarInterfaz(data);
+            });
+        }
+
+        function actualizarInterfaz(data) {
+            // Actualizar campos de input (para admin)
+            document.getElementById('dato-ocupacion').value = data.ocupacion || "";
+            document.getElementById('dato-bitacora').value = data.bitacora || "";
+            document.getElementById('dato-necesidades').value = data.necesidades || "";
+
+            // Actualizar vista de solo lectura (para visitas y exportación)
+            const texto = `
+                🏥 OCUPACIÓN: ${data.ocupacion}
+                📝 BITÁCORA: ${data.bitacora}
+                ⚠️ NECESIDADES: ${data.necesidades}
+            `;
+            document.getElementById('display-data').innerText = texto;
+        }
+
+        // --- 3. GUARDAR DATOS (SOLO ADMIN) ---
+        window.guardarDatos = async () => {
+            if (currentRole !== 'admin') return alert("No tienes permisos.");
+
+            const ocupacion = document.getElementById('dato-ocupacion').value;
+            const bitacora = document.getElementById('dato-bitacora').value;
+            const necesidades = document.getElementById('dato-necesidades').value;
+
+            try {
+                const albergueRef = doc(db, "albergues", currentDocId);
+                await updateDoc(albergueRef, {
+                    ocupacion: ocupacion,
+                    bitacora: bitacora,
+                    necesidades: necesidades,
+                    ultimaActualizacion: new Date()
+                });
+                alert("Datos actualizados correctamente ✅");
+            } catch (e) {
+                alert("Error al guardar: " + e.message);
+            }
+        };
+
+        // --- 4. EXPORTAR A EXCEL ---
+        window.exportarExcel = () => {
+            const ocupacion = document.getElementById('dato-ocupacion').value;
+            const bitacora = document.getElementById('dato-bitacora').value;
+            const necesidades = document.getElementById('dato-necesidades').value;
+            const rol = document.getElementById('user-role').innerText;
+
+            const datos = [
+                ["Informe de Albergue", ""],
+                ["Fecha", new Date().toLocaleString()],
+                ["Generado por", rol],
+                ["", ""],
+                ["OCUPACIÓN", ocupacion],
+                ["BITÁCORA", bitacora],
+                ["NECESIDADES", necesidades]
+            ];
+
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(datos);
+            XLSX.utils.book_append_sheet(wb, ws, "Estado Albergue");
+            XLSX.writeFile(wb, "Estado_Albergue.xlsx");
+        };
+
+    </script>
+</body>
+</html>

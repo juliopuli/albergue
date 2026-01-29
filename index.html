@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión Albergue - V.2.1.0 (Roles)</title>
+    <title>Gestión Albergue - V.2.1.1 (Gestión Completa)</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; max-width: 1000px; margin: 0 auto; padding: 20px; background-color: #f0f2f5; color: #333; }
         .card { background: white; padding: 25px; margin-bottom: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
@@ -44,6 +44,7 @@
         .bed-box { height: 60px; display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 8px; cursor: pointer; font-weight: bold; border: 2px solid transparent; }
         .bed-free { background-color: #d4edda; color: #155724; border-color: #c3e6cb; }
         .bed-busy { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; opacity: 0.8; }
+        .bed-current { background-color: #fff3cd; border-color: #ffeeba; }
 
         .version-tag { position: fixed; bottom: 10px; right: 10px; background: rgba(0, 0, 0, 0.05); color: #999; padding: 5px 10px; border-radius: 5px; font-size: 0.75em; pointer-events: none; font-family: monospace; }
         
@@ -59,7 +60,7 @@
 </head>
 <body>
 
-    <div class="version-tag">V.2.1.0 (Sin Códigos)</div>
+    <div class="version-tag">V.2.1.1 (Corrección Gestión)</div>
 
     <div id="login-screen" class="card">
         <h1 style="text-align:center;">🔐 Acceso Sistema</h1>
@@ -113,7 +114,7 @@
 
     <div id="create-albergue-screen" class="card hidden">
         <h2>Nuevo Albergue</h2>
-        <label>Nombre del Albergue (Identificador):</label>
+        <label>Nombre del Albergue:</label>
         <input type="text" id="create-nombre" placeholder="Ej: Pabellón Municipal">
         <label>Capacidad Inicial:</label>
         <input type="number" id="create-camas" value="50">
@@ -163,8 +164,27 @@
     <div id="modal-cama" class="modal-overlay hidden">
         <div class="modal-content">
             <h3>Seleccionar Cama</h3>
+            <p id="modal-cama-text"></p>
             <div id="grid-camas" class="bed-grid"></div>
             <button onclick="document.getElementById('modal-cama').classList.add('hidden')" class="secondary" style="margin-top:10px;">Cancelar</button>
+        </div>
+    </div>
+
+    <div id="modal-editar" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3>Gestionar Persona</h3>
+            <h4 id="edit-nombre" style="color:#007bff; margin-top:0;"></h4>
+            
+            <label>Cama Actual:</label>
+            <div class="row">
+                <input type="text" id="edit-cama-actual" readonly style="background:#f0f0f0;">
+                <button class="warning" onclick="abrirCambioCama()" style="margin-top:8px;">🔄 Cambiar</button>
+            </div>
+
+            <hr>
+            <p style="font-size:0.9em; color:#666;">Opciones de salida:</p>
+            <button class="danger" onclick="darSalidaAlbergue()">📤 Dar de Salida (Liberar cama)</button>
+            <button class="secondary" onclick="document.getElementById('modal-editar').classList.add('hidden')" style="margin-top:10px;">Cerrar</button>
         </div>
     </div>
 
@@ -202,11 +222,12 @@
         let totalCapacidad = 0;
         let ocupacionActual = 0;
         let camasOcupadas = {};
-        let unsubscribeAlbergue = null;
-        let unsubscribePersonas = null;
         
-        // variables temp
+        // Variables temp para selección
         window.personaSeleccionadaId = null;
+        window.personaSeleccionadaNombre = null;
+        window.personaEnEdicion = null; // Objeto de la persona que estamos editando
+        window.modoCambioCama = false;  // Flag para saber si es ingreso o cambio
 
         // --- INICIO ---
         window.onload = async () => {
@@ -253,13 +274,8 @@
             badge.innerText = rol.replace('_', ' ').toUpperCase();
             badge.className = `role-badge role-${rol}`;
 
-            // PERMISOS
-            if (['super_admin', 'admin'].includes(rol)) {
-                document.getElementById('section-admin-users').classList.remove('hidden');
-            }
-            if (['super_admin', 'admin', 'avanzado'].includes(rol)) {
-                document.getElementById('btn-crear-albergue-container').classList.remove('hidden');
-            }
+            if (['super_admin', 'admin'].includes(rol)) document.getElementById('section-admin-users').classList.remove('hidden');
+            if (['super_admin', 'admin', 'avanzado'].includes(rol)) document.getElementById('btn-crear-albergue-container').classList.remove('hidden');
 
             cargarListaAlbergues();
         }
@@ -269,12 +285,8 @@
             const select = document.getElementById('new-user-role');
             select.innerHTML = "";
             const rol = currentUserData.rol;
-            
-            if(rol === 'super_admin') {
-                ['super_admin', 'admin', 'avanzado', 'medio'].forEach(r => select.add(new Option(r.toUpperCase(), r)));
-            } else if(rol === 'admin') {
-                ['admin', 'avanzado', 'medio'].forEach(r => select.add(new Option(r.toUpperCase(), r)));
-            }
+            if(rol === 'super_admin') ['super_admin', 'admin', 'avanzado', 'medio'].forEach(r => select.add(new Option(r.toUpperCase(), r)));
+            else if(rol === 'admin') ['admin', 'avanzado', 'medio'].forEach(r => select.add(new Option(r.toUpperCase(), r)));
             document.getElementById('modal-crear-usuario').classList.remove('hidden');
         };
 
@@ -285,7 +297,6 @@
             const pass = document.getElementById('new-user-pass').value;
             const nombre = document.getElementById('new-user-name').value;
             const rol = document.getElementById('new-user-role').value;
-
             try {
                 const tempApp = initializeApp(firebaseConfig, "Temp");
                 const tempAuth = getAuth(tempApp);
@@ -300,11 +311,9 @@
         // --- LISTA ALBERGUES ---
         function cargarListaAlbergues() {
             const listDiv = document.getElementById('lista-albergues');
-            // Escuchar colección de albergues
             onSnapshot(collection(db, "albergues"), (snap) => {
                 listDiv.innerHTML = "";
-                if (snap.empty) listDiv.innerHTML = "<p>No hay albergues creados.</p>";
-                
+                if (snap.empty) listDiv.innerHTML = "<p>No hay albergues.</p>";
                 snap.forEach(d => {
                     const alb = d.data();
                     const div = document.createElement('div');
@@ -330,26 +339,14 @@
         window.generarAlbergue = async () => {
             const nombre = document.getElementById('create-nombre').value;
             const cap = document.getElementById('create-camas').value;
-            if(!nombre) return alert("Pon un nombre");
-            
+            if(!nombre) return alert("Falta nombre");
             await addDoc(collection(db, "albergues"), {
-                nombre: nombre,
-                capacidad: parseInt(cap),
-                creadoPor: currentUserData.email,
-                fecha: new Date()
+                nombre: nombre, capacidad: parseInt(cap), creadoPor: currentUserData.email, fecha: new Date()
             });
             window.volverMenu();
         };
 
-        window.volverMenu = () => {
-            // Limpiar listeners
-            if(unsubscribeAlbergue) unsubscribeAlbergue();
-            if(unsubscribePersonas) unsubscribePersonas();
-            
-            document.getElementById('create-albergue-screen').classList.add('hidden');
-            document.getElementById('app-screen').classList.add('hidden');
-            document.getElementById('main-menu').classList.remove('hidden');
-        };
+        window.volverMenu = () => location.reload();
 
         // --- DENTRO DEL ALBERGUE ---
         window.entrarAlbergue = (id) => {
@@ -357,8 +354,7 @@
             document.getElementById('main-menu').classList.add('hidden');
             document.getElementById('app-screen').classList.remove('hidden');
             
-            // Cargar datos
-            unsubscribeAlbergue = onSnapshot(doc(db, "albergues", id), (d) => {
+            onSnapshot(doc(db, "albergues", id), (d) => {
                 const data = d.data();
                 document.getElementById('app-title').innerText = data.nombre;
                 totalCapacidad = data.capacidad || 0;
@@ -367,7 +363,7 @@
             });
 
             const q = query(collection(db, "albergues", id, "personas"), orderBy("fechaRegistro", "desc"));
-            unsubscribePersonas = onSnapshot(q, (snap) => {
+            onSnapshot(q, (snap) => {
                 const lE = document.getElementById('list-espera');
                 const lD = document.getElementById('list-dentro');
                 lE.innerHTML = ""; lD.innerHTML = "";
@@ -392,11 +388,15 @@
             div.className = `person-card status-${p.estado}`;
             let btn = "";
             
-            // Asumimos que todos los roles que pueden ENTRAR pueden gestionar
             if(p.estado === 'espera') {
-                btn = `<button class="success" onclick="window.asignarCama('${p.id}')">Ingresar</button>`;
+                btn = `<button class="success" onclick="window.prepararIngreso('${p.id}', '${p.nombre}')">Ingresar</button>`;
             } else {
-                btn = `<span>🛏️ ${p.cama}</span>`;
+                // AQUÍ ESTABA EL FALLO ANTES: AHORA RECUPERAMOS EL BOTÓN DE AJUSTES
+                btn = `
+                <div style="text-align:right;">
+                    <strong>🛏️ ${p.cama}</strong><br>
+                    <button class="secondary" style="font-size:0.8em; padding:2px 6px; margin-top:5px;" onclick="window.abrirEdicion('${p.id}')">⚙️ Ajustes</button>
+                </div>`;
             }
             
             div.innerHTML = `<div><strong>${p.nombre}</strong><br><small>${p.dni}</small></div><div>${btn}</div>`;
@@ -411,32 +411,83 @@
             else badge.classList.remove('capacity-full');
         }
 
-        // --- ASIGNACIÓN CAMAS ---
-        window.asignarCama = (id) => {
+        // --- ASIGNACIÓN / CAMBIO DE CAMA ---
+        
+        // 1. Ingreso nuevo
+        window.prepararIngreso = (id, nombre) => {
             window.personaSeleccionadaId = id;
+            window.modoCambioCama = false;
+            document.getElementById('modal-cama-text').innerText = `Asignar cama a ${nombre}`;
+            mostrarGridCamas();
+        };
+
+        // 2. Cambio de cama (Desde edición)
+        window.abrirCambioCama = () => {
+            document.getElementById('modal-editar').classList.add('hidden');
+            window.personaSeleccionadaId = window.personaEnEdicion.id;
+            window.modoCambioCama = true;
+            document.getElementById('modal-cama-text').innerText = `Mover cama de ${window.personaEnEdicion.nombre}`;
+            mostrarGridCamas();
+        };
+
+        function mostrarGridCamas() {
             const grid = document.getElementById('grid-camas');
             grid.innerHTML = "";
             for(let i=1; i<=totalCapacidad; i++) {
                 const n = i.toString();
                 const ocup = camasOcupadas[n];
                 const d = document.createElement('div');
-                d.className = `bed-box ${ocup ? 'bed-busy' : 'bed-free'}`;
-                d.innerText = n;
-                if(!ocup) d.onclick = () => guardarIngreso(n);
+                
+                // Si es modo cambio, la cama actual del usuario se marca diferente
+                const esMiCama = (window.modoCambioCama && window.personaEnEdicion && window.personaEnEdicion.cama === n);
+
+                if (esMiCama) {
+                    d.className = 'bed-box bed-current';
+                    d.innerText = "Actual";
+                } else if (ocup) {
+                    d.className = 'bed-box bed-busy';
+                    d.innerText = n;
+                    d.title = `Ocupado por ${ocup}`;
+                } else {
+                    d.className = 'bed-box bed-free';
+                    d.innerText = n;
+                    d.onclick = () => guardarCama(n);
+                }
                 grid.appendChild(d);
             }
             document.getElementById('modal-cama').classList.remove('hidden');
-        };
+        }
 
-        async function guardarIngreso(cama) {
+        async function guardarCama(cama) {
             await updateDoc(doc(db, "albergues", currentAlbergueId, "personas", window.personaSeleccionadaId), {
                 estado: 'ingresado', cama: cama, fechaIngreso: new Date()
             });
             document.getElementById('modal-cama').classList.add('hidden');
         }
 
+        // --- EDICIÓN Y SALIDA ---
+        window.abrirEdicion = async (id) => {
+            const docRef = doc(db, "albergues", currentAlbergueId, "personas", id);
+            const snap = await getDoc(docRef);
+            if(snap.exists()) {
+                const p = snap.data();
+                p.id = id;
+                window.personaEnEdicion = p;
+                document.getElementById('edit-nombre').innerText = p.nombre;
+                document.getElementById('edit-cama-actual').value = p.cama;
+                document.getElementById('modal-editar').classList.remove('hidden');
+            }
+        };
+
+        window.darSalidaAlbergue = async () => {
+            if(!confirm("¿Seguro que quieres liberar esta cama y devolver a la persona a la lista de espera?")) return;
+            await updateDoc(doc(db, "albergues", currentAlbergueId, "personas", window.personaEnEdicion.id), {
+                estado: 'espera', cama: null // Null borra el campo cama
+            });
+            document.getElementById('modal-editar').classList.add('hidden');
+        };
+
         window.editarCapacidad = async () => {
-            // Solo permitido si tienes rol adecuado (validación simple frontend)
             if(currentUserData.rol === 'medio') return alert("Tu rol no permite editar capacidad.");
             const n = prompt("Nueva capacidad:", totalCapacidad);
             if(n) await updateDoc(doc(db, "albergues", currentAlbergueId), { capacidad: parseInt(n) });

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión Albergue - V.7.2.0 (Family Fix)</title>
+    <title>Gestión Albergue - V.7.3.0 (QR Fix)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     
@@ -12,7 +12,7 @@
 </head>
 <body>
 
-    <div class="version-tag">V.7.2.0</div>
+    <div class="version-tag">V.7.3.0</div>
 
     <div id="login-screen" class="">
         <div class="card">
@@ -48,7 +48,9 @@
                             <i class="fa-solid fa-user-plus"></i> Nuevo
                         </button>
                     </div>
-                    <div class="row"><input type="text" id="search-user" placeholder="🔍 Buscar por nombre o email..." onkeyup="filtrarUsuarios()"></div>
+                    <div class="row">
+                        <input type="text" id="search-user" placeholder="🔍 Buscar por nombre o email..." onkeyup="filtrarUsuarios()">
+                    </div>
                     <div id="lista-usuarios-container" class="user-list-grid"></div>
                 </div>
             </div>
@@ -80,6 +82,7 @@
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                             <div><h2 id="app-title" style="margin:0;">Albergue</h2><span class="badge badge-active">Ocupación: <span id="ocupacion-count">0</span> / <span id="capacidad-total">0</span></span></div>
                             <div class="btn-group-horizontal" style="margin-top:0;">
+                                <button class="dark" onclick="abrirModalQR()"><i class="fa-solid fa-qrcode"></i> QR Acceso</button>
                                 <button class="primary" onclick="abrirMapaGeneral()"><i class="fa-solid fa-bed"></i> Infografía Camas</button>
                                 <button class="secondary" onclick="navegar('gestion-albergues')"><i class="fa-solid fa-right-from-bracket"></i> Salir</button>
                             </div>
@@ -102,7 +105,6 @@
                                     <div class="fam-list"><h4><i class="fa-solid fa-people-roof"></i> Miembros</h4><div id="admin-lista-familiares-ui"><p style="color:#999;">Ninguno.</p></div><button class="secondary" onclick="abrirModalFamiliarAdmin()" style="width:100%; margin-top:10px;">+ Miembro</button></div>
                                     <button class="success" style="width:100%; margin-top:20px;" onclick="adminPrefiliarManual()">💾 Guardar Todo</button>
                                 </div>
-                                <hr style="margin: 30px 0;"><details><summary style="cursor:pointer; color:var(--primary);">📲 QR Público</summary><div id="qrcode" style="background:white; padding:10px; text-align:center;"></div></details>
                             </div>
                         </div>
 
@@ -142,6 +144,15 @@
             </div>
         </div>
         <div id="public-success-msg" class="success-screen hidden"><div class="success-icon"><i class="fa-solid fa-circle-check"></i></div><h2>¡Enviado!</h2></div>
+    </div>
+
+    <div id="modal-qr" class="modal-overlay hidden">
+        <div class="modal-content" style="text-align:center;">
+            <h3>Escanea para acceder</h3>
+            <div id="qrcode" style="display:inline-block; margin:20px;"></div>
+            <p style="color:#666; font-size:0.9rem;">Este código permite el auto-registro desde cualquier móvil.</p>
+            <button class="secondary" onclick="document.getElementById('modal-qr').classList.add('hidden')">Cerrar</button>
+        </div>
     </div>
 
     <div id="modal-cama" class="modal-overlay hidden"><div class="modal-content"><h3>Seleccionar Cama</h3><p style="font-size:0.8rem;color:#666;">Verde Borde=Sugerencia | Naranja=Reserva Familia</p><div id="grid-camas" class="bed-grid"></div><button class="secondary" style="margin-top:20px; width:100%" onclick="document.getElementById('modal-cama').classList.add('hidden')">Cancelar</button></div></div>

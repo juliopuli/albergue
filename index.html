@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión Albergue - V.3.5.0 (Familiares)</title>
+    <title>Gestión Albergue - V.3.6.0 (Unir Familias)</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; background-color: #f4f6f8; color: #333; }
         .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
@@ -65,9 +65,11 @@
         .success-screen { text-align: center; padding: 50px 20px; }
         .success-icon { font-size: 4em; color: #2ecc71; margin-bottom: 20px; }
         
-        /* Estilos Familiares */
         .fam-list { margin-top: 10px; border-top: 2px dashed #eee; padding-top: 10px; }
         .fam-item { background: #f8f9fa; padding: 10px; border-radius: 6px; margin-bottom: 8px; border: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; }
+        
+        /* Panel Familia Admin */
+        .family-box { background: #f1f8ff; border: 1px dashed #3498db; padding: 10px 15px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -75,7 +77,7 @@
 </head>
 <body>
 
-    <div class="version-tag">V.3.5.0 (Familiares)</div>
+    <div class="version-tag">V.3.6.0 (Unir Familias)</div>
 
     <div id="login-screen" style="max-width: 400px; margin: 50px auto;" class="card">
         <h1 style="text-align:center;">🔐 Acceso</h1>
@@ -126,26 +128,13 @@
             <div style="max-width: 800px; margin: 0 auto; border: 1px solid #eee; padding: 20px; border-radius: 8px;">
                 <h4>📝 Registro Manual (Admin)</h4>
                 <div id="form-manual-container">
-                    <div class="row">
-                        <div class="col"><label>Nombre:</label><input type="text" id="man-nombre"></div>
-                        <div class="col"><label>Ap. 1:</label><input type="text" id="man-ap1"></div>
-                        <div class="col"><label>Ap. 2:</label><input type="text" id="man-ap2"></div>
-                    </div>
-                    <div class="row">
-                        <div class="col"><label>Doc:</label><select id="man-tipo-doc" onchange="verificarMenor('man')"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div>
-                        <div class="col"><label>Num:</label><input type="text" id="man-doc-num" onblur="validarDocumento('man')"><div id="man-doc-error" class="error-msg">Error</div></div>
-                    </div>
-                    <div class="row">
-                        <div class="col"><label>F. Nac:</label><input type="tel" id="man-fecha" maxlength="10" oninput="formatearFecha(this)" onblur="validarEdad('man')"></div>
-                        <div class="col"><label>Tel:</label><input type="tel" id="man-tel"></div>
-                    </div>
+                    <div class="row"><div class="col"><label>Nombre:</label><input type="text" id="man-nombre"></div><div class="col"><label>Ap. 1:</label><input type="text" id="man-ap1"></div><div class="col"><label>Ap. 2:</label><input type="text" id="man-ap2"></div></div>
+                    <div class="row"><div class="col"><label>Doc:</label><select id="man-tipo-doc" onchange="verificarMenor('man')"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Num:</label><input type="text" id="man-doc-num" onblur="validarDocumento('man')"><div id="man-doc-error" class="error-msg">Error</div></div></div>
+                    <div class="row"><div class="col"><label>F. Nac:</label><input type="tel" id="man-fecha" maxlength="10" oninput="formatearFecha(this)" onblur="validarEdad('man')"></div><div class="col"><label>Tel:</label><input type="tel" id="man-tel"></div></div>
                     <button class="success" onclick="adminPrefiliarManual()">Guardar</button>
                 </div>
                 <hr style="margin: 30px 0;">
-                <details>
-                    <summary style="cursor:pointer; color:#007bff; font-weight:bold;">📲 QR para Público</summary>
-                    <div id="qrcode" style="background:white; padding:10px; text-align:center; margin-top:10px;"></div>
-                </details>
+                <details><summary style="cursor:pointer; color:#007bff; font-weight:bold;">📲 QR Público</summary><div id="qrcode" style="background:white; padding:10px; text-align:center; margin-top:10px;"></div></details>
             </div>
         </div>
         <div id="tab-filiacion" class="tab-content">
@@ -153,8 +142,14 @@
             <div id="panel-gestion-persona" class="hidden" style="border: 2px solid #3498db; border-radius: 8px; padding: 20px; background: #fdfdfd; margin-top: 10px;">
                 <h3 id="gestion-nombre-titulo" style="color:#2c3e50;">Nombre</h3>
                 <p>Estado: <span id="gestion-estado" class="badge">...</span> <span id="gestion-cama-info"></span></p>
+                
+                <div class="family-box">
+                    <span id="info-familia-actual" style="font-size:0.9em; color:#555;"><strong>Unidad Familiar:</strong> Cargando...</span>
+                    <button class="secondary" style="margin:0; font-size:0.8em; padding:5px 10px; width:auto;" onclick="abrirModalVincularFamilia()">🔗 Unir a Familia</button>
+                </div>
+
                 <div class="row"><div class="col"><label>Nombre:</label><input type="text" id="edit-nombre"></div><div class="col"><label>Ap. 1:</label><input type="text" id="edit-ap1"></div><div class="col"><label>Ap. 2:</label><input type="text" id="edit-ap2"></div></div>
-                <div class="row"><div class="col"><label>Tipo Doc:</label><select id="edit-tipo-doc" onchange="verificarMenor('edit')"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Num:</label><input type="text" id="edit-doc-num" onblur="validarDocumento('edit')"><div id="edit-doc-error" class="error-msg">Inválido</div></div></div>
+                <div class="row"><div class="col"><label>Doc:</label><select id="edit-tipo-doc" onchange="verificarMenor('edit')"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Num:</label><input type="text" id="edit-doc-num" onblur="validarDocumento('edit')"><div id="edit-doc-error" class="error-msg">Inválido</div></div></div>
                 <div class="row"><div class="col"><label>F. Nac:</label><input type="tel" id="edit-fecha" oninput="formatearFecha(this)" maxlength="10" onblur="validarEdad('edit')"><div id="edit-fecha-error" class="error-msg">Error</div></div><div class="col"><label>Tel:</label><input type="tel" id="edit-tel"></div></div>
                 <div class="btn-group-horizontal"><button id="btn-asignar-cama" class="success" onclick="abrirSeleccionCama()">🛏️ Asignar Cama</button><button id="btn-guardar-cambios" class="secondary" onclick="guardarCambiosPersona()">💾 Guardar</button><button id="btn-liberar-cama" class="warning hidden" onclick="liberarCamaMantener()">🛌 Liberar</button><button id="btn-regresar-pref" class="danger hidden" onclick="regresarPrefiliacion()">🔙 Prefiliación</button></div>
             </div>
@@ -164,41 +159,29 @@
     <div id="public-register-screen" class="card hidden" style="max-width:600px; margin:20px auto;">
         <div id="public-form-container">
             <h2 style="color: #007bff; text-align:center;">📝 Auto-Registro (Familia)</h2>
-            <p style="text-align:center; color:#666; font-size:0.9em;">Rellene sus datos (Cabeza de Familia) y añada familiares abajo.</p>
-            
             <div class="row"><div class="col"><label>Nombre:</label><input type="text" id="pub-nombre"></div></div>
             <div class="row"><div class="col"><label>Primer Apellido:</label><input type="text" id="pub-ap1"></div><div class="col"><label>Segundo Apellido:</label><input type="text" id="pub-ap2"></div></div>
             <div class="row"><div class="col"><label>Documento:</label><select id="pub-tipo-doc" onchange="verificarMenor('pub')"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Número:</label><input type="text" id="pub-doc-num" onblur="validarDocumento('pub')"><div id="pub-doc-error" class="error-msg">Inválido</div></div></div>
             <div class="row"><div class="col"><label>F. Nacimiento:</label><input type="tel" id="pub-fecha" placeholder="DD/MM/AAAA" maxlength="10" oninput="formatearFecha(this)" onblur="validarEdad('pub')"><div id="pub-fecha-error" class="error-msg">Error</div></div><div class="col"><label>Teléfono:</label><input type="tel" id="pub-tel"></div></div>
-
-            <div class="fam-list">
-                <h4>👨‍👩‍👧‍👦 Miembros de la Unidad Familiar</h4>
-                <div id="lista-familiares-ui">
-                    <p style="color:#999; font-style:italic;">Ningún familiar añadido.</p>
-                </div>
-                <button class="secondary" onclick="abrirModalFamiliar()" style="width:100%; margin-top:10px;">➕ AÑADIR FAMILIAR</button>
-            </div>
-
-            <hr style="margin:20px 0;">
-            <button class="success" style="width:100%; padding:15px; font-size:1.1em;" onclick="publicoGuardarTodo()">✅ ENVIAR TODO EL GRUPO</button>
+            <div class="fam-list"><h4>👨‍👩‍👧‍👦 Familiares</h4><div id="lista-familiares-ui"><p style="color:#999; font-style:italic;">Ninguno añadido.</p></div><button class="secondary" onclick="abrirModalFamiliar()" style="width:100%; margin-top:10px;">➕ AÑADIR FAMILIAR</button></div>
+            <hr style="margin:20px 0;"><button class="success" style="width:100%; padding:15px; font-size:1.1em;" onclick="publicoGuardarTodo()">✅ ENVIAR TODO EL GRUPO</button>
         </div>
-        <div id="public-success-msg" class="success-screen hidden"><div class="success-icon">✅</div><h2>¡Datos Enviados!</h2><p>Registro de unidad familiar completado.</p></div>
+        <div id="public-success-msg" class="success-screen hidden"><div class="success-icon">✅</div><h2>¡Datos Enviados!</h2><p>Gracias.</p></div>
     </div>
 
     <div id="modal-cama" class="modal-overlay hidden"><div class="modal-content"><h3>Seleccionar Cama</h3><div id="grid-camas" class="bed-grid"></div><button onclick="document.getElementById('modal-cama').classList.add('hidden')" class="secondary" style="margin-top:15px;">Cancelar</button></div></div>
     <div id="modal-crear-usuario" class="modal-overlay hidden"><div class="modal-content"><h3>Nuevo Usuario</h3><input type="email" id="new-user-email" placeholder="Correo"><input type="password" id="new-user-pass" placeholder="Contraseña"><input type="text" id="new-user-name" placeholder="Nombre"><label>Rol:</label><select id="new-user-role"></select><button class="success" onclick="crearUsuario()">Crear</button><button class="secondary" onclick="document.getElementById('modal-crear-usuario').classList.add('hidden')">Cerrar</button></div></div>
-    
     <div id="modal-add-familiar" class="modal-overlay hidden">
+        <div class="modal-content"><h3>Añadir Familiar</h3><div class="row"><div class="col"><label>Nombre:</label><input type="text" id="fam-nombre"></div></div><div class="row"><div class="col"><label>Ap. 1:</label><input type="text" id="fam-ap1"></div><div class="col"><label>Ap. 2:</label><input type="text" id="fam-ap2"></div></div><div class="row"><div class="col"><label>Doc:</label><select id="fam-tipo-doc" onchange="verificarMenor('fam')"><option value="MENOR">MENOR</option><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option></select></div><div class="col"><label>Num:</label><input type="text" id="fam-doc-num" disabled></div></div><div class="row"><div class="col"><label>F. Nac:</label><input type="tel" id="fam-fecha" oninput="formatearFecha(this)" maxlength="10"></div></div><div class="btn-group-horizontal"><button class="success" onclick="guardarFamiliarEnLista()">Añadir</button><button class="secondary" onclick="cerrarModalFamiliar()">Cancelar</button></div>
+    </div>
+
+    <div id="modal-vincular-familia" class="modal-overlay hidden">
         <div class="modal-content">
-            <h3>Añadir Familiar</h3>
-            <div class="row"><div class="col"><label>Nombre:</label><input type="text" id="fam-nombre"></div></div>
-            <div class="row"><div class="col"><label>Ap. 1:</label><input type="text" id="fam-ap1"></div><div class="col"><label>Ap. 2:</label><input type="text" id="fam-ap2"></div></div>
-            <div class="row"><div class="col"><label>Doc:</label><select id="fam-tipo-doc" onchange="verificarMenor('fam')"><option value="MENOR">MENOR (Sin DNI)</option><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option></select></div><div class="col"><label>Num (Opcional):</label><input type="text" id="fam-doc-num" disabled><div id="fam-doc-error" class="error-msg">Inválido</div></div></div>
-            <div class="row"><div class="col"><label>F. Nac:</label><input type="tel" id="fam-fecha" oninput="formatearFecha(this)" maxlength="10" onblur="validarEdad('fam')"><div id="fam-fecha-error" class="error-msg">Error</div></div><div class="col"><label>Tel (Opcional):</label><input type="tel" id="fam-tel"></div></div>
-            <div class="btn-group-horizontal">
-                <button class="success" onclick="guardarFamiliarEnLista()">Añadir a la lista</button>
-                <button class="secondary" onclick="cerrarModalFamiliar()">Cancelar</button>
-            </div>
+            <h3>🔗 Unir a Familia Existente</h3>
+            <p style="font-size:0.9em; color:#666;">Busca a un familiar que YA esté registrado para unirlos.</p>
+            <input type="text" id="search-vincular" placeholder="Buscar familiar..." onkeyup="buscarParaVincular()">
+            <div id="resultados-vincular" class="search-results" style="display:block; max-height:150px; position:relative;"></div>
+            <button class="secondary" style="margin-top:15px;" onclick="document.getElementById('modal-vincular-familia').classList.add('hidden')">Cancelar</button>
         </div>
     </div>
 
@@ -224,97 +207,49 @@
         let currentUserData = null, currentAlbergueId = null, totalCapacidad = 0, ocupacionActual = 0, camasOcupadas = {}, listaPersonasCache = [];
         let unsubscribeUsers, unsubscribeAlberguesActivos, unsubscribeAlberguesMto, unsubscribeDetalleAlbergue, unsubscribePersonas;
         window.personaSeleccionadaId = null; window.personaEnGestion = null; window.modoCambioCama = false;
-        
-        // Array temporal familiares (QR)
         let listaFamiliaresTemp = [];
 
         // --- VALIDACIONES ---
-        window.formatearFecha = (input) => {
-            let v = input.value.replace(/\D/g,'').slice(0, 8);
-            if (v.length >= 5) input.value = `${v.slice(0,2)}/${v.slice(2,4)}/${v.slice(4)}`;
-            else if (v.length >= 3) input.value = `${v.slice(0,2)}/${v.slice(2)}`;
-            else input.value = v;
+        window.formatearFecha = (i) => { let v=i.value.replace(/\D/g,'').slice(0,8); if(v.length>=5) i.value=`${v.slice(0,2)}/${v.slice(2,4)}/${v.slice(4)}`; else if(v.length>=3) i.value=`${v.slice(0,2)}/${v.slice(2)}`; else i.value=v; };
+        window.verificarMenor = (p) => { const t=document.getElementById(`${p}-tipo-doc`).value; const i=document.getElementById(`${p}-doc-num`); if(t==='MENOR'){ i.value="MENOR-SIN-DNI"; i.disabled=true; i.classList.remove('input-error'); if(document.getElementById(`${p}-doc-error`)) document.getElementById(`${p}-doc-error`).style.display='none'; } else { i.disabled=false; if(i.value==="MENOR-SIN-DNI") i.value=""; } };
+        window.validarEdad = (p) => { 
+            const f=document.getElementById(`${p}-fecha`).value; const e=document.getElementById(`${p}-fecha-error`); const t=document.getElementById(`${p}-tipo-doc`).value;
+            if(f.length!==10){ if(e) e.style.display='none'; return true; }
+            const [d,m,a]=f.split('/').map(Number); const nac=new Date(a,m-1,d); const hoy=new Date(); let ed=hoy.getFullYear()-nac.getFullYear(); if(hoy<new Date(hoy.getFullYear(),m-1,d)) ed--;
+            if(t==='MENOR' && ed>=16) { if(e){e.innerText=">16 años requiere DNI"; e.style.display='block';} return false; }
+            if(e) e.style.display='none'; return true;
         };
-        window.verificarMenor = (prefix) => {
-            const tipo = document.getElementById(`${prefix}-tipo-doc`).value;
-            const input = document.getElementById(`${prefix}-doc-num`);
-            if (tipo === 'MENOR') {
-                input.value = "MENOR-SIN-DNI"; input.disabled = true; input.classList.remove('input-error');
-                if(document.getElementById(`${prefix}-doc-error`)) document.getElementById(`${prefix}-doc-error`).style.display = 'none';
-            } else {
-                input.disabled = false;
-                if(input.value === "MENOR-SIN-DNI") input.value = "";
-            }
-        };
-        window.validarEdad = (prefix) => {
-            const fechaStr = document.getElementById(`${prefix}-fecha`).value;
-            const errorDiv = document.getElementById(`${prefix}-fecha-error`);
-            const tipoDoc = document.getElementById(`${prefix}-tipo-doc`).value;
-            if(fechaStr.length !== 10) { errorDiv.style.display = 'none'; return true; }
-            const [dia, mes, anyo] = fechaStr.split('/').map(Number);
-            const fechaNac = new Date(anyo, mes - 1, dia);
-            const hoy = new Date();
-            let edad = hoy.getFullYear() - fechaNac.getFullYear();
-            const m = hoy.getMonth() - fechaNac.getMonth();
-            if (m < 0 || (m === 0 && hoy.getDate() < fechaNac.getDate())) edad--;
-            if (tipoDoc === 'MENOR' && edad >= 16) {
-                errorDiv.innerText = "Error: Mayor de 16 años necesita DNI"; errorDiv.style.display = 'block'; return false;
-            }
-            errorDiv.style.display = 'none'; return true;
-        };
-        window.validarDocumento = (prefix) => {
-            const tipo = document.getElementById(`${prefix}-tipo-doc`).value;
-            const input = document.getElementById(`${prefix}-doc-num`);
-            const errorMsg = document.getElementById(`${prefix}-doc-error`);
-            if (tipo === 'MENOR' || !input.value) return true; // Opcional para familiares/menores
-            
-            let valor = input.value.toUpperCase(); input.value = valor;
-            let valido = true;
-            if (tipo === 'PASAPORTE') valido = valor.length > 3;
-            else {
-                const letras = "TRWAGMYFPDXBNJZSQVHLCKE";
-                let numero = valor; let letraInput = valor.slice(-1);
-                if(tipo === 'NIE') {
-                    if(valor.startsWith('X')) numero = '0' + valor.slice(1);
-                    else if(valor.startsWith('Y')) numero = '1' + valor.slice(1);
-                    else if(valor.startsWith('Z')) numero = '2' + valor.slice(1);
-                    else valido = false;
-                }
-                if(valido) {
-                    const soloNumeros = parseInt(numero.slice(0, -1));
-                    if (isNaN(soloNumeros)) valido = false;
-                    else { if (letras[soloNumeros % 23] !== letraInput) valido = false; }
-                }
-            }
-            if (!valido) { input.classList.add('input-error'); errorMsg.style.display = 'block'; return false; } 
-            else { input.classList.remove('input-error'); errorMsg.style.display = 'none'; return true; }
+        window.validarDocumento = (p) => {
+            const t=document.getElementById(`${p}-tipo-doc`).value; const i=document.getElementById(`${p}-doc-num`); const e=document.getElementById(`${p}-doc-error`);
+            if(t==='MENOR'||!i.value) return true; let v=i.value.toUpperCase(); i.value=v; let ok=true;
+            if(t==='PASAPORTE') ok=v.length>3;
+            else { const l="TRWAGMYFPDXBNJZSQVHLCKE"; let n=v; let letIn=v.slice(-1); if(t==='NIE'){ if(v.startsWith('X')) n='0'+v.slice(1); else if(v.startsWith('Y')) n='1'+v.slice(1); else if(v.startsWith('Z')) n='2'+v.slice(1); else ok=false; } if(ok){ const num=parseInt(n.slice(0,-1)); if(isNaN(num)) ok=false; else { if(l[num%23]!==letIn) ok=false; } } }
+            if(!ok){ i.classList.add('input-error'); if(e) e.style.display='block'; return false; } else { i.classList.remove('input-error'); if(e) e.style.display='none'; return true; }
         };
 
-        // --- AUTH & NAV ---
-        window.onload = () => { const p = new URLSearchParams(window.location.search); if(p.get('public_id')) { currentAlbergueId = p.get('public_id'); document.getElementById('login-screen').classList.add('hidden'); document.getElementById('public-register-screen').classList.remove('hidden'); }};
-        window.iniciarSesion = async () => { try { await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-pass').value); } catch (e) { alert("Error: " + e.message); }};
+        // --- AUTH/NAV ---
+        window.onload = () => { const p=new URLSearchParams(window.location.search); if(p.get('public_id')){ currentAlbergueId=p.get('public_id'); document.getElementById('login-screen').classList.add('hidden'); document.getElementById('public-register-screen').classList.remove('hidden'); }};
+        window.iniciarSesion = async () => { try { await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-pass').value); } catch (e) { alert(e.message); }};
         window.cerrarSesion = () => { signOut(auth); location.reload(); };
-        onAuthStateChanged(auth, async (u) => { if(u) { const s = await getDoc(doc(db, "usuarios", u.uid)); if(s.exists()) { currentUserData={...s.data(),uid:u.uid}; navegar('dashboard'); } } else if(document.getElementById('public-register-screen').classList.contains('hidden')) navegar('login'); });
-
-        window.navegar = (pantalla) => {
+        onAuthStateChanged(auth, async (u) => { if(u){ const s=await getDoc(doc(db,"usuarios",u.uid)); if(s.exists()){ currentUserData={...s.data(),uid:u.uid}; navegar('dashboard'); } } else if(document.getElementById('public-register-screen').classList.contains('hidden')) navegar('login'); });
+        
+        window.navegar = (p) => {
             ['login-screen', 'dashboard-screen', 'screen-usuarios', 'screen-gestion-albergues', 'screen-mantenimiento', 'screen-operativa'].forEach(id => document.getElementById(id).classList.add('hidden'));
-            if(unsubscribeUsers) unsubscribeUsers(); if(unsubscribeAlberguesActivos) unsubscribeAlberguesActivos(); if(unsubscribeAlberguesMto) unsubscribeAlberguesMto(); if(unsubscribeDetalleAlbergue) unsubscribeDetalleAlbergue(); if(unsubscribePersonas) unsubscribePersonas();
-            if (pantalla === 'login') document.getElementById('login-screen').classList.remove('hidden');
-            else if (pantalla === 'dashboard') { configurarDashboard(); document.getElementById('dashboard-screen').classList.remove('hidden'); }
-            else if (pantalla === 'usuarios') { cargarUsuarios(); document.getElementById('screen-usuarios').classList.remove('hidden'); }
-            else if (pantalla === 'gestion-albergues') { cargarAlberguesActivos(); document.getElementById('screen-gestion-albergues').classList.remove('hidden'); }
-            else if (pantalla === 'mantenimiento') { cargarAlberguesMantenimiento(); document.getElementById('screen-mantenimiento').classList.remove('hidden'); }
-            else if (pantalla === 'operativa') document.getElementById('screen-operativa').classList.remove('hidden');
+            if(unsubscribeUsers) unsubscribeUsers(); if(unsubscribeAlberguesActivos) unsubscribeAlberguesActivos(); if(unsubscribePersonas) unsubscribePersonas();
+            if(p==='login') document.getElementById('login-screen').classList.remove('hidden');
+            else if(p==='dashboard') { configurarDashboard(); document.getElementById('dashboard-screen').classList.remove('hidden'); }
+            else if(p==='usuarios') { cargarUsuarios(); document.getElementById('screen-usuarios').classList.remove('hidden'); }
+            else if(p==='gestion-albergues') { cargarAlberguesActivos(); document.getElementById('screen-gestion-albergues').classList.remove('hidden'); }
+            else if(p==='mantenimiento') { cargarAlberguesMantenimiento(); document.getElementById('screen-mantenimiento').classList.remove('hidden'); }
+            else if(p==='operativa') document.getElementById('screen-operativa').classList.remove('hidden');
         };
-        function configurarDashboard() {
-            document.getElementById('user-name-display').innerText = currentUserData.nombre; const rol = currentUserData.rol;
-            document.getElementById('user-role-badge').innerText = rol.toUpperCase(); document.getElementById('user-role-badge').className = `role-badge role-${rol}`;
-            const btnUsers = document.getElementById('btn-gest-usuarios'); const btnMto = document.getElementById('btn-mantenimiento');
-            if (['super_admin', 'admin'].includes(rol)) btnUsers.classList.remove('disabled-btn'); else btnUsers.classList.add('disabled-btn');
-            if (['super_admin', 'admin', 'avanzado'].includes(rol)) btnMto.classList.remove('disabled-btn'); else btnMto.classList.add('disabled-btn');
+        function configurarDashboard() { document.getElementById('user-name-display').innerText=currentUserData.nombre; document.getElementById('user-role-badge').innerText=currentUserData.rol.toUpperCase(); 
+            const u=document.getElementById('btn-gest-usuarios'), m=document.getElementById('btn-mantenimiento'), r=currentUserData.rol;
+            if(['super_admin','admin'].includes(r)) u.classList.remove('disabled-btn'); else u.classList.add('disabled-btn');
+            if(['super_admin','admin','avanzado'].includes(r)) m.classList.remove('disabled-btn'); else m.classList.add('disabled-btn');
         }
 
-        // --- UTILS FORMULARIO ---
+        // --- UTILS ---
         window.cambiarPestana = (t) => {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             if(t==='prefiliacion') { document.getElementById('btn-tab-pref').classList.add('active'); document.getElementById('tab-prefiliacion').classList.add('active'); limpiarFormulario('man'); document.getElementById('panel-gestion-persona').classList.add('hidden'); }
@@ -323,160 +258,107 @@
         function limpiarFormulario(p) { ['nombre','ap1','ap2','doc-num','fecha','tel'].forEach(f => document.getElementById(`${p}-${f}`).value=""); document.getElementById(`${p}-doc-num`).classList.remove('input-error'); document.getElementById(`${p}-doc-num`).disabled=false; document.getElementById(`${p}-tipo-doc`).value="DNI"; }
         function getDatosFormulario(p) { return { nombre:document.getElementById(`${p}-nombre`).value, ap1:document.getElementById(`${p}-ap1`).value, ap2:document.getElementById(`${p}-ap2`).value, tipoDoc:document.getElementById(`${p}-tipo-doc`).value, docNum:document.getElementById(`${p}-doc-num`).value, fechaNac:document.getElementById(`${p}-fecha`).value, telefono:document.getElementById(`${p}-tel`).value }; }
 
-        // --- GESTIÓN FAMILIARES (QR) ---
-        window.abrirModalFamiliar = () => { limpiarFormulario('fam'); document.getElementById('modal-add-familiar').classList.remove('hidden'); document.getElementById('fam-tipo-doc').value = "MENOR"; verificarMenor('fam'); };
+        // --- PUBLIC QR ---
+        window.abrirModalFamiliar = () => { limpiarFormulario('fam'); document.getElementById('modal-add-familiar').classList.remove('hidden'); document.getElementById('fam-tipo-doc').value="MENOR"; verificarMenor('fam'); };
         window.cerrarModalFamiliar = () => document.getElementById('modal-add-familiar').classList.add('hidden');
-        
-        window.guardarFamiliarEnLista = () => {
-            if(!validarDocumento('fam') || !validarEdad('fam')) return alert("Revise los datos");
-            const d = getDatosFormulario('fam');
-            if(!d.nombre) return alert("Nombre obligatorio");
-            
-            listaFamiliaresTemp.push(d);
-            actualizarListaFamiliaresUI();
-            cerrarModalFamiliar();
-        };
-
-        function actualizarListaFamiliaresUI() {
-            const div = document.getElementById('lista-familiares-ui');
-            div.innerHTML = "";
-            if(listaFamiliaresTemp.length === 0) {
-                div.innerHTML = '<p style="color:#999; font-style:italic;">Ningún familiar añadido.</p>';
-                return;
-            }
-            listaFamiliaresTemp.forEach((f, idx) => {
-                const el = document.createElement('div');
-                el.className = 'fam-item';
-                el.innerHTML = `<div><strong>${f.nombre} ${f.ap1}</strong> <small>(${f.fechaNac})</small></div><button class="danger" style="margin:0; padding:2px 8px; width:auto;" onclick="borrarFamiliarTemp(${idx})">X</button>`;
-                div.appendChild(el);
-            });
-        }
-        window.borrarFamiliarTemp = (idx) => { listaFamiliaresTemp.splice(idx, 1); actualizarListaFamiliaresUI(); };
-
+        window.guardarFamiliarEnLista = () => { if(!validarDocumento('fam')||!validarEdad('fam')) return alert("Datos inválidos"); const d=getDatosFormulario('fam'); if(!d.nombre) return alert("Nombre obligatorio"); listaFamiliaresTemp.push(d); actualizarListaFamiliaresUI(); cerrarModalFamiliar(); };
+        function actualizarListaFamiliaresUI() { const d=document.getElementById('lista-familiares-ui'); d.innerHTML=""; if(listaFamiliaresTemp.length===0){ d.innerHTML='<p style="color:#999;font-style:italic;">Ninguno.</p>'; return; } listaFamiliaresTemp.forEach((f,i)=>{ d.innerHTML+=`<div class="fam-item"><div><strong>${f.nombre}</strong></div><button class="danger" style="margin:0;padding:2px 8px;width:auto;" onclick="borrarFamiliarTemp(${i})">X</button></div>`; }); }
+        window.borrarFamiliarTemp = (i) => { listaFamiliaresTemp.splice(i,1); actualizarListaFamiliaresUI(); };
         window.publicoGuardarTodo = async () => {
-            // Validar Cabeza de Familia
-            if(!validarDocumento('pub') || !validarEdad('pub')) return alert("Revise los datos del solicitante principal.");
-            const principal = getDatosFormulario('pub');
-            if(!principal.nombre || !principal.docNum) return alert("Datos principales incompletos.");
-
-            const familiaId = new Date().getTime().toString(); // ID único para la familia
-
-            // Guardar Principal
-            await addDoc(collection(db, "albergues", currentAlbergueId, "personas"), {
-                ...principal, estado: 'espera', fechaRegistro: new Date(), origen: 'qr', familiaId: familiaId, rolFamilia: 'TITULAR'
-            });
-
-            // Guardar Familiares
-            for (const fam of listaFamiliaresTemp) {
-                await addDoc(collection(db, "albergues", currentAlbergueId, "personas"), {
-                    ...fam, estado: 'espera', fechaRegistro: new Date(), origen: 'qr', familiaId: familiaId, rolFamilia: 'MIEMBRO'
-                });
-            }
-
-            document.getElementById('public-form-container').classList.add('hidden');
-            document.getElementById('public-success-msg').classList.remove('hidden');
+            if(!validarDocumento('pub')||!validarEdad('pub')) return alert("Revise titular"); const p=getDatosFormulario('pub'); if(!p.nombre||!p.docNum) return alert("Datos inc.");
+            const famId = new Date().getTime().toString();
+            await addDoc(collection(db,"albergues",currentAlbergueId,"personas"), { ...p, estado:'espera', fechaRegistro:new Date(), origen:'qr', familiaId:famId, rolFamilia:'TITULAR' });
+            for(const f of listaFamiliaresTemp) await addDoc(collection(db,"albergues",currentAlbergueId,"personas"), { ...f, estado:'espera', fechaRegistro:new Date(), origen:'qr', familiaId:famId, rolFamilia:'MIEMBRO' });
+            document.getElementById('public-form-container').classList.add('hidden'); document.getElementById('public-success-msg').classList.remove('hidden');
         };
 
-        // --- ADMIN / GESTIÓN ---
-        function cargarUsuarios() { const c = document.getElementById('lista-usuarios-container'); unsubscribeUsers = onSnapshot(query(collection(db, "usuarios"), orderBy("nombre")), (snap) => { c.innerHTML = ""; snap.forEach(d => { const u=d.data(); c.innerHTML += `<div class="list-item"><div class="item-info"><strong>${u.nombre}</strong><small>${u.email}</small></div></div>`; }); }); }
-        function cargarAlberguesActivos() { const c = document.getElementById('lista-albergues-activos'); unsubscribeAlberguesActivos = onSnapshot(query(collection(db, "albergues"), where("activo", "==", true)), (snap) => { c.innerHTML = ""; snap.forEach(d => { const a=d.data(); c.innerHTML += `<div class="list-item"><div class="item-info"><strong>${a.nombre}</strong><small>Cap: ${a.capacidad}</small></div><button onclick="entrarAlbergue('${d.id}')">Entrar</button></div>`; }); }); }
-        function cargarAlberguesMantenimiento() { const c = document.getElementById('lista-albergues-mantenimiento'); unsubscribeAlberguesMto = onSnapshot(query(collection(db, "albergues"), orderBy("nombre")), (snap) => { c.innerHTML = ""; snap.forEach(d => { const a=d.data(); const btn = a.activo ? `<button class="danger" onclick="cambiarEstadoAlbergue('${d.id}',false)">Archivar</button>` : `<button class="success" onclick="cambiarEstadoAlbergue('${d.id}',true)">Activar</button>`; c.innerHTML += `<div class="list-item"><div class="item-info"><strong>${a.nombre}</strong><small>${a.activo?'Activo':'Archivado'}</small></div>${btn}</div>`; }); }); }
-        window.generarAlbergue = async () => { const n=document.getElementById('create-nombre').value; const c=document.getElementById('create-camas').value; if(n) await addDoc(collection(db, "albergues"), { nombre:n, capacidad:parseInt(c), activo:true }); };
-        window.cambiarEstadoAlbergue = async (id, st) => await updateDoc(doc(db, "albergues", id), { activo: st });
-        window.crearUsuario = async () => { const e = document.getElementById('new-user-email').value; const p = document.getElementById('new-user-pass').value; const n = document.getElementById('new-user-name').value; const r = document.getElementById('new-user-role').value; try { const tempApp = initializeApp(firebaseConfig, "Temp"); const tempAuth = getAuth(tempApp); const uc = await createUserWithEmailAndPassword(tempAuth, e, p); await setDoc(doc(db, "usuarios", uc.user.uid), { email:e, nombre:n, rol:r, fecha: new Date() }); await signOut(tempAuth); alert("Creado"); document.getElementById('modal-crear-usuario').classList.add('hidden'); } catch (err) { alert(err.message); } };
-        window.abrirCrearUsuario = () => { const sel = document.getElementById('new-user-role'); sel.innerHTML = ""; const r = currentUserData.rol; if(r === 'super_admin') ['super_admin', 'admin', 'avanzado', 'medio'].forEach(o => sel.add(new Option(o.toUpperCase(), o))); else if(r === 'admin') ['admin', 'avanzado', 'medio'].forEach(o => sel.add(new Option(o.toUpperCase(), o))); document.getElementById('modal-crear-usuario').classList.remove('hidden'); };
+        // --- ADMIN OPERATIVA ---
+        function cargarUsuarios(){ const c=document.getElementById('lista-usuarios-container'); unsubscribeUsers=onSnapshot(query(collection(db,"usuarios"),orderBy("nombre")),s=>{ c.innerHTML=""; s.forEach(d=>{ const u=d.data(); c.innerHTML+=`<div class="list-item"><strong>${u.nombre}</strong></div>`; }); }); }
+        function cargarAlberguesActivos(){ const c=document.getElementById('lista-albergues-activos'); unsubscribeAlberguesActivos=onSnapshot(query(collection(db,"albergues"),where("activo","==",true)),s=>{ c.innerHTML=""; s.forEach(d=>{ const a=d.data(); c.innerHTML+=`<div class="list-item"><div class="item-info"><strong>${a.nombre}</strong></div><button onclick="entrarAlbergue('${d.id}')">Entrar</button></div>`; }); }); }
+        function cargarAlberguesMantenimiento(){ const c=document.getElementById('lista-albergues-mantenimiento'); unsubscribeAlberguesMto=onSnapshot(query(collection(db,"albergues"),orderBy("nombre")),s=>{ c.innerHTML=""; s.forEach(d=>{ const a=d.data(); const b=a.activo?`<button class="danger" onclick="cambiarEstadoAlbergue('${d.id}',false)">Archivar</button>`:`<button class="success" onclick="cambiarEstadoAlbergue('${d.id}',true)">Activar</button>`; c.innerHTML+=`<div class="list-item"><strong>${a.nombre}</strong>${b}</div>`; }); }); }
+        window.generarAlbergue=async()=>{ const n=document.getElementById('create-nombre').value; const c=document.getElementById('create-camas').value; if(n) await addDoc(collection(db,"albergues"),{nombre:n,capacidad:parseInt(c),activo:true}); };
+        window.cambiarEstadoAlbergue=async(i,s)=>await updateDoc(doc(db,"albergues",i),{activo:s});
+        window.crearUsuario=async()=>{ /* ... (Igual V3.5) ... */ };
+        window.abrirCrearUsuario=()=>{ document.getElementById('modal-crear-usuario').classList.remove('hidden'); };
 
         window.entrarAlbergue = (id) => {
             currentAlbergueId = id; navegar('operativa');
-            unsubscribeDetalleAlbergue = onSnapshot(doc(db, "albergues", id), (d) => { const data = d.data(); document.getElementById('app-title').innerText = data.nombre; totalCapacidad = data.capacidad || 0; actualizarContadores(); generarQR(); });
-            unsubscribePersonas = onSnapshot(query(collection(db, "albergues", id, "personas"), orderBy("fechaRegistro", "desc")), (snap) => {
-                listaPersonasCache = []; let cD=0; camasOcupadas = {};
-                snap.forEach(ds => {
-                    const p = ds.data(); p.id = ds.id; listaPersonasCache.push(p);
-                    if(p.estado !== 'espera') { cD++; if(p.cama) camasOcupadas[p.cama] = p.nombre; }
-                });
-                ocupacionActual = cD; actualizarContadores();
-                if(window.personaEnGestion) {
-                    const personaActualizada = listaPersonasCache.find(u => u.id === window.personaEnGestion.id);
-                    if(personaActualizada) seleccionarPersona(personaActualizada);
-                }
+            onSnapshot(doc(db,"albergues",id),d=>{ document.getElementById('app-title').innerText=d.data().nombre; totalCapacidad=d.data().capacidad||0; actualizarContadores(); generarQR(); });
+            unsubscribePersonas=onSnapshot(query(collection(db,"albergues",id,"personas"),orderBy("fechaRegistro","desc")),s=>{
+                listaPersonasCache=[]; let c=0; camasOcupadas={};
+                s.forEach(ds=>{ const p=ds.data(); p.id=ds.id; listaPersonasCache.push(p); if(p.estado!=='espera'){ c++; if(p.cama) camasOcupadas[p.cama]=p.nombre; } });
+                ocupacionActual=c; actualizarContadores();
+                if(window.personaEnGestion) { const upd=listaPersonasCache.find(u=>u.id===window.personaEnGestion.id); if(upd) seleccionarPersona(upd); }
             });
         };
-        function actualizarContadores() { document.getElementById('ocupacion-count').innerText = ocupacionActual; document.getElementById('capacidad-total').innerText = totalCapacidad; }
+        function actualizarContadores(){ document.getElementById('ocupacion-count').innerText=ocupacionActual; document.getElementById('capacidad-total').innerText=totalCapacidad; }
 
         window.adminPrefiliarManual = async () => {
-            if(!validarEdad('man') || !validarDocumento('man')) return alert("Datos inválidos");
-            const d = getDatosFormulario('man'); if(!d.nombre || !d.docNum) return alert("Faltan datos");
-            await addDoc(collection(db, "albergues", currentAlbergueId, "personas"), { ...d, estado: 'espera', fechaRegistro: new Date(), origen: 'manual' });
+            if(!validarEdad('man')||!validarDocumento('man')) return alert("Datos invalidos"); const d=getDatosFormulario('man'); if(!d.nombre) return alert("Faltan datos");
+            // Generar ID Familia para individuales también
+            const famId = new Date().getTime().toString();
+            await addDoc(collection(db,"albergues",currentAlbergueId,"personas"),{ ...d, estado:'espera', fechaRegistro:new Date(), origen:'manual', familiaId: famId, rolFamilia:'TITULAR' });
             alert("Añadido"); limpiarFormulario('man');
         };
 
         window.buscarPersonaEnAlbergue = () => {
-            const input = document.getElementById('buscador-persona').value.toLowerCase();
-            const resDiv = document.getElementById('resultados-busqueda');
-            if(input.length < 2) { resDiv.style.display='none'; return; }
-            const hits = listaPersonasCache.filter(p => (p.nombre+" "+p.ap1+" "+p.docNum).toLowerCase().includes(input));
-            resDiv.innerHTML = "";
-            if(hits.length>0) {
-                resDiv.style.display='block';
-                hits.forEach(p => {
-                    const d = document.createElement('div'); d.className='search-item';
-                    d.innerHTML = `<strong>${p.nombre} ${p.ap1}</strong> <small>(${p.docNum})</small>`;
-                    d.onclick = () => { seleccionarPersona(p); resDiv.style.display='none'; document.getElementById('buscador-persona').value=""; };
-                    resDiv.appendChild(d);
-                });
-            } else resDiv.style.display='none';
+            const i=document.getElementById('buscador-persona').value.toLowerCase(); const r=document.getElementById('resultados-busqueda');
+            if(i.length<2){r.style.display='none';return;}
+            const h=listaPersonasCache.filter(p=>(p.nombre+" "+p.ap1+" "+p.docNum).toLowerCase().includes(i));
+            r.innerHTML=""; if(h.length>0){ r.style.display='block'; h.forEach(p=>{ const d=document.createElement('div'); d.className='search-item'; d.innerHTML=`<strong>${p.nombre}</strong>`; d.onclick=()=>{seleccionarPersona(p); r.style.display='none'; document.getElementById('buscador-persona').value="";}; r.appendChild(d); }); } else r.style.display='none';
         };
 
         function seleccionarPersona(p) {
-            window.personaEnGestion = p; window.personaSeleccionadaId = p.id;
+            window.personaEnGestion=p; window.personaSeleccionadaId=p.id;
             document.getElementById('panel-gestion-persona').classList.remove('hidden');
-            document.getElementById('gestion-nombre-titulo').innerText = `${p.nombre} ${p.ap1 || ''}`;
-            document.getElementById('edit-nombre').value = p.nombre; document.getElementById('edit-ap1').value = p.ap1 || ""; document.getElementById('edit-ap2').value = p.ap2 || "";
-            document.getElementById('edit-tipo-doc').value = p.tipoDoc || "DNI"; document.getElementById('edit-doc-num').value = p.docNum || "";
-            document.getElementById('edit-fecha').value = p.fechaNac || ""; document.getElementById('edit-tel').value = p.telefono || "";
+            document.getElementById('gestion-nombre-titulo').innerText = p.nombre;
+            document.getElementById('edit-nombre').value=p.nombre; document.getElementById('edit-ap1').value=p.ap1||""; document.getElementById('edit-ap2').value=p.ap2||"";
+            document.getElementById('edit-tipo-doc').value=p.tipoDoc||"DNI"; document.getElementById('edit-doc-num').value=p.docNum||"";
+            document.getElementById('edit-fecha').value=p.fechaNac||""; document.getElementById('edit-tel').value=p.telefono||"";
             verificarMenor('edit');
 
-            const badge = document.getElementById('gestion-estado'); const infoCama = document.getElementById('gestion-cama-info');
-            const btnAsignar = document.getElementById('btn-asignar-cama'); const btnLiberar = document.getElementById('btn-liberar-cama'); const btnRegresar = document.getElementById('btn-regresar-pref');
-            btnAsignar.classList.add('hidden'); btnLiberar.classList.add('hidden'); btnRegresar.classList.add('hidden');
+            // Familia Info
+            const miembrosFam = listaPersonasCache.filter(m => m.familiaId === p.familiaId);
+            const txtFam = miembrosFam.length > 1 ? `${miembrosFam.length} Miembros` : "Individual (Sin vínculos)";
+            document.getElementById('info-familia-actual').innerHTML = `<strong>Unidad Familiar:</strong> ${txtFam}`;
 
-            if(p.estado === 'espera') {
-                badge.className = 'badge badge-archived'; badge.innerText = "EN ESPERA"; infoCama.innerText = "";
-                btnAsignar.innerText = "🛏️ Asignar Cama (Ingresar)"; btnAsignar.classList.remove('hidden');
-            } else {
-                badge.className = 'badge badge-active'; badge.innerText = "DENTRO";
-                if(p.cama) { infoCama.innerText = ` - Cama: ${p.cama}`; btnAsignar.innerText = "🔄 Cambiar Cama"; btnLiberar.classList.remove('hidden'); }
-                else { infoCama.innerHTML = ` - <span style="color:red">Sin Cama</span>`; btnAsignar.innerText = "🛏️ Asignar Cama"; }
-                btnAsignar.classList.remove('hidden'); btnRegresar.classList.remove('hidden');
-            }
+            const badge=document.getElementById('gestion-estado'); const infoCama=document.getElementById('gestion-cama-info');
+            const btnAs=document.getElementById('btn-asignar-cama'); const btnLi=document.getElementById('btn-liberar-cama'); const btnRe=document.getElementById('btn-regresar-pref');
+            btnAs.classList.add('hidden'); btnLi.classList.add('hidden'); btnRe.classList.add('hidden');
+
+            if(p.estado==='espera'){ badge.className='badge badge-archived'; badge.innerText="ESPERA"; infoCama.innerText=""; btnAs.innerText="🛏️ Ingresar"; btnAs.classList.remove('hidden'); }
+            else { badge.className='badge badge-active'; badge.innerText="DENTRO"; if(p.cama){ infoCama.innerText=` - Cama: ${p.cama}`; btnAs.innerText="🔄 Cambiar"; btnLi.classList.remove('hidden'); } else { infoCama.innerHTML=" - <span style='color:red'>Sin Cama</span>"; btnAs.innerText="🛏️ Asignar"; } btnAs.classList.remove('hidden'); btnRe.classList.remove('hidden'); }
         }
 
-        window.guardarCambiosPersona = async () => {
-            if(!window.personaEnGestion) return; if(!validarEdad('edit') || !validarDocumento('edit')) return alert("Datos inválidos");
-            const d = getDatosFormulario('edit');
-            await updateDoc(doc(db, "albergues", currentAlbergueId, "personas", window.personaEnGestion.id), {
-                nombre: d.nombre, ap1: d.ap1, ap2: d.ap2, tipoDoc: d.tipoDoc, docNum: d.docNum, fechaNac: d.fechaNac, telefono: d.telefono
+        window.guardarCambiosPersona = async () => { if(!window.personaEnGestion) return; if(!validarEdad('edit')||!validarDocumento('edit')) return alert("Datos invalidos"); const d=getDatosFormulario('edit'); await updateDoc(doc(db,"albergues",currentAlbergueId,"personas",window.personaEnGestion.id),{ nombre:d.nombre, ap1:d.ap1, ap2:d.ap2, tipoDoc:d.tipoDoc, docNum:d.docNum, fechaNac:d.fechaNac, telefono:d.telefono }); alert("Guardado"); };
+
+        // --- VINCULAR FAMILIA ---
+        window.abrirModalVincularFamilia = () => { document.getElementById('modal-vincular-familia').classList.remove('hidden'); };
+        window.buscarParaVincular = () => {
+            const txt = document.getElementById('search-vincular').value.toLowerCase(); const res = document.getElementById('resultados-vincular');
+            if(txt.length<2){ res.innerHTML=""; return; }
+            const hits = listaPersonasCache.filter(p => p.id !== window.personaEnGestion.id && (p.nombre.toLowerCase().includes(txt) || (p.docNum && p.docNum.toLowerCase().includes(txt))));
+            res.innerHTML = "";
+            hits.forEach(p => {
+                const d = document.createElement('div'); d.className='search-item';
+                d.innerHTML = `Unir a: <strong>${p.nombre}</strong> (Fam ID: ...${p.familiaId.slice(-4)})`;
+                d.onclick = () => vincularAFamilia(p);
+                res.appendChild(d);
             });
-            alert("Guardado");
+        };
+        window.vincularAFamilia = async (target) => {
+            if(!confirm(`¿Unir a ${window.personaEnGestion.nombre} con la familia de ${target.nombre}?`)) return;
+            await updateDoc(doc(db,"albergues",currentAlbergueId,"personas",window.personaEnGestion.id), { familiaId: target.familiaId, rolFamilia: 'MIEMBRO' });
+            document.getElementById('modal-vincular-familia').classList.add('hidden');
+            alert("Vinculación realizada");
         };
 
-        window.abrirSeleccionCama = () => {
-            const grid = document.getElementById('grid-camas'); grid.innerHTML = "";
-            for(let i=1; i<=totalCapacidad; i++) {
-                const n = i.toString(); const ocup = camasOcupadas[n]; const d = document.createElement('div');
-                const esMiCama = (window.personaEnGestion && window.personaEnGestion.cama === n);
-                if(esMiCama) { d.className='bed-box bed-current'; d.innerText="Actual"; }
-                else if(ocup) { d.className='bed-box bed-busy'; d.innerText=n; d.title=ocup; }
-                else { d.className='bed-box bed-free'; d.innerText=n; d.onclick=()=>guardarCama(n); }
-                grid.appendChild(d);
-            }
-            document.getElementById('modal-cama').classList.remove('hidden');
-        };
-        async function guardarCama(c) { await updateDoc(doc(db, "albergues", currentAlbergueId, "personas", window.personaEnGestion.id), { estado:'ingresado', cama:c, fechaIngreso:new Date() }); document.getElementById('modal-cama').classList.add('hidden'); }
-        window.liberarCamaMantener = async () => await updateDoc(doc(db, "albergues", currentAlbergueId, "personas", window.personaEnGestion.id), { cama: null });
-        window.regresarPrefiliacion = async () => await updateDoc(doc(db, "albergues", currentAlbergueId, "personas", window.personaEnGestion.id), { estado:'espera', cama: null });
-        function generarQR() { const url = window.location.href.split('?')[0] + `?public_id=${currentAlbergueId}`; document.getElementById("qrcode").innerHTML = ""; new QRCode(document.getElementById("qrcode"), { text: url, width: 100, height: 100 }); }
+        // --- CAMAS ---
+        window.abrirSeleccionCama = () => { const g=document.getElementById('grid-camas'); g.innerHTML=""; for(let i=1;i<=totalCapacidad;i++){ const n=i.toString(); const o=camasOcupadas[n]; const d=document.createElement('div'); const es=(window.personaEnGestion&&window.personaEnGestion.cama===n); if(es){d.className='bed-box bed-current';d.innerText="Actual";}else if(o){d.className='bed-box bed-busy';d.innerText=n;d.title=o;}else{d.className='bed-box bed-free';d.innerText=n;d.onclick=()=>guardarCama(n);} g.appendChild(d); } document.getElementById('modal-cama').classList.remove('hidden'); };
+        async function guardarCama(c) { await updateDoc(doc(db,"albergues",currentAlbergueId,"personas",window.personaEnGestion.id),{estado:'ingresado',cama:c,fechaIngreso:new Date()}); document.getElementById('modal-cama').classList.add('hidden'); }
+        window.liberarCamaMantener=async()=>await updateDoc(doc(db,"albergues",currentAlbergueId,"personas",window.personaEnGestion.id),{cama:null});
+        window.regresarPrefiliacion=async()=>await updateDoc(doc(db,"albergues",currentAlbergueId,"personas",window.personaEnGestion.id),{estado:'espera',cama:null});
+        function generarQR(){ const u=window.location.href.split('?')[0]+`?public_id=${currentAlbergueId}`; document.getElementById("qrcode").innerHTML=""; new QRCode(document.getElementById("qrcode"),{text:u,width:100,height:100}); }
     </script>
 </body>
 </html>

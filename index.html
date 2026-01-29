@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión Albergue - V.1.2.0</title>
+    <title>Gestión Albergue - V.2.0.0 (Usuarios)</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; background-color: #f0f2f5; color: #333; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; max-width: 1000px; margin: 0 auto; padding: 20px; background-color: #f0f2f5; color: #333; }
         .card { background: white; padding: 25px; margin-bottom: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         h1, h2, h3 { color: #1a1a1a; margin-top: 0; }
         input, button, select { width: 100%; padding: 12px; margin-top: 8px; margin-bottom: 16px; box-sizing: border-box; border-radius: 6px; border: 1px solid #ccc; font-size: 16px; }
@@ -20,47 +20,31 @@
         .hidden { display: none !important; }
         .row { display: flex; gap: 10px; }
         .col { flex: 1; }
+        
+        /* Roles y Etiquetas */
+        .role-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.8em; font-weight: bold; text-transform: uppercase; margin-left: 10px; }
+        .role-super_admin { background: #6f42c1; color: white; }
+        .role-admin { background: #dc3545; color: white; }
+        .role-avanzado { background: #ffc107; color: #333; }
+        .role-medio { background: #17a2b8; color: white; }
+
+        /* Listas */
         .person-card { border-left: 5px solid #ccc; padding: 10px 15px; background: #f8f9fa; margin-bottom: 10px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; }
         .status-espera { border-left-color: #ffc107; }
         .status-ingresado { border-left-color: #28a745; }
-        
-        .capacity-badge { background: #e9ecef; color: #495057; padding: 5px 10px; border-radius: 20px; font-weight: bold; font-size: 0.9em; display: inline-block; margin-left: 10px; }
-        .capacity-full { background: #f8d7da; color: #721c24; }
 
-        .version-tag { position: fixed; bottom: 10px; right: 10px; background: rgba(0, 0, 0, 0.05); color: #999; padding: 5px 10px; border-radius: 5px; font-size: 0.75em; pointer-events: none; font-family: monospace; }
-
-        #qr-code-container { text-align: center; padding: 20px; background: white; margin-top: 20px; display: flex; flex-direction: column; align-items: center; }
-        label { font-weight: 600; font-size: 0.9em; color: #555; }
-
-        /* MODALES */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.5); z-index: 1000;
-            display: flex; justify-content: center; align-items: center;
-        }
-        .modal-content {
-            background: white; width: 90%; max-width: 500px; max-height: 85vh;
-            padding: 25px; border-radius: 12px; overflow-y: auto;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2); position: relative;
-        }
-        
-        /* Grid de Camas */
+        /* Grid Camas */
         .bed-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 10px; margin-top: 20px; }
-        .bed-box {
-            height: 60px; display: flex; flex-direction: column;
-            justify-content: center; align-items: center;
-            border-radius: 8px; font-weight: bold; cursor: pointer;
-            border: 2px solid transparent; transition: transform 0.1s;
-        }
-        .bed-box:hover { transform: scale(1.05); }
+        .bed-box { height: 60px; display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 8px; cursor: pointer; font-weight: bold; border: 2px solid transparent; }
         .bed-free { background-color: #d4edda; color: #155724; border-color: #c3e6cb; }
-        .bed-busy { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; cursor: not-allowed; opacity: 0.8; }
-        .bed-number { font-size: 1.2em; }
-        .bed-user { font-size: 0.6em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+        .bed-busy { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; opacity: 0.8; }
 
-        /* Historial en Edición */
-        .history-log { background: #f8f9fa; border: 1px solid #ddd; padding: 10px; max-height: 100px; overflow-y: auto; font-size: 0.85em; margin-bottom: 15px; border-radius: 4px; }
-        .history-item { border-bottom: 1px solid #eee; padding: 4px 0; }
+        /* Version Tag */
+        .version-tag { position: fixed; bottom: 10px; right: 10px; background: rgba(0, 0, 0, 0.05); color: #999; padding: 5px 10px; border-radius: 5px; font-size: 0.75em; pointer-events: none; font-family: monospace; }
+        
+        /* Modal Overlay */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; justify-content: center; align-items: center; }
+        .modal-content { background: white; width: 90%; max-width: 500px; padding: 25px; border-radius: 12px; max-height: 85vh; overflow-y: auto; }
 
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -68,132 +52,148 @@
 </head>
 <body>
 
-    <div class="version-tag">V.1.2.0</div>
+    <div class="version-tag">V.2.0.0 (Auth)</div>
 
     <div id="login-screen" class="card">
-        <h1>🏥 Gestión de Albergue</h1>
-        <p>Introduce tu código de acceso.</p>
-        <input type="text" id="access-code" placeholder="Código Admin o Visita">
-        <button onclick="entrar()">Entrar</button>
-        <hr>
-        <button class="secondary" onclick="mostrarCrear()">Crear Nuevo Albergue</button>
+        <h1 style="text-align:center;">🔐 Acceso Seguro</h1>
+        <p style="text-align:center; color:#666;">Sistema de Gestión de Albergues</p>
+        
+        <label>Correo Electrónico:</label>
+        <input type="email" id="login-email" placeholder="usuario@organizacion.com">
+        
+        <label>Contraseña:</label>
+        <input type="password" id="login-pass" placeholder="********">
+        
+        <button onclick="iniciarSesion()">Iniciar Sesión</button>
+        
+        <div id="first-run-alert" class="hidden" style="margin-top:20px; padding:10px; background:#e2e3e5; border-radius:5px; text-align:center;">
+            <small>⚠️ No hay usuarios detectados. El primero que crees será <strong>Super Admin</strong>.</small>
+            <button class="secondary" onclick="mostrarRegistroInicial()" style="margin-top:10px;">Crear Primer Usuario</button>
+        </div>
     </div>
 
-    <div id="create-screen" class="card hidden">
+    <div id="main-menu" class="card hidden">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h2>Hola, <span id="user-name-display">Usuario</span></h2>
+            <button class="danger" onclick="cerrarSesion()" style="width:auto; padding:5px 15px;">Salir</button>
+        </div>
+        <p>Tu rol: <span id="user-role-badge" class="role-badge">Cargando...</span></p>
+
+        <hr>
+
+        <div id="section-admin-users" class="hidden">
+            <h3>👥 Gestión de Usuarios</h3>
+            <div class="row">
+                <button class="secondary" onclick="abrirCrearUsuario()">+ Crear Nuevo Usuario</button>
+            </div>
+            <br>
+        </div>
+
+        <div id="section-albergues">
+            <h3>🏥 Albergues</h3>
+            
+            <div id="btn-crear-albergue-container">
+                <button class="success" onclick="mostrarCrearAlbergue()">+ Crear Nuevo Albergue</button>
+            </div>
+
+            <label>Acceder a un albergue existente (Código):</label>
+            <div class="row">
+                <input type="text" id="access-code" placeholder="Código Admin o Visita">
+                <button onclick="entrarAlbergue()" style="margin-top:8px;">Entrar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-crear-usuario" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3>Registrar Nuevo Usuario</h3>
+            <label>Correo:</label>
+            <input type="email" id="new-user-email">
+            <label>Contraseña:</label>
+            <input type="password" id="new-user-pass">
+            <label>Nombre:</label>
+            <input type="text" id="new-user-name">
+            
+            <label>Rol:</label>
+            <select id="new-user-role">
+                </select>
+
+            <button class="success" onclick="crearUsuario()">Crear Usuario</button>
+            <button class="secondary" onclick="cerrarModalUsuario()">Cancelar</button>
+        </div>
+    </div>
+
+    <div id="create-albergue-screen" class="card hidden">
         <h2>Crear Nuevo Albergue</h2>
-        <label>Capacidad Inicial (Camas):</label>
-        <input type="number" id="create-camas" placeholder="Ej: 50" value="50">
-        <button class="success" onclick="generarAlbergue()">Confirmar Creación</button>
-        <button class="secondary" onclick="location.reload()">Cancelar</button>
+        <label>Capacidad Inicial:</label>
+        <input type="number" id="create-camas" value="50">
+        <button class="success" onclick="generarAlbergue()">Confirmar</button>
+        <button class="secondary" onclick="volverMenu()">Cancelar</button>
     </div>
 
     <div id="codes-screen" class="card hidden">
-        <h2 style="color: green;">¡Albergue Creado!</h2>
-        <div style="background:#e9ecef; padding:15px; border-radius:8px;">
-            <p><strong>🔑 ADMIN:</strong> <span id="new-admin-code" style="font-family:monospace; font-size:1.2em;"></span></p>
-            <p><strong>👁️ VISITA:</strong> <span id="new-visitor-code" style="font-family:monospace; font-size:1.2em;"></span></p>
+        <h2 style="color:green;">Albergue Creado</h2>
+        <div style="background:#eee; padding:15px; border-radius:8px;">
+            <p><strong>ADMIN:</strong> <span id="new-admin-code"></span></p>
+            <p><strong>VISITA:</strong> <span id="new-visitor-code"></span></p>
         </div>
-        <p style="color:red; font-size:0.9em;">Anota los códigos.</p>
-        <button onclick="location.reload()">Ir al Login</button>
-    </div>
-
-    <div id="public-register-screen" class="card hidden">
-        <h2 style="color: #007bff;">📝 Auto-Registro</h2>
-        <p>Rellena tus datos para entrar en la sala de espera.</p>
-        <label>Nombre Completo:</label>
-        <input type="text" id="public-nombre" placeholder="Nombre y Apellidos">
-        <label>DNI / Pasaporte:</label>
-        <input type="text" id="public-dni" placeholder="Identificación">
-        <label>Fecha de Nacimiento:</label>
-        <input type="date" id="public-nacimiento">
-        <button class="success" onclick="publicoGuardarPrefiliacion()">✅ Enviar mis datos</button>
+        <button onclick="volverMenu()">Volver al Menú</button>
     </div>
 
     <div id="app-screen" class="card hidden">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
-            <div>
-                <h3 style="margin-bottom:5px;">Panel de Control</h3>
-                <span id="role-display" style="font-size:0.8em; color:#666;"></span>
-            </div>
-            <div id="capacity-container" class="capacity-badge">
-                🛏️ Ocupación: <span id="ocupacion-count">0</span> / <span id="capacidad-total">0</span>
-                <button id="btn-edit-capacidad" class="hidden" style="padding:2px 8px; font-size:0.8em; margin-left:5px; width:auto;" onclick="editarCapacidad()">✏️</button>
-            </div>
-            <button onclick="location.href = window.location.pathname" style="width: auto; background: #dc3545; padding: 5px 15px; margin-left: 10px;">Salir</button>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h3>Gestión Albergue</h3>
+            <button onclick="volverMenu()" style="width:auto; background:#6c757d; padding:5px 15px;">Volver</button>
+        </div>
+        
+        <div class="capacity-badge" id="capacity-container">
+             🛏️ <span id="ocupacion-count">0</span> / <span id="capacidad-total">0</span>
+             <button id="btn-edit-capacidad" class="hidden" onclick="editarCapacidad()" style="padding:0 5px;">✏️</button>
         </div>
 
         <div id="admin-tools" class="hidden">
             <hr>
             <details>
-                <summary style="cursor:pointer; color:#007bff; font-weight:bold;">📲 Ver QR Auto-Registro</summary>
-                <div id="qr-code-container">
-                    <div id="qrcode"></div>
-                </div>
+                <summary style="cursor:pointer; color:#007bff;">📲 Ver QR</summary>
+                <div id="qrcode" style="margin-top:10px;"></div>
             </details>
-            
-            <h4 style="margin-top:15px;">➕ Añadir Manualmente</h4>
+            <h4>➕ Añadir Manual</h4>
             <div class="row">
                 <input type="text" id="admin-nombre" placeholder="Nombre" class="col">
                 <input type="text" id="admin-dni" placeholder="DNI" class="col">
+                <button onclick="adminPrefiliarManual()" class="success col">Añadir</button>
             </div>
-            <div class="row">
-                <input type="date" id="admin-nacimiento" class="col">
-                <button onclick="adminPrefiliarManual()" class="col success">Añadir a Espera</button>
-            </div>
+            <input type="date" id="admin-nacimiento">
         </div>
 
         <hr>
         <div class="row">
             <div class="col">
-                <h3 style="color:#e67e22;">⏳ En Espera <span id="count-espera" style="font-size:0.7em;">(0)</span></h3>
-                <div id="list-espera">Cargando...</div>
+                <h3 style="color:#e67e22;">⏳ Espera (<span id="count-espera">0</span>)</h3>
+                <div id="list-espera"></div>
             </div>
             <div class="col">
-                <h3 style="color:#28a745;">✅ Ingresados <span id="count-ingresados" style="font-size:0.7em;">(0)</span></h3>
-                <div id="list-dentro">Cargando...</div>
+                <h3 style="color:#28a745;">✅ Dentro (<span id="count-ingresados">0</span>)</h3>
+                <div id="list-dentro"></div>
             </div>
         </div>
-        <br>
-        <button onclick="exportarExcel()" class="secondary">📊 Descargar Excel</button>
     </div>
 
     <div id="modal-cama" class="modal-overlay hidden">
         <div class="modal-content">
-            <h3>Asignar Cama</h3>
-            <p>Selecciona una cama libre para <strong id="modal-person-name"></strong>.</p>
+            <h3>Seleccionar Cama</h3>
             <div id="grid-camas" class="bed-grid"></div>
-            <button onclick="cerrarModalCama()" class="secondary" style="margin-top:20px;">Cancelar</button>
-        </div>
-    </div>
-
-    <div id="modal-editar" class="modal-overlay hidden">
-        <div class="modal-content">
-            <h3 style="margin-bottom: 5px;">Gestionar Persona</h3>
-            <h4 id="edit-nombre" style="color:#007bff; margin-top:0;"></h4>
-            
-            <label>Cama Actual:</label>
-            <div class="row">
-                <input type="text" id="edit-cama-actual" readonly style="background:#f0f0f0;">
-                <button class="warning" onclick="abrirCambioCama()" style="margin-top:8px;">🔄 Cambiar</button>
-            </div>
-
-            <label>Historial de Movimientos:</label>
-            <div id="edit-historial" class="history-log">
-                </div>
-
-            <hr>
-            <label style="color:#dc3545;">Acciones de Salida:</label>
-            <p style="font-size:0.9em; color:#666;">Al dar salida, la persona vuelve a la Sala de Espera (Prefiliación) y la cama queda libre.</p>
-            <button class="danger" onclick="darSalidaAlbergue()">📤 Quitar del Albergue (Volver a Espera)</button>
-            <button class="secondary" onclick="cerrarModalEdicion()" style="margin-top:10px;">Cerrar</button>
+            <button onclick="document.getElementById('modal-cama').classList.add('hidden')" class="secondary" style="margin-top:10px;">Cancelar</button>
         </div>
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, query, where, getDocs, doc, updateDoc, onSnapshot, orderBy, arrayUnion } 
+        import { initializeApp, getApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, setDoc, query, where, getDocs, doc, updateDoc, onSnapshot, orderBy, arrayUnion, getDoc } 
         from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
+        // CONFIGURACIÓN
         const firebaseConfig = {
             apiKey: "AIzaSyAzfEMwMd6M1VgvV0tJn7RS63RJghLE5UI",
             authDomain: "albergues-temporales.firebaseapp.com",
@@ -203,372 +203,322 @@
             appId: "1:489999184108:web:32b9b580727f83158075c9"
         };
 
+        // INICIALIZACIÓN
         const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // State
+        // ESTADO GLOBAL
+        let currentUserData = null; // { email, role, uid }
         let currentAlbergueId = null;
-        let currentRole = null;
         let totalCapacidad = 0;
         let ocupacionActual = 0;
-        let camasOcupadas = {}; 
+        let camasOcupadas = {};
         
-        // Variables Selección
+        // Variables temporales UI
         window.personaSeleccionadaId = null;
-        window.personaSeleccionadaNombre = null;
-        window.personaEnEdicion = null; // Objeto completo de la persona editada
 
-        // ONLOAD
-        window.onload = async () => {
-            const params = new URLSearchParams(window.location.search);
-            const publicId = params.get('public_id');
-            if (publicId) {
-                currentAlbergueId = publicId;
-                currentRole = 'public';
-                document.getElementById('login-screen').classList.add('hidden');
-                document.getElementById('public-register-screen').classList.remove('hidden');
+        // --- 1. GESTIÓN DE SESIÓN ---
+
+        // Verificar si es la primera vez (no hay usuarios)
+        async function verificarInicio() {
+            const q = query(collection(db, "usuarios"));
+            const snapshot = await getDocs(q);
+            if (snapshot.empty) {
+                document.getElementById('first-run-alert').classList.remove('hidden');
+            }
+        }
+        verificarInicio(); // Ejecutar al cargar
+
+        window.mostrarRegistroInicial = () => {
+             // Abre el modal pero forzando rol Super Admin
+             document.getElementById('modal-crear-usuario').classList.remove('hidden');
+             const select = document.getElementById('new-user-role');
+             select.innerHTML = '<option value="super_admin">Super Administrador (Primer Usuario)</option>';
+        };
+
+        window.iniciarSesion = async () => {
+            const email = document.getElementById('login-email').value;
+            const pass = document.getElementById('login-pass').value;
+            try {
+                await signInWithEmailAndPassword(auth, email, pass);
+                // El listener onAuthStateChanged manejará la redirección
+            } catch (e) { alert("Error: " + e.message); }
+        };
+
+        window.cerrarSesion = () => {
+            signOut(auth);
+            location.reload();
+        };
+
+        // LISTENER DE AUTH
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                // Usuario logueado, obtenemos su rol de Firestore
+                const docRef = doc(db, "usuarios", user.uid);
+                const docSnap = await getDoc(docRef);
+                
+                if (docSnap.exists()) {
+                    currentUserData = docSnap.data();
+                    currentUserData.uid = user.uid;
+                    configurarInterfazPorRol();
+                } else {
+                    alert("Usuario autenticado pero sin registro de rol en base de datos.");
+                    signOut(auth);
+                }
+            }
+        });
+
+        function configurarInterfazPorRol() {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('main-menu').classList.remove('hidden');
+            
+            document.getElementById('user-name-display').innerText = currentUserData.nombre;
+            const badge = document.getElementById('user-role-badge');
+            badge.innerText = currentUserData.rol.replace('_', ' ').toUpperCase();
+            badge.className = `role-badge role-${currentUserData.rol}`;
+
+            // LOGICA DE PERMISOS
+            const rol = currentUserData.rol;
+
+            // 1. Gestión de Usuarios (Solo Super y Admin)
+            if (rol === 'super_admin' || rol === 'admin') {
+                document.getElementById('section-admin-users').classList.remove('hidden');
+            }
+
+            // 2. Crear Albergues (Super, Admin, Avanzado)
+            if (rol === 'medio') {
+                document.getElementById('btn-crear-albergue-container').classList.add('hidden');
+            }
+        }
+
+        // --- 2. CREACIÓN DE USUARIOS (TRUCO SECONDARY APP) ---
+        
+        window.abrirCrearUsuario = () => {
+            const modal = document.getElementById('modal-crear-usuario');
+            const select = document.getElementById('new-user-role');
+            select.innerHTML = "";
+            const rol = currentUserData.rol;
+
+            // Lógica de qué roles puedes crear
+            if (rol === 'super_admin') {
+                select.innerHTML += '<option value="super_admin">Super Administrador</option>';
+                select.innerHTML += '<option value="admin">Administrador</option>';
+                select.innerHTML += '<option value="avanzado">Usuario Avanzado</option>';
+                select.innerHTML += '<option value="medio">Usuario Medio</option>';
+            } else if (rol === 'admin') {
+                select.innerHTML += '<option value="admin">Administrador</option>';
+                select.innerHTML += '<option value="avanzado">Usuario Avanzado</option>';
+                select.innerHTML += '<option value="medio">Usuario Medio</option>';
+            }
+            
+            modal.classList.remove('hidden');
+        };
+
+        window.cerrarModalUsuario = () => {
+            document.getElementById('modal-crear-usuario').classList.add('hidden');
+        };
+
+        window.crearUsuario = async () => {
+            const email = document.getElementById('new-user-email').value;
+            const pass = document.getElementById('new-user-pass').value;
+            const nombre = document.getElementById('new-user-name').value;
+            const rol = document.getElementById('new-user-role').value;
+
+            if(!email || !pass || !nombre) return alert("Rellena todo");
+
+            try {
+                // TRUCO: Si usas auth.createUser... te desconecta a ti y loguea al nuevo.
+                // Solución: Usar una segunda "App" de Firebase temporal.
+                
+                // 1. Inicializar app secundaria (sin nombre específico, Firebase le da uno interno)
+                const secondaryApp = initializeApp(firebaseConfig, "Secondary");
+                const secondaryAuth = getAuth(secondaryApp);
+
+                // 2. Crear usuario en la app secundaria
+                const userCredential = await createUserWithEmailAndPassword(secondaryAuth, email, pass);
+                const uidNuevo = userCredential.user.uid;
+
+                // 3. Guardar rol en Firestore (usando la instancia db principal, que ya tiene permisos)
+                await setDoc(doc(db, "usuarios", uidNuevo), {
+                    email: email,
+                    nombre: nombre,
+                    rol: rol,
+                    fechaCreacion: new Date()
+                });
+
+                // 4. Logout de la app secundaria para limpiar memoria
+                await signOut(secondaryAuth);
+                
+                alert(`Usuario ${email} creado correctamente con rol ${rol}`);
+                cerrarModalUsuario();
+
+            } catch (e) {
+                alert("Error al crear usuario: " + e.message);
             }
         };
 
-        window.mostrarCrear = () => {
-            document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('create-screen').classList.remove('hidden');
+        // --- 3. GESTIÓN DE ALBERGUES ---
+
+        window.volverMenu = () => {
+            document.getElementById('create-albergue-screen').classList.add('hidden');
+            document.getElementById('codes-screen').classList.add('hidden');
+            document.getElementById('app-screen').classList.add('hidden');
+            document.getElementById('main-menu').classList.remove('hidden');
+            // Detener listeners si fuera necesario (aquí simplificado)
+            location.reload(); // Recarga simple para limpiar listeners de albergues
+        };
+
+        window.mostrarCrearAlbergue = () => {
+            document.getElementById('main-menu').classList.add('hidden');
+            document.getElementById('create-albergue-screen').classList.remove('hidden');
         };
 
         window.generarAlbergue = async () => {
             const adminCode = Math.random().toString(36).substring(2, 8).toUpperCase();
             const visitorCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-            const capacidad = document.getElementById('create-camas').value || 50;
+            const capacidad = document.getElementById('create-camas').value;
 
             try {
                 await addDoc(collection(db, "albergues"), {
-                    adminCode, visitorCode, capacidad: parseInt(capacidad), fechaCreacion: new Date()
+                    adminCode, visitorCode, capacidad: parseInt(capacidad),
+                    creadoPor: currentUserData.email,
+                    fecha: new Date()
                 });
-                document.getElementById('create-screen').classList.add('hidden');
+                document.getElementById('create-albergue-screen').classList.add('hidden');
                 document.getElementById('codes-screen').classList.remove('hidden');
                 document.getElementById('new-admin-code').innerText = adminCode;
                 document.getElementById('new-visitor-code').innerText = visitorCode;
-            } catch (e) { alert("Error: " + e.message); }
+            } catch (e) { alert(e.message); }
         };
 
-        window.entrar = async () => {
+        window.entrarAlbergue = async () => {
             const code = document.getElementById('access-code').value.trim().toUpperCase();
-            if (!code) return;
+            if(!code) return;
 
+            // Busca el albergue
             let q = query(collection(db, "albergues"), where("adminCode", "==", code));
             let snapshot = await getDocs(q);
-            let role = 'admin';
+            let mode = 'admin'; // Por defecto si tiene codigo admin
 
-            if (snapshot.empty) {
+            if(snapshot.empty) {
                 q = query(collection(db, "albergues"), where("visitorCode", "==", code));
                 snapshot = await getDocs(q);
-                role = 'visitor';
+                mode = 'visita';
             }
 
-            if (!snapshot.empty) {
-                const docSnap = snapshot.docs[0];
-                currentAlbergueId = docSnap.id;
-                currentRole = role;
-                iniciarDashboard();
-            } else { alert("Código incorrecto"); }
+            if(!snapshot.empty) {
+                const docData = snapshot.docs[0];
+                currentAlbergueId = docData.id;
+                cargarAlbergue(mode);
+            } else {
+                alert("Código no encontrado");
+            }
         };
 
-        function iniciarDashboard() {
-            document.getElementById('login-screen').classList.add('hidden');
+        function cargarAlbergue(mode) {
+            document.getElementById('main-menu').classList.add('hidden');
             document.getElementById('app-screen').classList.remove('hidden');
-            document.getElementById('role-display').innerText = currentRole === 'admin' ? "MODO ADMINISTRADOR" : "MODO VISITA";
 
-            if (currentRole === 'admin') {
+            // Determinar permisos efectivos (Combinación de Rol Usuario + Código usado)
+            // Si eres Medio pero usas código Admin, puedes editar.
+            // Si eres Super Admin, siempre puedes editar (lógica a futuro, por ahora respetamos código).
+            
+            const puedeEditar = (mode === 'admin' && currentUserData.rol !== 'medio') || currentUserData.rol === 'super_admin'; 
+
+            if(puedeEditar) {
                 document.getElementById('admin-tools').classList.remove('hidden');
                 document.getElementById('btn-edit-capacidad').classList.remove('hidden');
-                generarQR();
+            } else {
+                document.getElementById('admin-tools').classList.add('hidden');
+                document.getElementById('btn-edit-capacidad').classList.add('hidden');
             }
 
-            onSnapshot(doc(db, "albergues", currentAlbergueId), (docSnap) => {
-                const data = docSnap.data();
-                totalCapacidad = data.capacidad || 0;
-                actualizarContadores();
+            // Listeners (Igual que V1.2.0)
+            onSnapshot(doc(db, "albergues", currentAlbergueId), (d) => {
+                totalCapacidad = d.data().capacidad || 0;
+                actualizarUI();
             });
 
-            const personasRef = collection(db, "albergues", currentAlbergueId, "personas");
-            const q = query(personasRef, orderBy("fechaRegistro", "desc"));
+            const q = query(collection(db, "albergues", currentAlbergueId, "personas"), orderBy("fechaRegistro", "desc"));
+            onSnapshot(q, (snap) => {
+                const listE = document.getElementById('list-espera');
+                const listD = document.getElementById('list-dentro');
+                listE.innerHTML = ""; listD.innerHTML = "";
+                let cE = 0, cD = 0;
+                camasOcupadas = {};
 
-            onSnapshot(q, (snapshot) => {
-                const listaEspera = document.getElementById('list-espera');
-                const listaDentro = document.getElementById('list-dentro');
-                listaEspera.innerHTML = "";
-                listaDentro.innerHTML = "";
-
-                let countEspera = 0;
-                let countIngresados = 0;
-                camasOcupadas = {}; 
-
-                snapshot.forEach((docSnap) => {
-                    const p = docSnap.data();
-                    const pId = docSnap.id;
-                    // Guardamos el ID en el objeto para usarlo luego
-                    p.id = pId; 
-                    const card = crearTarjetaPersona(p);
-
-                    if (p.estado === 'espera') {
-                        listaEspera.appendChild(card);
-                        countEspera++;
-                    } else {
-                        listaDentro.appendChild(card);
-                        countIngresados++;
-                        if(p.cama) camasOcupadas[p.cama] = p.nombre;
-                    }
+                snap.forEach(docS => {
+                    const p = docS.data();
+                    p.id = docS.id;
+                    const card = crearCard(p, puedeEditar);
+                    if(p.estado === 'espera') { listE.appendChild(card); cE++; }
+                    else { listD.appendChild(card); cD++; if(p.cama) camasOcupadas[p.cama] = p.nombre; }
                 });
-
-                document.getElementById('count-espera').innerText = `(${countEspera})`;
-                document.getElementById('count-ingresados').innerText = `(${countIngresados})`;
-                ocupacionActual = countIngresados;
-                actualizarContadores();
+                document.getElementById('count-espera').innerText = cE;
+                document.getElementById('count-ingresados').innerText = cD;
+                ocupacionActual = cD;
+                actualizarUI();
             });
         }
 
-        function actualizarContadores() {
+        function actualizarUI() {
             document.getElementById('ocupacion-count').innerText = ocupacionActual;
             document.getElementById('capacidad-total').innerText = totalCapacidad;
             const badge = document.getElementById('capacity-container');
-            if (ocupacionActual >= totalCapacidad) badge.classList.add('capacity-full');
+            if(ocupacionActual >= totalCapacidad) badge.classList.add('capacity-full');
             else badge.classList.remove('capacity-full');
         }
 
-        function crearTarjetaPersona(p) {
+        function crearCard(p, editable) {
             const div = document.createElement('div');
             div.className = `person-card status-${p.estado}`;
-            let contenidoDerecha = "";
-            
-            if (p.estado === 'espera') {
-                if (currentRole === 'admin') {
-                    // Pasamos el objeto completo a JSON string para recuperarlo en la función
-                    contenidoDerecha = `<button class="success" style="padding:5px 10px;" onclick='window.prepararIngreso("${p.id}", "${p.nombre}")'>Ingresar ➡️</button>`;
-                } else {
-                    contenidoDerecha = `<span style="color:#856404;">En cola</span>`;
-                }
+            let btn = "";
+            if(editable) {
+                if(p.estado === 'espera') btn = `<button class="success" onclick="window.asignarCama('${p.id}', '${p.nombre}')">Ingresar</button>`;
+                else btn = `<span>🛏️ ${p.cama}</span>`; // Simplificado para este ejemplo
             } else {
-                // Estado INGRESADO
-                const camaInfo = `<strong>🛏️ ${p.cama || '?'}</strong>`;
-                if (currentRole === 'admin') {
-                    // Botón de EDICIÓN (NUEVO)
-                    // Usamos un truco para pasar el objeto 'p' almacenado en memoria temporal o buscarlo,
-                    // aquí pasaremos los datos básicos y al abrir modal consultaremos si es necesario.
-                    // Para simplificar, guardamos los datos en atributos data o pasamos ID.
-                    contenidoDerecha = `
-                        <div style="text-align:right;">
-                            ${camaInfo}<br>
-                            <button class="secondary" style="padding:2px 8px; font-size:0.8em; margin-top:5px;" onclick='window.abrirEdicion("${p.id}")'>⚙️ Ajustes</button>
-                        </div>
-                    `;
-                } else {
-                    contenidoDerecha = camaInfo;
-                }
+                btn = p.estado === 'espera' ? 'En cola' : `🛏️ ${p.cama}`;
             }
-
-            div.innerHTML = `
-                <div><strong>${p.nombre}</strong> <br> <small>${p.dni}</small></div>
-                <div>${contenidoDerecha}</div>
-            `;
+            div.innerHTML = `<div><strong>${p.nombre}</strong><br><small>${p.dni}</small></div><div>${btn}</div>`;
             return div;
         }
 
-        // --- LÓGICA DE MODALES Y EDICIÓN ---
-
-        // 1. INGRESO (De Espera a Cama)
-        window.prepararIngreso = (id, nombre) => {
-            if (ocupacionActual >= totalCapacidad) {
-                if(!confirm("⚠️ El albergue está lleno. ¿Seguro que quieres buscar hueco?")) return;
-            }
+        // --- FUNCIONES EXTRA (Simplificadas para V2.0) ---
+        window.asignarCama = (id, nombre) => {
             window.personaSeleccionadaId = id;
-            window.personaSeleccionadaNombre = nombre;
-            // Modo "asignar" normal
-            abrirGridCama(false); 
-        };
-
-        // 2. EDICIÓN (Gestionar Ingresado)
-        window.abrirEdicion = async (id) => {
-            const docRef = doc(db, "albergues", currentAlbergueId, "personas", id);
-            const docSnap = await getDocs(query(collection(db, "albergues", currentAlbergueId, "personas"), where("__name__", "==", id)));
-            
-            if (!docSnap.empty) {
-                const p = docSnap.docs[0].data();
-                window.personaEnEdicion = { ...p, id: id }; // Guardar en global
-                
-                document.getElementById('edit-nombre').innerText = p.nombre;
-                document.getElementById('edit-cama-actual').value = p.cama || "Sin cama";
-                
-                // Renderizar historial
-                const histDiv = document.getElementById('edit-historial');
-                histDiv.innerHTML = "";
-                if (p.historial && p.historial.length > 0) {
-                    p.historial.forEach(h => {
-                        // Intentar formatear fecha
-                        let fechaStr = "Fecha desc.";
-                        if(h.fecha && h.fecha.seconds) {
-                            fechaStr = new Date(h.fecha.seconds * 1000).toLocaleString();
-                        }
-                        histDiv.innerHTML += `<div class="history-item"><strong>${fechaStr}</strong>: ${h.accion}</div>`;
-                    });
-                } else {
-                    histDiv.innerHTML = "<i style='color:#999'>Sin historial registrado.</i>";
-                }
-
-                document.getElementById('modal-editar').classList.remove('hidden');
-            }
-        };
-
-        window.cerrarModalEdicion = () => {
-            document.getElementById('modal-editar').classList.add('hidden');
-            window.personaEnEdicion = null;
-        };
-
-        // 3. CAMBIAR CAMA (Desde Edición)
-        window.abrirCambioCama = () => {
-            // Cerramos edición temporalmente y abrimos grid
-            document.getElementById('modal-editar').classList.add('hidden');
-            window.personaSeleccionadaId = window.personaEnEdicion.id;
-            window.personaSeleccionadaNombre = window.personaEnEdicion.nombre;
-            abrirGridCama(true); // true = modo cambio
-        };
-
-        // 4. DAR SALIDA (Back to Prefiliación)
-        window.darSalidaAlbergue = async () => {
-            if(!confirm(`¿Estás seguro de sacar a ${window.personaEnEdicion.nombre} del albergue? \nPasará a la lista de espera y liberará la cama.`)) return;
-
-            const personaRef = doc(db, "albergues", currentAlbergueId, "personas", window.personaEnEdicion.id);
-            const evento = {
-                fecha: new Date(),
-                accion: `Salida: Liberó la cama ${window.personaEnEdicion.cama}`
-            };
-
-            try {
-                await updateDoc(personaRef, {
-                    estado: 'espera',
-                    cama: null, // Borrar cama
-                    fechaSalida: new Date(),
-                    historial: arrayUnion(evento)
-                });
-                cerrarModalEdicion();
-            } catch (e) { alert("Error: " + e.message); }
-        };
-
-
-        // --- GRID DE CAMAS (Reutilizable) ---
-        function abrirGridCama(esCambio) {
-            document.getElementById('modal-person-name').innerText = window.personaSeleccionadaNombre + (esCambio ? " (Cambio de cama)" : "");
-            
             const grid = document.getElementById('grid-camas');
             grid.innerHTML = "";
-
-            for (let i = 1; i <= totalCapacidad; i++) {
-                const numCama = i.toString();
-                const ocupante = camasOcupadas[numCama];
-                
-                const div = document.createElement('div');
-                // Si estamos cambiando, mi propia cama no cuenta como ocupada (puedo seleccionarla pero no tiene sentido)
-                const esMiCama = (esCambio && window.personaEnEdicion && window.personaEnEdicion.cama === numCama);
-                
-                div.className = `bed-box ${(ocupante && !esMiCama) ? 'bed-busy' : 'bed-free'}`;
-                
-                let htmlContent = `<span class="bed-number">${numCama}</span>`;
-                
-                if (ocupante && !esMiCama) {
-                    htmlContent += `<span class="bed-user">${ocupante.split(' ')[0]}</span>`;
-                    div.onclick = () => alert(`Ocupada por ${ocupante}`);
-                } else if (esMiCama) {
-                    div.style.background = "#fff3cd"; // Color diferente para actual
-                    div.style.borderColor = "#ffeeba";
-                    htmlContent += `<span class="bed-user">Actual</span>`;
-                } else {
-                    htmlContent += `<span class="bed-user">Libre</span>`;
-                    div.onclick = () => asignarCama(numCama, esCambio);
-                }
-
-                div.innerHTML = htmlContent;
-                grid.appendChild(div);
+            for(let i=1; i<=totalCapacidad; i++) {
+                const num = i.toString();
+                const ocupado = camasOcupadas[num];
+                const d = document.createElement('div');
+                d.className = `bed-box ${ocupado ? 'bed-busy' : 'bed-free'}`;
+                d.innerText = num;
+                if(!ocupado) d.onclick = () => guardarIngreso(num);
+                grid.appendChild(d);
             }
             document.getElementById('modal-cama').classList.remove('hidden');
-        }
+        };
 
-        window.cerrarModalCama = () => {
+        async function guardarIngreso(cama) {
+            await updateDoc(doc(db, "albergues", currentAlbergueId, "personas", window.personaSeleccionadaId), {
+                estado: 'ingresado', cama: cama, fechaIngreso: new Date()
+            });
             document.getElementById('modal-cama').classList.add('hidden');
-            // Si veníamos de edición, volvemos a abrir edición? Mejor no, flujo terminado.
-            window.personaSeleccionadaId = null;
-        };
-
-        async function asignarCama(numCama, esCambio) {
-            const accionTxt = esCambio ? "Cambio de cama" : "Ingreso";
-            if(!confirm(`Confirmar: \n${accionTxt} a Cama ${numCama}`)) return;
-
-            const personaRef = doc(db, "albergues", currentAlbergueId, "personas", window.personaSeleccionadaId);
-            
-            // Log del historial
-            const evento = {
-                fecha: new Date(),
-                accion: esCambio ? `Cambio: De cama ${window.personaEnEdicion.cama} a ${numCama}` : `Ingreso: Asignada cama ${numCama}`
-            };
-
-            try {
-                await updateDoc(personaRef, {
-                    estado: 'ingresado',
-                    cama: numCama,
-                    fechaIngreso: new Date(),
-                    historial: arrayUnion(evento)
-                });
-                cerrarModalCama();
-            } catch (e) { alert("Error: " + e.message); }
         }
 
-        // --- EXTRAS ---
         window.editarCapacidad = async () => {
-            const nuevaCap = prompt("Nuevo total de camas:", totalCapacidad);
-            if (nuevaCap && !isNaN(nuevaCap)) {
-                await updateDoc(doc(db, "albergues", currentAlbergueId), { capacidad: parseInt(nuevaCap) });
-            }
+            const n = prompt("Capacidad:");
+            if(n) await updateDoc(doc(db, "albergues", currentAlbergueId), { capacidad: parseInt(n) });
         };
-
-        window.publicoGuardarPrefiliacion = async () => {
-            const nombre = document.getElementById('public-nombre').value;
-            const dni = document.getElementById('public-dni').value;
-            const nac = document.getElementById('public-nacimiento').value;
-            if (!nombre || !dni) return alert("Falta nombre o DNI");
-            try {
-                // Añadimos historial inicial al crear
-                const evento = { fecha: new Date(), accion: "Registro inicial (Prefiliación)" };
-                await addDoc(collection(db, "albergues", currentAlbergueId, "personas"), {
-                    nombre, dni, nacimiento: nac, estado: 'espera', origen: 'qr', 
-                    fechaRegistro: new Date(), historial: [evento]
-                });
-                alert("Registrado.");
-                document.getElementById('public-nombre').value = "";
-                document.getElementById('public-dni').value = "";
-            } catch (e) { alert("Error: " + e.message); }
-        };
-
+        
         window.adminPrefiliarManual = async () => {
             const nombre = document.getElementById('admin-nombre').value;
             const dni = document.getElementById('admin-dni').value;
-            const nac = document.getElementById('admin-nacimiento').value;
-            if (!nombre) return alert("Falta nombre");
-            try {
-                const evento = { fecha: new Date(), accion: "Registro manual por Admin" };
-                await addDoc(collection(db, "albergues", currentAlbergueId, "personas"), {
-                    nombre, dni, nacimiento: nac, estado: 'espera', origen: 'manual', 
-                    fechaRegistro: new Date(), historial: [evento]
-                });
-                document.getElementById('admin-nombre').value = "";
-                document.getElementById('admin-dni').value = "";
-            } catch (e) { alert("Error: " + e.message); }
+            if(nombre) await addDoc(collection(db, "albergues", currentAlbergueId, "personas"), { nombre, dni, estado:'espera', fechaRegistro: new Date() });
         };
 
-        function generarQR() {
-            const urlPublica = window.location.href.split('?')[0] + `?public_id=${currentAlbergueId}`;
-            document.getElementById("qrcode").innerHTML = "";
-            new QRCode(document.getElementById("qrcode"), { text: urlPublica, width: 128, height: 128 });
-        }
-
-        window.exportarExcel = () => { alert("Próximamente"); };
     </script>
 </body>
 </html>

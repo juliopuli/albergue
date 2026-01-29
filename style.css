@@ -58,7 +58,7 @@ button.primary, button.success { background: var(--primary); color: white; }
 button.secondary { background: var(--bg-body); color: var(--text-main); border: 1px solid #cbd5e1; }
 button.danger { background: var(--danger); color: white; }
 button.warning { background: var(--warning); color: white; }
-button.dark { background: #1e293b; color: white; }
+button.dark { background: #334155; color: white; }
 
 .btn-group-horizontal, .btn-row { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
 .btn-group-horizontal button, .btn-row button { flex: 1; }
@@ -126,7 +126,7 @@ button.dark { background: #1e293b; color: white; }
 .badge-hidden { background: #e2e8f0; color: #475569; }
 
 /* MODALES */
-/* Z-Index aumentado a 3000 para superar al public screen */
+/* IMPORTANTE: Z-Index 3000 para estar por encima del modo público */
 .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3000; display: flex; justify-content: center; align-items: center; }
 .modal-content { background: white; width: 90%; max-width: 600px; padding: 30px; border-radius: 12px; max-height: 85vh; overflow-y: auto; }
 

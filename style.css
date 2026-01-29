@@ -120,14 +120,10 @@ button.dark { background: #334155; color: white; }
 .search-item { padding: 15px; border-bottom: 1px solid #f1f5f9; cursor: pointer; font-size: 0.9rem; }
 .search-item:hover { background: #f8fafc; }
 .hidden { display: none !important; }
-.badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
-.badge-active { background: #dcfce7; color: #166534; }
-.badge-archived { background: #fee2e2; color: #991b1b; }
-.badge-hidden { background: #e2e8f0; color: #475569; }
 .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; justify-content: center; align-items: center; }
 .modal-content { background: white; width: 90%; max-width: 600px; padding: 30px; border-radius: 12px; max-height: 85vh; overflow-y: auto; }
 .version-tag { position: fixed; bottom: 10px; right: 10px; color: #94a3b8; font-size: 0.75em; pointer-events: none; }
 .fam-list { margin-top: 10px; border-top: 2px dashed #eee; padding-top: 10px; }
 .fam-item { background: #f8f9fa; padding: 10px; border-radius: 6px; margin-bottom: 8px; border: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; }
-.family-box { background: #eff6ff; border: 1px solid #bfdbfe; padding: 15px; border-radius: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+.family-box { background: #eff6ff; border: 1px solid #bfdbfe; padding: 15px; border-radius: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-direction: column; align-items: stretch; }
 .success-screen { text-align: center; padding: 50px 20px; } .success-icon { font-size: 4em; color: #10b981; margin-bottom: 20px; }

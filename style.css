@@ -92,7 +92,6 @@ button.dark { background: #334155; color: white; }
 .toggle-input:checked + .toggle-slider { background: var(--primary); }
 .toggle-input:checked + .toggle-slider::before { transform: translateX(20px); }
 
-/* GRID CAMAS */
 .bed-grid { display: grid; gap: 12px; margin-top: 25px; }
 .bed-box { 
     height: 75px; border-radius: 10px; font-weight: 700; font-size: 1.1rem;

@@ -41,6 +41,20 @@ body { background-color: var(--bg-body); color: var(--text-main); height: 100vh;
 .card { background: var(--surface); padding: 30px; border-radius: var(--radius); box-shadow: var(--shadow-md); margin-bottom: 20px; animation: slideUp 0.3s ease; }
 @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
+/* STICKY HEADER (NUEVO V.6.5.2) */
+.sticky-header {
+    position: sticky;
+    top: 130px; /* Header 60 + Nav 70 */
+    z-index: 80;
+    background: var(--surface);
+    /* Romper padding del card padre */
+    margin: -30px -30px 20px -30px;
+    padding: 30px 30px 10px 30px;
+    border-bottom: 1px solid #e2e8f0;
+    border-radius: var(--radius) var(--radius) 0 0;
+    transition: box-shadow 0.3s;
+}
+
 h2, h3 { color: var(--text-main); margin-bottom: 20px; font-weight: 700; }
 h4 { color: var(--text-light); margin-bottom: 10px; font-weight: 600; text-transform: uppercase; font-size: 0.85rem; }
 
@@ -56,6 +70,8 @@ button.danger { background: var(--danger); color: white; }
 button.warning { background: var(--warning); color: white; }
 button.dark { background: #334155; color: white; }
 
+.btn-group-horizontal { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px; }
+.btn-group-horizontal button { flex: 1; }
 .btn-row { display: flex; gap: 10px; margin-top: 15px; }
 .btn-row button { flex: 1; }
 
@@ -68,7 +84,6 @@ button.dark { background: #334155; color: white; }
 .mto-card.archived { background: #f1f5f9; border-left: 5px solid var(--warning); }
 .mto-card.hidden-item { background: #e2e8f0; border-left: 5px solid var(--secondary); opacity: 0.8; }
 
-/* Switch Toggle */
 .toggle-switch { display: flex; align-items: center; gap: 10px; cursor: pointer; }
 .toggle-input { display: none; }
 .toggle-slider { width: 40px; height: 20px; background: #cbd5e1; border-radius: 20px; position: relative; transition: 0.3s; }

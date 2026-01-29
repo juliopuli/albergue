@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión Albergue - V.3.6.0 (Unir Familias)</title>
+    <title>Gestión Albergue - V.3.6.1 (Fix Familia)</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; background-color: #f4f6f8; color: #333; }
         .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
@@ -69,7 +69,7 @@
         .fam-item { background: #f8f9fa; padding: 10px; border-radius: 6px; margin-bottom: 8px; border: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; }
         
         /* Panel Familia Admin */
-        .family-box { background: #f1f8ff; border: 1px dashed #3498db; padding: 10px 15px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .family-box { background: #e3f2fd; border: 1px solid #90caf9; padding: 12px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -77,7 +77,7 @@
 </head>
 <body>
 
-    <div class="version-tag">V.3.6.0 (Unir Familias)</div>
+    <div class="version-tag">V.3.6.1 (Unir Familias Fix)</div>
 
     <div id="login-screen" style="max-width: 400px; margin: 50px auto;" class="card">
         <h1 style="text-align:center;">🔐 Acceso</h1>
@@ -144,8 +144,8 @@
                 <p>Estado: <span id="gestion-estado" class="badge">...</span> <span id="gestion-cama-info"></span></p>
                 
                 <div class="family-box">
-                    <span id="info-familia-actual" style="font-size:0.9em; color:#555;"><strong>Unidad Familiar:</strong> Cargando...</span>
-                    <button class="secondary" style="margin:0; font-size:0.8em; padding:5px 10px; width:auto;" onclick="abrirModalVincularFamilia()">🔗 Unir a Familia</button>
+                    <span id="info-familia-actual" style="font-size:0.9em; color:#333;"><strong>Unidad Familiar:</strong> Cargando...</span>
+                    <button class="secondary" style="margin:0; font-size:0.8em; padding:8px 12px; width:auto; border:1px solid #aaa;" onclick="abrirModalVincularFamilia()">🔗 Unir a Familia Existente</button>
                 </div>
 
                 <div class="row"><div class="col"><label>Nombre:</label><input type="text" id="edit-nombre"></div><div class="col"><label>Ap. 1:</label><input type="text" id="edit-ap1"></div><div class="col"><label>Ap. 2:</label><input type="text" id="edit-ap2"></div></div>
@@ -175,12 +175,12 @@
         <div class="modal-content"><h3>Añadir Familiar</h3><div class="row"><div class="col"><label>Nombre:</label><input type="text" id="fam-nombre"></div></div><div class="row"><div class="col"><label>Ap. 1:</label><input type="text" id="fam-ap1"></div><div class="col"><label>Ap. 2:</label><input type="text" id="fam-ap2"></div></div><div class="row"><div class="col"><label>Doc:</label><select id="fam-tipo-doc" onchange="verificarMenor('fam')"><option value="MENOR">MENOR</option><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option></select></div><div class="col"><label>Num:</label><input type="text" id="fam-doc-num" disabled></div></div><div class="row"><div class="col"><label>F. Nac:</label><input type="tel" id="fam-fecha" oninput="formatearFecha(this)" maxlength="10"></div></div><div class="btn-group-horizontal"><button class="success" onclick="guardarFamiliarEnLista()">Añadir</button><button class="secondary" onclick="cerrarModalFamiliar()">Cancelar</button></div>
     </div>
 
-    <div id="modal-vincular-familia" class="modal-overlay hidden">
+    <div id="modal-vincular-familia" class="modal-overlay hidden" style="z-index: 1100;">
         <div class="modal-content">
             <h3>🔗 Unir a Familia Existente</h3>
-            <p style="font-size:0.9em; color:#666;">Busca a un familiar que YA esté registrado para unirlos.</p>
+            <p style="font-size:0.9em; color:#666;">Busca a un familiar que YA esté registrado:</p>
             <input type="text" id="search-vincular" placeholder="Buscar familiar..." onkeyup="buscarParaVincular()">
-            <div id="resultados-vincular" class="search-results" style="display:block; max-height:150px; position:relative;"></div>
+            <div id="resultados-vincular" class="search-results" style="display:none; max-height:150px; border:1px solid #ddd;"></div>
             <button class="secondary" style="margin-top:15px;" onclick="document.getElementById('modal-vincular-familia').classList.add('hidden')">Cancelar</button>
         </div>
     </div>
@@ -224,7 +224,8 @@
             if(t==='MENOR'||!i.value) return true; let v=i.value.toUpperCase(); i.value=v; let ok=true;
             if(t==='PASAPORTE') ok=v.length>3;
             else { const l="TRWAGMYFPDXBNJZSQVHLCKE"; let n=v; let letIn=v.slice(-1); if(t==='NIE'){ if(v.startsWith('X')) n='0'+v.slice(1); else if(v.startsWith('Y')) n='1'+v.slice(1); else if(v.startsWith('Z')) n='2'+v.slice(1); else ok=false; } if(ok){ const num=parseInt(n.slice(0,-1)); if(isNaN(num)) ok=false; else { if(l[num%23]!==letIn) ok=false; } } }
-            if(!ok){ i.classList.add('input-error'); if(e) e.style.display='block'; return false; } else { i.classList.remove('input-error'); if(e) e.style.display='none'; return true; }
+            if(!ok){ i.classList.add('input-error'); if(e) e.style.display='block'; return false; } 
+            else { i.classList.remove('input-error'); if(e) e.style.display='none'; return true; }
         };
 
         // --- AUTH/NAV ---
@@ -278,7 +279,7 @@
         function cargarAlberguesMantenimiento(){ const c=document.getElementById('lista-albergues-mantenimiento'); unsubscribeAlberguesMto=onSnapshot(query(collection(db,"albergues"),orderBy("nombre")),s=>{ c.innerHTML=""; s.forEach(d=>{ const a=d.data(); const b=a.activo?`<button class="danger" onclick="cambiarEstadoAlbergue('${d.id}',false)">Archivar</button>`:`<button class="success" onclick="cambiarEstadoAlbergue('${d.id}',true)">Activar</button>`; c.innerHTML+=`<div class="list-item"><strong>${a.nombre}</strong>${b}</div>`; }); }); }
         window.generarAlbergue=async()=>{ const n=document.getElementById('create-nombre').value; const c=document.getElementById('create-camas').value; if(n) await addDoc(collection(db,"albergues"),{nombre:n,capacidad:parseInt(c),activo:true}); };
         window.cambiarEstadoAlbergue=async(i,s)=>await updateDoc(doc(db,"albergues",i),{activo:s});
-        window.crearUsuario=async()=>{ /* ... (Igual V3.5) ... */ };
+        window.crearUsuario=async()=>{ /* ... */ };
         window.abrirCrearUsuario=()=>{ document.getElementById('modal-crear-usuario').classList.remove('hidden'); };
 
         window.entrarAlbergue = (id) => {
@@ -295,7 +296,6 @@
 
         window.adminPrefiliarManual = async () => {
             if(!validarEdad('man')||!validarDocumento('man')) return alert("Datos invalidos"); const d=getDatosFormulario('man'); if(!d.nombre) return alert("Faltan datos");
-            // Generar ID Familia para individuales también
             const famId = new Date().getTime().toString();
             await addDoc(collection(db,"albergues",currentAlbergueId,"personas"),{ ...d, estado:'espera', fechaRegistro:new Date(), origen:'manual', familiaId: famId, rolFamilia:'TITULAR' });
             alert("Añadido"); limpiarFormulario('man');
@@ -332,25 +332,33 @@
 
         window.guardarCambiosPersona = async () => { if(!window.personaEnGestion) return; if(!validarEdad('edit')||!validarDocumento('edit')) return alert("Datos invalidos"); const d=getDatosFormulario('edit'); await updateDoc(doc(db,"albergues",currentAlbergueId,"personas",window.personaEnGestion.id),{ nombre:d.nombre, ap1:d.ap1, ap2:d.ap2, tipoDoc:d.tipoDoc, docNum:d.docNum, fechaNac:d.fechaNac, telefono:d.telefono }); alert("Guardado"); };
 
-        // --- VINCULAR FAMILIA ---
+        // --- VINCULAR FAMILIA FIX (WINDOW EXPORT) ---
         window.abrirModalVincularFamilia = () => { document.getElementById('modal-vincular-familia').classList.remove('hidden'); };
+        
         window.buscarParaVincular = () => {
             const txt = document.getElementById('search-vincular').value.toLowerCase(); const res = document.getElementById('resultados-vincular');
-            if(txt.length<2){ res.innerHTML=""; return; }
+            if(txt.length<2){ res.style.display='none'; return; }
+            // Buscar excluyendo al propio usuario
             const hits = listaPersonasCache.filter(p => p.id !== window.personaEnGestion.id && (p.nombre.toLowerCase().includes(txt) || (p.docNum && p.docNum.toLowerCase().includes(txt))));
             res.innerHTML = "";
-            hits.forEach(p => {
-                const d = document.createElement('div'); d.className='search-item';
-                d.innerHTML = `Unir a: <strong>${p.nombre}</strong> (Fam ID: ...${p.familiaId.slice(-4)})`;
-                d.onclick = () => vincularAFamilia(p);
-                res.appendChild(d);
-            });
+            if(hits.length > 0) {
+                res.style.display='block';
+                hits.forEach(p => {
+                    const d = document.createElement('div'); d.className='search-item';
+                    d.innerHTML = `Unir a: <strong>${p.nombre}</strong>`;
+                    d.onclick = () => vincularAFamilia(p);
+                    res.appendChild(d);
+                });
+            } else res.style.display='none';
         };
+
         window.vincularAFamilia = async (target) => {
             if(!confirm(`¿Unir a ${window.personaEnGestion.nombre} con la familia de ${target.nombre}?`)) return;
             await updateDoc(doc(db,"albergues",currentAlbergueId,"personas",window.personaEnGestion.id), { familiaId: target.familiaId, rolFamilia: 'MIEMBRO' });
             document.getElementById('modal-vincular-familia').classList.add('hidden');
-            alert("Vinculación realizada");
+            document.getElementById('search-vincular').value = "";
+            document.getElementById('resultados-vincular').style.display='none';
+            alert("Vinculación realizada. El panel se actualizará automáticamente.");
         };
 
         // --- CAMAS ---

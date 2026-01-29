@@ -7,11 +7,11 @@
     --surface: #ffffff;
     --text-main: #0f172a;
     --text-light: #64748b;
-    --success: #10b981;     /* Verde */
+    --success: #10b981;
     --success-bg: #dcfce7;
-    --warning: #f59e0b;     /* Naranja */
+    --warning: #f59e0b;
     --warning-bg: #ffedd5;
-    --danger: #ef4444;      /* Rojo */
+    --danger: #ef4444;
     --danger-bg: #fee2e2;
     --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
     --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
@@ -96,7 +96,7 @@ button.dark { background: #334155; color: white; }
 .toggle-input:checked + .toggle-slider { background: var(--primary); }
 .toggle-input:checked + .toggle-slider::before { transform: translateX(20px); }
 
-/* --- GRID CAMAS (INFOGRAFÍA AVANZADA) --- */
+/* --- GRID CAMAS --- */
 .bed-grid { display: grid; gap: 12px; margin-top: 25px; }
 .bed-box { 
     height: 75px; border-radius: 10px; font-weight: 700; font-size: 1.1rem;
@@ -107,21 +107,11 @@ button.dark { background: #334155; color: white; }
 .bed-box:hover { transform: scale(1.05); z-index: 10; }
 .bed-box span { font-size: 0.7em; font-weight: normal; margin-top: 4px; display: block; max-width: 90%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-/* Estados Cama */
 .bed-free { background: var(--success-bg); color: #166534; border-color: #86efac; }
 .bed-busy { background: var(--danger-bg); color: #991b1b; border-color: #fca5a5; }
 .bed-current { background: #e0e7ff; color: #3730a3; border-color: #818cf8; border-width: 3px; }
-
-/* Lógica Visual de Reserva (Sombra) */
-.bed-shadow { 
-    background: var(--warning-bg) !important; 
-    border: 2px dashed #f97316 !important; 
-    color: #c2410c; 
-    opacity: 0.9;
-}
+.bed-shadow { background: var(--warning-bg) !important; border: 2px dashed #f97316 !important; color: #c2410c; opacity: 0.9; }
 .bed-shadow::after { content: 'RESERVA'; font-size: 0.6em; margin-top: 2px; font-weight: bold; }
-
-/* Sugerencias de Asignación */
 .bed-suggest-target { border: 4px solid #10b981 !important; transform: scale(1.15); z-index: 20; box-shadow: 0 0 20px rgba(16, 185, 129, 0.5); }
 .bed-suggest-block { border: 3px solid #10b981 !important; animation: pulse 2s infinite; }
 @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
@@ -142,10 +132,10 @@ button.dark { background: #334155; color: white; }
 .search-item:hover { background: #f8fafc; }
 .hidden { display: none !important; }
 
-/* BADGES DE ESTADO (IMPORTANTE) */
+/* BADGES */
 .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; display: inline-block; }
-.badge-active { background: var(--success-bg); color: #166534; border: 1px solid #86efac; } /* DENTRO */
-.badge-archived { background: var(--danger-bg); color: #991b1b; border: 1px solid #fca5a5; } /* ESPERA */
+.badge-active { background: var(--success-bg); color: #166534; border: 1px solid #86efac; }
+.badge-archived { background: var(--danger-bg); color: #991b1b; border: 1px solid #fca5a5; }
 .badge-hidden { background: #e2e8f0; color: #475569; }
 
 /* MODALES */

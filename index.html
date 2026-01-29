@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión Albergue - V.8.6.0</title>
+    <title>Gestión Albergue - V.9.0.0</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     
@@ -12,7 +12,7 @@
 </head>
 <body>
 
-    <div class="version-tag">V.8.6.0</div>
+    <div class="version-tag">V.9.0.0</div>
 
     <div id="login-screen" class="">
         <div class="card">
@@ -37,18 +37,10 @@
         </header>
 
         <nav class="app-nav">
-            <div class="nav-item" id="nav-users" onclick="navegar('usuarios')">
-                <i class="fa-solid fa-users"></i><span>Usuarios</span>
-            </div>
-            <div class="nav-item" id="nav-albergues" onclick="navegar('gestion-albergues')">
-                <i class="fa-solid fa-bed"></i><span>Gestión</span>
-            </div>
-            <div class="nav-item" id="nav-mto" onclick="navegar('mantenimiento')">
-                <i class="fa-solid fa-screwdriver-wrench"></i><span>Mantenimiento</span>
-            </div>
-            <div class="nav-item disabled">
-                <i class="fa-solid fa-chart-pie"></i><span>Informes</span>
-            </div>
+            <div class="nav-item" id="nav-users" onclick="navegar('usuarios')"><i class="fa-solid fa-users"></i><span>Usuarios</span></div>
+            <div class="nav-item" id="nav-albergues" onclick="navegar('gestion-albergues')"><i class="fa-solid fa-bed"></i><span>Gestión</span></div>
+            <div class="nav-item" id="nav-mto" onclick="navegar('mantenimiento')"><i class="fa-solid fa-screwdriver-wrench"></i><span>Mantenimiento</span></div>
+            <div class="nav-item disabled"><i class="fa-solid fa-chart-pie"></i><span>Informes</span></div>
         </nav>
 
         <main class="main-content">
@@ -92,10 +84,7 @@
                 <div class="card">
                     <div class="sticky-header">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                            <div>
-                                <h2 id="app-title" style="margin:0;">Albergue</h2>
-                                <span class="badge badge-active">Ocupación: <span id="ocupacion-count">0</span> / <span id="capacidad-total">0</span></span>
-                            </div>
+                            <div><h2 id="app-title" style="margin:0;">Albergue</h2><span class="badge badge-active">Ocupación: <span id="ocupacion-count">0</span> / <span id="capacidad-total">0</span></span></div>
                             <div class="btn-group-horizontal" style="margin-top:0;">
                                 <button class="dark" onclick="abrirModalQR()"><i class="fa-solid fa-qrcode"></i> QR Acceso</button>
                                 <button class="primary" onclick="abrirMapaGeneral()"><i class="fa-solid fa-bed"></i> Infografía Camas</button>
@@ -113,37 +102,20 @@
                         <div id="tab-prefiliacion" class="tab-content active">
                             <div style="border: 2px dashed #cbd5e1; padding: 25px; border-radius: var(--radius);">
                                 <h3 style="color:var(--primary);">📝 Ficha de Ingreso</h3>
-                                
                                 <div style="background:#e0e7ff; padding:15px; border-radius:8px; margin-bottom:20px;">
                                     <label><i class="fa-solid fa-magnifying-glass"></i> Buscar si ya existe (Evitar duplicados):</label>
                                     <input type="text" id="buscador-pref" placeholder="Nombre, DNI o Teléfono..." onkeyup="buscarEnPrefiliacion()" autocomplete="off" style="background:white;">
                                     <div id="resultados-pref" class="search-results"></div>
                                 </div>
-
                                 <div id="form-manual-container">
                                     <div style="display:flex; justify-content:space-between; align-items:center;">
                                         <h4>Datos del Titular</h4>
                                         <button id="btn-cancelar-edicion-pref" class="secondary hidden" style="font-size:0.7em; padding:4px 8px;" onclick="cancelarEdicionPref()">Cancelar Edición</button>
                                     </div>
-                                    <div class="row">
-                                        <div class="col"><label>Nombre (*)</label><input type="text" id="man-nombre"></div>
-                                        <div class="col"><label>Ap 1</label><input type="text" id="man-ap1"></div>
-                                        <div class="col"><label>Ap 2</label><input type="text" id="man-ap2"></div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col"><label>Doc</label><select id="man-tipo-doc" onchange="verificarMenor('man')"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div>
-                                        <div class="col"><label>Número</label><input type="text" id="man-doc-num" onblur="validarDocumento('man')"><div id="man-doc-error" class="error-msg">Inválido</div></div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col"><label>F. Nac</label><input type="tel" id="man-fecha" maxlength="10" oninput="formatearFecha(this)" onblur="validarEdad('man')"></div>
-                                        <div class="col"><label>Tel</label><input type="tel" id="man-tel"></div>
-                                    </div>
-                                    <div class="fam-list">
-                                        <h4><i class="fa-solid fa-people-roof"></i> Miembros</h4>
-                                        <div id="admin-lista-familiares-ui"><p style="color:#999;">Ninguno.</p></div>
-                                        <button class="secondary" onclick="abrirModalFamiliarAdmin()" style="width:100%; margin-top:10px;">+ Miembro</button>
-                                    </div>
-                                    
+                                    <div class="row"><div class="col"><label>Nombre (*)</label><input type="text" id="man-nombre"></div><div class="col"><label>Ap 1</label><input type="text" id="man-ap1"></div><div class="col"><label>Ap 2</label><input type="text" id="man-ap2"></div></div>
+                                    <div class="row"><div class="col"><label>Doc</label><select id="man-tipo-doc" onchange="verificarMenor('man')"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Número</label><input type="text" id="man-doc-num" onblur="validarDocumento('man')"><div id="man-doc-error" class="error-msg">Inválido</div></div></div>
+                                    <div class="row"><div class="col"><label>F. Nac</label><input type="tel" id="man-fecha" maxlength="10" oninput="formatearFecha(this)" onblur="validarEdad('man')"></div><div class="col"><label>Tel</label><input type="tel" id="man-tel"></div></div>
+                                    <div class="fam-list"><h4><i class="fa-solid fa-people-roof"></i> Miembros</h4><div id="admin-lista-familiares-ui"><p style="color:#999;">Ninguno.</p></div><button class="secondary" onclick="abrirModalFamiliarAdmin()" style="width:100%; margin-top:10px;">+ Miembro</button></div>
                                     <button id="btn-save-pref" class="success" style="width:100%; margin-top:20px;" onclick="adminPrefiliarManual()">💾 Guardar Nuevo</button>
                                 </div>
                             </div>
@@ -154,13 +126,7 @@
                             <div id="panel-gestion-persona" class="hidden" style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:var(--radius); padding:25px; margin-top:10px;">
                                 <h3 id="gestion-nombre-titulo" style="color:var(--primary);">Nombre</h3>
                                 <p style="margin-bottom:15px;">Estado: <span id="gestion-estado" class="badge">...</span> <span id="gestion-cama-info"></span></p>
-                                <div class="family-box">
-                                    <div style="display:flex;justify-content:space-between;align-items:center;">
-                                        <span id="info-familia-resumen" style="font-weight:bold;">...</span>
-                                        <button class="secondary" style="padding:5px 10px;font-size:0.8rem;" onclick="abrirModalVincularFamilia()">🔗 Unir</button>
-                                    </div>
-                                    <div id="info-familia-lista" style="margin-top:10px;"></div>
-                                </div>
+                                <div class="family-box"><div style="display:flex;justify-content:space-between;align-items:center;"><span id="info-familia-resumen" style="font-weight:bold;">...</span><button class="secondary" style="padding:5px 10px;font-size:0.8rem;" onclick="abrirModalVincularFamilia()">🔗 Unir</button></div><div id="info-familia-lista" style="margin-top:10px;"></div></div>
                                 <div class="row"><div class="col"><label>Nombre</label><input type="text" id="edit-nombre"></div><div class="col"><label>Ap 1</label><input type="text" id="edit-ap1"></div><div class="col"><label>Ap 2</label><input type="text" id="edit-ap2"></div></div>
                                 <div class="row"><div class="col"><label>Doc</label><select id="edit-tipo-doc" onchange="verificarMenor('edit')"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Num</label><input type="text" id="edit-doc-num" onblur="validarDocumento('edit')"><div id="edit-doc-error" class="error-msg">Inválido</div></div></div>
                                 <div class="row"><div class="col"><label>F. Nac</label><input type="tel" id="edit-fecha" oninput="formatearFecha(this)" maxlength="10" onblur="validarEdad('edit')"></div><div class="col"><label>Tel</label><input type="tel" id="edit-tel"></div></div>
@@ -182,7 +148,7 @@
         <div style="max-width:600px; margin:0 auto;" id="public-form-container">
             <h1 style="color:var(--primary); text-align:center; margin-bottom:20px;">Auto-Registro</h1>
             <div class="card">
-                <div class="row"><div class="col"><label>Nombre</label><input type="text" id="pub-nombre"></div></div>
+                <div class="row"><div class="col"><label>Nombre (*)</label><input type="text" id="pub-nombre"></div></div>
                 <div class="row"><div class="col"><label>Ap 1</label><input type="text" id="pub-ap1"></div><div class="col"><label>Ap 2</label><input type="text" id="pub-ap2"></div></div>
                 <div class="row"><div class="col"><label>Doc</label><select id="pub-tipo-doc" onchange="verificarMenor('pub')"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Num</label><input type="text" id="pub-doc-num" onblur="validarDocumento('pub')"><div id="pub-doc-error" class="error-msg">Inválido</div></div></div>
                 <div class="row"><div class="col"><label>F. Nac</label><input type="tel" id="pub-fecha" placeholder="DD/MM/AAAA" maxlength="10" oninput="formatearFecha(this)" onblur="validarEdad('pub')"><div id="pub-fecha-error" class="error-msg">Error</div></div><div class="col"><label>Tel</label><input type="tel" id="pub-tel"></div></div>
@@ -194,8 +160,8 @@
     </div>
 
     <div id="modal-qr" class="modal-overlay hidden"><div class="modal-content" style="text-align:center;"><h3>Escanea para acceder</h3><div id="qrcode-display" style="display:inline-block; margin:20px;"></div><p style="color:#666;">Auto-registro móvil.</p><button class="secondary" onclick="document.getElementById('modal-qr').classList.add('hidden')">Cerrar</button></div></div>
-    <div id="modal-cama" class="modal-overlay hidden"><div class="modal-content"><h3>Seleccionar Cama</h3><div id="grid-camas" class="bed-grid"></div><button class="secondary" style="margin-top:20px; width:100%" onclick="document.getElementById('modal-cama').classList.add('hidden')">Cancelar</button></div></div>
-    <div id="modal-bed-info" class="modal-overlay hidden"><div class="modal-content" style="text-align:center; padding:40px;"><div style="font-size:3rem; color:var(--primary); margin-bottom:10px;"><i class="fa-solid fa-user-check"></i></div><h3 style="color:var(--text-light);">Cama <span id="info-cama-num"></span></h3><h2 id="info-nombre-completo" style="color:var(--primary); margin:15px 0;"></h2><p><span id="info-telefono"></span></p><div id="info-familia-tag" style="background:var(--warning); color:white; padding:5px 15px; border-radius:20px; font-weight:bold; font-size:0.9rem; display:inline-block;"></div><br><br><button class="secondary" onclick="document.getElementById('modal-bed-info').classList.add('hidden')">Cerrar</button></div></div>
+    <div id="modal-cama" class="modal-overlay hidden"><div class="modal-content"><h3>Seleccionar Cama</h3><p style="font-size:0.8rem;color:#666;">Verde Borde=Sugerencia | Naranja=Reserva Familia</p><div id="grid-camas" class="bed-grid"></div><button class="secondary" style="margin-top:20px; width:100%" onclick="document.getElementById('modal-cama').classList.add('hidden')">Cancelar</button></div></div>
+    <div id="modal-bed-info" class="modal-overlay hidden"><div class="modal-content" style="text-align:center; padding:40px;"><div style="font-size:3rem; color:var(--primary); margin-bottom:10px;"><i class="fa-solid fa-user-check"></i></div><h3 style="color:var(--text-light);">Cama <span id="info-cama-num"></span></h3><h2 id="info-nombre-completo" style="color:var(--primary);"></h2><p><span id="info-telefono"></span></p><div id="info-familia-tag" style="background:var(--warning); color:white; padding:5px 15px; border-radius:20px; font-weight:bold; font-size:0.9rem; display:inline-block;"></div><br><br><button class="secondary" onclick="document.getElementById('modal-bed-info').classList.add('hidden')">Cerrar</button></div></div>
     <div id="modal-vincular-familia" class="modal-overlay hidden" style="z-index: 2000;"><div class="modal-content"><h3>Unir a Familia</h3><input type="text" id="search-vincular" placeholder="Buscar..." onkeyup="buscarParaVincular()" autocomplete="off"><div id="resultados-vincular" class="search-results" style="display:none; max-height:200px;"></div><button class="secondary" style="margin-top:15px; width:100%" onclick="document.getElementById('modal-vincular-familia').classList.add('hidden')">Cancelar</button></div></div>
     <div id="modal-albergue" class="modal-overlay hidden"><div class="modal-content"><h3 id="mto-modal-title">Nuevo</h3><label>Nombre</label><input type="text" id="mto-nombre"><div class="row"><div class="col"><label>Cap</label><input type="number" id="mto-capacidad"></div><div class="col"><label>Cols</label><input type="number" id="mto-columnas" value="8"></div></div><div class="btn-row"><button class="primary" onclick="guardarAlbergue()">Guardar</button><button class="secondary" onclick="document.getElementById('modal-albergue').classList.add('hidden')">Cancelar</button></div></div></div>
     <div id="modal-crear-usuario" class="modal-overlay hidden"><div class="modal-content"><h3 id="user-modal-title">Usuario</h3><label>Nombre</label><input type="text" id="new-user-name"><label>Rol</label><select id="new-user-role"></select><label>Email</label><input type="email" id="new-user-email"><label>Contraseña</label><input type="password" id="new-user-pass"><p id="edit-pass-warning" style="display:none;color:orange;font-size:0.8em;">Use reset email.</p><div class="btn-row"><button class="primary" onclick="guardarUsuario()">Guardar</button><button class="secondary" onclick="document.getElementById('modal-crear-usuario').classList.add('hidden')">Cerrar</button></div></div></div>

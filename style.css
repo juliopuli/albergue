@@ -125,8 +125,7 @@ button.dark { background: #334155; color: white; }
 .badge-archived { background: #fee2e2; color: #991b1b; }
 .badge-hidden { background: #e2e8f0; color: #475569; }
 
-/* MODALES */
-/* IMPORTANTE: Z-Index 3000 para estar por encima del modo público */
+/* MODALES (Z-Index alto) */
 .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3000; display: flex; justify-content: center; align-items: center; }
 .modal-content { background: white; width: 90%; max-width: 600px; padding: 30px; border-radius: 12px; max-height: 85vh; overflow-y: auto; }
 

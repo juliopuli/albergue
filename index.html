@@ -3,45 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Albergue - Filiación</title>
+    <title>Gestión de Albergue - V.1.0.0</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; background-color: #f0f2f5; color: #333; }
         .card { background: white; padding: 25px; margin-bottom: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         h1, h2, h3 { color: #1a1a1a; margin-top: 0; }
         input, button, select { width: 100%; padding: 12px; margin-top: 8px; margin-bottom: 16px; box-sizing: border-box; border-radius: 6px; border: 1px solid #ccc; font-size: 16px; }
         
-        /* Botones */
         button { background-color: #007bff; color: white; border: none; cursor: pointer; font-weight: 600; transition: background 0.2s; }
         button:hover { background-color: #0056b3; }
         button.secondary { background-color: #6c757d; }
-        button.secondary:hover { background-color: #5a6268; }
         button.success { background-color: #28a745; }
-        button.success:hover { background-color: #218838; }
         button.warning { background-color: #ffc107; color: #333; }
-        button.danger { background-color: #dc3545; }
         
         .hidden { display: none !important; }
         .row { display: flex; gap: 10px; }
         .col { flex: 1; }
-
-        /* Tablas y Listas */
         .person-card { border-left: 5px solid #ccc; padding: 10px 15px; background: #f8f9fa; margin-bottom: 10px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; }
         .status-espera { border-left-color: #ffc107; }
         .status-ingresado { border-left-color: #28a745; }
         
-        .badge { padding: 4px 8px; border-radius: 12px; font-size: 0.8em; font-weight: bold; text-transform: uppercase; }
-        .badge-espera { background: #fff3cd; color: #856404; }
-        .badge-ingresado { background: #d4edda; color: #155724; }
+        /* Contador de camas */
+        .capacity-badge {
+            background: #e9ecef; color: #495057; padding: 5px 10px; border-radius: 20px; font-weight: bold; font-size: 0.9em; display: inline-block; margin-left: 10px;
+        }
+        .capacity-full { background: #f8d7da; color: #721c24; }
 
-        /* QR Area */
+        /* ETIQUETA DE VERSIÓN */
+        .version-tag {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.05);
+            color: #999;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.75em;
+            pointer-events: none; /* Para que no moleste al hacer clic */
+            font-family: monospace;
+        }
+
         #qr-code-container { text-align: center; padding: 20px; background: white; margin-top: 20px; display: flex; flex-direction: column; align-items: center; }
-        
         label { font-weight: 600; font-size: 0.9em; color: #555; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
+
+    <div class="version-tag">V.1.0.0</div>
 
     <div id="login-screen" class="card">
         <h1>🏥 Gestión de Albergue</h1>
@@ -54,6 +64,8 @@
 
     <div id="create-screen" class="card hidden">
         <h2>Crear Nuevo Albergue</h2>
+        <label>Capacidad Inicial (Camas):</label>
+        <input type="number" id="create-camas" placeholder="Ej: 50" value="50">
         <button class="success" onclick="generarAlbergue()">Confirmar Creación</button>
         <button class="secondary" onclick="location.reload()">Cancelar</button>
     </div>
@@ -61,46 +73,48 @@
     <div id="codes-screen" class="card hidden">
         <h2 style="color: green;">¡Albergue Creado!</h2>
         <div style="background:#e9ecef; padding:15px; border-radius:8px;">
-            <p><strong>🔑 ADMIN (Escritura):</strong> <span id="new-admin-code" style="font-family:monospace; font-size:1.2em;"></span></p>
-            <p><strong>👁️ VISITA (Lectura):</strong> <span id="new-visitor-code" style="font-family:monospace; font-size:1.2em;"></span></p>
+            <p><strong>🔑 ADMIN:</strong> <span id="new-admin-code" style="font-family:monospace; font-size:1.2em;"></span></p>
+            <p><strong>👁️ VISITA:</strong> <span id="new-visitor-code" style="font-family:monospace; font-size:1.2em;"></span></p>
         </div>
         <p style="color:red; font-size:0.9em;">Anota los códigos. No se volverán a mostrar.</p>
         <button onclick="location.reload()">Ir al Login</button>
     </div>
 
     <div id="public-register-screen" class="card hidden">
-        <h2 style="color: #007bff;">📝 Auto-Registro (Prefiliación)</h2>
+        <h2 style="color: #007bff;">📝 Auto-Registro</h2>
         <p>Rellena tus datos para entrar en la sala de espera.</p>
-        
         <label>Nombre Completo:</label>
         <input type="text" id="public-nombre" placeholder="Nombre y Apellidos">
-        
         <label>DNI / Pasaporte:</label>
         <input type="text" id="public-dni" placeholder="Identificación">
-        
         <label>Fecha de Nacimiento:</label>
         <input type="date" id="public-nacimiento">
-
         <button class="success" onclick="publicoGuardarPrefiliacion()">✅ Enviar mis datos</button>
     </div>
 
     <div id="app-screen" class="card hidden">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h3 id="role-display">Panel de Control</h3>
-            <button onclick="location.href = window.location.pathname" style="width: auto; background: #dc3545; padding: 5px 15px;">Salir</button>
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+            <div>
+                <h3 style="margin-bottom:5px;">Panel de Control</h3>
+                <span id="role-display" style="font-size:0.8em; color:#666;"></span>
+            </div>
+            <div id="capacity-container" class="capacity-badge">
+                🛏️ Ocupación: <span id="ocupacion-count">0</span> / <span id="capacidad-total">0</span>
+                <button id="btn-edit-capacidad" class="hidden" style="padding:2px 8px; font-size:0.8em; margin-left:5px; width:auto;" onclick="editarCapacidad()">✏️</button>
+            </div>
+            <button onclick="location.href = window.location.pathname" style="width: auto; background: #dc3545; padding: 5px 15px; margin-left: 10px;">Salir</button>
         </div>
 
         <div id="admin-tools" class="hidden">
+            <hr>
             <details>
-                <summary style="cursor:pointer; color:#007bff; font-weight:bold; margin-bottom:10px;">📲 Ver QR para Auto-Registro</summary>
-                <div id="qr-code-container" class="card">
+                <summary style="cursor:pointer; color:#007bff; font-weight:bold;">📲 Ver QR Auto-Registro</summary>
+                <div id="qr-code-container">
                     <div id="qrcode"></div>
-                    <p style="font-size: 0.9em; margin-top: 10px;">Muestra este QR a las personas para que se registren ellas mismas con su móvil.</p>
                 </div>
             </details>
-            <hr>
             
-            <h3>➕ Prefiliación Manual</h3>
+            <h4 style="margin-top:15px;">➕ Añadir Manualmente</h4>
             <div class="row">
                 <input type="text" id="admin-nombre" placeholder="Nombre" class="col">
                 <input type="text" id="admin-dni" placeholder="DNI" class="col">
@@ -112,19 +126,16 @@
         </div>
 
         <hr>
-
         <div class="row">
             <div class="col">
-                <h3 style="color:#e67e22;">⏳ Sala de Espera (Prefiliados)</h3>
+                <h3 style="color:#e67e22;">⏳ En Espera <span id="count-espera" style="font-size:0.7em;">(0)</span></h3>
                 <div id="list-espera">Cargando...</div>
             </div>
-
             <div class="col">
-                <h3 style="color:#28a745;">✅ Dentro del Albergue</h3>
+                <h3 style="color:#28a745;">✅ Ingresados <span id="count-ingresados" style="font-size:0.7em;">(0)</span></h3>
                 <div id="list-dentro">Cargando...</div>
             </div>
         </div>
-        
         <br>
         <button onclick="exportarExcel()" class="secondary">📊 Descargar Excel</button>
     </div>
@@ -134,7 +145,7 @@
         import { getFirestore, collection, addDoc, query, where, getDocs, doc, updateDoc, onSnapshot, orderBy } 
         from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
-        // --- TU CONFIGURACIÓN (YA INTEGRADA) ---
+        // CONFIGURACIÓN (Tu proyecto real)
         const firebaseConfig = {
             apiKey: "AIzaSyAzfEMwMd6M1VgvV0tJn7RS63RJghLE5UI",
             authDomain: "albergues-temporales.firebaseapp.com",
@@ -147,17 +158,16 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Variables de estado
         let currentAlbergueId = null;
-        let currentRole = null; // 'admin', 'visitor', 'public'
+        let currentRole = null;
+        let totalCapacidad = 0;
+        let ocupacionActual = 0;
 
-        // 1. DETECTAR SI ES REGISTRO PÚBLICO (QR) AL CARGAR
+        // ONLOAD: Verificar modo público
         window.onload = async () => {
             const params = new URLSearchParams(window.location.search);
             const publicId = params.get('public_id');
-
             if (publicId) {
-                // Modo Auto-Registro
                 currentAlbergueId = publicId;
                 currentRole = 'public';
                 document.getElementById('login-screen').classList.add('hidden');
@@ -165,24 +175,24 @@
             }
         };
 
-        // --- NAVEGACIÓN SIMPLE ---
         window.mostrarCrear = () => {
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('create-screen').classList.remove('hidden');
         };
 
-        // --- FUNCIÓN 1: CREAR ALBERGUE ---
+        // --- 1. CREAR CON CAPACIDAD ---
         window.generarAlbergue = async () => {
             const adminCode = Math.random().toString(36).substring(2, 8).toUpperCase();
             const visitorCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+            const capacidad = document.getElementById('create-camas').value || 50;
 
             try {
-                const docRef = await addDoc(collection(db, "albergues"), {
+                await addDoc(collection(db, "albergues"), {
                     adminCode: adminCode,
                     visitorCode: visitorCode,
+                    capacidad: parseInt(capacidad),
                     fechaCreacion: new Date()
                 });
-
                 document.getElementById('create-screen').classList.add('hidden');
                 document.getElementById('codes-screen').classList.remove('hidden');
                 document.getElementById('new-admin-code').innerText = adminCode;
@@ -192,17 +202,15 @@
             }
         };
 
-        // --- FUNCIÓN 2: ENTRAR (LOGIN) ---
+        // --- 2. ENTRAR ---
         window.entrar = async () => {
             const code = document.getElementById('access-code').value.trim().toUpperCase();
             if (!code) return;
 
-            // Buscar Admin
             let q = query(collection(db, "albergues"), where("adminCode", "==", code));
             let snapshot = await getDocs(q);
             let role = 'admin';
 
-            // Buscar Visitante si no es Admin
             if (snapshot.empty) {
                 q = query(collection(db, "albergues"), where("visitorCode", "==", code));
                 snapshot = await getDocs(q);
@@ -219,29 +227,37 @@
             }
         };
 
-        // --- FUNCIÓN 3: DASHBOARD Y LISTENER EN TIEMPO REAL ---
+        // --- 3. DASHBOARD ---
         function iniciarDashboard() {
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('app-screen').classList.remove('hidden');
-            
-            const roleText = currentRole === 'admin' ? "ADMINISTRADOR" : "VISITANTE";
-            document.getElementById('role-display').innerText = "Panel: " + roleText;
+            document.getElementById('role-display').innerText = currentRole === 'admin' ? "MODO ADMINISTRADOR" : "MODO VISITA";
 
             if (currentRole === 'admin') {
                 document.getElementById('admin-tools').classList.remove('hidden');
+                document.getElementById('btn-edit-capacidad').classList.remove('hidden');
                 generarQR();
             }
 
-            // ESCUCHAR LA SUB-COLECCIÓN "PERSONAS"
+            // ESCUCHAR DATOS DEL ALBERGUE (Para cambios en capacidad)
+            onSnapshot(doc(db, "albergues", currentAlbergueId), (docSnap) => {
+                const data = docSnap.data();
+                totalCapacidad = data.capacidad || 0;
+                actualizarContadores();
+            });
+
+            // ESCUCHAR PERSONAS
             const personasRef = collection(db, "albergues", currentAlbergueId, "personas");
             const q = query(personasRef, orderBy("fechaRegistro", "desc"));
 
             onSnapshot(q, (snapshot) => {
                 const listaEspera = document.getElementById('list-espera');
                 const listaDentro = document.getElementById('list-dentro');
-                
                 listaEspera.innerHTML = "";
                 listaDentro.innerHTML = "";
+
+                let countEspera = 0;
+                let countIngresados = 0;
 
                 snapshot.forEach((docSnap) => {
                     const p = docSnap.data();
@@ -250,122 +266,138 @@
 
                     if (p.estado === 'espera') {
                         listaEspera.appendChild(card);
+                        countEspera++;
                     } else {
                         listaDentro.appendChild(card);
+                        countIngresados++;
                     }
                 });
+
+                document.getElementById('count-espera').innerText = `(${countEspera})`;
+                document.getElementById('count-ingresados').innerText = `(${countIngresados})`;
+                ocupacionActual = countIngresados;
+                actualizarContadores();
             });
         }
 
+        function actualizarContadores() {
+            document.getElementById('ocupacion-count').innerText = ocupacionActual;
+            document.getElementById('capacidad-total').innerText = totalCapacidad;
+            
+            const badge = document.getElementById('capacity-container');
+            if (ocupacionActual >= totalCapacidad) {
+                badge.classList.add('capacity-full');
+            } else {
+                badge.classList.remove('capacity-full');
+            }
+        }
+
+        // --- TARJETAS DE PERSONAS ---
         function crearTarjetaPersona(p, id) {
             const div = document.createElement('div');
             div.className = `person-card status-${p.estado}`;
             
-            let btnAction = "";
+            let contenidoDerecha = "";
             
-            // Solo el Admin ve los botones de acción
-            if (currentRole === 'admin') {
-                if (p.estado === 'espera') {
-                    btnAction = `<button class="success" style="width:auto; padding:5px 10px;" onclick="window.cambiarEstado('${id}', 'ingresado')">Ingresar ➡️</button>`;
+            if (p.estado === 'espera') {
+                if (currentRole === 'admin') {
+                    contenidoDerecha = `<button class="success" style="padding:5px 10px;" onclick="window.ingresarPersona('${id}')">Ingresar ➡️</button>`;
                 } else {
-                    // Opcional: Sacar del albergue (volver a esperar o salir)
-                    btnAction = `<span style="color:green;">✅</span>`; 
+                    contenidoDerecha = `<span style="color:#856404;">En cola</span>`;
                 }
+            } else {
+                // Ya está dentro
+                contenidoDerecha = `<strong>🛏️ ${p.cama || '?'}</strong>`;
             }
 
             div.innerHTML = `
                 <div>
                     <strong>${p.nombre}</strong> <br>
-                    <small>DNI: ${p.dni} | Nac: ${p.nacimiento}</small>
+                    <small>DNI: ${p.dni}</small>
                 </div>
-                <div>${btnAction}</div>
+                <div>${contenidoDerecha}</div>
             `;
             return div;
         }
 
-        // --- ACCIONES DE DATOS ---
+        // --- 4. ACCIONES LÓGICAS ---
 
-        // A. Guardar desde QR (Público)
+        // A. Ingresar Persona (Asignar Cama)
+        window.ingresarPersona = async (idPersona) => {
+            if (ocupacionActual >= totalCapacidad) {
+                if(!confirm("⚠️ ¡El albergue está LLENO! ¿Quieres forzar el ingreso?")) return;
+            }
+
+            // Pedir número de cama
+            const cama = prompt(`Asignar Cama (Total disponibles: ${totalCapacidad - ocupacionActual}) \nIntroduce número o identificador:`);
+            
+            if (cama) {
+                const personaRef = doc(db, "albergues", currentAlbergueId, "personas", idPersona);
+                try {
+                    await updateDoc(personaRef, {
+                        estado: 'ingresado',
+                        cama: cama,
+                        fechaIngreso: new Date()
+                    });
+                } catch (e) {
+                    alert("Error: " + e.message);
+                }
+            }
+        };
+
+        // B. Editar Capacidad Total
+        window.editarCapacidad = async () => {
+            const nuevaCap = prompt("Nuevo número total de camas:", totalCapacidad);
+            if (nuevaCap && !isNaN(nuevaCap)) {
+                try {
+                    await updateDoc(doc(db, "albergues", currentAlbergueId), {
+                        capacidad: parseInt(nuevaCap)
+                    });
+                } catch (e) {
+                    alert("Error: " + e.message);
+                }
+            }
+        };
+
+        // C. Funciones de Registro
         window.publicoGuardarPrefiliacion = async () => {
             const nombre = document.getElementById('public-nombre').value;
             const dni = document.getElementById('public-dni').value;
             const nac = document.getElementById('public-nacimiento').value;
-
-            if (!nombre || !dni) return alert("Rellena nombre y DNI");
+            if (!nombre || !dni) return alert("Falta nombre o DNI");
 
             try {
                 await addDoc(collection(db, "albergues", currentAlbergueId, "personas"), {
-                    nombre: nombre,
-                    dni: dni,
-                    nacimiento: nac,
-                    estado: 'espera', // Por defecto a sala de espera
-                    origen: 'qr',
-                    fechaRegistro: new Date()
+                    nombre, dni, nacimiento: nac, estado: 'espera', origen: 'qr', fechaRegistro: new Date()
                 });
-                alert("¡Datos enviados! Dirígete al mostrador de ingreso.");
-                // Limpiar formulario
+                alert("Registrado. Espere su turno.");
                 document.getElementById('public-nombre').value = "";
                 document.getElementById('public-dni').value = "";
-            } catch (e) {
-                alert("Error: " + e.message);
-            }
+            } catch (e) { alert("Error: " + e.message); }
         };
 
-        // B. Guardar desde Panel Admin (Manual)
         window.adminPrefiliarManual = async () => {
             const nombre = document.getElementById('admin-nombre').value;
             const dni = document.getElementById('admin-dni').value;
             const nac = document.getElementById('admin-nacimiento').value;
-
             if (!nombre) return alert("Falta nombre");
 
             try {
                 await addDoc(collection(db, "albergues", currentAlbergueId, "personas"), {
-                    nombre: nombre,
-                    dni: dni,
-                    nacimiento: nac,
-                    estado: 'espera',
-                    origen: 'manual',
-                    fechaRegistro: new Date()
+                    nombre, dni, nacimiento: nac, estado: 'espera', origen: 'manual', fechaRegistro: new Date()
                 });
-                // Limpiar campos
                 document.getElementById('admin-nombre').value = "";
                 document.getElementById('admin-dni').value = "";
-            } catch (e) {
-                alert("Error: " + e.message);
-            }
+            } catch (e) { alert("Error: " + e.message); }
         };
 
-        // C. Cambiar Estado (Filiación)
-        window.cambiarEstado = async (idPersona, nuevoEstado) => {
-            const personaRef = doc(db, "albergues", currentAlbergueId, "personas", idPersona);
-            try {
-                await updateDoc(personaRef, {
-                    estado: nuevoEstado,
-                    fechaIngreso: new Date()
-                });
-            } catch (e) {
-                alert("Error al cambiar estado: " + e.message);
-            }
-        };
-
-        // --- ÚTILES ---
         function generarQR() {
-            // La URL actual + el ID del albergue para acceso público
             const urlPublica = window.location.href.split('?')[0] + `?public_id=${currentAlbergueId}`;
-            
             document.getElementById("qrcode").innerHTML = "";
-            new QRCode(document.getElementById("qrcode"), {
-                text: urlPublica,
-                width: 128,
-                height: 128
-            });
+            new QRCode(document.getElementById("qrcode"), { text: urlPublica, width: 128, height: 128 });
         }
-        
-        window.exportarExcel = () => {
-             // Lógica simplificada de exportación... (se puede ampliar)
-             alert("Función de exportar lista disponible próximamente");
-        };
+
+        window.exportarExcel = () => { alert("Próximamente"); };
     </script>
 </body>
 </html>

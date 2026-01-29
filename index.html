@@ -3,253 +3,369 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Albergue Temporal</title>
+    <title>Gestión de Albergue - Filiación</title>
     <style>
-        body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background-color: #f4f4f9; }
-        .card { background: white; padding: 20px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        h1, h2 { color: #333; }
-        input, button, textarea { width: 100%; padding: 10px; margin-top: 10px; box-sizing: border-box; }
-        button { background-color: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; background-color: #f0f2f5; color: #333; }
+        .card { background: white; padding: 25px; margin-bottom: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        h1, h2, h3 { color: #1a1a1a; margin-top: 0; }
+        input, button, select { width: 100%; padding: 12px; margin-top: 8px; margin-bottom: 16px; box-sizing: border-box; border-radius: 6px; border: 1px solid #ccc; font-size: 16px; }
+        
+        /* Botones */
+        button { background-color: #007bff; color: white; border: none; cursor: pointer; font-weight: 600; transition: background 0.2s; }
         button:hover { background-color: #0056b3; }
         button.secondary { background-color: #6c757d; }
+        button.secondary:hover { background-color: #5a6268; }
         button.success { background-color: #28a745; }
-        .hidden { display: none; }
-        .status-box { padding: 10px; background: #e9ecef; border-radius: 4px; margin-top: 10px; font-family: monospace; }
-        label { font-weight: bold; display: block; margin-top: 15px; }
-        .rojo { color: red; }
+        button.success:hover { background-color: #218838; }
+        button.warning { background-color: #ffc107; color: #333; }
+        button.danger { background-color: #dc3545; }
+        
+        .hidden { display: none !important; }
+        .row { display: flex; gap: 10px; }
+        .col { flex: 1; }
+
+        /* Tablas y Listas */
+        .person-card { border-left: 5px solid #ccc; padding: 10px 15px; background: #f8f9fa; margin-bottom: 10px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; }
+        .status-espera { border-left-color: #ffc107; }
+        .status-ingresado { border-left-color: #28a745; }
+        
+        .badge { padding: 4px 8px; border-radius: 12px; font-size: 0.8em; font-weight: bold; text-transform: uppercase; }
+        .badge-espera { background: #fff3cd; color: #856404; }
+        .badge-ingresado { background: #d4edda; color: #155724; }
+
+        /* QR Area */
+        #qr-code-container { text-align: center; padding: 20px; background: white; margin-top: 20px; display: flex; flex-direction: column; align-items: center; }
+        
+        label { font-weight: 600; font-size: 0.9em; color: #555; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
 
     <div id="login-screen" class="card">
-        <h1>🏥 Acceso al Albergue</h1>
-        <p>Introduce tu código de acceso (Admin o Visitante) para entrar, o crea un nuevo albergue.</p>
-        
-        <input type="text" id="access-code" placeholder="Introduce el código aquí...">
-        <button onclick="entrar()">Entrar al Albergue</button>
-        
+        <h1>🏥 Gestión de Albergue</h1>
+        <p>Introduce tu código de acceso.</p>
+        <input type="text" id="access-code" placeholder="Código Admin o Visita">
+        <button onclick="entrar()">Entrar</button>
         <hr>
         <button class="secondary" onclick="mostrarCrear()">Crear Nuevo Albergue</button>
     </div>
 
     <div id="create-screen" class="card hidden">
         <h2>Crear Nuevo Albergue</h2>
-        <p>Se generarán dos códigos automáticamente.</p>
-        <button class="success" onclick="generarAlbergue()">Confirmar y Generar Códigos</button>
-        <button class="secondary" onclick="volverInicio()">Cancelar</button>
+        <button class="success" onclick="generarAlbergue()">Confirmar Creación</button>
+        <button class="secondary" onclick="location.reload()">Cancelar</button>
     </div>
 
     <div id="codes-screen" class="card hidden">
         <h2 style="color: green;">¡Albergue Creado!</h2>
-        <p>Guarda estos códigos muy bien. No se volverán a mostrar.</p>
-        <div class="status-box">
-            <p><strong>🔑 Código ADMIN (Escritura):</strong> <span id="new-admin-code"></span></p>
-            <p><strong>👁️ Código VISITA (Solo Lectura):</strong> <span id="new-visitor-code"></span></p>
+        <div style="background:#e9ecef; padding:15px; border-radius:8px;">
+            <p><strong>🔑 ADMIN (Escritura):</strong> <span id="new-admin-code" style="font-family:monospace; font-size:1.2em;"></span></p>
+            <p><strong>👁️ VISITA (Lectura):</strong> <span id="new-visitor-code" style="font-family:monospace; font-size:1.2em;"></span></p>
         </div>
-        <p class="rojo">Copia los códigos antes de continuar.</p>
-        <button onclick="location.reload()">Volver al Inicio</button>
+        <p style="color:red; font-size:0.9em;">Anota los códigos. No se volverán a mostrar.</p>
+        <button onclick="location.reload()">Ir al Login</button>
+    </div>
+
+    <div id="public-register-screen" class="card hidden">
+        <h2 style="color: #007bff;">📝 Auto-Registro (Prefiliación)</h2>
+        <p>Rellena tus datos para entrar en la sala de espera.</p>
+        
+        <label>Nombre Completo:</label>
+        <input type="text" id="public-nombre" placeholder="Nombre y Apellidos">
+        
+        <label>DNI / Pasaporte:</label>
+        <input type="text" id="public-dni" placeholder="Identificación">
+        
+        <label>Fecha de Nacimiento:</label>
+        <input type="date" id="public-nacimiento">
+
+        <button class="success" onclick="publicoGuardarPrefiliacion()">✅ Enviar mis datos</button>
     </div>
 
     <div id="app-screen" class="card hidden">
         <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h2 id="albergue-title">Panel de Control</h2>
-            <button onclick="location.reload()" style="width: auto; background: #dc3545;">Salir</button>
-        </div>
-        <p>Conectado como: <strong id="user-role"></strong></p>
-
-        <div id="form-container">
-            <label>Ocupación Actual / Camas Libres:</label>
-            <input type="text" id="dato-ocupacion" placeholder="Ej: 10 libres de 50">
-
-            <label>Novedades / Bitácora:</label>
-            <textarea id="dato-bitacora" rows="4" placeholder="Escribe aquí las novedades..."></textarea>
-            
-            <label>Necesidades Urgentes:</label>
-            <input type="text" id="dato-necesidades" placeholder="Ej: Faltan mantas, agua...">
-            
-            <button id="btn-guardar" onclick="guardarDatos()" class="success">💾 Guardar Cambios</button>
+            <h3 id="role-display">Panel de Control</h3>
+            <button onclick="location.href = window.location.pathname" style="width: auto; background: #dc3545; padding: 5px 15px;">Salir</button>
         </div>
 
-        <div id="read-only-container" class="hidden">
-            <h3>Estado Actual:</h3>
-            <div class="status-box" id="display-data">Cargando datos...</div>
+        <div id="admin-tools" class="hidden">
+            <details>
+                <summary style="cursor:pointer; color:#007bff; font-weight:bold; margin-bottom:10px;">📲 Ver QR para Auto-Registro</summary>
+                <div id="qr-code-container" class="card">
+                    <div id="qrcode"></div>
+                    <p style="font-size: 0.9em; margin-top: 10px;">Muestra este QR a las personas para que se registren ellas mismas con su móvil.</p>
+                </div>
+            </details>
+            <hr>
+            
+            <h3>➕ Prefiliación Manual</h3>
+            <div class="row">
+                <input type="text" id="admin-nombre" placeholder="Nombre" class="col">
+                <input type="text" id="admin-dni" placeholder="DNI" class="col">
+            </div>
+            <div class="row">
+                <input type="date" id="admin-nacimiento" class="col">
+                <button onclick="adminPrefiliarManual()" class="col success">Añadir a Espera</button>
+            </div>
         </div>
 
         <hr>
-        <button onclick="exportarExcel()" style="background-color: #217346;">📊 Descargar Informe Excel</button>
+
+        <div class="row">
+            <div class="col">
+                <h3 style="color:#e67e22;">⏳ Sala de Espera (Prefiliados)</h3>
+                <div id="list-espera">Cargando...</div>
+            </div>
+
+            <div class="col">
+                <h3 style="color:#28a745;">✅ Dentro del Albergue</h3>
+                <div id="list-dentro">Cargando...</div>
+            </div>
+        </div>
+        
+        <br>
+        <button onclick="exportarExcel()" class="secondary">📊 Descargar Excel</button>
     </div>
 
     <script type="module">
-        // Importamos las funciones necesarias de Firebase v9
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, query, where, getDocs, doc, updateDoc, onSnapshot } 
+        import { getFirestore, collection, addDoc, query, where, getDocs, doc, updateDoc, onSnapshot, orderBy } 
         from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
+        // --- TU CONFIGURACIÓN (YA INTEGRADA) ---
         const firebaseConfig = {
-  apiKey: "AIzaSyAzfEMwMd6M1VgvV0tJn7RS63RJghLE5UI",
-  authDomain: "albergues-temporales.firebaseapp.com",
-  projectId: "albergues-temporales",
-  storageBucket: "albergues-temporales.firebasestorage.app",
-  messagingSenderId: "489999184108",
-  appId: "1:489999184108:web:32b9b580727f83158075c9"
-};
-        // Inicializar Firebase
+            apiKey: "AIzaSyAzfEMwMd6M1VgvV0tJn7RS63RJghLE5UI",
+            authDomain: "albergues-temporales.firebaseapp.com",
+            projectId: "albergues-temporales",
+            storageBucket: "albergues-temporales.firebasestorage.app",
+            messagingSenderId: "489999184108",
+            appId: "1:489999184108:web:32b9b580727f83158075c9"
+        };
+
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Variables globales
-        let currentDocId = null;
-        let currentRole = null; // 'admin' o 'visitor'
+        // Variables de estado
+        let currentAlbergueId = null;
+        let currentRole = null; // 'admin', 'visitor', 'public'
 
-        // Funciones para moverse por las pantallas
+        // 1. DETECTAR SI ES REGISTRO PÚBLICO (QR) AL CARGAR
+        window.onload = async () => {
+            const params = new URLSearchParams(window.location.search);
+            const publicId = params.get('public_id');
+
+            if (publicId) {
+                // Modo Auto-Registro
+                currentAlbergueId = publicId;
+                currentRole = 'public';
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('public-register-screen').classList.remove('hidden');
+            }
+        };
+
+        // --- NAVEGACIÓN SIMPLE ---
         window.mostrarCrear = () => {
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('create-screen').classList.remove('hidden');
         };
 
-        window.volverInicio = () => {
-            document.getElementById('create-screen').classList.add('hidden');
-            document.getElementById('login-screen').classList.remove('hidden');
-        };
-
-        // --- 1. FUNCIÓN PARA CREAR ALBERGUE ---
+        // --- FUNCIÓN 1: CREAR ALBERGUE ---
         window.generarAlbergue = async () => {
             const adminCode = Math.random().toString(36).substring(2, 8).toUpperCase();
             const visitorCode = Math.random().toString(36).substring(2, 8).toUpperCase();
 
             try {
-                // Guardamos en Firebase
                 const docRef = await addDoc(collection(db, "albergues"), {
                     adminCode: adminCode,
                     visitorCode: visitorCode,
-                    ocupacion: "Sin datos",
-                    bitacora: "Albergue iniciado.",
-                    necesidades: "Ninguna por ahora",
                     fechaCreacion: new Date()
                 });
 
-                // Mostramos los códigos al usuario
                 document.getElementById('create-screen').classList.add('hidden');
                 document.getElementById('codes-screen').classList.remove('hidden');
                 document.getElementById('new-admin-code').innerText = adminCode;
                 document.getElementById('new-visitor-code').innerText = visitorCode;
-
             } catch (e) {
-                alert("Error al crear: " + e.message);
-                console.error(e);
+                alert("Error: " + e.message);
             }
         };
 
-        // --- 2. FUNCIÓN PARA ENTRAR (LOGIN) ---
+        // --- FUNCIÓN 2: ENTRAR (LOGIN) ---
         window.entrar = async () => {
             const code = document.getElementById('access-code').value.trim().toUpperCase();
-            if (!code) return alert("Escribe un código");
+            if (!code) return;
 
-            // Buscamos si es Admin
-            const qAdmin = query(collection(db, "albergues"), where("adminCode", "==", code));
-            const snapshotAdmin = await getDocs(qAdmin);
+            // Buscar Admin
+            let q = query(collection(db, "albergues"), where("adminCode", "==", code));
+            let snapshot = await getDocs(q);
+            let role = 'admin';
 
-            if (!snapshotAdmin.empty) {
-                configurarSesion(snapshotAdmin.docs[0], 'admin');
-                return;
+            // Buscar Visitante si no es Admin
+            if (snapshot.empty) {
+                q = query(collection(db, "albergues"), where("visitorCode", "==", code));
+                snapshot = await getDocs(q);
+                role = 'visitor';
             }
 
-            // Si no es Admin, buscamos si es Visitante
-            const qVisitor = query(collection(db, "albergues"), where("visitorCode", "==", code));
-            const snapshotVisitor = await getDocs(qVisitor);
-
-            if (!snapshotVisitor.empty) {
-                configurarSesion(snapshotVisitor.docs[0], 'visitor');
-                return;
+            if (!snapshot.empty) {
+                const docSnap = snapshot.docs[0];
+                currentAlbergueId = docSnap.id;
+                currentRole = role;
+                iniciarDashboard();
+            } else {
+                alert("Código incorrecto");
             }
-
-            alert("Código no válido. Inténtalo de nuevo.");
         };
 
-        // Configura la pantalla según el rol
-        function configurarSesion(documento, rol) {
-            currentDocId = documento.id;
-            currentRole = rol;
-
+        // --- FUNCIÓN 3: DASHBOARD Y LISTENER EN TIEMPO REAL ---
+        function iniciarDashboard() {
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('app-screen').classList.remove('hidden');
-            document.getElementById('user-role').innerText = rol === 'admin' ? "ADMINISTRADOR (Edición)" : "VISITANTE (Solo lectura)";
             
-            // Si es visitante, bloqueamos la edición visualmente
-            if (rol === 'visitor') {
-                document.getElementById('form-container').classList.add('hidden');
-                document.getElementById('read-only-container').classList.remove('hidden');
+            const roleText = currentRole === 'admin' ? "ADMINISTRADOR" : "VISITANTE";
+            document.getElementById('role-display').innerText = "Panel: " + roleText;
+
+            if (currentRole === 'admin') {
+                document.getElementById('admin-tools').classList.remove('hidden');
+                generarQR();
             }
 
-            // ESCUCHAR CAMBIOS EN TIEMPO REAL
-            // Esto sustituye a MQTT. Cuando la base de datos cambie, esto se ejecuta solo.
-            onSnapshot(doc(db, "albergues", currentDocId), (doc) => {
-                const data = doc.data();
-                actualizarInterfaz(data);
+            // ESCUCHAR LA SUB-COLECCIÓN "PERSONAS"
+            const personasRef = collection(db, "albergues", currentAlbergueId, "personas");
+            const q = query(personasRef, orderBy("fechaRegistro", "desc"));
+
+            onSnapshot(q, (snapshot) => {
+                const listaEspera = document.getElementById('list-espera');
+                const listaDentro = document.getElementById('list-dentro');
+                
+                listaEspera.innerHTML = "";
+                listaDentro.innerHTML = "";
+
+                snapshot.forEach((docSnap) => {
+                    const p = docSnap.data();
+                    const pId = docSnap.id;
+                    const card = crearTarjetaPersona(p, pId);
+
+                    if (p.estado === 'espera') {
+                        listaEspera.appendChild(card);
+                    } else {
+                        listaDentro.appendChild(card);
+                    }
+                });
             });
         }
 
-        function actualizarInterfaz(data) {
-            // Actualizar campos de input (para admin)
-            document.getElementById('dato-ocupacion').value = data.ocupacion || "";
-            document.getElementById('dato-bitacora').value = data.bitacora || "";
-            document.getElementById('dato-necesidades').value = data.necesidades || "";
+        function crearTarjetaPersona(p, id) {
+            const div = document.createElement('div');
+            div.className = `person-card status-${p.estado}`;
+            
+            let btnAction = "";
+            
+            // Solo el Admin ve los botones de acción
+            if (currentRole === 'admin') {
+                if (p.estado === 'espera') {
+                    btnAction = `<button class="success" style="width:auto; padding:5px 10px;" onclick="window.cambiarEstado('${id}', 'ingresado')">Ingresar ➡️</button>`;
+                } else {
+                    // Opcional: Sacar del albergue (volver a esperar o salir)
+                    btnAction = `<span style="color:green;">✅</span>`; 
+                }
+            }
 
-            // Actualizar vista de solo lectura (para visitas y exportación)
-            const texto = `
-                🏥 OCUPACIÓN: ${data.ocupacion}
-                📝 BITÁCORA: ${data.bitacora}
-                ⚠️ NECESIDADES: ${data.necesidades}
+            div.innerHTML = `
+                <div>
+                    <strong>${p.nombre}</strong> <br>
+                    <small>DNI: ${p.dni} | Nac: ${p.nacimiento}</small>
+                </div>
+                <div>${btnAction}</div>
             `;
-            document.getElementById('display-data').innerText = texto;
+            return div;
         }
 
-        // --- 3. GUARDAR DATOS (SOLO ADMIN) ---
-        window.guardarDatos = async () => {
-            if (currentRole !== 'admin') return alert("No tienes permisos.");
+        // --- ACCIONES DE DATOS ---
 
-            const ocupacion = document.getElementById('dato-ocupacion').value;
-            const bitacora = document.getElementById('dato-bitacora').value;
-            const necesidades = document.getElementById('dato-necesidades').value;
+        // A. Guardar desde QR (Público)
+        window.publicoGuardarPrefiliacion = async () => {
+            const nombre = document.getElementById('public-nombre').value;
+            const dni = document.getElementById('public-dni').value;
+            const nac = document.getElementById('public-nacimiento').value;
+
+            if (!nombre || !dni) return alert("Rellena nombre y DNI");
 
             try {
-                const albergueRef = doc(db, "albergues", currentDocId);
-                await updateDoc(albergueRef, {
-                    ocupacion: ocupacion,
-                    bitacora: bitacora,
-                    necesidades: necesidades,
-                    ultimaActualizacion: new Date()
+                await addDoc(collection(db, "albergues", currentAlbergueId, "personas"), {
+                    nombre: nombre,
+                    dni: dni,
+                    nacimiento: nac,
+                    estado: 'espera', // Por defecto a sala de espera
+                    origen: 'qr',
+                    fechaRegistro: new Date()
                 });
-                alert("Datos actualizados correctamente ✅");
+                alert("¡Datos enviados! Dirígete al mostrador de ingreso.");
+                // Limpiar formulario
+                document.getElementById('public-nombre').value = "";
+                document.getElementById('public-dni').value = "";
             } catch (e) {
-                alert("Error al guardar: " + e.message);
+                alert("Error: " + e.message);
             }
         };
 
-        // --- 4. EXPORTAR A EXCEL ---
-        window.exportarExcel = () => {
-            const ocupacion = document.getElementById('dato-ocupacion').value;
-            const bitacora = document.getElementById('dato-bitacora').value;
-            const necesidades = document.getElementById('dato-necesidades').value;
-            const rol = document.getElementById('user-role').innerText;
+        // B. Guardar desde Panel Admin (Manual)
+        window.adminPrefiliarManual = async () => {
+            const nombre = document.getElementById('admin-nombre').value;
+            const dni = document.getElementById('admin-dni').value;
+            const nac = document.getElementById('admin-nacimiento').value;
 
-            const datos = [
-                ["Informe de Albergue", ""],
-                ["Fecha", new Date().toLocaleString()],
-                ["Generado por", rol],
-                ["", ""],
-                ["OCUPACIÓN", ocupacion],
-                ["BITÁCORA", bitacora],
-                ["NECESIDADES", necesidades]
-            ];
+            if (!nombre) return alert("Falta nombre");
 
-            const wb = XLSX.utils.book_new();
-            const ws = XLSX.utils.aoa_to_sheet(datos);
-            XLSX.utils.book_append_sheet(wb, ws, "Estado Albergue");
-            XLSX.writeFile(wb, "Estado_Albergue.xlsx");
+            try {
+                await addDoc(collection(db, "albergues", currentAlbergueId, "personas"), {
+                    nombre: nombre,
+                    dni: dni,
+                    nacimiento: nac,
+                    estado: 'espera',
+                    origen: 'manual',
+                    fechaRegistro: new Date()
+                });
+                // Limpiar campos
+                document.getElementById('admin-nombre').value = "";
+                document.getElementById('admin-dni').value = "";
+            } catch (e) {
+                alert("Error: " + e.message);
+            }
         };
 
+        // C. Cambiar Estado (Filiación)
+        window.cambiarEstado = async (idPersona, nuevoEstado) => {
+            const personaRef = doc(db, "albergues", currentAlbergueId, "personas", idPersona);
+            try {
+                await updateDoc(personaRef, {
+                    estado: nuevoEstado,
+                    fechaIngreso: new Date()
+                });
+            } catch (e) {
+                alert("Error al cambiar estado: " + e.message);
+            }
+        };
+
+        // --- ÚTILES ---
+        function generarQR() {
+            // La URL actual + el ID del albergue para acceso público
+            const urlPublica = window.location.href.split('?')[0] + `?public_id=${currentAlbergueId}`;
+            
+            document.getElementById("qrcode").innerHTML = "";
+            new QRCode(document.getElementById("qrcode"), {
+                text: urlPublica,
+                width: 128,
+                height: 128
+            });
+        }
+        
+        window.exportarExcel = () => {
+             // Lógica simplificada de exportación... (se puede ampliar)
+             alert("Función de exportar lista disponible próximamente");
+        };
     </script>
 </body>
 </html>

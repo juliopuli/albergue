@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión Albergue - V.3.3.1 (Limpieza UI)</title>
+    <title>Gestión Albergue - V.3.4.0 (Menores y Diseño)</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; background-color: #f4f6f8; color: #333; }
         .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         h1, h2, h3 { color: #2c3e50; margin-top: 0; }
         
-        /* Inputs mejorados */
+        /* Inputs */
         input, button, select { width: 100%; padding: 12px; margin-top: 5px; margin-bottom: 15px; box-sizing: border-box; border-radius: 8px; border: 1px solid #dfe6e9; font-size: 16px; }
         input:focus, select:focus { border-color: #3498db; outline: none; box-shadow: 0 0 5px rgba(52,152,219,0.3); }
         .input-error { border-color: #e74c3c !important; background-color: #fdf0ed; }
@@ -24,63 +24,40 @@
         button.danger { background-color: #e74c3c; }
         button.warning { background-color: #f39c12; color: white; }
         
+        /* Botones en línea (Horizontal) */
+        .btn-group-horizontal { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px; }
+        .btn-group-horizontal button { flex: 1; min-width: 120px; margin-top: 0; }
+
         .hidden { display: none !important; }
         .row { display: flex; gap: 15px; flex-wrap: wrap; }
         .col { flex: 1; min-width: 200px; } 
         
-        /* Dashboard */
+        /* Pestañas (Fixed) */
+        .tabs { display: flex; background: #e9ecef; padding: 5px; border-radius: 10px; margin-bottom: 20px; gap: 5px; }
+        .tab-btn { flex: 1; padding: 12px; cursor: pointer; font-weight: bold; color: #666; border: none; background: transparent; border-radius: 8px; margin: 0; transition: all 0.2s ease; }
+        .tab-btn.active { background-color: #ffffff; color: #3498db; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .tab-content { display: none; animation: fadeIn 0.3s; }
+        .tab-content.active { display: block; }
+
+        /* Dashboard Grid */
         .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 20px; }
         .dash-btn { background: white; padding: 30px; border-radius: 15px; text-align: center; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.05); border: 2px solid transparent; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; }
         .dash-btn:hover { transform: translateY(-5px); border-color: #3498db; }
         .dash-icon { font-size: 3em; margin-bottom: 15px; }
         .disabled-btn { opacity: 0.5; cursor: not-allowed; pointer-events: none; filter: grayscale(1); }
 
-        /* --- NUEVO ESTILO DE PESTAÑAS (Pill Style) --- */
-        .tabs { 
-            display: flex; 
-            background: #e9ecef; /* Fondo gris para el contenedor */
-            padding: 5px; 
-            border-radius: 10px; 
-            margin-bottom: 20px;
-            gap: 5px;
-        }
-        .tab-btn { 
-            flex: 1;
-            padding: 12px; 
-            cursor: pointer; 
-            font-weight: bold; 
-            color: #666; 
-            border: none;
-            background: transparent;
-            border-radius: 8px; 
-            margin: 0;
-            transition: all 0.2s ease;
-        }
-        .tab-btn:hover { background-color: rgba(255,255,255,0.5); }
-        
-        /* Estado Activo: Blanco brillante y sombra */
-        .tab-btn.active { 
-            background-color: #ffffff; 
-            color: #3498db; 
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        
-        .tab-content { display: none; animation: fadeIn 0.3s; }
-        .tab-content.active { display: block; }
-
-        /* Search Results */
+        /* Search & Lists */
         .search-results { max-height: 200px; overflow-y: auto; border: 1px solid #eee; margin-top: -16px; margin-bottom: 20px; background: white; display: none; }
         .search-item { padding: 10px; border-bottom: 1px solid #f0f0f0; cursor: pointer; }
         .search-item:hover { background: #eef2f7; }
-
-        /* List & Badges */
         .list-item { background: white; border: 1px solid #eee; padding: 15px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        
+        /* Badges */
         .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.8em; font-weight: bold; text-transform: uppercase; }
+        .badge-active { background: #d4edda; color: #155724; }
         .role-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.8em; font-weight: bold; text-transform: uppercase; margin-left: 10px; }
-        .role-super_admin { background: #8e44ad; color: white; }
-        .role-admin { background: #c0392b; color: white; }
-        .role-avanzado { background: #f39c12; color: white; }
-        .role-medio { background: #16a085; color: white; }
+        .role-super_admin { background: #8e44ad; color: white; } .role-admin { background: #c0392b; color: white; }
+        .role-avanzado { background: #f39c12; color: white; } .role-medio { background: #16a085; color: white; }
 
         /* Bed Grid */
         .bed-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 10px; margin-top: 20px; }
@@ -92,7 +69,6 @@
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; justify-content: center; align-items: center; }
         .modal-content { background: white; width: 90%; max-width: 600px; padding: 30px; border-radius: 12px; max-height: 85vh; overflow-y: auto; }
         .version-tag { position: fixed; bottom: 10px; right: 10px; background: rgba(0, 0, 0, 0.05); color: #999; padding: 5px 10px; border-radius: 5px; font-size: 0.75em; pointer-events: none; font-family: monospace; }
-        
         .success-screen { text-align: center; padding: 50px 20px; }
         .success-icon { font-size: 4em; color: #2ecc71; margin-bottom: 20px; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -102,7 +78,7 @@
 </head>
 <body>
 
-    <div class="version-tag">V.3.3.1 (Limpieza)</div>
+    <div class="version-tag">V.3.4.0 (Menores)</div>
 
     <div id="login-screen" style="max-width: 400px; margin: 50px auto;" class="card">
         <h1 style="text-align:center;">🔐 Acceso</h1>
@@ -153,8 +129,8 @@
         </div>
 
         <div class="tabs">
-            <button class="tab-btn active" onclick="cambiarPestana('prefiliacion')">📁 Prefiliación (Manual)</button>
-            <button class="tab-btn" onclick="cambiarPestana('filiacion')">📁 Filiación (Gestión)</button>
+            <button id="btn-tab-pref" class="tab-btn active" onclick="cambiarPestana('prefiliacion')">📁 Prefiliación (Manual)</button>
+            <button id="btn-tab-fil" class="tab-btn" onclick="cambiarPestana('filiacion')">📁 Filiación (Gestión)</button>
         </div>
 
         <div id="tab-prefiliacion" class="tab-content active">
@@ -170,10 +146,11 @@
                     <div class="row">
                         <div class="col">
                             <label>Tipo Documento:</label>
-                            <select id="man-tipo-doc" onchange="resetValidation('man')">
+                            <select id="man-tipo-doc" onchange="verificarMenor('man')">
                                 <option value="DNI">DNI</option>
                                 <option value="NIE">NIE</option>
                                 <option value="PASAPORTE">Pasaporte</option>
+                                <option value="MENOR">MENOR DE EDAD (Sin DNI)</option>
                             </select>
                         </div>
                         <div class="col">
@@ -184,13 +161,11 @@
                     </div>
                     <div class="row">
                         <div class="col">
-                            <label>Fecha Nacimiento:</label>
-                            <input type="tel" id="man-fecha" placeholder="DD/MM/AAAA" maxlength="10" oninput="formatearFecha(this)">
+                            <label>Fecha Nacimiento (DD/MM/AAAA):</label>
+                            <input type="tel" id="man-fecha" placeholder="Ej: 31/12/2010" maxlength="10" oninput="formatearFecha(this)" onblur="validarEdad('man')">
+                            <div id="man-fecha-error" class="error-msg">Error en edad/fecha</div>
                         </div>
-                        <div class="col">
-                            <label>Teléfono:</label>
-                            <input type="tel" id="man-tel">
-                        </div>
+                        <div class="col"><label>Teléfono:</label><input type="tel" id="man-tel"></div>
                     </div>
                     <button class="success" onclick="adminPrefiliarManual()">Guardar en Prefiliación</button>
                 </div>
@@ -224,7 +199,10 @@
                 <div class="row">
                     <div class="col">
                         <label>Tipo Doc:</label>
-                        <select id="edit-tipo-doc"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option></select>
+                        <select id="edit-tipo-doc" onchange="verificarMenor('edit')">
+                            <option value="DNI">DNI</option><option value="NIE">NIE</option>
+                            <option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR DE EDAD</option>
+                        </select>
                     </div>
                     <div class="col">
                         <label>Num. Doc:</label>
@@ -233,13 +211,13 @@
                     </div>
                 </div>
                 <div class="row">
-                    <div class="col"><label>F. Nac (DD/MM/AAAA):</label><input type="tel" id="edit-fecha" oninput="formatearFecha(this)" maxlength="10"></div>
+                    <div class="col"><label>F. Nac:</label><input type="tel" id="edit-fecha" oninput="formatearFecha(this)" maxlength="10" onblur="validarEdad('edit')"><div id="edit-fecha-error" class="error-msg">Error</div></div>
                     <div class="col"><label>Teléfono:</label><input type="tel" id="edit-tel"></div>
                 </div>
 
-                <div class="row" style="margin-top:10px;">
+                <div class="btn-group-horizontal">
                     <button id="btn-asignar-cama" class="success" onclick="abrirSeleccionCama()">🛏️ Asignar Cama</button>
-                    <button id="btn-guardar-cambios" class="primary" onclick="guardarCambiosPersona()">💾 Guardar Datos</button>
+                    <button id="btn-guardar-cambios" class="secondary" onclick="guardarCambiosPersona()">💾 Guardar Datos</button>
                     <button id="btn-liberar-cama" class="warning hidden" onclick="liberarCamaMantener()">🛌 Liberar Cama</button>
                     <button id="btn-regresar-pref" class="danger hidden" onclick="regresarPrefiliacion()">🔙 A Prefiliación</button>
                 </div>
@@ -258,11 +236,16 @@
                 <div class="col"><label>Segundo Apellido:</label><input type="text" id="pub-ap2"></div>
             </div>
             <div class="row">
-                <div class="col"><label>Documento:</label><select id="pub-tipo-doc" onchange="resetValidation('pub')"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option></select></div>
-                <div class="col"><label>Número:</label><input type="text" id="pub-doc-num" onblur="validarDocumento('pub')"><div id="pub-doc-error" class="error-msg">Incorrecto</div></div>
+                <div class="col"><label>Documento:</label>
+                    <select id="pub-tipo-doc" onchange="verificarMenor('pub')">
+                        <option value="DNI">DNI</option><option value="NIE">NIE</option>
+                        <option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR DE EDAD</option>
+                    </select>
+                </div>
+                <div class="col"><label>Número:</label><input type="text" id="pub-doc-num" onblur="validarDocumento('pub')"><div id="pub-doc-error" class="error-msg">Inválido</div></div>
             </div>
             <div class="row">
-                <div class="col"><label>F. Nacimiento:</label><input type="tel" id="pub-fecha" placeholder="DD/MM/AAAA" maxlength="10" oninput="formatearFecha(this)"></div>
+                <div class="col"><label>F. Nacimiento:</label><input type="tel" id="pub-fecha" placeholder="DD/MM/AAAA" maxlength="10" oninput="formatearFecha(this)" onblur="validarEdad('pub')"><div id="pub-fecha-error" class="error-msg">Error</div></div>
                 <div class="col"><label>Teléfono:</label><input type="tel" id="pub-tel"></div>
             </div>
             <button class="success" style="width:100%; padding:15px; font-size:1.1em;" onclick="publicoGuardarPrefiliacion()">✅ ENVIAR MIS DATOS</button>
@@ -298,37 +281,68 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        let currentUserData = null;
-        let currentAlbergueId = null;
-        let totalCapacidad = 0;
-        let ocupacionActual = 0;
-        let camasOcupadas = {};
-        let listaPersonasCache = [];
+        let currentUserData = null, currentAlbergueId = null, totalCapacidad = 0, ocupacionActual = 0, camasOcupadas = {}, listaPersonasCache = [];
         let unsubscribeUsers, unsubscribeAlberguesActivos, unsubscribeAlberguesMto, unsubscribeDetalleAlbergue, unsubscribePersonas;
+        window.personaSeleccionadaId = null; window.personaEnGestion = null; window.modoCambioCama = false;
 
-        window.personaSeleccionadaId = null;
-        window.personaEnGestion = null;
-        window.modoCambioCama = false;
-
-        // --- UTILS ---
+        // --- VALIDACIONES ACTUALIZADAS (MENORES) ---
         window.formatearFecha = (input) => {
             let v = input.value.replace(/\D/g,'').slice(0, 8);
             if (v.length >= 5) input.value = `${v.slice(0,2)}/${v.slice(2,4)}/${v.slice(4)}`;
             else if (v.length >= 3) input.value = `${v.slice(0,2)}/${v.slice(2)}`;
             else input.value = v;
         };
-        window.resetValidation = (prefix) => {
-            document.getElementById(`${prefix}-doc-num`).classList.remove('input-error');
-            document.getElementById(`${prefix}-doc-error`).style.display = 'none';
+
+        window.verificarMenor = (prefix) => {
+            const tipo = document.getElementById(`${prefix}-tipo-doc`).value;
+            const input = document.getElementById(`${prefix}-doc-num`);
+            if (tipo === 'MENOR') {
+                input.value = "MENOR-SIN-DNI";
+                input.disabled = true;
+                input.classList.remove('input-error');
+                document.getElementById(`${prefix}-doc-error`).style.display = 'none';
+            } else {
+                input.disabled = false;
+                if(input.value === "MENOR-SIN-DNI") input.value = "";
+            }
         };
+
+        window.validarEdad = (prefix) => {
+            const fechaStr = document.getElementById(`${prefix}-fecha`).value;
+            const errorDiv = document.getElementById(`${prefix}-fecha-error`);
+            const tipoDoc = document.getElementById(`${prefix}-tipo-doc`).value;
+            
+            if(fechaStr.length !== 10) { errorDiv.style.display = 'none'; return true; } // Aún escribiendo
+
+            const [dia, mes, anyo] = fechaStr.split('/').map(Number);
+            const fechaNac = new Date(anyo, mes - 1, dia);
+            const hoy = new Date();
+            let edad = hoy.getFullYear() - fechaNac.getFullYear();
+            const m = hoy.getMonth() - fechaNac.getMonth();
+            if (m < 0 || (m === 0 && hoy.getDate() < fechaNac.getDate())) edad--;
+
+            // Regla: Si es MENOR, tiene que tener < 16
+            if (tipoDoc === 'MENOR' && edad >= 16) {
+                errorDiv.innerText = "Error: Mayor de 16 años debe tener DNI/Pasaporte";
+                errorDiv.style.display = 'block';
+                return false;
+            } else {
+                errorDiv.style.display = 'none';
+                return true;
+            }
+        };
+
         window.validarDocumento = (prefix) => {
             const tipo = document.getElementById(`${prefix}-tipo-doc`).value;
             const input = document.getElementById(`${prefix}-doc-num`);
             const errorMsg = document.getElementById(`${prefix}-doc-error`);
-            let valor = input.value.toUpperCase();
-            input.value = valor; 
+            
+            if (tipo === 'MENOR') return true; // No validar
 
+            let valor = input.value.toUpperCase();
+            input.value = valor;
             let valido = true;
+
             if (tipo === 'PASAPORTE') valido = valor.length > 3;
             else {
                 const letras = "TRWAGMYFPDXBNJZSQVHLCKE";
@@ -350,31 +364,31 @@
             else { input.classList.remove('input-error'); errorMsg.style.display = 'none'; return true; }
         };
 
-        // --- PESTAÑAS (LIMPIEZA) ---
+        // --- PESTAÑAS (FIXED) ---
         window.cambiarPestana = (tabName) => {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            if(tabName === 'prefiliacion') document.querySelector("button[onclick*='prefiliacion']").classList.add('active');
-            if(tabName === 'filiacion') document.querySelector("button[onclick*='filiacion']").classList.add('active');
-            document.getElementById(`tab-${tabName}`).classList.add('active');
-
-            // LIMPIEZA AUTOMÁTICA
+            
             if(tabName === 'prefiliacion') {
+                document.getElementById('btn-tab-pref').classList.add('active');
+                document.getElementById('tab-prefiliacion').classList.add('active');
                 limpiarFormulario('man');
                 document.getElementById('panel-gestion-persona').classList.add('hidden');
-                window.personaEnGestion = null;
             } else {
+                document.getElementById('btn-tab-fil').classList.add('active');
+                document.getElementById('tab-filiacion').classList.add('active');
                 document.getElementById('buscador-persona').value = "";
                 document.getElementById('resultados-busqueda').style.display = 'none';
-                document.getElementById('panel-gestion-persona').classList.add('hidden');
-                window.personaEnGestion = null;
             }
         };
 
         function limpiarFormulario(prefix) {
             ['nombre','ap1','ap2','doc-num','fecha','tel'].forEach(f => document.getElementById(`${prefix}-${f}`).value = "");
             document.getElementById(`${prefix}-doc-num`).classList.remove('input-error');
+            document.getElementById(`${prefix}-doc-num`).disabled = false;
+            document.getElementById(`${prefix}-tipo-doc`).value = "DNI";
         }
+        
         function getDatosFormulario(prefix) {
             return {
                 nombre: document.getElementById(`${prefix}-nombre`).value,
@@ -387,11 +401,12 @@
             };
         }
 
-        // --- AUTH Y NAV ---
-        window.onload = () => { const params = new URLSearchParams(window.location.search); if (params.get('public_id')) { currentAlbergueId = params.get('public_id'); document.getElementById('login-screen').classList.add('hidden'); document.getElementById('public-register-screen').classList.remove('hidden'); }};
+        // --- RESTO LÓGICA (AUTH, NAV, CORE) ---
+        window.onload = () => { const p = new URLSearchParams(window.location.search); if(p.get('public_id')) { currentAlbergueId = p.get('public_id'); document.getElementById('login-screen').classList.add('hidden'); document.getElementById('public-register-screen').classList.remove('hidden'); }};
         window.iniciarSesion = async () => { try { await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-pass').value); } catch (e) { alert("Error: " + e.message); }};
         window.cerrarSesion = () => { signOut(auth); location.reload(); };
-        onAuthStateChanged(auth, async (user) => { if (user) { const snap = await getDoc(doc(db, "usuarios", user.uid)); if (snap.exists()) { currentUserData = { ...snap.data(), uid: user.uid }; navegar('dashboard'); } } else if(document.getElementById('public-register-screen').classList.contains('hidden')) { navegar('login'); }});
+        onAuthStateChanged(auth, async (u) => { if(u) { const s = await getDoc(doc(db, "usuarios", u.uid)); if(s.exists()) { currentUserData={...s.data(),uid:u.uid}; navegar('dashboard'); } } else if(document.getElementById('public-register-screen').classList.contains('hidden')) navegar('login'); });
+
         window.navegar = (pantalla) => {
             ['login-screen', 'dashboard-screen', 'screen-usuarios', 'screen-gestion-albergues', 'screen-mantenimiento', 'screen-operativa'].forEach(id => document.getElementById(id).classList.add('hidden'));
             if(unsubscribeUsers) unsubscribeUsers(); if(unsubscribeAlberguesActivos) unsubscribeAlberguesActivos(); if(unsubscribeAlberguesMto) unsubscribeAlberguesMto(); if(unsubscribeDetalleAlbergue) unsubscribeDetalleAlbergue(); if(unsubscribePersonas) unsubscribePersonas();
@@ -405,7 +420,7 @@
 
         function configurarDashboard() {
             document.getElementById('user-name-display').innerText = currentUserData.nombre; const rol = currentUserData.rol;
-            const badge = document.getElementById('user-role-badge'); badge.innerText = rol.replace('_', ' ').toUpperCase(); badge.className = `role-badge role-${rol}`;
+            document.getElementById('user-role-badge').innerText = rol.toUpperCase(); document.getElementById('user-role-badge').className = `role-badge role-${rol}`;
             const btnUsers = document.getElementById('btn-gest-usuarios'); const btnMto = document.getElementById('btn-mantenimiento');
             if (['super_admin', 'admin'].includes(rol)) btnUsers.classList.remove('disabled-btn'); else btnUsers.classList.add('disabled-btn');
             if (['super_admin', 'admin', 'avanzado'].includes(rol)) btnMto.classList.remove('disabled-btn'); else btnMto.classList.add('disabled-btn');
@@ -423,8 +438,7 @@
         window.entrarAlbergue = (id) => {
             currentAlbergueId = id; navegar('operativa');
             unsubscribeDetalleAlbergue = onSnapshot(doc(db, "albergues", id), (d) => { const data = d.data(); document.getElementById('app-title').innerText = data.nombre; totalCapacidad = data.capacidad || 0; actualizarContadores(); generarQR(); });
-            const q = query(collection(db, "albergues", id, "personas"), orderBy("fechaRegistro", "desc"));
-            unsubscribePersonas = onSnapshot(q, (snap) => {
+            unsubscribePersonas = onSnapshot(query(collection(db, "albergues", id, "personas"), orderBy("fechaRegistro", "desc")), (snap) => {
                 listaPersonasCache = []; let cD=0; camasOcupadas = {};
                 snap.forEach(ds => {
                     const p = ds.data(); p.id = ds.id; listaPersonasCache.push(p);
@@ -441,17 +455,19 @@
 
         // --- GESTIÓN PERSONAS ---
         window.adminPrefiliarManual = async () => {
-            if(!validarDocumento('man')) return alert("Documento inválido");
+            if(!validarEdad('man')) return alert("Error en fecha/edad para el tipo de documento seleccionado.");
+            if(!validarDocumento('man')) return alert("Documento inválido.");
             const d = getDatosFormulario('man');
-            if(!d.nombre || !d.docNum) return alert("Faltan datos");
+            if(!d.nombre) return alert("Faltan datos");
             await addDoc(collection(db, "albergues", currentAlbergueId, "personas"), { ...d, estado: 'espera', fechaRegistro: new Date(), origen: 'manual' });
             alert("Añadido"); limpiarFormulario('man');
         };
 
         window.publicoGuardarPrefiliacion = async () => {
-            if(!validarDocumento('pub')) return alert("Documento inválido");
+            if(!validarEdad('pub')) return alert("Error en fecha/edad.");
+            if(!validarDocumento('pub')) return alert("Documento inválido.");
             const d = getDatosFormulario('pub');
-            if(!d.nombre || !d.docNum) return alert("Faltan datos");
+            if(!d.nombre) return alert("Faltan datos");
             await addDoc(collection(db, "albergues", currentAlbergueId, "personas"), { ...d, estado: 'espera', fechaRegistro: new Date(), origen: 'qr' });
             document.getElementById('public-form-container').classList.add('hidden');
             document.getElementById('public-success-msg').classList.remove('hidden');
@@ -478,13 +494,11 @@
             window.personaEnGestion = p; window.personaSeleccionadaId = p.id;
             document.getElementById('panel-gestion-persona').classList.remove('hidden');
             document.getElementById('gestion-nombre-titulo').innerText = `${p.nombre} ${p.ap1 || ''}`;
-            document.getElementById('edit-nombre').value = p.nombre;
-            document.getElementById('edit-ap1').value = p.ap1 || "";
-            document.getElementById('edit-ap2').value = p.ap2 || "";
-            document.getElementById('edit-tipo-doc').value = p.tipoDoc || "DNI";
+            document.getElementById('edit-nombre').value = p.nombre; document.getElementById('edit-ap1').value = p.ap1 || ""; document.getElementById('edit-ap2').value = p.ap2 || "";
+            document.getElementById('edit-tipo-doc').value = p.tipoDoc || "DNI"; 
             document.getElementById('edit-doc-num').value = p.docNum || "";
-            document.getElementById('edit-fecha').value = p.fechaNac || "";
-            document.getElementById('edit-tel').value = p.telefono || "";
+            document.getElementById('edit-fecha').value = p.fechaNac || ""; document.getElementById('edit-tel').value = p.telefono || "";
+            verificarMenor('edit'); // Ajustar estado del input DNI según tipo
 
             const badge = document.getElementById('gestion-estado');
             const infoCama = document.getElementById('gestion-cama-info');
@@ -494,8 +508,7 @@
             btnAsignar.classList.add('hidden'); btnLiberar.classList.add('hidden'); btnRegresar.classList.add('hidden');
 
             if(p.estado === 'espera') {
-                badge.className = 'badge badge-archived'; badge.innerText = "EN ESPERA";
-                infoCama.innerText = "";
+                badge.className = 'badge badge-archived'; badge.innerText = "EN ESPERA"; infoCama.innerText = "";
                 btnAsignar.innerText = "🛏️ Asignar Cama (Ingresar)"; btnAsignar.classList.remove('hidden');
             } else {
                 badge.className = 'badge badge-active'; badge.innerText = "DENTRO";
@@ -507,6 +520,7 @@
 
         window.guardarCambiosPersona = async () => {
             if(!window.personaEnGestion) return;
+            if(!validarEdad('edit')) return alert("Revisa la edad.");
             if(!validarDocumento('edit')) return alert("Documento inválido");
             const d = getDatosFormulario('edit');
             await updateDoc(doc(db, "albergues", currentAlbergueId, "personas", window.personaEnGestion.id), {

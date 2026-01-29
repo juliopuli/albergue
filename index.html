@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión Albergue - V.3.1.0 (Gestión Camas Flexible)</title>
+    <title>Gestión Albergue - V.3.2.0 (Pestañas)</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; background-color: #f4f6f8; color: #333; }
         .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
@@ -13,10 +13,10 @@
         /* Botones */
         button { background-color: #3498db; color: white; border: none; cursor: pointer; font-weight: 600; transition: transform 0.1s; }
         button:hover { background-color: #2980b9; transform: translateY(-1px); }
-        button.secondary { background-color: #95a5a6; } button.secondary:hover { background-color: #7f8c8d; }
-        button.success { background-color: #2ecc71; } button.success:hover { background-color: #27ae60; }
-        button.danger { background-color: #e74c3c; } button.danger:hover { background-color: #c0392b; }
-        button.warning { background-color: #f39c12; color: white; } button.warning:hover { background-color: #d35400; }
+        button.secondary { background-color: #95a5a6; }
+        button.success { background-color: #2ecc71; }
+        button.danger { background-color: #e74c3c; }
+        button.warning { background-color: #f39c12; color: white; }
         
         .hidden { display: none !important; }
         .row { display: flex; gap: 10px; }
@@ -29,18 +29,32 @@
         .dash-icon { font-size: 3em; margin-bottom: 15px; }
         .disabled-btn { opacity: 0.5; cursor: not-allowed; pointer-events: none; filter: grayscale(1); }
 
-        /* Listas */
-        .list-item { background: white; border: 1px solid #eee; padding: 15px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        /* Listas y Badges */
+        .list-item { background: white; border: 1px solid #eee; padding: 15px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .list-item:hover { background-color: #f8f9fa; border-color: #3498db; }
         .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.8em; font-weight: bold; text-transform: uppercase; }
         .badge-active { background: #d4edda; color: #155724; }
-        .badge-archived { background: #f8d7da; color: #721c24; }
         .role-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.8em; font-weight: bold; text-transform: uppercase; margin-left: 10px; }
         .role-super_admin { background: #8e44ad; color: white; }
         .role-admin { background: #c0392b; color: white; }
         .role-avanzado { background: #f39c12; color: white; }
         .role-medio { background: #16a085; color: white; }
 
-        /* Camas */
+        /* --- NUEVO: PESTAÑAS (TABS) --- */
+        .tabs { display: flex; border-bottom: 2px solid #ddd; margin-bottom: 20px; }
+        .tab-btn { padding: 15px 25px; cursor: pointer; font-weight: bold; color: #7f8c8d; border-bottom: 4px solid transparent; flex: 1; text-align: center; background: none; border-top: none; border-left: none; border-right: none; border-radius: 0; margin: 0; }
+        .tab-btn:hover { background-color: #f8f9fa; color: #3498db; }
+        .tab-btn.active { color: #3498db; border-bottom-color: #3498db; }
+        .tab-content { display: none; animation: fadeIn 0.3s; }
+        .tab-content.active { display: block; }
+
+        /* Buscador Resultados */
+        .search-results { max-height: 200px; overflow-y: auto; border: 1px solid #eee; border-radius: 0 0 8px 8px; margin-top: -16px; margin-bottom: 20px; background: white; display: none; }
+        .search-item { padding: 10px; border-bottom: 1px solid #f0f0f0; cursor: pointer; }
+        .search-item:hover { background: #eef2f7; }
+        .search-item strong { color: #2c3e50; }
+
+        /* Grid Camas */
         .bed-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 10px; margin-top: 20px; }
         .bed-box { height: 60px; display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 8px; cursor: pointer; font-weight: bold; border: 2px solid transparent; }
         .bed-free { background-color: #d4edda; color: #155724; border-color: #c3e6cb; }
@@ -50,13 +64,15 @@
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; justify-content: center; align-items: center; }
         .modal-content { background: white; width: 90%; max-width: 600px; padding: 30px; border-radius: 12px; max-height: 85vh; overflow-y: auto; }
         .version-tag { position: fixed; bottom: 10px; right: 10px; background: rgba(0, 0, 0, 0.05); color: #999; padding: 5px 10px; border-radius: 5px; font-size: 0.75em; pointer-events: none; font-family: monospace; }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
 
-    <div class="version-tag">V.3.1.0 (Sin Cama)</div>
+    <div class="version-tag">V.3.2.0 (Pestañas)</div>
 
     <div id="login-screen" style="max-width: 400px; margin: 50px auto;" class="card">
         <h1 style="text-align:center;">🔐 Acceso</h1>
@@ -108,9 +124,10 @@
 
     <div id="screen-gestion-albergues" class="card hidden">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h3>🏥 Albergues Activos</h3>
+            <h3>🏥 Selección de Albergue</h3>
             <button class="secondary" onclick="navegar('dashboard')" style="width:auto;">Volver</button>
         </div>
+        <p>Selecciona un albergue activo para entrar:</p>
         <div id="lista-albergues-activos"></div>
     </div>
 
@@ -133,35 +150,74 @@
     <div id="screen-operativa" class="card hidden">
         <div style="display:flex; justify-content:space-between; align-items:center;">
             <h3 id="app-title">Albergue</h3>
+            
+            <div style="background:#e9ecef; padding:5px 15px; border-radius:20px; font-weight:bold; color:#555;">
+                 🛏️ Ocupación: <span id="ocupacion-count">0</span> / <span id="capacidad-total">0</span>
+            </div>
+
             <button onclick="navegar('gestion-albergues')" style="width:auto; background:#6c757d; padding:5px 15px;">Salir</button>
         </div>
-        
-        <div style="background:#e9ecef; padding:10px; border-radius:20px; display:inline-block; font-weight:bold; color:#555;">
-             🛏️ Ocupación: <span id="ocupacion-count">0</span> / <span id="capacidad-total">0</span>
-             <button onclick="editarCapacidad()" style="padding:2px 8px; margin-left:10px; font-size:0.8em; width:auto;">✏️</button>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="cambiarPestana('prefiliacion')">📁 Prefiliación</button>
+            <button class="tab-btn" onclick="cambiarPestana('filiacion')">📁 Filiación (Ingreso)</button>
         </div>
 
-        <details style="margin-top:15px;">
-            <summary style="cursor:pointer; color:#007bff; font-weight:bold;">📲 QR y Registro</summary>
-            <div class="row" style="margin-top:10px;">
-                <div id="qrcode" style="background:white; padding:10px;"></div>
-                <div style="flex:1;">
-                    <input type="text" id="admin-nombre" placeholder="Nombre">
-                    <input type="text" id="admin-dni" placeholder="DNI">
-                    <button onclick="adminPrefiliarManual()" class="success">Añadir Manual</button>
+        <div id="tab-prefiliacion" class="tab-content active">
+            <div style="max-width: 600px; margin: 0 auto;">
+                <h4>📝 Registro Manual (Sin QR)</h4>
+                <p style="color:#666; font-size:0.9em;">Rellena los datos para añadir a la persona a la lista de espera.</p>
+                
+                <label>Nombre Completo:</label>
+                <input type="text" id="manual-nombre">
+                
+                <label>DNI / Pasaporte:</label>
+                <input type="text" id="manual-dni">
+                
+                <label>Fecha de Nacimiento:</label>
+                <input type="date" id="manual-nacimiento">
+                
+                <button class="success" onclick="adminPrefiliarManual()">Guardar en Prefiliación</button>
+
+                <hr style="margin: 30px 0;">
+                
+                <details>
+                    <summary style="cursor:pointer; color:#007bff; font-weight:bold;">📲 Ver QR para Auto-Registro</summary>
+                    <div id="qrcode" style="background:white; padding:10px; text-align:center; margin-top:10px;"></div>
+                </details>
+            </div>
+        </div>
+
+        <div id="tab-filiacion" class="tab-content">
+            <div class="row">
+                <div class="col">
+                    <h4>🔍 Buscar Persona</h4>
+                    <input type="text" id="buscador-persona" placeholder="Escribe Nombre o DNI..." onkeyup="buscarPersonaEnAlbergue()" autocomplete="off">
+                    <div id="resultados-busqueda" class="search-results"></div>
                 </div>
             </div>
-        </details>
 
-        <hr>
-        <div class="row">
-            <div class="col">
-                <h3 style="color:#e67e22;">⏳ Espera (<span id="count-espera">0</span>)</h3>
-                <div id="list-espera"></div>
-            </div>
-            <div class="col">
-                <h3 style="color:#28a745;">✅ Dentro (<span id="count-ingresados">0</span>)</h3>
-                <div id="list-dentro"></div>
+            <div id="panel-gestion-persona" class="hidden" style="border: 2px solid #3498db; border-radius: 8px; padding: 20px; background: #fdfdfd; margin-top: 10px;">
+                <h3 id="gestion-nombre" style="color:#2c3e50; margin-bottom:5px;">Nombre Persona</h3>
+                <p>Estado Actual: <span id="gestion-estado" class="badge">...</span> <span id="gestion-cama-info"></span></p>
+                
+                <div class="row">
+                    <div class="col">
+                        <label>Nombre:</label>
+                        <input type="text" id="edit-nombre">
+                    </div>
+                    <div class="col">
+                        <label>DNI:</label>
+                        <input type="text" id="edit-dni">
+                    </div>
+                </div>
+
+                <div class="row" style="margin-top:10px;">
+                    <button id="btn-asignar-cama" class="success" onclick="abrirSeleccionCama()">🛏️ Asignar Cama</button>
+                    <button id="btn-guardar-cambios" class="primary" onclick="guardarCambiosPersona()">💾 Guardar Datos</button>
+                    <button id="btn-liberar-cama" class="warning hidden" onclick="liberarCamaMantener()">🛌 Liberar Cama</button>
+                    <button id="btn-regresar-pref" class="danger hidden" onclick="regresarPrefiliacion()">🔙 A Prefiliación</button>
+                </div>
             </div>
         </div>
     </div>
@@ -183,29 +239,6 @@
             <h3>Seleccionar Cama</h3>
             <div id="grid-camas" class="bed-grid"></div>
             <button onclick="document.getElementById('modal-cama').classList.add('hidden')" class="secondary" style="margin-top:15px;">Cancelar</button>
-        </div>
-    </div>
-
-    <div id="modal-editar" class="modal-overlay hidden">
-        <div class="modal-content">
-            <h3 id="edit-nombre">Gestionar</h3>
-            
-            <label>Estado Cama:</label>
-            <div class="row">
-                <input type="text" id="edit-cama-actual" readonly>
-                <button class="success" onclick="abrirCambioCama()">Asignar / Cambiar</button>
-            </div>
-            
-            <hr>
-            <p style="font-size:0.9em; font-weight:bold; color:#555;">Acciones:</p>
-            
-            <button class="warning" onclick="liberarCamaMantener()">🛌 Liberar Cama (Mantener Dentro)</button>
-            <p style="font-size:0.8em; color:#666; margin-top:5px; margin-bottom:15px;">Quita la cama pero la persona sigue en la lista de ingresados.</p>
-
-            <button class="danger" onclick="regresarPrefiliacion()">🔙 Mover a Prefiliación</button>
-            <p style="font-size:0.8em; color:#666; margin-top:5px;">Saca a la persona del albergue y la devuelve a la cola de espera.</p>
-
-            <button class="secondary" onclick="document.getElementById('modal-editar').classList.add('hidden')" style="margin-top:20px;">Cancelar</button>
         </div>
     </div>
 
@@ -242,11 +275,14 @@
         let ocupacionActual = 0;
         let camasOcupadas = {};
         
-        let unsubscribeUsers, unsubscribeAlberguesActivos, unsubscribeAlberguesMto, unsubscribeDetalleAlbergue, unsubscribePersonas;
+        // Cache de personas para búsqueda rápida en cliente
+        let listaPersonasCache = [];
 
+        let unsubscribeUsers, unsubscribeAlberguesActivos, unsubscribeAlberguesMto, unsubscribeDetalleAlbergue, unsubscribePersonas;
+        
+        // Variables Edición
         window.personaSeleccionadaId = null;
-        window.personaEnEdicion = null;
-        window.modoCambioCama = false;
+        window.personaEnGestion = null; // Objeto completo
 
         window.onload = () => {
             const params = new URLSearchParams(window.location.search);
@@ -295,7 +331,21 @@
             if (['super_admin', 'admin', 'avanzado'].includes(rol)) btnMto.classList.remove('disabled-btn'); else btnMto.classList.add('disabled-btn');
         }
 
-        // --- GESTIÓN USUARIOS ---
+        // --- PESTAÑAS LÓGICA ---
+        window.cambiarPestana = (tabName) => {
+            // UI tabs
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            // Activar seleccionada
+            // Truco: buscamos el botón que contenga el onclick correcto o por index
+            if(tabName === 'prefiliacion') document.querySelector("button[onclick*='prefiliacion']").classList.add('active');
+            if(tabName === 'filiacion') document.querySelector("button[onclick*='filiacion']").classList.add('active');
+            
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+        };
+
+        // --- GESTIÓN USUARIOS (Igual) ---
         function cargarUsuarios() {
             const container = document.getElementById('lista-usuarios-container');
             const q = query(collection(db, "usuarios"), orderBy("nombre"));
@@ -334,7 +384,7 @@
             document.querySelectorAll('#lista-usuarios-container .list-item').forEach(i => i.style.display = i.innerText.toLowerCase().includes(texto) ? 'flex' : 'none');
         };
 
-        // --- GESTIÓN ALBERGUES ---
+        // --- LISTA ALBERGUES ---
         function cargarAlberguesActivos() {
             const container = document.getElementById('lista-albergues-activos');
             const q = query(collection(db, "albergues"), where("activo", "==", true));
@@ -344,7 +394,7 @@
                     const a = d.data();
                     const div = document.createElement('div');
                     div.className = "list-item";
-                    div.innerHTML = `<div class="item-info"><strong>${a.nombre}</strong><small>Cap: ${a.capacidad}</small></div><button onclick="entrarAlbergue('${d.id}')">Gestionar</button>`;
+                    div.innerHTML = `<div class="item-info"><strong>${a.nombre}</strong><small>Cap: ${a.capacidad}</small></div><button onclick="entrarAlbergue('${d.id}')">Entrar</button>`;
                     container.appendChild(div);
                 });
             });
@@ -371,57 +421,145 @@
         };
         window.cambiarEstadoAlbergue = async (id, st) => await updateDoc(doc(db, "albergues", id), { activo: st });
 
-        // --- OPERATIVA ---
+        // --- OPERATIVA ALBERGUE (CORE) ---
         window.entrarAlbergue = (id) => {
             currentAlbergueId = id; navegar('operativa');
+            // Reset UI
+            document.getElementById('panel-gestion-persona').classList.add('hidden');
+            document.getElementById('buscador-persona').value = "";
+            document.getElementById('resultados-busqueda').style.display = 'none';
+
             unsubscribeDetalleAlbergue = onSnapshot(doc(db, "albergues", id), (d) => {
                 const data = d.data(); document.getElementById('app-title').innerText = data.nombre;
                 totalCapacidad = data.capacidad || 0; actualizarContadores(); generarQR();
             });
             const q = query(collection(db, "albergues", id, "personas"), orderBy("fechaRegistro", "desc"));
             unsubscribePersonas = onSnapshot(q, (snap) => {
-                const lE = document.getElementById('list-espera'); const lD = document.getElementById('list-dentro');
-                lE.innerHTML = ""; lD.innerHTML = ""; let cE=0, cD=0; camasOcupadas = {};
+                listaPersonasCache = []; // Actualizar cache local para buscador
+                let cD=0; camasOcupadas = {};
                 snap.forEach(ds => {
                     const p = ds.data(); p.id = ds.id;
-                    const card = crearCard(p);
-                    if(p.estado === 'espera') { lE.appendChild(card); cE++; }
-                    else { lD.appendChild(card); cD++; if(p.cama) camasOcupadas[p.cama] = p.nombre; }
+                    listaPersonasCache.push(p);
+                    if(p.estado !== 'espera') { cD++; if(p.cama) camasOcupadas[p.cama] = p.nombre; }
                 });
-                document.getElementById('count-espera').innerText = cE; document.getElementById('count-ingresados').innerText = cD;
                 ocupacionActual = cD; actualizarContadores();
+                
+                // Si estamos gestionando a alguien, actualizar sus datos en tiempo real en el panel
+                if(window.personaEnGestion) {
+                    const personaActualizada = listaPersonasCache.find(u => u.id === window.personaEnGestion.id);
+                    if(personaActualizada) seleccionarPersona(personaActualizada);
+                }
             });
         };
-
-        function crearCard(p) {
-            const div = document.createElement('div');
-            div.className = `list-item status-${p.estado}`;
-            div.style.marginBottom = "5px"; div.style.padding = "10px";
-            let btn = "";
-            if(p.estado === 'espera') {
-                btn = `<button class="success" style="padding:4px 8px; font-size:0.8em;" onclick="window.prepararIngreso('${p.id}', '${p.nombre}')">Ingresar</button>`;
-            } else {
-                const txtCama = p.cama ? `🛏️ ${p.cama}` : `<span style="color:red; font-weight:bold;">⚠️ Sin Cama</span>`;
-                btn = `<div style="text-align:right;">${txtCama} <button class="secondary" style="font-size:0.7em; padding:2px 5px;" onclick="window.abrirEdicion('${p.id}')">⚙️</button></div>`;
-            }
-            div.innerHTML = `<div class="item-info"><strong>${p.nombre}</strong><small>${p.dni}</small></div><div>${btn}</div>`;
-            return div;
-        }
 
         function actualizarContadores() {
             document.getElementById('ocupacion-count').innerText = ocupacionActual;
             document.getElementById('capacidad-total').innerText = totalCapacidad;
         }
 
-        // --- MODALES CAMAS Y ACCIONES ---
-        window.prepararIngreso = (id, nombre) => { window.personaSeleccionadaId = id; window.modoCambioCama = false; mostrarGridCamas(); };
-        window.abrirCambioCama = () => { document.getElementById('modal-editar').classList.add('hidden'); window.personaSeleccionadaId = window.personaEnEdicion.id; window.modoCambioCama = true; mostrarGridCamas(); };
+        // --- PREFILIACIÓN MANUAL ---
+        window.adminPrefiliarManual = async () => {
+            const nombre = document.getElementById('manual-nombre').value;
+            const dni = document.getElementById('manual-dni').value;
+            const nac = document.getElementById('manual-nacimiento').value;
+            if(nombre) {
+                await addDoc(collection(db, "albergues", currentAlbergueId, "personas"), { nombre, dni, nacimiento: nac, estado:'espera', fechaRegistro:new Date() });
+                alert("Añadido a Prefiliación");
+                document.getElementById('manual-nombre').value = "";
+                document.getElementById('manual-dni').value = "";
+            }
+        };
+
+        // --- FILIACIÓN (BUSCADOR Y GESTIÓN) ---
+        window.buscarPersonaEnAlbergue = () => {
+            const input = document.getElementById('buscador-persona').value.toLowerCase();
+            const resultadosDiv = document.getElementById('resultados-busqueda');
+            
+            if(input.length < 2) { resultadosDiv.style.display = 'none'; return; }
+
+            const coincidencias = listaPersonasCache.filter(p => 
+                (p.nombre && p.nombre.toLowerCase().includes(input)) || 
+                (p.dni && p.dni.toLowerCase().includes(input))
+            );
+
+            resultadosDiv.innerHTML = "";
+            if(coincidencias.length > 0) {
+                resultadosDiv.style.display = 'block';
+                coincidencias.forEach(p => {
+                    const div = document.createElement('div');
+                    div.className = 'search-item';
+                    const estadoTxt = p.estado === 'espera' ? '🟠 En Espera' : '🟢 Dentro';
+                    div.innerHTML = `<strong>${p.nombre}</strong> <small>(${p.dni}) - ${estadoTxt}</small>`;
+                    div.onclick = () => { seleccionarPersona(p); resultadosDiv.style.display = 'none'; document.getElementById('buscador-persona').value = ""; };
+                    resultadosDiv.appendChild(div);
+                });
+            } else {
+                resultadosDiv.style.display = 'none';
+            }
+        };
+
+        function seleccionarPersona(p) {
+            window.personaEnGestion = p;
+            window.personaSeleccionadaId = p.id;
+
+            const panel = document.getElementById('panel-gestion-persona');
+            panel.classList.remove('hidden');
+
+            document.getElementById('gestion-nombre').innerText = p.nombre;
+            document.getElementById('edit-nombre').value = p.nombre;
+            document.getElementById('edit-dni').value = p.dni || "";
+
+            const badge = document.getElementById('gestion-estado');
+            const infoCama = document.getElementById('gestion-cama-info');
+            const btnAsignar = document.getElementById('btn-asignar-cama');
+            const btnLiberar = document.getElementById('btn-liberar-cama');
+            const btnRegresar = document.getElementById('btn-regresar-pref');
+
+            // Reset botones
+            btnAsignar.classList.add('hidden'); btnLiberar.classList.add('hidden'); btnRegresar.classList.add('hidden');
+
+            if (p.estado === 'espera') {
+                badge.className = 'badge badge-archived'; // Usamos color naranja/rojo
+                badge.innerText = "EN ESPERA (PREFILIACIÓN)";
+                infoCama.innerText = "";
+                btnAsignar.innerText = "🛏️ Asignar Cama (Ingresar)";
+                btnAsignar.classList.remove('hidden');
+            } else {
+                badge.className = 'badge badge-active';
+                badge.innerText = "INGRESADO (FILIACIÓN)";
+                if (p.cama) {
+                    infoCama.innerText = ` - Cama: ${p.cama}`;
+                    btnAsignar.innerText = "🔄 Cambiar Cama";
+                    btnLiberar.classList.remove('hidden');
+                } else {
+                    infoCama.innerHTML = ` - <span style="color:red">Sin Cama Asignada</span>`;
+                    btnAsignar.innerText = "🛏️ Asignar Cama";
+                }
+                btnAsignar.classList.remove('hidden');
+                btnRegresar.classList.remove('hidden');
+            }
+        }
+
+        window.guardarCambiosPersona = async () => {
+            if(!window.personaEnGestion) return;
+            const n = document.getElementById('edit-nombre').value;
+            const d = document.getElementById('edit-dni').value;
+            await updateDoc(doc(db, "albergues", currentAlbergueId, "personas", window.personaEnGestion.id), { nombre: n, dni: d });
+            alert("Datos actualizados");
+        };
+
+        // --- ASIGNACIÓN CAMAS ---
+        window.abrirSeleccionCama = () => {
+            // Determinar si es mi cama actual para pintarla diferente
+            mostrarGridCamas();
+        };
 
         function mostrarGridCamas() {
             const grid = document.getElementById('grid-camas'); grid.innerHTML = "";
             for(let i=1; i<=totalCapacidad; i++) {
                 const n = i.toString(); const ocup = camasOcupadas[n]; const d = document.createElement('div');
-                const esMiCama = (window.modoCambioCama && window.personaEnEdicion && window.personaEnEdicion.cama === n);
+                const esMiCama = (window.personaEnGestion && window.personaEnGestion.cama === n);
+                
                 if(esMiCama) { d.className='bed-box bed-current'; d.innerText="Actual"; }
                 else if(ocup) { d.className='bed-box bed-busy'; d.innerText=n; d.title=ocup; }
                 else { d.className='bed-box bed-free'; d.innerText=n; d.onclick=()=>guardarCama(n); }
@@ -431,46 +569,26 @@
         }
 
         async function guardarCama(cama) {
-            await updateDoc(doc(db, "albergues", currentAlbergueId, "personas", window.personaSeleccionadaId), { estado: 'ingresado', cama: cama, fechaIngreso: new Date() });
+            await updateDoc(doc(db, "albergues", currentAlbergueId, "personas", window.personaEnGestion.id), { estado: 'ingresado', cama: cama, fechaIngreso: new Date() });
             document.getElementById('modal-cama').classList.add('hidden');
+            // Panel se actualiza solo vía listener
         }
 
-        window.abrirEdicion = async (id) => {
-            const snap = await getDoc(doc(db, "albergues", currentAlbergueId, "personas", id));
-            if(snap.exists()) {
-                window.personaEnEdicion = { ...snap.data(), id };
-                document.getElementById('edit-nombre').innerText = window.personaEnEdicion.nombre;
-                document.getElementById('edit-cama-actual').value = window.personaEnEdicion.cama || "Sin cama asignada";
-                document.getElementById('modal-editar').classList.remove('hidden');
-            }
-        };
-
-        // --- NUEVAS FUNCIONES 3.1.0 ---
         window.liberarCamaMantener = async () => {
-            if(!confirm("¿Quitar cama pero mantener a la persona dentro del albergue?")) return;
-            await updateDoc(doc(db, "albergues", currentAlbergueId, "personas", window.personaEnEdicion.id), { cama: null });
-            document.getElementById('modal-editar').classList.add('hidden');
+            if(!confirm("¿Quitar cama pero mantener dentro?")) return;
+            await updateDoc(doc(db, "albergues", currentAlbergueId, "personas", window.personaEnGestion.id), { cama: null });
         };
 
         window.regresarPrefiliacion = async () => {
-            if(!confirm("¿Sacar del albergue y devolver a cola de espera?")) return;
-            await updateDoc(doc(db, "albergues", currentAlbergueId, "personas", window.personaEnEdicion.id), { estado: 'espera', cama: null });
-            document.getElementById('modal-editar').classList.add('hidden');
+            if(!confirm("¿Sacar del albergue a espera?")) return;
+            await updateDoc(doc(db, "albergues", currentAlbergueId, "personas", window.personaEnGestion.id), { estado: 'espera', cama: null });
         };
 
-        window.editarCapacidad = async () => {
-            const n = prompt("Capacidad:", totalCapacidad);
-            if(n) await updateDoc(doc(db, "albergues", currentAlbergueId), { capacidad: parseInt(n) });
-        };
-        window.adminPrefiliarManual = async () => {
-            const nombre = document.getElementById('admin-nombre').value; const dni = document.getElementById('admin-dni').value;
-            if(nombre) await addDoc(collection(db, "albergues", currentAlbergueId, "personas"), { nombre, dni, estado:'espera', fechaRegistro:new Date() });
-            document.getElementById('admin-nombre').value = "";
-        };
         window.publicoGuardarPrefiliacion = async () => {
             const nombre = document.getElementById('public-nombre').value; const dni = document.getElementById('public-dni').value;
             if(nombre) { await addDoc(collection(db, "albergues", currentAlbergueId, "personas"), { nombre, dni, estado:'espera', fechaRegistro:new Date(), origen:'qr' }); alert("Registrado"); document.getElementById('public-nombre').value=""; }
         };
+
         function generarQR() { const url = window.location.href.split('?')[0] + `?public_id=${currentAlbergueId}`; document.getElementById("qrcode").innerHTML = ""; new QRCode(document.getElementById("qrcode"), { text: url, width: 100, height: 100 }); }
     </script>
 </body>

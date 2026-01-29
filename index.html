@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión Albergue - V.1.1.0</title>
+    <title>Gestión Albergue - V.1.2.0</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; background-color: #f0f2f5; color: #333; }
         .card { background: white; padding: 25px; margin-bottom: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
@@ -15,6 +15,7 @@
         button.secondary { background-color: #6c757d; }
         button.success { background-color: #28a745; }
         button.danger { background-color: #dc3545; }
+        button.warning { background-color: #ffc107; color: #333; }
         
         .hidden { display: none !important; }
         .row { display: flex; gap: 10px; }
@@ -23,32 +24,28 @@
         .status-espera { border-left-color: #ffc107; }
         .status-ingresado { border-left-color: #28a745; }
         
-        /* Badges */
         .capacity-badge { background: #e9ecef; color: #495057; padding: 5px 10px; border-radius: 20px; font-weight: bold; font-size: 0.9em; display: inline-block; margin-left: 10px; }
         .capacity-full { background: #f8d7da; color: #721c24; }
 
-        /* VERSION TAG */
         .version-tag { position: fixed; bottom: 10px; right: 10px; background: rgba(0, 0, 0, 0.05); color: #999; padding: 5px 10px; border-radius: 5px; font-size: 0.75em; pointer-events: none; font-family: monospace; }
 
         #qr-code-container { text-align: center; padding: 20px; background: white; margin-top: 20px; display: flex; flex-direction: column; align-items: center; }
         label { font-weight: 600; font-size: 0.9em; color: #555; }
 
-        /* --- NUEVOS ESTILOS PARA EL SELECTOR DE CAMAS (MODAL) --- */
+        /* MODALES */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.5); z-index: 1000;
             display: flex; justify-content: center; align-items: center;
         }
         .modal-content {
-            background: white; width: 90%; max-width: 600px; max-height: 80vh;
-            padding: 20px; border-radius: 12px; overflow-y: auto;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            background: white; width: 90%; max-width: 500px; max-height: 85vh;
+            padding: 25px; border-radius: 12px; overflow-y: auto;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2); position: relative;
         }
-        .bed-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
-            gap: 10px; margin-top: 20px;
-        }
+        
+        /* Grid de Camas */
+        .bed-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 10px; margin-top: 20px; }
         .bed-box {
             height: 60px; display: flex; flex-direction: column;
             justify-content: center; align-items: center;
@@ -56,15 +53,14 @@
             border: 2px solid transparent; transition: transform 0.1s;
         }
         .bed-box:hover { transform: scale(1.05); }
-        
-        .bed-free {
-            background-color: #d4edda; color: #155724; border-color: #c3e6cb;
-        }
-        .bed-busy {
-            background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; cursor: not-allowed; opacity: 0.8;
-        }
+        .bed-free { background-color: #d4edda; color: #155724; border-color: #c3e6cb; }
+        .bed-busy { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; cursor: not-allowed; opacity: 0.8; }
         .bed-number { font-size: 1.2em; }
         .bed-user { font-size: 0.6em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+
+        /* Historial en Edición */
+        .history-log { background: #f8f9fa; border: 1px solid #ddd; padding: 10px; max-height: 100px; overflow-y: auto; font-size: 0.85em; margin-bottom: 15px; border-radius: 4px; }
+        .history-item { border-bottom: 1px solid #eee; padding: 4px 0; }
 
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -72,7 +68,7 @@
 </head>
 <body>
 
-    <div class="version-tag">V.1.1.0</div>
+    <div class="version-tag">V.1.2.0</div>
 
     <div id="login-screen" class="card">
         <h1>🏥 Gestión de Albergue</h1>
@@ -163,24 +159,39 @@
 
     <div id="modal-cama" class="modal-overlay hidden">
         <div class="modal-content">
-            <h3>Selecciona una cama</h3>
-            <p>Elige una cama verde para asignar a <strong id="modal-person-name"></strong>.</p>
+            <h3>Asignar Cama</h3>
+            <p>Selecciona una cama libre para <strong id="modal-person-name"></strong>.</p>
+            <div id="grid-camas" class="bed-grid"></div>
+            <button onclick="cerrarModalCama()" class="secondary" style="margin-top:20px;">Cancelar</button>
+        </div>
+    </div>
+
+    <div id="modal-editar" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 5px;">Gestionar Persona</h3>
+            <h4 id="edit-nombre" style="color:#007bff; margin-top:0;"></h4>
             
-            <div class="row" style="margin-bottom:10px;">
-                <div style="display:flex; align-items:center; gap:5px;"><div style="width:20px; height:20px; background:#d4edda; border:1px solid #c3e6cb;"></div> Libre</div>
-                <div style="display:flex; align-items:center; gap:5px; margin-left:15px;"><div style="width:20px; height:20px; background:#f8d7da; border:1px solid #f5c6cb;"></div> Ocupada</div>
+            <label>Cama Actual:</label>
+            <div class="row">
+                <input type="text" id="edit-cama-actual" readonly style="background:#f0f0f0;">
+                <button class="warning" onclick="abrirCambioCama()" style="margin-top:8px;">🔄 Cambiar</button>
             </div>
 
-            <div id="grid-camas" class="bed-grid">
+            <label>Historial de Movimientos:</label>
+            <div id="edit-historial" class="history-log">
                 </div>
-            
-            <button onclick="cerrarModalCama()" class="secondary" style="margin-top:20px;">Cancelar</button>
+
+            <hr>
+            <label style="color:#dc3545;">Acciones de Salida:</label>
+            <p style="font-size:0.9em; color:#666;">Al dar salida, la persona vuelve a la Sala de Espera (Prefiliación) y la cama queda libre.</p>
+            <button class="danger" onclick="darSalidaAlbergue()">📤 Quitar del Albergue (Volver a Espera)</button>
+            <button class="secondary" onclick="cerrarModalEdicion()" style="margin-top:10px;">Cerrar</button>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, query, where, getDocs, doc, updateDoc, onSnapshot, orderBy } 
+        import { getFirestore, collection, addDoc, query, where, getDocs, doc, updateDoc, onSnapshot, orderBy, arrayUnion } 
         from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -195,20 +206,19 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Variables Globales
+        // State
         let currentAlbergueId = null;
         let currentRole = null;
         let totalCapacidad = 0;
         let ocupacionActual = 0;
-        
-        // Mapa de camas ocupadas: { "1": "Juan Perez", "2": "Maria..." }
         let camasOcupadas = {}; 
         
-        // Persona seleccionada para ingresar
+        // Variables Selección
         window.personaSeleccionadaId = null;
         window.personaSeleccionadaNombre = null;
+        window.personaEnEdicion = null; // Objeto completo de la persona editada
 
-        // --- INICIO ---
+        // ONLOAD
         window.onload = async () => {
             const params = new URLSearchParams(window.location.search);
             const publicId = params.get('public_id');
@@ -274,14 +284,12 @@
                 generarQR();
             }
 
-            // Listener Albergue (Capacidad)
             onSnapshot(doc(db, "albergues", currentAlbergueId), (docSnap) => {
                 const data = docSnap.data();
                 totalCapacidad = data.capacidad || 0;
                 actualizarContadores();
             });
 
-            // Listener Personas
             const personasRef = collection(db, "albergues", currentAlbergueId, "personas");
             const q = query(personasRef, orderBy("fechaRegistro", "desc"));
 
@@ -293,12 +301,14 @@
 
                 let countEspera = 0;
                 let countIngresados = 0;
-                camasOcupadas = {}; // Reiniciar mapa de ocupación
+                camasOcupadas = {}; 
 
                 snapshot.forEach((docSnap) => {
                     const p = docSnap.data();
                     const pId = docSnap.id;
-                    const card = crearTarjetaPersona(p, pId);
+                    // Guardamos el ID en el objeto para usarlo luego
+                    p.id = pId; 
+                    const card = crearTarjetaPersona(p);
 
                     if (p.estado === 'espera') {
                         listaEspera.appendChild(card);
@@ -306,7 +316,6 @@
                     } else {
                         listaDentro.appendChild(card);
                         countIngresados++;
-                        // Registrar cama ocupada
                         if(p.cama) camasOcupadas[p.cama] = p.nombre;
                     }
                 });
@@ -326,19 +335,35 @@
             else badge.classList.remove('capacity-full');
         }
 
-        function crearTarjetaPersona(p, id) {
+        function crearTarjetaPersona(p) {
             const div = document.createElement('div');
             div.className = `person-card status-${p.estado}`;
             let contenidoDerecha = "";
             
             if (p.estado === 'espera') {
                 if (currentRole === 'admin') {
-                    contenidoDerecha = `<button class="success" style="padding:5px 10px;" onclick="window.abrirModalCama('${id}', '${p.nombre}')">Ingresar ➡️</button>`;
+                    // Pasamos el objeto completo a JSON string para recuperarlo en la función
+                    contenidoDerecha = `<button class="success" style="padding:5px 10px;" onclick='window.prepararIngreso("${p.id}", "${p.nombre}")'>Ingresar ➡️</button>`;
                 } else {
                     contenidoDerecha = `<span style="color:#856404;">En cola</span>`;
                 }
             } else {
-                contenidoDerecha = `<strong>🛏️ ${p.cama || '?'}</strong>`;
+                // Estado INGRESADO
+                const camaInfo = `<strong>🛏️ ${p.cama || '?'}</strong>`;
+                if (currentRole === 'admin') {
+                    // Botón de EDICIÓN (NUEVO)
+                    // Usamos un truco para pasar el objeto 'p' almacenado en memoria temporal o buscarlo,
+                    // aquí pasaremos los datos básicos y al abrir modal consultaremos si es necesario.
+                    // Para simplificar, guardamos los datos en atributos data o pasamos ID.
+                    contenidoDerecha = `
+                        <div style="text-align:right;">
+                            ${camaInfo}<br>
+                            <button class="secondary" style="padding:2px 8px; font-size:0.8em; margin-top:5px;" onclick='window.abrirEdicion("${p.id}")'>⚙️ Ajustes</button>
+                        </div>
+                    `;
+                } else {
+                    contenidoDerecha = camaInfo;
+                }
             }
 
             div.innerHTML = `
@@ -348,17 +373,91 @@
             return div;
         }
 
-        // --- LÓGICA DE SELECCIÓN DE CAMA (VISUAL) ---
-        window.abrirModalCama = (idPersona, nombrePersona) => {
+        // --- LÓGICA DE MODALES Y EDICIÓN ---
+
+        // 1. INGRESO (De Espera a Cama)
+        window.prepararIngreso = (id, nombre) => {
             if (ocupacionActual >= totalCapacidad) {
                 if(!confirm("⚠️ El albergue está lleno. ¿Seguro que quieres buscar hueco?")) return;
             }
+            window.personaSeleccionadaId = id;
+            window.personaSeleccionadaNombre = nombre;
+            // Modo "asignar" normal
+            abrirGridCama(false); 
+        };
 
-            window.personaSeleccionadaId = idPersona;
-            window.personaSeleccionadaNombre = nombrePersona;
-            document.getElementById('modal-person-name').innerText = nombrePersona;
+        // 2. EDICIÓN (Gestionar Ingresado)
+        window.abrirEdicion = async (id) => {
+            const docRef = doc(db, "albergues", currentAlbergueId, "personas", id);
+            const docSnap = await getDocs(query(collection(db, "albergues", currentAlbergueId, "personas"), where("__name__", "==", id)));
             
-            // Generar Grid
+            if (!docSnap.empty) {
+                const p = docSnap.docs[0].data();
+                window.personaEnEdicion = { ...p, id: id }; // Guardar en global
+                
+                document.getElementById('edit-nombre').innerText = p.nombre;
+                document.getElementById('edit-cama-actual').value = p.cama || "Sin cama";
+                
+                // Renderizar historial
+                const histDiv = document.getElementById('edit-historial');
+                histDiv.innerHTML = "";
+                if (p.historial && p.historial.length > 0) {
+                    p.historial.forEach(h => {
+                        // Intentar formatear fecha
+                        let fechaStr = "Fecha desc.";
+                        if(h.fecha && h.fecha.seconds) {
+                            fechaStr = new Date(h.fecha.seconds * 1000).toLocaleString();
+                        }
+                        histDiv.innerHTML += `<div class="history-item"><strong>${fechaStr}</strong>: ${h.accion}</div>`;
+                    });
+                } else {
+                    histDiv.innerHTML = "<i style='color:#999'>Sin historial registrado.</i>";
+                }
+
+                document.getElementById('modal-editar').classList.remove('hidden');
+            }
+        };
+
+        window.cerrarModalEdicion = () => {
+            document.getElementById('modal-editar').classList.add('hidden');
+            window.personaEnEdicion = null;
+        };
+
+        // 3. CAMBIAR CAMA (Desde Edición)
+        window.abrirCambioCama = () => {
+            // Cerramos edición temporalmente y abrimos grid
+            document.getElementById('modal-editar').classList.add('hidden');
+            window.personaSeleccionadaId = window.personaEnEdicion.id;
+            window.personaSeleccionadaNombre = window.personaEnEdicion.nombre;
+            abrirGridCama(true); // true = modo cambio
+        };
+
+        // 4. DAR SALIDA (Back to Prefiliación)
+        window.darSalidaAlbergue = async () => {
+            if(!confirm(`¿Estás seguro de sacar a ${window.personaEnEdicion.nombre} del albergue? \nPasará a la lista de espera y liberará la cama.`)) return;
+
+            const personaRef = doc(db, "albergues", currentAlbergueId, "personas", window.personaEnEdicion.id);
+            const evento = {
+                fecha: new Date(),
+                accion: `Salida: Liberó la cama ${window.personaEnEdicion.cama}`
+            };
+
+            try {
+                await updateDoc(personaRef, {
+                    estado: 'espera',
+                    cama: null, // Borrar cama
+                    fechaSalida: new Date(),
+                    historial: arrayUnion(evento)
+                });
+                cerrarModalEdicion();
+            } catch (e) { alert("Error: " + e.message); }
+        };
+
+
+        // --- GRID DE CAMAS (Reutilizable) ---
+        function abrirGridCama(esCambio) {
+            document.getElementById('modal-person-name').innerText = window.personaSeleccionadaNombre + (esCambio ? " (Cambio de cama)" : "");
+            
             const grid = document.getElementById('grid-camas');
             grid.innerHTML = "";
 
@@ -367,47 +466,63 @@
                 const ocupante = camasOcupadas[numCama];
                 
                 const div = document.createElement('div');
-                div.className = `bed-box ${ocupante ? 'bed-busy' : 'bed-free'}`;
+                // Si estamos cambiando, mi propia cama no cuenta como ocupada (puedo seleccionarla pero no tiene sentido)
+                const esMiCama = (esCambio && window.personaEnEdicion && window.personaEnEdicion.cama === numCama);
+                
+                div.className = `bed-box ${(ocupante && !esMiCama) ? 'bed-busy' : 'bed-free'}`;
                 
                 let htmlContent = `<span class="bed-number">${numCama}</span>`;
-                if(ocupante) {
-                    htmlContent += `<span class="bed-user" title="${ocupante}">${ocupante.split(' ')[0]}</span>`;
-                    div.title = "Ocupada por: " + ocupante;
-                    div.onclick = () => alert(`Esta cama está ocupada por ${ocupante}`);
+                
+                if (ocupante && !esMiCama) {
+                    htmlContent += `<span class="bed-user">${ocupante.split(' ')[0]}</span>`;
+                    div.onclick = () => alert(`Ocupada por ${ocupante}`);
+                } else if (esMiCama) {
+                    div.style.background = "#fff3cd"; // Color diferente para actual
+                    div.style.borderColor = "#ffeeba";
+                    htmlContent += `<span class="bed-user">Actual</span>`;
                 } else {
                     htmlContent += `<span class="bed-user">Libre</span>`;
-                    div.onclick = () => asignarCama(numCama);
+                    div.onclick = () => asignarCama(numCama, esCambio);
                 }
 
                 div.innerHTML = htmlContent;
                 grid.appendChild(div);
             }
-
             document.getElementById('modal-cama').classList.remove('hidden');
-        };
+        }
 
         window.cerrarModalCama = () => {
             document.getElementById('modal-cama').classList.add('hidden');
+            // Si veníamos de edición, volvemos a abrir edición? Mejor no, flujo terminado.
             window.personaSeleccionadaId = null;
         };
 
-        async function asignarCama(numCama) {
-            if(!confirm(`¿Asignar cama ${numCama} a ${window.personaSeleccionadaNombre}?`)) return;
+        async function asignarCama(numCama, esCambio) {
+            const accionTxt = esCambio ? "Cambio de cama" : "Ingreso";
+            if(!confirm(`Confirmar: \n${accionTxt} a Cama ${numCama}`)) return;
 
             const personaRef = doc(db, "albergues", currentAlbergueId, "personas", window.personaSeleccionadaId);
+            
+            // Log del historial
+            const evento = {
+                fecha: new Date(),
+                accion: esCambio ? `Cambio: De cama ${window.personaEnEdicion.cama} a ${numCama}` : `Ingreso: Asignada cama ${numCama}`
+            };
+
             try {
                 await updateDoc(personaRef, {
                     estado: 'ingresado',
                     cama: numCama,
-                    fechaIngreso: new Date()
+                    fechaIngreso: new Date(),
+                    historial: arrayUnion(evento)
                 });
                 cerrarModalCama();
             } catch (e) { alert("Error: " + e.message); }
         }
 
-        // --- OTRAS FUNCIONES ---
+        // --- EXTRAS ---
         window.editarCapacidad = async () => {
-            const nuevaCap = prompt("Nuevo número total de camas:", totalCapacidad);
+            const nuevaCap = prompt("Nuevo total de camas:", totalCapacidad);
             if (nuevaCap && !isNaN(nuevaCap)) {
                 await updateDoc(doc(db, "albergues", currentAlbergueId), { capacidad: parseInt(nuevaCap) });
             }
@@ -419,8 +534,11 @@
             const nac = document.getElementById('public-nacimiento').value;
             if (!nombre || !dni) return alert("Falta nombre o DNI");
             try {
+                // Añadimos historial inicial al crear
+                const evento = { fecha: new Date(), accion: "Registro inicial (Prefiliación)" };
                 await addDoc(collection(db, "albergues", currentAlbergueId, "personas"), {
-                    nombre, dni, nacimiento: nac, estado: 'espera', origen: 'qr', fechaRegistro: new Date()
+                    nombre, dni, nacimiento: nac, estado: 'espera', origen: 'qr', 
+                    fechaRegistro: new Date(), historial: [evento]
                 });
                 alert("Registrado.");
                 document.getElementById('public-nombre').value = "";
@@ -434,8 +552,10 @@
             const nac = document.getElementById('admin-nacimiento').value;
             if (!nombre) return alert("Falta nombre");
             try {
+                const evento = { fecha: new Date(), accion: "Registro manual por Admin" };
                 await addDoc(collection(db, "albergues", currentAlbergueId, "personas"), {
-                    nombre, dni, nacimiento: nac, estado: 'espera', origen: 'manual', fechaRegistro: new Date()
+                    nombre, dni, nacimiento: nac, estado: 'espera', origen: 'manual', 
+                    fechaRegistro: new Date(), historial: [evento]
                 });
                 document.getElementById('admin-nombre').value = "";
                 document.getElementById('admin-dni').value = "";

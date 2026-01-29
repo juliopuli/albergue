@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión Albergue - V.4.1.0 (Reservas Fantasma)</title>
+    <title>Gestión Albergue - V.4.2.0 (Asignación Dirigida)</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; background-color: #f4f6f8; color: #333; }
         .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
@@ -56,7 +56,7 @@
         .role-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.8em; font-weight: bold; text-transform: uppercase; margin-left: 10px; }
         .role-super_admin { background: #8e44ad; color: white; } .role-admin { background: #c0392b; color: white; } .role-avanzado { background: #f39c12; color: white; } .role-medio { background: #16a085; color: white; }
 
-        /* Bed Grid System (UPDATED) */
+        /* Bed Grid System (UPDATED V4.2) */
         .bed-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 10px; margin-top: 20px; }
         .bed-box { height: 60px; display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 8px; cursor: pointer; font-weight: bold; border: 2px solid transparent; transition: all 0.2s; position: relative; }
         
@@ -64,17 +64,23 @@
         .bed-busy { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; opacity: 0.8; }
         .bed-current { background-color: #fff3cd; border-color: #ffeeba; }
         
-        /* New Style: Shadow Reservation (Orange Ghost) */
+        /* Reservas Fantasma (Naranja) */
         .bed-shadow { 
-            background-color: #ffe0b2 !important; /* Orange background */
+            background-color: #ffe0b2 !important; 
             border: 2px dashed #fb8c00 !important; 
             color: #e65100; 
             opacity: 0.9;
         }
-        .bed-shadow::after { content: "Reserva Fam"; font-size: 0.55em; position: absolute; bottom: 2px; }
+        .bed-shadow::after { content: "Reserva"; font-size: 0.55em; position: absolute; bottom: 2px; }
 
-        /* Suggestion (Green - Current Assignment) */
-        .bed-suggest-block { border: 3px solid #2ecc71 !important; box-shadow: 0 0 10px rgba(46, 204, 113, 0.5); transform: scale(1.05); }
+        /* Sugerencia (Borde Verde Fuerte) */
+        .bed-suggest-target { 
+            border: 4px solid #2ecc71 !important; 
+            box-shadow: 0 0 15px rgba(46, 204, 113, 0.8); 
+            transform: scale(1.1);
+            z-index: 10;
+        }
+        .bed-suggest-target::after { content: "¡AQUÍ!"; font-weight:900; color:#27ae60; bottom: -15px; background:white; padding:0 3px; border-radius:4px; font-size:0.7em;}
 
         /* Modals & Others */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; justify-content: center; align-items: center; }
@@ -91,7 +97,7 @@
 </head>
 <body>
 
-    <div class="version-tag">V.4.1.0 (Reservas Fantasma)</div>
+    <div class="version-tag">V.4.2.0 (Asignación Dirigida)</div>
 
     <div id="login-screen" style="max-width: 400px; margin: 50px auto;" class="card">
         <h1 style="text-align:center;">🔐 Acceso</h1>
@@ -193,7 +199,7 @@
         <div id="public-success-msg" class="success-screen hidden"><div class="success-icon">✅</div><h2>¡Datos Enviados!</h2><p>Gracias.</p></div>
     </div>
 
-    <div id="modal-cama" class="modal-overlay hidden"><div class="modal-content"><h3>Seleccionar Cama</h3><p style="font-size:0.9em;color:#666;">Verde=Tu Cama | Naranja=Reservada Familia</p><div id="grid-camas" class="bed-grid"></div><button onclick="document.getElementById('modal-cama').classList.add('hidden')" class="secondary" style="margin-top:15px;">Cancelar</button></div></div>
+    <div id="modal-cama" class="modal-overlay hidden"><div class="modal-content"><h3>Seleccionar Cama</h3><div id="grid-camas" class="bed-grid"></div><button onclick="document.getElementById('modal-cama').classList.add('hidden')" class="secondary" style="margin-top:15px;">Cancelar</button></div></div>
     <div id="modal-crear-usuario" class="modal-overlay hidden"><div class="modal-content"><h3>Nuevo Usuario</h3><input type="email" id="new-user-email" placeholder="Correo"><input type="password" id="new-user-pass" placeholder="Contraseña"><input type="text" id="new-user-name" placeholder="Nombre"><label>Rol:</label><select id="new-user-role"></select><button class="success" onclick="crearUsuario()">Crear</button><button class="secondary" onclick="document.getElementById('modal-crear-usuario').classList.add('hidden')">Cerrar</button></div></div>
     <div id="modal-add-familiar" class="modal-overlay hidden"><div class="modal-content"><h3>Añadir Familiar</h3><div class="row"><div class="col"><label>Nombre:</label><input type="text" id="fam-nombre"></div></div><div class="row"><div class="col"><label>Ap. 1:</label><input type="text" id="fam-ap1"></div><div class="col"><label>Ap. 2:</label><input type="text" id="fam-ap2"></div></div><div class="row"><div class="col"><label>Doc:</label><select id="fam-tipo-doc" onchange="verificarMenor('fam')"><option value="MENOR">MENOR</option><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option></select></div><div class="col"><label>Num:</label><input type="text" id="fam-doc-num" disabled></div></div><div class="row"><div class="col"><label>F. Nac:</label><input type="tel" id="fam-fecha" oninput="formatearFecha(this)" maxlength="10"></div></div><div class="btn-group-horizontal"><button class="success" onclick="guardarFamiliarEnLista()">Añadir</button><button class="secondary" onclick="cerrarModalFamiliar()">Cancelar</button></div></div></div>
     <div id="modal-admin-add-familiar" class="modal-overlay hidden"><div class="modal-content"><h3>Añadir Miembro (Admin)</h3><div class="row"><div class="col"><label>Nombre:</label><input type="text" id="adm-fam-nombre"></div><div class="col"><label>Ap. 1:</label><input type="text" id="adm-fam-ap1"></div><div class="col"><label>Ap. 2:</label><input type="text" id="adm-fam-ap2"></div></div><div class="row"><div class="col"><label>Doc:</label><select id="adm-fam-tipo-doc" onchange="verificarMenor('adm-fam')"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Num:</label><input type="text" id="adm-fam-doc-num" onblur="validarDocumento('adm-fam')"><div id="adm-fam-doc-error" class="error-msg">Inválido</div></div></div><div class="row"><div class="col"><label>F. Nac:</label><input type="tel" id="adm-fam-fecha" oninput="formatearFecha(this)" maxlength="10" onblur="validarEdad('adm-fam')"><div id="adm-fam-fecha-error" class="error-msg">Error</div></div><div class="col"><label>Tel:</label><input type="tel" id="adm-fam-tel"></div></div><div class="btn-group-horizontal"><button class="success" onclick="guardarFamiliarAdmin()">Añadir a la lista</button><button class="secondary" onclick="cerrarModalFamiliarAdmin()">Cancelar</button></div></div></div>
@@ -253,7 +259,7 @@
         window.abrirModalFamiliarAdmin=()=>{limpiarFormulario('adm-fam');document.getElementById('modal-admin-add-familiar').classList.remove('hidden');document.getElementById('adm-fam-tipo-doc').value="MENOR";verificarMenor('adm-fam');};
         window.cerrarModalFamiliarAdmin=()=>document.getElementById('modal-admin-add-familiar').classList.add('hidden');
         window.guardarFamiliarAdmin=()=>{if(!validarDocumento('adm-fam')||!validarEdad('adm-fam'))return alert("Datos inválidos");const d=getDatosFormulario('adm-fam');if(!d.nombre)return alert("Nombre obligatorio");adminFamiliaresTemp.push(d);actualizarListaFamiliaresAdminUI();cerrarModalFamiliarAdmin();};
-        function actualizarListaFamiliaresAdminUI(){const d=document.getElementById('admin-lista-familiares-ui');d.innerHTML="";if(adminFamiliaresTemp.length===0){d.innerHTML='<p style="color:#999;font-style:italic;">Ninguno.</p>';return;}adminFamiliaresTemp.forEach((f,i)=>{d.innerHTML+=`<div class="fam-item"><div><strong>${f.nombre}</strong></div><button class="danger" style="margin:0;padding:2px 8px;width:auto;" onclick="borrarFamiliarAdminTemp(${i})">X</button></div>`;});}
+        function actualizarListaFamiliaresAdminUI(){const d=document.getElementById('admin-lista-familiares-ui');d.innerHTML="";if(adminFamiliaresTemp.length===0){d.innerHTML='<p style="color:#999;font-style:italic;">Ninguno.</p>';return;}adminFamiliaresTemp.forEach((f,i)=>{d.innerHTML+=`<div class="fam-item"><div><strong>${f.nombre} ${f.ap1}</strong> <small>(${f.docNum})</small></div><button class="danger" style="margin:0;padding:2px 8px;width:auto;" onclick="borrarFamiliarAdminTemp(${i})">X</button></div>`;});}
         window.borrarFamiliarAdminTemp=(i)=>{adminFamiliaresTemp.splice(i,1);actualizarListaFamiliaresAdminUI();};
         window.adminPrefiliarManual=async()=>{
             if(!validarEdad('man')||!validarDocumento('man'))return alert("Datos titular inválidos");const t=getDatosFormulario('man');if(!t.nombre)return alert("Falta nombre titular");
@@ -290,14 +296,14 @@
 
         window.guardarCambiosPersona=async()=>{if(!window.personaEnGestion)return;if(!validarEdad('edit')||!validarDocumento('edit'))return alert("Datos invalidos");const d=getDatosFormulario('edit');await updateDoc(doc(db,"albergues",currentAlbergueId,"personas",window.personaEnGestion.id),{nombre:d.nombre,ap1:d.ap1,ap2:d.ap2,tipoDoc:d.tipoDoc,docNum:d.docNum,fechaNac:d.fechaNac,telefono:d.telefono});alert("Guardado");};
 
-        // --- GRID (PERSISTENT SHADOW) ---
+        // --- GRID LOGIC (TARGETED) ---
         window.abrirSeleccionCama=()=>{window.modoMapaGeneral=false;mostrarGridCamas();};window.abrirMapaGeneral=()=>{window.modoMapaGeneral=true;mostrarGridCamas();};
         function mostrarGridCamas(){
             const g=document.getElementById('grid-camas'); g.innerHTML="";
             
             // 1. Calcular "Sombras de Familias" (Reservas) Globalmente
-            let shadowMap = {}; // Key: CamaNum, Val: "Nombre Familia"
-            let famGroups = {}; // Agrupar por familiaId
+            let shadowMap = {}; // Key: CamaNum, Val: familiaId
+            let famGroups = {};
             listaPersonasCache.forEach(p => {
                 if(p.familiaId) {
                     if(!famGroups[p.familiaId]) famGroups[p.familiaId] = { members:[], beds:[] };
@@ -306,21 +312,17 @@
                 }
             });
 
-            // Para cada familia, si faltan camas, reservar las siguientes libres
             Object.values(famGroups).forEach(fam => {
                 let assigned = fam.beds.length;
                 let total = fam.members.length;
                 let needed = total - assigned;
-                
                 if(assigned > 0 && needed > 0) {
-                    let startBed = Math.max(...fam.beds); // Empezar tras la última cama ocupada
+                    let startBed = Math.max(...fam.beds);
                     let placed = 0;
                     let check = startBed + 1;
-                    
                     while(placed < needed && check <= totalCapacidad) {
-                        // Si la cama 'check' está libre (no tiene ocupante real), márcala como shadow
                         if(!camasOcupadas[check.toString()]) {
-                            shadowMap[check.toString()] = "Reserva Familiar";
+                            shadowMap[check.toString()] = fam.groupsId || fam.members[0].familiaId; // Store Family ID
                             placed++;
                         }
                         check++;
@@ -328,7 +330,7 @@
                 }
             });
 
-            // 2. Variables del usuario actual (si estamos editando)
+            // 2. Determine My Context
             let myFamId, famMembers=[], assignedMembers=[], neededForMe=1;
             if(!window.modoMapaGeneral && window.personaEnGestion) {
                 myFamId = window.personaEnGestion.familiaId;
@@ -338,7 +340,6 @@
                 neededForMe = famMembers.length - assignedMembers.length;
             }
 
-            // 3. Pintar Grid
             for(let i=1; i<=totalCapacidad; i++){
                 const n = i.toString();
                 const occupant = listaPersonasCache.find(p => p.cama === n);
@@ -350,28 +351,24 @@
                 let classes = "bed-box"; let title = "";
 
                 if(esMiCama) { classes += " bed-current"; title = "Tu cama actual"; }
-                else if(ocup) { 
-                    classes += " bed-busy"; 
-                    let fs = 1; if(occupant.familiaId) fs = listaPersonasCache.filter(m => m.familiaId === occupant.familiaId).length;
-                    title = `${occupant.nombre} (Familia: ${fs})`; 
-                }
+                else if(ocup) { classes += " bed-busy"; title = `${occupant.nombre}`; }
                 else { 
                     classes += " bed-free"; 
                     title = "Libre"; 
-                    
-                    // APLICAR SOMBRA (Naranja Fuerte) si está en el mapa de reservas
-                    if(shadowMap[n]) {
-                        classes += " bed-shadow";
-                        title = "RESERVADA (Familia contigua)";
-                    }
+                    if(shadowMap[n]) { classes += " bed-shadow"; title = "RESERVADA"; }
                 }
 
-                // SUGERENCIAS (Verde) - Solo al asignar a MI usuario
+                // SUGGESTION LOGIC (TARGETED)
                 if(!window.modoMapaGeneral && !ocup && !esMiCama) {
-                    // Logic: Consecutive block green
-                    let fit = true; 
-                    for(let k=0; k<neededForMe; k++) { if(camasOcupadas[(i+k).toString()]) fit = false; }
-                    if(fit && neededForMe > 1) classes += " bed-suggest-block";
+                    // Si ya tengo familia con camas, solo sugerir MIS sombras
+                    if(assignedMembers.length > 0) {
+                        if(shadowMap[n] === myFamId) classes += " bed-suggest-target";
+                    } else {
+                        // Si no tengo camas aun, sugerir bloques libres
+                        let fit = true; 
+                        for(let k=0; k<neededForMe; k++) { if(camasOcupadas[(i+k).toString()]) fit = false; }
+                        if(fit && neededForMe > 1) classes += " bed-suggest-block";
+                    }
                 }
 
                 d.className = classes; d.innerText = n; d.title = title;

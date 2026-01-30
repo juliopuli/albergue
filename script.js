@@ -128,10 +128,69 @@ function getDatosFormulario(p) {
 // --- FAMILIA ---
 window.abrirModalVincularFamilia=()=>{document.getElementById('modal-vincular-familia').classList.remove('hidden');document.getElementById('search-vincular').value="";document.getElementById('resultados-vincular').innerHTML="";};
 window.buscarParaVincular=()=>{const txt=document.getElementById('search-vincular').value.toLowerCase();const res=document.getElementById('resultados-vincular');res.innerHTML="";if(txt.length<2){res.style.display='none';return;}const hits=listaPersonasCache.filter(p=>p.id!==window.personaEnGestion.id && (p.nombre.toLowerCase().includes(txt)||(p.docNum&&p.docNum.toLowerCase().includes(txt))));if(hits.length===0){res.innerHTML="<div class='search-item' style='color:#999;'>No hay coincidencias.</div>"; res.style.display='block';}else{res.style.display='block';hits.forEach(p=>{const d=document.createElement('div');d.className='search-item';const isOut=p.estado==='espera'; const badge=isOut?`<span class="badge badge-archived" style="font-size:0.75em;">ESPERA</span>`:`<span class="badge badge-active" style="font-size:0.75em;">DENTRO</span>`;d.innerHTML=`<div style="display:flex; justify-content:space-between; align-items:center;"><div><strong>${p.nombre} ${p.ap1||''}</strong><div style="font-size:0.8em; color:#666;">📄 ${p.docNum||'-'}</div></div>${badge}</div>`;d.onclick=()=>vincularAFamilia(p);res.appendChild(d);});}};
-window.vincularAFamilia=async(target)=>{if(!confirm(`¿Unir a ${window.personaEnGestion.nombre} con ${target.nombre}?`))return;let tid=target.familiaId;if(!tid){tid=new Date().getTime().toString()+"-LEGACY";await updateDoc(doc(db,"albergues",currentAlbergueId,"personas",target.id),{familiaId:tid, rolFamilia: 'TITULAR'});}await updateDoc(doc(db,"albergues",currentAlbergueId,"personas",window.personaEnGestion.id),{familiaId:tid,rolFamilia:'MIEMBRO'});document.getElementById('modal-vincular-familia').classList.add('hidden');alert("Vinculado.");};
+
+// ** FIX LOGICA FUSION FAMILIAS **
+window.vincularAFamilia = async (target) => {
+    if (!confirm(`¿Unir a ${window.personaEnGestion.nombre} con ${target.nombre}?`)) return;
+
+    let myFamId = window.personaEnGestion.familiaId;
+    let targetFamId = target.familiaId;
+    let finalFamId = null;
+
+    // Caso 1: Yo ya tengo familia, el objetivo NO (o sí).
+    // Prioridad: Mantener MI familia y traer a los otros.
+    if (myFamId) {
+        finalFamId = myFamId;
+    } 
+    // Caso 2: Yo NO tengo familia, el objetivo SÍ.
+    else if (targetFamId) {
+        finalFamId = targetFamId;
+    } 
+    // Caso 3: Ninguno tiene familia. Crear nueva.
+    else {
+        finalFamId = new Date().getTime().toString() + "-FAM";
+    }
+
+    // LISTA DE PERSONAS A ACTUALIZAR
+    // Si el objetivo tenía otra familia, TODOS sus miembros deben moverse a la nueva.
+    let personasAmover = [window.personaEnGestion, target];
+    
+    // Si el target tenía una familia distinta, buscar a sus miembros para moverlos también
+    if (targetFamId && targetFamId !== finalFamId) {
+        const otrosMiembros = listaPersonasCache.filter(p => p.familiaId === targetFamId);
+        personasAmover = [...personasAmover, ...otrosMiembros];
+    }
+    
+    // Si yo tenía una familia distinta (raro en este flujo, pero posible), moverlos.
+    if (myFamId && myFamId !== finalFamId) {
+        const misOtrosMiembros = listaPersonasCache.filter(p => p.familiaId === myFamId);
+        personasAmover = [...personasAmover, ...misOtrosMiembros];
+    }
+
+    // Eliminar duplicados en el array por si acaso
+    const unicos = [...new Map(personasAmover.map(item => [item.id, item])).values()];
+
+    // EJECUTAR ACTUALIZACIÓN
+    const batch = writeBatch(db);
+    unicos.forEach(p => {
+        const ref = doc(db, "albergues", currentAlbergueId, "personas", p.id);
+        batch.update(ref, { familiaId: finalFamId });
+    });
+
+    try {
+        await batch.commit();
+        alert("Familias fusionadas correctamente.");
+        document.getElementById('modal-vincular-familia').classList.add('hidden');
+        // Refrescar visualización
+        if(window.personaEnGestion) seleccionarPersona(window.personaEnGestion);
+    } catch (e) {
+        alert("Error al unir familias: " + e.message);
+    }
+};
 
 window.abrirModalFamiliar=()=>{limpiarFormulario('fam');document.getElementById('modal-add-familiar').classList.remove('hidden');document.getElementById('fam-tipo-doc').value="MENOR";verificarMenor('fam');};window.cerrarModalFamiliar=()=>document.getElementById('modal-add-familiar').classList.add('hidden');
 window.guardarFamiliarEnLista=()=>{
+    // FIX VALIDACION MODAL FAMILIA
     const tDoc = document.getElementById('fam-tipo-doc').value;
     if(tDoc !== 'MENOR'){ if(!window.validarDocumento('fam')) return alert("Documento inválido."); }
     const d=getDatosFormulario('fam');
@@ -234,11 +293,15 @@ window.adminPrefiliarManual = async () => {
 window.buscarPersonaEnAlbergue=()=>{
     const i=document.getElementById('buscador-persona').value.toLowerCase();const r=document.getElementById('resultados-busqueda');if(i.length<2){r.style.display='none';return;}
     const h=listaPersonasCache.filter(p=>(p.nombre+" "+p.ap1+" "+p.docNum).toLowerCase().includes(i));r.innerHTML="";
-    if(h.length>0){r.style.display='block';h.forEach(p=>{const d=document.createElement('div');d.className='search-item';const isOut=p.estado==='espera';const badge=isOut?`<span class="badge badge-archived" style="float:right;">ESPERA</span>`:`<span class="badge badge-active" style="float:right;">DENTRO</span>`;d.innerHTML=`<div style="display:flex; justify-content:space-between; align-items:center;"><div><strong>${p.nombre} ${p.ap1||''} ${p.ap2||''}</strong><div class="search-details">📄 ${p.docNum||'-'}</div></div>${badge}</div>`;d.onclick=()=>{seleccionarPersona(p);r.style.display='none';document.getElementById('buscador-persona').value="";};r.appendChild(d);});}else r.style.display='none';
+    if(h.length>0){r.style.display='block';h.forEach(p=>{const d=document.createElement('div');d.className='search-item';const isOut=p.estado==='espera';const badge=isOut?`<span class="badge badge-archived" style="float:right;">ESPERA</span>`:`<span class="badge badge-active" style="float:right;">DENTRO</span>`;d.innerHTML=`<div style="display:flex; justify-content:space-between; align-items:center;"><div><strong>${p.nombre} ${p.ap1||''} ${p.ap2||''}</strong><div class="search-details">📄 ${p.docNum||'-'}</div></div>${badge}</div>`;d.onclick=()=>seleccionarPersona(p);r.appendChild(d);});}else r.style.display='none';
 };
 
 function seleccionarPersona(p){
     window.personaEnGestion=p;window.personaSeleccionadaId=p.id;
+    // Ocultar buscador
+    document.getElementById('resultados-busqueda').style.display='none';
+    document.getElementById('buscador-persona').value="";
+
     const panel=document.getElementById('panel-gestion-persona');
     panel.classList.remove('hidden'); panel.style.display = "block"; panel.scrollIntoView({behavior:"smooth", block: "center"});
     

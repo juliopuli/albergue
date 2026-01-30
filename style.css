@@ -1,7 +1,6 @@
 /* --- 1. VARIABLES & RESET --- */
 :root {
     --primary: #4f46e5;
-    --primary-dark: #4338ca;
     --bg-body: #f8fafc;
     --surface: #ffffff;
     --text-main: #1e293b;
@@ -81,10 +80,16 @@ button.dark { background: #334155; color: white; }
 
 /* --- 8. UTILS --- */
 .hidden { display: none !important; }
-.sticky-header { position: sticky; top: 130px; z-index: 80; background: var(--surface); margin: -30px -30px 20px -30px; padding: 20px 30px; border-bottom: 1px solid #e2e8f0; border-radius: var(--radius) var(--radius) 0 0; }
-.search-results { background: white; border: 1px solid #e2e8f0; border-radius: 0 0 12px 12px; max-height: 200px; overflow-y: auto; margin-top: -15px; margin-bottom: 20px; box-shadow: var(--shadow-sm); display: block; }
-.search-item { padding: 10px; border-bottom: 1px solid #f1f5f9; cursor: pointer; font-size: 0.9rem; }
+.sticky-header { position: sticky; top: 130px; z-index: 80; background: var(--surface); padding: 20px 30px; border-bottom: 1px solid #eee; margin: -30px -30px 20px -30px; border-radius: var(--radius) var(--radius) 0 0; }
+
+/* BUSCADOR CON PUNTITOS */
+.search-results { background: white; border: 1px solid #e2e8f0; border-radius: 0 0 12px 12px; max-height: 200px; overflow-y: auto; margin-top: -15px; margin-bottom: 20px; box-shadow: var(--shadow-sm); }
+.search-item { padding: 12px; border-bottom: 1px solid #f1f5f9; cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: 0.2s; }
 .search-item:hover { background: #f8fafc; }
+.status-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-left: 10px; flex-shrink: 0; }
+.dot-green { background-color: var(--success); box-shadow: 0 0 4px var(--success); }
+.dot-orange { background-color: var(--warning); box-shadow: 0 0 4px var(--warning); }
+
 .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; display: inline-block; }
 
 .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3000; display: flex; justify-content: center; align-items: center; }

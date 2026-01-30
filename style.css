@@ -1,6 +1,7 @@
 /* --- 1. VARIABLES & RESET --- */
 :root {
     --primary: #4f46e5;
+    --primary-dark: #4338ca;
     --bg-body: #f8fafc;
     --surface: #ffffff;
     --text-main: #1e293b;
@@ -24,7 +25,7 @@ body { background-color: var(--bg-body); color: var(--text-main); height: 100vh;
 
 .btn-icon { background: #e0e7ff; color: var(--primary); border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; transition: 0.2s; font-size: 1rem; }
 .btn-icon:hover { background: #c7d2fe; }
-.btn-logout { background: #fee2e2; color: var(--danger); }
+.btn-logout { background: var(--danger-bg); color: var(--danger); }
 .btn-logout:hover { background: #fecaca; }
 
 /* --- 3. NAV --- */
@@ -44,33 +45,34 @@ body { background-color: var(--bg-body); color: var(--text-main); height: 100vh;
 .hero-icon { font-size: 4rem; color: var(--primary); margin-bottom: 15px; }
 
 /* --- 5. FORMULARIOS --- */
-input, select { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #cbd5e1; border-radius: 8px; background: #f8fafc; font-size: 0.95rem; }
-label { font-weight: 600; font-size: 0.9rem; margin-bottom: 5px; display: block; }
+input, select { width: 100%; padding: 12px 15px; margin-bottom: 15px; border: 1px solid #cbd5e1; border-radius: 8px; background: #f8fafc; font-size: 0.95rem; transition: 0.2s; }
+input:focus, select:focus { border-color: var(--primary); outline: none; background: #fff; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
+label { font-weight: 600; font-size: 0.9rem; color: var(--text-main); margin-bottom: 5px; display: block; }
 .row { display: flex; gap: 15px; flex-wrap: wrap; } .col { flex: 1; min-width: 200px; }
 
-button { padding: 12px 20px; border-radius: 8px; font-weight: 600; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
+button { padding: 12px 20px; border-radius: 8px; font-weight: 600; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: transform 0.1s; }
 button:hover { transform: translateY(-1px); }
 button.primary { background: var(--primary); color: white; }
-button.secondary { background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; }
-button.success { background: var(--success); color: white; }
+button.secondary { background: var(--bg-body); color: var(--text-main); border: 1px solid #cbd5e1; }
 button.danger { background: var(--danger); color: white; }
 button.warning { background: var(--warning); color: white; }
 button.dark { background: #334155; color: white; }
+button.success { background: var(--success); color: white; }
 
 .btn-group-horizontal { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
 
 /* --- 6. LISTAS Y GRID --- */
-.mto-grid, .user-list-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin-top: 20px; }
-.mto-card, .user-card-item { background: white; border: 1px solid #e2e8f0; border-radius: var(--radius); padding: 20px; cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; justify-content: space-between; }
-.mto-card:hover, .user-card-item:hover { border-color: var(--primary); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
-.mto-card.add-new { border: 2px dashed #cbd5e1; align-items: center; justify-content: center; background: #f8fafc; color: #94a3b8; font-size: 1.5rem; }
+.mto-grid, .user-list-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; margin-top: 20px; }
+.mto-card, .user-card-item { background: var(--surface); border-radius: var(--radius); padding: 25px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; justify-content: space-between; height: 100%; transition: all 0.2s; }
+.mto-card:hover, .user-card-item:hover { box-shadow: var(--shadow-md); border-color: var(--primary); transform: translateY(-3px); }
+.mto-card.add-new { border: 2px dashed #cbd5e1; background: #f8fafc; cursor: pointer; align-items: center; justify-content: center; min-height: 200px; font-size: 1.5rem; color: #94a3b8; }
 .mto-card.archived { background: #f1f5f9; border-left: 5px solid var(--warning); opacity: 0.8; }
 
 .user-card-left { display: flex; align-items: center; gap: 15px; }
-.user-avatar-circle { width: 40px; height: 40px; background: #e0e7ff; color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+.user-avatar-circle { width: 45px; height: 45px; background: #e0e7ff; color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: bold; }
 
 /* --- 7. CAMAS --- */
-.bed-grid { display: grid; gap: 10px; margin-top: 20px; }
+.bed-grid { display: grid; gap: 10px; margin-top: 25px; }
 .bed-box { height: 60px; border-radius: 8px; font-weight: 700; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; border: 2px solid transparent; background: #f1f5f9; transition: 0.1s; }
 .bed-box span { font-size: 0.7em; font-weight: normal; margin-top: 2px; }
 .bed-free { background: var(--success-bg); color: #166534; border-color: #86efac; }
@@ -80,7 +82,7 @@ button.dark { background: #334155; color: white; }
 
 /* --- 8. UTILS --- */
 .hidden { display: none !important; }
-.sticky-header { position: sticky; top: 130px; z-index: 80; background: var(--surface); padding: 20px 30px; border-bottom: 1px solid #eee; margin: -30px -30px 20px -30px; border-radius: var(--radius) var(--radius) 0 0; }
+.sticky-header { position: sticky; top: 130px; z-index: 80; background: var(--surface); margin: -30px -30px 20px -30px; padding: 20px 30px; border-bottom: 1px solid #e2e8f0; border-radius: var(--radius) var(--radius) 0 0; }
 
 /* BUSCADOR CON PUNTITOS */
 .search-results { background: white; border: 1px solid #e2e8f0; border-radius: 0 0 12px 12px; max-height: 200px; overflow-y: auto; margin-top: -15px; margin-bottom: 20px; box-shadow: var(--shadow-sm); }

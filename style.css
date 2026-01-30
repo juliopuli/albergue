@@ -43,29 +43,12 @@ body { background-color: var(--bg-body); color: var(--text-main); height: 100vh;
 
 /* --- 3. HOME SCREEN HERO --- */
 .hero-container {
-    text-align: center;
-    padding: 60px 20px;
-    background: white;
-    border-radius: var(--radius);
-    box-shadow: var(--shadow-md);
-    margin-top: 20px;
+    text-align: center; padding: 60px 20px; background: white;
+    border-radius: var(--radius); box-shadow: var(--shadow-md); margin-top: 20px;
 }
-.hero-icon {
-    font-size: 5rem;
-    color: var(--primary);
-    margin-bottom: 20px;
-    animation: float 3s ease-in-out infinite;
-}
-.hero-title {
-    font-size: 2.5rem;
-    color: var(--text-main);
-    margin-bottom: 10px;
-    font-weight: 800;
-}
-.hero-subtitle {
-    color: var(--text-light);
-    font-size: 1.1rem;
-}
+.hero-icon { font-size: 5rem; color: var(--primary); margin-bottom: 20px; animation: float 3s ease-in-out infinite; }
+.hero-title { font-size: 2.5rem; color: var(--text-main); margin-bottom: 10px; font-weight: 800; }
+.hero-subtitle { color: var(--text-light); font-size: 1.1rem; }
 @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
 
 /* --- 4. COMPONENTES --- */
@@ -161,7 +144,7 @@ button.dark { background: #334155; color: white; }
 .badge-archived { background: var(--danger-bg); color: #991b1b; border: 1px solid #fca5a5; }
 .badge-hidden { background: #e2e8f0; color: #475569; }
 
-/* MODALES */
+/* MODALES (Z-Index 3000) */
 .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3000; display: flex; justify-content: center; align-items: center; }
 .modal-content { background: white; width: 90%; max-width: 600px; padding: 30px; border-radius: 12px; max-height: 85vh; overflow-y: auto; }
 

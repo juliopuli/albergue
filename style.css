@@ -41,11 +41,8 @@ body { background-color: var(--bg-body); color: var(--text-main); height: 100vh;
 
 .main-content { margin-top: 140px; padding: 30px; max-width: 1200px; margin-left: auto; margin-right: auto; width: 100%; flex: 1; }
 
-/* --- 3. HOME SCREEN HERO --- */
-.hero-container {
-    text-align: center; padding: 60px 20px; background: white;
-    border-radius: var(--radius); box-shadow: var(--shadow-md); margin-top: 20px;
-}
+/* --- 3. HOME HERO --- */
+.hero-container { text-align: center; padding: 60px 20px; background: white; border-radius: var(--radius); box-shadow: var(--shadow-md); margin-top: 20px; }
 .hero-icon { font-size: 5rem; color: var(--primary); margin-bottom: 20px; animation: float 3s ease-in-out infinite; }
 .hero-title { font-size: 2.5rem; color: var(--text-main); margin-bottom: 10px; font-weight: 800; }
 .hero-subtitle { color: var(--text-light); font-size: 1.1rem; }
@@ -102,7 +99,6 @@ button.dark { background: #334155; color: white; }
 .toggle-input:checked + .toggle-slider { background: var(--primary); }
 .toggle-input:checked + .toggle-slider::before { transform: translateX(20px); }
 
-/* GRID CAMAS */
 .bed-grid { display: grid; gap: 12px; margin-top: 25px; }
 .bed-box { 
     height: 75px; border-radius: 10px; font-weight: 700; font-size: 1.1rem;
@@ -144,7 +140,7 @@ button.dark { background: #334155; color: white; }
 .badge-archived { background: var(--danger-bg); color: #991b1b; border: 1px solid #fca5a5; }
 .badge-hidden { background: #e2e8f0; color: #475569; }
 
-/* MODALES (Z-Index 3000) */
+/* MODALES */
 .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3000; display: flex; justify-content: center; align-items: center; }
 .modal-content { background: white; width: 90%; max-width: 600px; padding: 30px; border-radius: 12px; max-height: 85vh; overflow-y: auto; }
 

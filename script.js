@@ -303,35 +303,14 @@ window.cargarUsuarios=(filtro="")=>{
 };
 window.filtrarUsuarios=()=>{window.cargarUsuarios(document.getElementById('search-user').value.toLowerCase());};
 
-// --- RESTO ---
+// --- RESTO SISTEMA ---
 window.cargarAlberguesMantenimiento = () => {const c=document.getElementById('mto-container');const showHidden=document.getElementById('check-ver-ocultos')?document.getElementById('check-ver-ocultos').checked:false;const isSuper=currentUserData.rol==='super_admin';unsubscribeAlberguesMto=onSnapshot(query(collection(db,"albergues"),orderBy("nombre")),s=>{c.innerHTML="";const addDiv=document.createElement('div');addDiv.className="mto-card add-new";addDiv.onclick=()=>abrirModalAlbergue();addDiv.innerHTML=`<div style="text-align:center;"><i class="fa-solid fa-circle-plus"></i><h3>Nuevo Albergue</h3></div>`;c.appendChild(addDiv);s.forEach(d=>{const a=d.data();if(a.oculto&&(!isSuper||!showHidden))return;const l=a.columnas?`${a.columnas} cols`:"Auto";const arch=!a.activo;const div=document.createElement('div');div.className=`mto-card ${arch?'archived':''} ${a.oculto?'hidden-item':''}`;let btns=`<button class="secondary" onclick="abrirModalAlbergue('${d.id}')">✏️</button><button class="${arch?'success':'warning'}" onclick="cambiarEstadoAlbergue('${d.id}',${!a.activo})">${arch?'Activar':'Archivar'}</button>`;if(isSuper){btns+=`<button class="danger" onclick="eliminarAlbergue('${d.id}')"><i class="fa-solid fa-trash"></i></button>`;if(arch){const icon=a.oculto?'fa-eye':'fa-eye-slash';btns+=`<button class="dark" onclick="toggleOcultarAlbergue('${d.id}', ${!a.oculto})"><i class="fa-solid ${icon}"></i></button>`;}}div.innerHTML=`<div><h3>${a.nombre}</h3><div class="mto-info">🛏️ Cap: <strong>${a.capacidad}</strong><br>📐 <strong>${l}</strong><br>${arch?'<span class="badge badge-archived">Archivado</span>':'<span class="badge badge-active">Activo</span>'}${a.oculto?'<span class="badge badge-hidden">Oculto</span>':''}</div></div><div class="btn-group-horizontal">${btns}</div>`;c.appendChild(div);});});};
 window.eliminarAlbergue=async(id)=>{if(!confirm("¿Seguro?"))return;try{const qP=query(collection(db,"albergues",id,"personas"));const snapP=await getDocs(qP);const promises=snapP.docs.map(doc=>deleteDoc(doc.ref));await Promise.all(promises);await deleteDoc(doc(db,"albergues",id));alert("Eliminado.");}catch(e){alert("Error: "+e.message);}};
 window.toggleOcultarAlbergue=async(id,est)=>{await updateDoc(doc(db,"albergues",id),{oculto:est});};
 window.abrirModalAlbergue=async(id=null)=>{albergueEdicionId=id;document.getElementById('modal-albergue').classList.remove('hidden');if(id){const s=await getDoc(doc(db,"albergues",id));const d=s.data();document.getElementById('mto-nombre').value=d.nombre;document.getElementById('mto-capacidad').value=d.capacidad;document.getElementById('mto-columnas').value=d.columnas||8;}else{document.getElementById('mto-nombre').value="";document.getElementById('mto-capacidad').value="";}};
 window.guardarAlbergue=async()=>{const n=document.getElementById('mto-nombre').value;const c=parseInt(document.getElementById('mto-capacidad').value);const cols=parseInt(document.getElementById('mto-columnas').value)||8;if(!n||!c)return alert("Faltan datos");if(albergueEdicionId)await updateDoc(doc(db,"albergues",albergueEdicionId),{nombre:n,capacidad:c,columnas:cols});else await addDoc(collection(db,"albergues"),{nombre:n,capacidad:c,columnas:cols,activo:true,fecha:new Date()});document.getElementById('modal-albergue').classList.add('hidden');};
 window.cambiarEstadoAlbergue=async(i,s)=>await updateDoc(doc(db,"albergues",i),{activo:s});
-
-// --- RESTORED: INFOGRAFIA & OCCUPANCY ---
-window.cargarAlberguesActivos=()=>{
-    const c=document.getElementById('lista-albergues-activos');
-    unsubscribeAlberguesActivos=onSnapshot(query(collection(db,"albergues"),where("activo","==",true)),s=>{
-        c.innerHTML="";
-        s.forEach(async d=>{
-            const a=d.data();
-            if(a.oculto&&currentUserData.rol!=='super_admin')return;
-            const qOccupied=query(collection(db,"albergues",d.id,"personas"),where("estado","==","ingresado"));
-            const snapOccupied=await getDocs(qOccupied);
-            const count=snapOccupied.size;
-            const div=document.createElement('div');
-            div.className="mto-card";
-            div.style.cursor="pointer";
-            div.innerHTML=`<h3>${a.nombre}</h3><div class="mto-info"><strong>${count}</strong> / ${a.capacidad} Ocupadas<div style="height:6px; background:#e2e8f0; border-radius:3px; margin-top:5px; overflow:hidden;"><div style="width:${(count/a.capacidad)*100}%; background:var(--primary); height:100%;"></div></div></div>`;
-            div.onclick=()=>window.entrarAlbergue(d.id);
-            c.appendChild(div);
-        });
-    });
-};
-
+window.cargarAlberguesActivos=()=>{const c=document.getElementById('lista-albergues-activos');unsubscribeAlberguesActivos=onSnapshot(query(collection(db,"albergues"),where("activo","==",true)),s=>{c.innerHTML="";s.forEach(async d=>{const a=d.data();if(a.oculto&&currentUserData.rol!=='super_admin')return;const qOccupied=query(collection(db,"albergues",d.id,"personas"),where("estado","==","ingresado"));const snapOccupied=await getDocs(qOccupied);const count=snapOccupied.size;const div=document.createElement('div');div.className="mto-card";div.style.cursor="pointer";div.innerHTML=`<h3>${a.nombre}</h3><div class="mto-info"><strong>${count}</strong> / ${a.capacidad} Ocupadas<div style="height:6px; background:#e2e8f0; border-radius:3px; margin-top:5px; overflow:hidden;"><div style="width:${(count/a.capacidad)*100}%; background:var(--primary); height:100%;"></div></div></div>`;div.onclick=()=>window.entrarAlbergue(d.id);c.appendChild(div);});});};
 window.entrarAlbergue=(id)=>{currentAlbergueId=id;window.navegar('operativa');onSnapshot(doc(db,"albergues",id),d=>{currentAlbergueData=d.data();document.getElementById('app-title').innerText=currentAlbergueData.nombre;totalCapacidad=currentAlbergueData.capacidad||0;actualizarContadores();});unsubscribePersonas=onSnapshot(query(collection(db,"albergues",id,"personas"),orderBy("fechaRegistro","desc")),s=>{listaPersonasCache=[];let c=0;camasOcupadas={};s.forEach(ds=>{const p=ds.data();p.id=ds.id;listaPersonasCache.push(p);if(p.estado!=='espera'){c++;if(p.cama)camasOcupadas[p.cama]=p.nombre;}});ocupacionActual=c;actualizarContadores();if(window.personaEnGestion){const upd=listaPersonasCache.find(u=>u.id===window.personaEnGestion.id);if(upd)seleccionarPersona(upd);}});};
 function actualizarContadores(){document.getElementById('ocupacion-count').innerText=ocupacionActual;document.getElementById('capacidad-total').innerText=totalCapacidad;}
 window.abrirSeleccionCama=()=>{window.modoMapaGeneral=false;mostrarGridCamas();};window.abrirMapaGeneral=()=>{window.modoMapaGeneral=true;mostrarGridCamas();};

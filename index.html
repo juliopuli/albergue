@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión Albergue - V.20.0.2</title>
+    <title>Gestión Albergue - V.21.0.0</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     
@@ -12,7 +12,7 @@
 </head>
 <body>
 
-    <div class="version-tag">V.20.0.2</div>
+    <div class="version-tag">V.21.0.0</div>
 
     <div id="login-screen" class="">
         <div class="card">
@@ -32,7 +32,7 @@
                     <span class="user-name" id="user-name-display">...</span>
                     <span class="user-role" id="user-role-badge">...</span>
                 </div>
-                <button id="header-btn-users" class="btn-users-header hidden" onclick="window.navegar('usuarios')" title="Gestión Usuarios">
+                <button id="header-btn-users" class="btn-users hidden" onclick="window.navegar('usuarios')" title="Gestionar Usuarios">
                     <i class="fa-solid fa-users-gear"></i>
                 </button>
                 <button class="btn-logout" onclick="window.cerrarSesion()"><i class="fa-solid fa-power-off"></i></button>
@@ -40,12 +40,20 @@
         </header>
 
         <nav class="app-nav">
-            <div class="nav-item" id="nav-albergues" onclick="window.navegar('gestion-albergues')"><i class="fa-solid fa-bed"></i><span>Gestión</span></div>
-            <div class="nav-item" id="nav-mto" onclick="window.navegar('mantenimiento')"><i class="fa-solid fa-screwdriver-wrench"></i><span>Mantenimiento</span></div>
+            <div class="nav-item" id="nav-home" onclick="window.navegar('home')">
+                <i class="fa-solid fa-house"></i><span>Inicio</span>
+            </div>
+            <div class="nav-item" id="nav-albergues" onclick="window.navegar('gestion-albergues')">
+                <i class="fa-solid fa-bed"></i><span>Gestión</span>
+            </div>
+            <div class="nav-item" id="nav-mto" onclick="window.navegar('mantenimiento')">
+                <i class="fa-solid fa-screwdriver-wrench"></i><span>Mantenimiento</span>
+            </div>
             <div class="nav-item disabled"><i class="fa-solid fa-chart-pie"></i><span>Informes</span></div>
         </nav>
 
         <main class="main-content">
+            
             <div id="screen-home" class="hidden">
                 <div class="hero-container">
                     <i class="fa-solid fa-campground hero-icon"></i>
@@ -108,6 +116,7 @@
                     </div>
 
                     <div style="margin-top:25px;">
+                        
                         <div id="tab-prefiliacion" class="tab-content active">
                             <div style="border: 2px dashed #cbd5e1; padding: 25px; border-radius: var(--radius);">
                                 <h3 style="color:var(--primary);">📝 Ficha de Ingreso</h3>

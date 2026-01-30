@@ -3,33 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión Albergue - V.24.0.0</title>
+    <title>Gestión Albergue - V.25.0.0</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
-
-    <div class="version-tag">V.1.0.1</div>
+    <div class="version-tag">V.25.0.0</div>
 
     <div id="login-screen">
-        <div class="login-box">
-            <h1 style="color:var(--primary); margin-bottom:20px;"><i class="fa-solid fa-hotel"></i> Acceso</h1>
-            <input type="email" id="login-email" placeholder="Correo electrónico">
+        <div class="card">
+            <h1><i class="fa-solid fa-hotel"></i> Acceso</h1>
+            <input type="email" id="login-email" placeholder="Email">
             <input type="password" id="login-pass" placeholder="Contraseña">
-            <button class="primary" style="width:100%; margin-top:10px;" onclick="window.iniciarSesion()">Entrar</button>
-            <p style="margin-top:15px; font-size:0.8rem; color:#666; cursor:pointer;" onclick="window.recuperarContrasena()">¿Olvidaste tu contraseña?</p>
+            <button class="primary" style="width:100%" onclick="window.iniciarSesion()">Entrar</button>
+            <p style="margin-top:10px; font-size:0.8rem; cursor:pointer;" onclick="window.recuperarContrasena()">Olvidé contraseña</p>
         </div>
     </div>
 
     <div id="app-shell" class="hidden">
         <header class="app-header">
-            <div class="brand"><i class="fa-solid fa-campground"></i> ALBERGUE PRO</div>
+            <div class="brand">ALBERGUE PRO</div>
             <div class="user-profile">
                 <div class="user-info">
-                    <span class="user-name" id="user-name-display">Usuario</span>
-                    <span class="user-role" id="user-role-badge">Rol</span>
+                    <span class="user-name" id="user-name-display">...</span>
+                    <span class="user-role" id="user-role-badge">...</span>
                 </div>
                 <button id="header-btn-users" class="btn-icon hidden" onclick="window.navegar('usuarios')" title="Usuarios">
                     <i class="fa-solid fa-users-gear"></i>
@@ -49,38 +49,38 @@
         <main class="main-content">
             
             <div id="screen-home" class="hidden">
-                <div class="hero">
-                    <i class="fa-solid fa-campground"></i>
-                    <h2>Bienvenido</h2>
-                    <p style="color:#666;">Selecciona una opción del menú inferior para comenzar.</p>
+                <div class="hero-container">
+                    <i class="fa-solid fa-campground hero-icon"></i>
+                    <h1>Bienvenido</h1>
+                    <p>Selecciona una opción del menú inferior</p>
                 </div>
             </div>
 
             <div id="screen-usuarios" class="hidden">
                 <div class="card">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                        <h2>Gestión de Personal</h2>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                        <h2>Usuarios</h2>
                         <button class="success" onclick="window.abrirModalUsuario()">+ Nuevo</button>
                     </div>
-                    <input type="text" id="search-user" placeholder="Buscar por nombre o email..." onkeyup="window.filtrarUsuarios()">
-                    <div id="lista-usuarios-container" class="list-grid"></div>
+                    <input type="text" id="search-user" placeholder="Buscar usuario..." onkeyup="window.filtrarUsuarios()">
+                    <div id="lista-usuarios-container" class="user-list-grid"></div>
                 </div>
             </div>
 
             <div id="screen-gestion-albergues" class="hidden">
                 <div class="card">
                     <h2>Selección de Albergue</h2>
-                    <div id="lista-albergues-activos" class="list-grid"></div>
+                    <div id="lista-albergues-activos" class="mto-grid"></div>
                 </div>
             </div>
 
             <div id="screen-mantenimiento" class="hidden">
                 <div class="card">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
                         <h2>Mantenimiento</h2>
-                        <button class="success" onclick="window.abrirModalAlbergue()">+ Crear Albergue</button>
+                        <button class="success" onclick="window.abrirModalAlbergue()">+ Nuevo Albergue</button>
                     </div>
-                    <div id="mto-container" class="list-grid"></div>
+                    <div id="mto-container" class="mto-grid"></div>
                 </div>
             </div>
 
@@ -89,12 +89,12 @@
                     <div class="sticky-header">
                         <div style="display:flex; justify-content:space-between; align-items:center;">
                             <div>
-                                <h2 id="app-title" style="margin:0; font-size:1.2rem;">Albergue</h2>
+                                <h2 id="app-title" style="margin:0;">Albergue</h2>
                                 <span class="badge badge-active">Ocupación: <span id="ocupacion-count">0</span> / <span id="capacidad-total">0</span></span>
                             </div>
                             <div class="btn-group-horizontal">
-                                <button class="dark" onclick="window.abrirModalQR()"><i class="fa-solid fa-qrcode"></i> QR</button>
-                                <button class="primary" onclick="window.abrirMapaGeneral()"><i class="fa-solid fa-bed"></i> Camas</button>
+                                <button class="dark" onclick="window.abrirModalQR()">QR</button>
+                                <button class="primary" onclick="window.abrirMapaGeneral()">Camas</button>
                                 <button class="secondary" onclick="window.navegar('gestion-albergues')">Salir</button>
                             </div>
                         </div>
@@ -107,55 +107,45 @@
                     <div style="margin-top:20px;">
                         <div id="tab-prefiliacion">
                             <div style="background:#eff6ff; padding:15px; border-radius:8px; margin-bottom:20px;">
-                                <label><i class="fa-solid fa-search"></i> Buscar (Evitar duplicados):</label>
-                                <input type="text" id="buscador-pref" placeholder="Escribe para buscar..." onkeyup="window.buscarEnPrefiliacion()">
+                                <label>Buscar (Evitar duplicados):</label>
+                                <input type="text" id="buscador-pref" placeholder="Escribe nombre o DNI..." onkeyup="window.buscarEnPrefiliacion()">
                                 <div id="resultados-pref" class="search-results hidden"></div>
                             </div>
-                            
-                            <div style="border:1px dashed #cbd5e1; padding:20px; border-radius:8px;">
-                                <h3>Nueva Ficha</h3>
+                            <div style="border:1px dashed #ccc; padding:20px; border-radius:8px;">
+                                <h3>Nueva Entrada</h3>
                                 <div class="row">
                                     <div class="col"><input type="text" id="man-nombre" placeholder="Nombre (*)"></div>
-                                    <div class="col"><input type="text" id="man-ap1" placeholder="Apellido 1"></div>
-                                </div>
-                                <div class="row">
-                                    <div class="col"><select id="man-tipo-doc"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div>
                                     <div class="col"><input type="text" id="man-doc-num" placeholder="Documento"></div>
                                 </div>
-                                
                                 <div class="fam-list">
                                     <h4>Familiares</h4>
-                                    <div id="admin-lista-familiares-ui"><p style="color:#999; font-style:italic;">Ninguno.</p></div>
-                                    <button class="secondary" style="width:100%; margin-top:5px;" onclick="window.abrirModalFamiliarAdmin()">+ Añadir Familiar</button>
+                                    <div id="admin-lista-familiares-ui"><p style="color:#999;">Ninguno.</p></div>
+                                    <button class="secondary" onclick="window.abrirModalFamiliarAdmin()">+ Añadir</button>
                                 </div>
                                 <br>
-                                <button class="success" style="width:100%" onclick="window.adminPrefiliarManual()">GUARDAR REGISTRO</button>
+                                <button class="success" style="width:100%" onclick="window.adminPrefiliarManual()">Guardar Registro</button>
                             </div>
                         </div>
 
                         <div id="tab-filiacion" class="hidden">
                             <input type="text" id="buscador-persona" placeholder="Buscar persona para gestionar..." onkeyup="window.buscarPersonaEnAlbergue()">
                             <div id="resultados-busqueda" class="search-results hidden"></div>
-
-                            <div id="panel-gestion-persona" class="hidden" style="background:#f8fafc; padding:20px; border-radius:10px; border:1px solid #e2e8f0; margin-top:20px;">
+                            
+                            <div id="panel-gestion-persona" class="hidden" style="background:#f8f9fa; padding:20px; border-radius:10px; margin-top:20px;">
                                 <h2 id="gestion-nombre-titulo" style="color:var(--primary); margin-top:0;">Nombre</h2>
-                                <div style="margin-bottom:15px;">
-                                    <span id="gestion-estado" class="badge"></span>
-                                    <span id="gestion-cama-info" style="font-weight:bold; margin-left:10px;"></span>
-                                </div>
-
+                                <p>Estado: <span id="gestion-estado" class="badge"></span> <strong id="gestion-cama-info"></strong></p>
+                                
                                 <div class="row">
                                     <div class="col"><label>Nombre</label><input type="text" id="edit-nombre"></div>
-                                    <div class="col"><label>Ap 1</label><input type="text" id="edit-ap1"></div>
+                                    <div class="col"><label>Doc</label><input type="text" id="edit-doc-num"></div>
                                 </div>
                                 
                                 <div class="btn-group-horizontal">
                                     <button class="primary" onclick="window.abrirSeleccionCama()">Asignar Cama</button>
-                                    <button class="warning" onclick="window.liberarCamaMantener()">Liberar Cama</button>
+                                    <button class="warning" onclick="window.liberarCamaMantener()">Liberar</button>
                                     <button class="secondary" onclick="window.guardarCambiosPersona()">Guardar Datos</button>
                                 </div>
-
-                                <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
+                                <hr>
                                 <h4>Grupo Familiar</h4>
                                 <div id="info-familia-lista" style="margin-bottom:10px;"></div>
                                 <button class="secondary" onclick="window.abrirModalVincularFamilia()">Vincular a otra familia</button>
@@ -171,60 +161,57 @@
         <div style="max-width:600px; margin:0 auto;">
             <h1 style="text-align:center; color:var(--primary);">Auto-Registro</h1>
             <div class="card">
-                <label>Datos del Titular</label>
                 <input type="text" id="pub-nombre" placeholder="Nombre Completo (*)">
-                <input type="text" id="pub-doc-num" placeholder="DNI / Pasaporte / NIE (*)">
+                <input type="text" id="pub-doc-num" placeholder="DNI / Pasaporte (*)">
                 
-                <div class="fam-list" style="margin-top:20px;">
+                <div class="fam-list">
                     <h4>Acompañantes</h4>
                     <div id="lista-familiares-ui"><p style="color:#999;">Ninguno añadido.</p></div>
-                    <button class="secondary" style="width:100%; margin-top:5px;" onclick="window.abrirModalFamiliar()">+ Añadir Acompañante</button>
+                    <button class="secondary" onclick="window.abrirModalFamiliar()">+ Añadir Acompañante</button>
                 </div>
                 <br>
-                <button class="success" style="width:100%; padding:15px; font-size:1.1rem;" onclick="window.publicoGuardarTodo()">ENVIAR REGISTRO</button>
+                <button class="success" style="width:100%; padding:15px;" onclick="window.publicoGuardarTodo()">ENVIAR REGISTRO</button>
             </div>
         </div>
         <div id="public-success-msg" class="hidden" style="text-align:center; padding:50px;">
-            <i class="fa-solid fa-circle-check" style="font-size:4rem; color:var(--success);"></i>
-            <h1>¡Recibido!</h1>
-            <p>Por favor, espere a ser llamado en recepción.</p>
+            <h1 style="color:green;">¡Recibido!</h1><p>Espere a ser llamado.</p>
         </div>
     </div>
 
-    <div id="modal-qr" class="modal-overlay hidden"><div class="modal-content" style="text-align:center;"><h3>Escanea este QR</h3><div id="qrcode-display" style="display:inline-block; margin:20px;"></div><br><button class="secondary" onclick="document.getElementById('modal-qr').classList.add('hidden')">Cerrar</button></div></div>
-
-    <div id="modal-cama" class="modal-overlay hidden"><div class="modal-content"><h3>Mapa de Camas</h3><p style="font-size:0.8rem; color:#666;">Verde: Libre | Rojo: Ocupado | Azul: Tu cama actual</p><div id="grid-camas" class="bed-grid"></div><button class="secondary" style="margin-top:20px; width:100%;" onclick="document.getElementById('modal-cama').classList.add('hidden')">Cerrar</button></div></div>
+    <div id="modal-qr" class="modal-overlay hidden"><div class="modal-content" style="text-align:center;"><h3>QR Acceso</h3><div id="qrcode-display" style="display:inline-block; margin:20px;"></div><br><button onclick="document.getElementById('modal-qr').classList.add('hidden')">Cerrar</button></div></div>
     
-    <div id="modal-bed-info" class="modal-overlay hidden"><div class="modal-content" style="text-align:center;"><i class="fa-solid fa-user" style="font-size:3rem; color:#ccc;"></i><h2 id="info-nombre-completo" style="margin:10px 0;"></h2><p>Cama: <strong id="info-cama-num"></strong></p><button class="secondary" onclick="document.getElementById('modal-bed-info').classList.add('hidden')">Cerrar</button></div></div>
-
-    <div id="modal-albergue" class="modal-overlay hidden"><div class="modal-content"><h3>Albergue</h3><label>Nombre</label><input type="text" id="mto-nombre"><label>Capacidad</label><input type="number" id="mto-capacidad"><label>Columnas Grid</label><input type="number" id="mto-columnas" value="8"><div class="row"><button class="primary col" onclick="window.guardarAlbergue()">Guardar</button><button class="secondary col" onclick="document.getElementById('modal-albergue').classList.add('hidden')">Cancelar</button></div></div></div>
-
-    <div id="modal-crear-usuario" class="modal-overlay hidden"><div class="modal-content"><h3>Usuario</h3><label>Nombre</label><input type="text" id="new-user-name"><label>Email</label><input type="email" id="new-user-email"><label>Contraseña</label><input type="password" id="new-user-pass"><label>Rol</label><select id="new-user-role"></select><div class="row"><button class="primary col" onclick="window.guardarUsuario()">Guardar</button><button class="secondary col" onclick="document.getElementById('modal-crear-usuario').classList.add('hidden')">Cancelar</button></div></div></div>
-
-    <div id="modal-vincular-familia" class="modal-overlay hidden"><div class="modal-content"><h3>Vincular a Familia</h3><input type="text" id="search-vincular" placeholder="Buscar familiar..." onkeyup="window.buscarParaVincular()"><div id="resultados-vincular" class="search-results hidden"></div><button class="secondary" style="width:100%; margin-top:10px;" onclick="document.getElementById('modal-vincular-familia').classList.add('hidden')">Cancelar</button></div></div>
-
     <div id="modal-add-familiar" class="modal-overlay hidden">
         <div class="modal-content">
-            <h3>Añadir Acompañante</h3>
-            <label>Nombre (*)</label><input type="text" id="fam-nombre">
-            <label>Documento</label><input type="text" id="fam-doc-num" placeholder="Opcional si es menor">
+            <h3>Añadir Familiar (QR)</h3>
+            <input type="text" id="fam-nombre" placeholder="Nombre (*)">
+            <input type="text" id="fam-doc-num" placeholder="Documento (Opcional si menor)">
             <div class="row">
                 <button class="primary col" onclick="window.guardarFamiliarQR()">Añadir</button>
-                <button class="secondary col" onclick="window.cerrarModalFamiliar()">Cancelar</button>
+                <button class="secondary col" onclick="document.getElementById('modal-add-familiar').classList.add('hidden')">Cancelar</button>
             </div>
         </div>
     </div>
 
     <div id="modal-admin-add-familiar" class="modal-overlay hidden">
         <div class="modal-content">
-            <h3>Añadir Miembro</h3>
-            <label>Nombre (*)</label><input type="text" id="adm-fam-nombre">
+            <h3>Añadir Familiar (Admin)</h3>
+            <input type="text" id="adm-fam-nombre" placeholder="Nombre (*)">
             <div class="row">
                 <button class="primary col" onclick="window.guardarFamiliarAdmin()">Añadir</button>
                 <button class="secondary col" onclick="document.getElementById('modal-admin-add-familiar').classList.add('hidden')">Cancelar</button>
             </div>
         </div>
     </div>
+
+    <div id="modal-cama" class="modal-overlay hidden"><div class="modal-content"><h3>Mapa de Camas</h3><div id="grid-camas" class="bed-grid"></div><button class="secondary" style="margin-top:20px; width:100%" onclick="document.getElementById('modal-cama').classList.add('hidden')">Cerrar</button></div></div>
+
+    <div id="modal-bed-info" class="modal-overlay hidden"><div class="modal-content" style="text-align:center;"><h2 id="info-nombre-completo"></h2><p>Cama: <strong id="info-cama-num"></strong></p><button class="secondary" onclick="document.getElementById('modal-bed-info').classList.add('hidden')">Cerrar</button></div></div>
+
+    <div id="modal-albergue" class="modal-overlay hidden"><div class="modal-content"><h3>Albergue</h3><input type="text" id="mto-nombre" placeholder="Nombre"><input type="number" id="mto-capacidad" placeholder="Capacidad"><input type="number" id="mto-columnas" placeholder="Columnas"><button class="primary" onclick="window.guardarAlbergue()">Guardar</button><button class="secondary" onclick="document.getElementById('modal-albergue').classList.add('hidden')">Cancelar</button></div></div>
+
+    <div id="modal-crear-usuario" class="modal-overlay hidden"><div class="modal-content"><h3>Usuario</h3><input type="text" id="new-user-name" placeholder="Nombre"><input type="email" id="new-user-email" placeholder="Email"><input type="password" id="new-user-pass" placeholder="Pass"><select id="new-user-role"></select><button class="primary" onclick="window.guardarUsuario()">Guardar</button><button class="secondary" onclick="document.getElementById('modal-crear-usuario').classList.add('hidden')">Cancelar</button></div></div>
+
+    <div id="modal-vincular-familia" class="modal-overlay hidden"><div class="modal-content"><h3>Vincular</h3><input type="text" id="search-vincular" placeholder="Buscar familiar..." onkeyup="window.buscarParaVincular()"><div id="resultados-vincular" class="search-results hidden"></div><button class="secondary" style="margin-top:10px;" onclick="document.getElementById('modal-vincular-familia').classList.add('hidden')">Cerrar</button></div></div>
 
     <script type="module" src="script.js"></script>
 </body>

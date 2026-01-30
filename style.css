@@ -24,12 +24,16 @@ body { background-color: var(--bg-body); color: var(--text-main); height: 100vh;
 /* --- 2. LAYOUT --- */
 .app-header { background: var(--surface); padding: 0 25px; height: 60px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; position: fixed; top: 0; width: 100%; z-index: 100; }
 .brand { font-size: 1.2rem; font-weight: 800; color: var(--primary); letter-spacing: -0.5px; }
-.user-profile { display: flex; align-items: center; gap: 15px; }
-.user-info { text-align: right; line-height: 1.2; }
+.user-profile { display: flex; align-items: center; gap: 12px; }
+.user-info { text-align: right; line-height: 1.2; margin-right: 10px; }
 .user-name { font-weight: 700; font-size: 0.9rem; }
 .user-role { font-size: 0.75rem; color: var(--text-light); text-transform: uppercase; font-weight: 600; }
+
+/* BOTONES HEADER */
 .btn-logout { background: var(--danger-bg); color: var(--danger); padding: 8px 12px; border-radius: 8px; border: none; cursor: pointer; transition: 0.2s; }
 .btn-logout:hover { background: #fecaca; }
+.btn-users { background: #e0e7ff; color: var(--primary); padding: 8px 12px; border-radius: 8px; border: none; cursor: pointer; transition: 0.2s; font-weight: 600; font-size: 0.9rem; }
+.btn-users:hover { background: #c7d2fe; }
 
 .app-nav { background: var(--surface); height: 70px; display: flex; justify-content: center; align-items: center; gap: 40px; box-shadow: var(--shadow-sm); position: fixed; top: 60px; width: 100%; z-index: 90; }
 .nav-item { display: flex; flex-direction: column; align-items: center; color: var(--text-light); cursor: pointer; padding: 10px 20px; border-radius: var(--radius); transition: all 0.2s; position: relative; }

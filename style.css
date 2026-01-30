@@ -24,16 +24,13 @@ body { background-color: var(--bg-body); color: var(--text-main); height: 100vh;
 /* --- 2. LAYOUT --- */
 .app-header { background: var(--surface); padding: 0 25px; height: 60px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; position: fixed; top: 0; width: 100%; z-index: 100; }
 .brand { font-size: 1.2rem; font-weight: 800; color: var(--primary); letter-spacing: -0.5px; }
-.user-profile { display: flex; align-items: center; gap: 10px; } /* Ajustado gap para los botones */
+.user-profile { display: flex; align-items: center; gap: 10px; }
 .user-info { text-align: right; line-height: 1.2; margin-right: 10px; }
 .user-name { font-weight: 700; font-size: 0.9rem; }
 .user-role { font-size: 0.75rem; color: var(--text-light); text-transform: uppercase; font-weight: 600; }
 
-/* BOTONES HEADER */
 .btn-logout { background: var(--danger-bg); color: var(--danger); padding: 8px 12px; border-radius: 8px; border: none; cursor: pointer; transition: 0.2s; }
 .btn-logout:hover { background: #fecaca; }
-
-/* Nuevo botón usuarios en header */
 .btn-users-header { background: #e0e7ff; color: var(--primary); padding: 8px 12px; border-radius: 8px; border: none; cursor: pointer; transition: 0.2s; font-size: 1rem; }
 .btn-users-header:hover { background: #c7d2fe; }
 
@@ -51,7 +48,10 @@ body { background-color: var(--bg-body); color: var(--text-main); height: 100vh;
 .card { background: var(--surface); padding: 30px; border-radius: var(--radius); box-shadow: var(--shadow-md); margin-bottom: 20px; animation: slideUp 0.3s ease; position: relative; }
 @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-/* STICKY HEADER */
+.hero-container { text-align: center; padding: 60px 20px; background: white; border-radius: var(--radius); box-shadow: var(--shadow-md); margin-top: 20px; }
+.hero-icon { font-size: 5rem; color: var(--primary); margin-bottom: 20px; animation: float 3s ease-in-out infinite; }
+@keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
+
 .sticky-header { position: sticky; top: 130px; z-index: 80; background: var(--surface); margin: -30px -30px 20px -30px; padding: 30px 30px 10px 30px; border-bottom: 1px solid #e2e8f0; border-radius: var(--radius) var(--radius) 0 0; transition: box-shadow 0.3s; }
 
 h2, h3 { color: var(--text-main); margin-bottom: 20px; font-weight: 700; }
@@ -74,7 +74,6 @@ button.dark { background: #334155; color: white; }
 .btn-group-horizontal, .btn-row { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
 .btn-group-horizontal button, .btn-row button { flex: 1; }
 
-/* LISTAS Y TARJETAS */
 .mto-grid, .user-list-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; margin-top: 20px; }
 .mto-card, .user-card-item { background: var(--surface); border-radius: var(--radius); padding: 25px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; justify-content: space-between; height: 100%; transition: all 0.2s; }
 .mto-card:hover, .user-card-item:hover { box-shadow: var(--shadow-md); border-color: var(--primary); transform: translateY(-3px); }
@@ -83,7 +82,6 @@ button.dark { background: #334155; color: white; }
 .mto-card.archived { background: #f1f5f9; border-left: 5px solid var(--warning); opacity: 0.8; }
 .mto-card.hidden-item { background: #e2e8f0; border-left: 5px solid var(--secondary); opacity: 0.6; }
 
-/* Usuarios UI */
 .user-card-left { display: flex; align-items: center; gap: 15px; }
 .user-avatar-circle { width: 45px; height: 45px; background: #e0e7ff; color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: bold; }
 .user-details h4 { margin: 0; color: var(--text-main); font-size: 1rem; }
@@ -94,7 +92,6 @@ button.dark { background: #334155; color: white; }
 .tag-avanzado, .role-avanzado { background: #ffedd5; color: #c2410c; border: 1px solid #fdba74; }
 .tag-medio, .role-medio { background: #ccfbf1; color: #0f766e; border: 1px solid #99f6e4; }
 
-/* Switch Toggle */
 .toggle-switch { display: flex; align-items: center; gap: 10px; cursor: pointer; }
 .toggle-input { display: none; }
 .toggle-slider { width: 40px; height: 20px; background: #cbd5e1; border-radius: 20px; position: relative; transition: 0.3s; }
@@ -102,7 +99,7 @@ button.dark { background: #334155; color: white; }
 .toggle-input:checked + .toggle-slider { background: var(--primary); }
 .toggle-input:checked + .toggle-slider::before { transform: translateX(20px); }
 
-/* --- GRID CAMAS (V12 STYLE) --- */
+/* GRID CAMAS */
 .bed-grid { display: grid; gap: 12px; margin-top: 25px; }
 .bed-box { 
     height: 75px; border-radius: 10px; font-weight: 700; font-size: 1.1rem;
@@ -138,7 +135,7 @@ button.dark { background: #334155; color: white; }
 .search-item:hover { background: #f8fafc; }
 .hidden { display: none !important; }
 
-/* BADGES DE ESTADO */
+/* BADGES */
 .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; display: inline-block; }
 .badge-active { background: var(--success-bg); color: #166534; border: 1px solid #86efac; }
 .badge-archived { background: var(--danger-bg); color: #991b1b; border: 1px solid #fca5a5; }

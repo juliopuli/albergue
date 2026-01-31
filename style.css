@@ -53,6 +53,7 @@ label { font-weight: 600; font-size: 0.9rem; color: var(--text-main); margin-bot
 button { padding: 12px 20px; border-radius: 8px; font-weight: 600; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: transform 0.1s; }
 button:hover { transform: translateY(-1px); }
 button:disabled { background: #cbd5e1; color: #64748b; cursor: not-allowed; transform: none; }
+
 button.primary { background: var(--primary); color: white; }
 button.secondary { background: var(--bg-body); color: var(--text-main); border: 1px solid #cbd5e1; }
 button.danger { background: var(--danger); color: white; }
@@ -72,7 +73,7 @@ button.success { background: var(--success); color: white; }
 .user-card-left { display: flex; align-items: center; gap: 15px; }
 .user-avatar-circle { width: 45px; height: 45px; background: #e0e7ff; color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: bold; }
 
-/* --- 7. CAMAS --- */
+/* --- 7. CAMAS (HORIZONTAL) --- */
 .bed-grid { display: grid; gap: 10px; margin-top: 25px; }
 .bed-box { 
     min-height: 90px;

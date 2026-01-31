@@ -82,6 +82,7 @@ window.navegar=(p)=>{
     
     if(p==='home'){
         document.getElementById('screen-home').classList.remove('hidden');
+        document.getElementById('nav-home').classList.add('active');
     } else if(p==='usuarios'){
         document.getElementById('screen-usuarios').classList.remove('hidden'); window.cargarUsuarios();
     } else if(p==='gestion-albergues'){

@@ -104,6 +104,7 @@ window.navegar=(p)=>{
     } else if(p==='observatorio'){
         document.getElementById('screen-observatorio').classList.remove('hidden');
         document.getElementById('nav-obs').classList.add('active');
+        window.cargarObservatorio(); // LLAMADA NUEVA V3.3.0
     }
     
     document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
@@ -125,6 +126,87 @@ function configurarDashboard(){
     if(['super_admin','admin','avanzado'].includes(r))m.classList.remove('disabled');else m.classList.add('disabled');
     if(r==='super_admin') document.getElementById('container-ver-ocultos').classList.remove('hidden');
 }
+
+// --- OBSERVATORIO (NUEVO V3.3.0) ---
+window.cargarObservatorio = async () => {
+    const listContainer = document.getElementById('obs-list-container');
+    listContainer.innerHTML = '<p style="color:#666; text-align:center;">Analizando datos de todos los albergues...</p>';
+    
+    // Globals
+    let gWait = 0, gHosted = 0, gCap = 0;
+
+    try {
+        // 1. Get Active Shelters
+        const q = query(collection(db, "albergues"), where("activo", "==", true));
+        const sSnap = await getDocs(q);
+        
+        let htmlList = "";
+
+        // 2. Iterate
+        for (const docS of sSnap.docs) {
+            const data = docS.data();
+            const cap = parseInt(data.capacidad || 0);
+            gCap += cap;
+
+            // 3. Get People for this shelter
+            const pSnap = await getDocs(collection(db, "albergues", docS.id, "personas"));
+            
+            let sWait = 0, sHosted = 0;
+            pSnap.forEach(p => {
+                const pd = p.data();
+                if(pd.estado === 'espera') sWait++;
+                if(pd.estado === 'ingresado') sHosted++;
+            });
+
+            gWait += sWait;
+            gHosted += sHosted;
+
+            // Stats per shelter
+            const sFree = Math.max(0, cap - sHosted);
+            const sPct = cap > 0 ? Math.round((sHosted / cap) * 100) : 0;
+            
+            // Color Logic
+            let color = "low";
+            if(sPct > 70) color = "med";
+            if(sPct > 90) color = "high";
+
+            htmlList += `
+            <div class="obs-row">
+                <div class="obs-row-title">${data.nombre}</div>
+                <div style="display:flex; width:100%; justify-content:space-between; flex-wrap:wrap;">
+                    <div class="obs-data-point"><span>Espera</span><strong>${sWait}</strong></div>
+                    <div class="obs-data-point"><span>Alojados</span><strong>${sHosted}</strong></div>
+                    <div class="obs-data-point"><span>Libres</span><strong>${sFree}</strong></div>
+                    <div class="obs-data-point" style="flex:1; min-width:150px; margin-right:0;">
+                        <span>Ocupación ${sPct}%</span>
+                        <div class="prog-track"><div class="prog-fill ${color}" style="width:${sPct}%"></div></div>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        // 4. Update Global DOM
+        document.getElementById('kpi-espera').innerText = gWait;
+        document.getElementById('kpi-alojados').innerText = gHosted;
+        document.getElementById('kpi-libres').innerText = Math.max(0, gCap - gHosted);
+        
+        const gPct = gCap > 0 ? Math.round((gHosted / gCap) * 100) : 0;
+        document.getElementById('kpi-percent').innerText = gPct + "%";
+        
+        const bar = document.getElementById('kpi-bar');
+        bar.style.width = gPct + "%";
+        if(gPct > 90) bar.className = "prog-fill high";
+        else if(gPct > 70) bar.className = "prog-fill med";
+        else bar.className = "prog-fill low";
+
+        // 5. Update List
+        listContainer.innerHTML = htmlList;
+
+    } catch(e) {
+        console.error(e);
+        listContainer.innerHTML = `<p style="color:red;">Error cargando datos: ${e.message}</p>`;
+    }
+};
 
 window.cambiarPestana = (t) => {
     if (t === 'prefiliacion') {

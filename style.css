@@ -31,6 +31,7 @@ body { background-color: var(--bg-body); color: var(--text-main); height: 100vh;
 .role-admin { background-color: #ef4444; }
 .role-intervencion { background-color: #f59e0b; }
 .role-filiacion { background-color: #10b981; }
+.role-observador { background-color: #64748b; } /* NUEVO */
 
 .btn-icon { background: #e0e7ff; color: var(--primary); border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; transition: 0.2s; font-size: 1rem; }
 .btn-icon:hover { background: #c7d2fe; }
@@ -43,7 +44,8 @@ body { background-color: var(--bg-body); color: var(--text-main); height: 100vh;
 .nav-item i { font-size: 1.4rem; margin-bottom: 4px; }
 .nav-item:hover, .nav-item.active { color: var(--primary); background: #e0e7ff; }
 .nav-item.active::after { content: ''; position: absolute; bottom: 0; width: 40%; height: 3px; background: var(--primary); }
-.nav-item.disabled { opacity: 0.3; pointer-events: none; }
+.nav-item.disabled { opacity: 0.3; pointer-events: none; } /* Visual disable */
+.nav-item.hidden { display: none !important; } /* Logic hide */
 
 /* --- 4. CONTENIDO --- */
 .main-content { margin-top: 140px; padding: 25px; max-width: 1200px; margin-left: auto; margin-right: auto; width: 100%; flex: 1; }

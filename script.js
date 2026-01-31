@@ -86,16 +86,22 @@ window.navegar=(p)=>{
     } else if(p==='usuarios'){
         document.getElementById('screen-usuarios').classList.remove('hidden'); window.cargarUsuarios();
     } else if(p==='gestion-albergues'){
-        document.getElementById('screen-gestion-albergues').classList.remove('hidden'); window.cargarAlberguesActivos();
+        window.cargarAlberguesActivos();
+        document.getElementById('screen-gestion-albergues').classList.remove('hidden');
+        document.getElementById('nav-albergues').classList.add('active');
     } else if(p==='mantenimiento'){
-        document.getElementById('screen-mantenimiento').classList.remove('hidden'); window.cargarAlberguesMantenimiento();
+        window.cargarAlberguesMantenimiento();
+        document.getElementById('screen-mantenimiento').classList.remove('hidden');
+        document.getElementById('nav-mto').classList.add('active');
     } else if(p==='operativa'){
         document.getElementById('screen-operativa').classList.remove('hidden');
+        document.getElementById('nav-albergues').classList.add('active');
+        window.cambiarPestana('filiacion'); 
     } else if(p==='observatorio'){
         document.getElementById('screen-observatorio').classList.remove('hidden');
+        document.getElementById('nav-obs').classList.add('active');
     }
     
-    // Update active class
     document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
     if(p==='home') document.getElementById('nav-home').classList.add('active');
     else if(p==='gestion-albergues' || p==='operativa') document.getElementById('nav-albergues').classList.add('active');
@@ -174,7 +180,7 @@ window.seleccionarPersona=(pid)=>{if(typeof pid!=='string')pid=pid.id;const p=li
 window.guardarCambiosPersona=async()=>{if(!window.personaEnGestion)return;const p=getDatosFormulario('edit');await updateDoc(doc(db,"albergues",currentAlbergueId,"personas",window.personaEnGestion.id),p);alert("Datos actualizados");};
 window.adminPrefiliarManual=async()=>{if(prefiliacionEdicionId){const p=getDatosFormulario('man');await updateDoc(doc(db,"albergues",currentAlbergueId,"personas",prefiliacionEdicionId),p);alert("Actualizado");window.cancelarEdicionPref();return;}const n=safeVal('man-nombre');if(!n)return alert("Nombre obligatorio");const fid=new Date().getTime().toString();const titular=getDatosFormulario('man');titular.estado='espera';titular.familiaId=fid;titular.rolFamilia='TITULAR';titular.fechaRegistro=new Date();await addDoc(collection(db,"albergues",currentAlbergueId,"personas"),titular);for(const f of adminFamiliaresTemp){await addDoc(collection(db,"albergues",currentAlbergueId,"personas"),{...f,estado:'espera',familiaId:fid,rolFamilia:'MIEMBRO',fechaRegistro:new Date()});}alert("Guardado");limpiarFormulario('man');adminFamiliaresTemp=[];document.getElementById('admin-lista-familiares-ui').innerHTML="Ninguno.";};
 
-// --- FIX: RESTORED BED FUNCTIONS ---
+// --- FIX: RESTORED BED FUNCTIONS (MISSING IN V2.0.3) ---
 window.cerrarMapaCamas=()=>{highlightedFamilyId=null;document.getElementById('modal-cama').classList.add('hidden');};
 window.highlightFamily=(pid)=>{const occupant=listaPersonasCache.find(p=>p.id===pid);if(!occupant||!occupant.familiaId)return;if(highlightedFamilyId===occupant.familiaId){highlightedFamilyId=null;}else{highlightedFamilyId=occupant.familiaId;}mostrarGridCamas();};
 // RESTORED ENTRY POINTS
@@ -183,8 +189,8 @@ window.abrirMapaGeneral=()=>{window.modoMapaGeneral=true;mostrarGridCamas();};
 
 function mostrarGridCamas(){
     const g=document.getElementById('grid-camas');g.innerHTML="";
-    // SAFE ACCESS to columns
-    const cols=(currentAlbergueData&&currentAlbergueData.columnas)?currentAlbergueData.columnas:8;
+    // FIX: SAFE ACCESS if data not ready yet
+    const cols=(currentAlbergueData && currentAlbergueData.columnas) ? currentAlbergueData.columnas : 8;
     g.style.gridTemplateColumns=`repeat(${cols}, 1fr)`;
     
     let shadowMap={}; let famGroups={};

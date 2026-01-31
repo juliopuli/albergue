@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión Albergue - V.36.0.0</title>
+    <title>Gestión Albergue - V.37.0.0</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     
@@ -12,7 +12,7 @@
 </head>
 <body>
 
-    <div class="version-tag">V.36.0.0</div>
+    <div class="version-tag">V.37.0.0</div>
 
     <div id="login-screen" class="">
         <div class="card">
@@ -57,7 +57,7 @@
             <div id="screen-home" class="hidden">
                 <div class="hero-container">
                     <i class="fa-solid fa-campground hero-icon"></i>
-                    <h1 class="hero-title">Gestión de Albergue</h1>
+                    <h1 class="hero-title">Te damos la bienvenida</h1>
                     <p class="hero-subtitle">Sistema integral de control de ocupación y filiación</p>
                 </div>
             </div>
@@ -131,7 +131,7 @@
                                     <div class="row"><div class="col"><label>Nombre (*)</label><input type="text" id="man-nombre"></div><div class="col"><label>Ap 1</label><input type="text" id="man-ap1"></div><div class="col"><label>Ap 2</label><input type="text" id="man-ap2"></div></div>
                                     <div class="row"><div class="col"><label>Doc</label><select id="man-tipo-doc"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Número</label><input type="text" id="man-doc-num"></div></div>
                                     <div class="row"><div class="col"><label>F. Nac</label><input type="tel" id="man-fecha" maxlength="10" oninput="window.formatearFecha(this)"></div><div class="col"><label>Teléfono</label><input type="tel" id="man-tel"></div></div>
-                                    <div class="fam-list"><h4><i class="fa-solid fa-people-roof"></i> Miembros</h4><div id="admin-lista-familiares-ui"><p style="color:#999;">Ninguno.</p></div><button class="secondary" onclick="window.abrirModalFamiliarAdmin()">+ Añadir Familiar</button></div>
+                                    <div class="fam-list"><h4><i class="fa-solid fa-people-roof"></i> Integrantes</h4><div id="admin-lista-familiares-ui"><p style="color:#999;">Ninguno.</p></div><button class="secondary" onclick="window.abrirModalFamiliarAdmin()">+ Añadir Familiar</button></div>
                                     <button id="btn-save-pref" class="success" style="width:100%; margin-top:20px;" onclick="window.adminPrefiliarManual()">💾 Guardar Nuevo</button>
                                 </div>
                             </div>
@@ -165,8 +165,8 @@
         <div id="public-welcome-screen" class="card" style="max-width:500px; width:100%;">
             <div class="welcome-box">
                 <i class="fa-solid fa-door-open welcome-icon"></i>
-                <h2 style="color:var(--text-main); margin-bottom:10px;">Bienvenido</h2>
-                <h3 id="public-albergue-name" style="color:var(--primary); margin-bottom:20px;">Cargando albergue...</h3>
+                <h2 style="color:var(--text-main); margin-bottom:10px;">Bienvenido/a</h2>
+                <h3 id="public-albergue-name" style="color:var(--primary); margin-bottom:20px;">Cargando...</h3>
                 <p style="color:var(--text-light); line-height:1.5;">
                     Estás a punto de rellenar la ficha de registro para ti y tus familiares. 
                     <br><br>
@@ -175,7 +175,7 @@
                 
                 <div class="consent-box">
                     <input type="checkbox" id="check-consent" onchange="window.toggleStartButton()">
-                    <label for="check-consent" style="cursor:pointer; margin:0;">He leído la información y acepto facilitar mis datos para el registro de entrada.</label>
+                    <label for="check-consent" style="cursor:pointer; margin:0; margin-left:5px;">He leído la información y acepto facilitar mis datos para el registro de entrada.</label>
                 </div>
                 
                 <button id="btn-start-public" class="primary" style="width:100%; padding:15px; font-size:1.1rem;" disabled onclick="window.iniciarRegistro()">COMENZAR REGISTRO</button>
@@ -196,7 +196,7 @@
         <div id="public-success-msg" class="hidden" style="text-align:center;">
             <div class="success-icon"><i class="fa-solid fa-circle-check"></i></div>
             <h1 style="margin-bottom:10px;">¡Datos Enviados!</h1>
-            <p style="font-size:1.2rem; color:var(--text-light);">Por favor, acércate a la mesa de entrada.</p>
+            <p style="font-size:1.2rem; color:var(--text-light);">Gracias. Por favor, acércate a la mesa de entrada.</p>
         </div>
 
     </div>
@@ -212,7 +212,7 @@
     <div id="modal-cama" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
         <div class="modal-content modal-lg">
             <span class="close-modal" onclick="document.getElementById('modal-cama').classList.add('hidden')">&times;</span>
-            <h3>Seleccionar Cama</h3><p style="font-size:0.8rem;color:#666;">Verde Borde=Sugerencia | Naranja=Reserva Familia</p><div id="grid-camas" class="bed-grid"></div>
+            <h3>Seleccionar Cama</h3><p style="font-size:0.8rem;color:#666;">Verde Borde=Sugerencia | Naranja=Reserva Familiar</p><div id="grid-camas" class="bed-grid"></div>
         </div>
     </div>
 
@@ -243,7 +243,7 @@
     <div id="modal-add-familiar" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
         <div class="modal-content">
             <span class="close-modal" onclick="window.cerrarModalFamiliar()">&times;</span>
-            <h3>Familiar (QR)</h3>
+            <h3>Acompañante (QR)</h3>
             <div class="row"><div class="col"><label>Nombre</label><input type="text" id="fam-nombre"></div></div>
             <div class="row"><div class="col"><label>Ap 1</label><input type="text" id="fam-ap1"></div><div class="col"><label>Ap 2</label><input type="text" id="fam-ap2"></div></div>
             <div class="row">
@@ -256,7 +256,7 @@
     </div>
     
     <div id="modal-admin-add-familiar" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
-        <div class="modal-content"><span class="close-modal" onclick="window.cerrarModalFamiliarAdmin()">&times;</span><h3>Miembro (Admin)</h3><div class="row"><div class="col"><label>Nombre</label><input type="text" id="adm-fam-nombre"></div><div class="col"><label>Ap 1</label><input type="text" id="adm-fam-ap1"></div><div class="col"><label>Ap 2</label><input type="text" id="adm-fam-ap2"></div></div><div class="row"><div class="col"><label>Doc</label><select id="adm-fam-tipo-doc" onchange="window.verificarMenor('adm-fam')"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Num</label><input type="text" id="adm-fam-doc-num"></div></div><div class="row"><div class="col"><label>F. Nac</label><input type="tel" id="adm-fam-fecha" oninput="window.formatearFecha(this)" maxlength="10"></div><div class="col"><label>Tel</label><input type="tel" id="adm-fam-tel"></div></div><div class="btn-row"><button class="primary" onclick="window.guardarFamiliarAdmin()">Añadir</button></div></div>
+        <div class="modal-content"><span class="close-modal" onclick="window.cerrarModalFamiliarAdmin()">&times;</span><h3>Integrante (Admin)</h3><div class="row"><div class="col"><label>Nombre</label><input type="text" id="adm-fam-nombre"></div><div class="col"><label>Ap 1</label><input type="text" id="adm-fam-ap1"></div><div class="col"><label>Ap 2</label><input type="text" id="adm-fam-ap2"></div></div><div class="row"><div class="col"><label>Doc</label><select id="adm-fam-tipo-doc" onchange="window.verificarMenor('adm-fam')"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Num</label><input type="text" id="adm-fam-doc-num"></div></div><div class="row"><div class="col"><label>F. Nac</label><input type="tel" id="adm-fam-fecha" oninput="window.formatearFecha(this)" maxlength="10"></div><div class="col"><label>Tel</label><input type="tel" id="adm-fam-tel"></div></div><div class="btn-row"><button class="primary" onclick="window.guardarFamiliarAdmin()">Añadir</button></div></div>
     </div>
 
     <script type="module" src="script.js"></script>

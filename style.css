@@ -40,7 +40,7 @@ body { background-color: var(--bg-body); color: var(--text-main); height: 100vh;
 .btn-key { background: #fef3c7; color: #d97706; }
 .btn-key:hover { background: #fde68a; }
 
-/* BOTÓN PEQUEÑO */
+/* Botón pequeño historial tabla */
 .btn-icon-small { background: transparent; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer; padding: 4px 8px; color: var(--text-light); transition: 0.2s; font-size: 0.9rem; }
 .btn-icon-small:hover { background: #e0e7ff; color: var(--primary); border-color: var(--primary); }
 

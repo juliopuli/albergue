@@ -1,6 +1,6 @@
 import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, createUserWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, setDoc, query, where, getDocs, doc, updateDoc, onSnapshot, orderBy, deleteDoc, getDoc, writeBatch, getDoc } 
+import { getFirestore, collection, addDoc, setDoc, query, where, getDocs, doc, updateDoc, onSnapshot, orderBy, deleteDoc, getDoc, writeBatch } 
 from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
 const firebaseConfig = { apiKey: "AIzaSyAzfEMwMd6M1VgvV0tJn7RS63RJghLE5UI", authDomain: "albergues-temporales.firebaseapp.com", projectId: "albergues-temporales", storageBucket: "albergues-temporales.firebasestorage.app", messagingSenderId: "489999184108", appId: "1:489999184108:web:32b9b580727f83158075c9" };
@@ -14,6 +14,13 @@ let listaFamiliaresTemp=[], adminFamiliaresTemp=[], userEditingId=null, albergue
 let prefiliacionEdicionId = null;
 let isPublicMode = false;
 let highlightedFamilyId = null;
+
+// --- CRITICAL: LOGIN EXPORT ---
+window.iniciarSesion=async()=>{
+    try{
+        await signInWithEmailAndPassword(auth,document.getElementById('login-email').value,document.getElementById('login-pass').value);
+    }catch(e){alert("Error: "+e.message);}
+};
 
 // --- AUTH & HOME ---
 window.onload=()=>{
@@ -35,9 +42,7 @@ async function initPublicMode() {
         const docRef = doc(db, "albergues", currentAlbergueId);
         const snap = await getDoc(docRef);
         if(snap.exists()){
-            // FIX: NOMBRE EXACTO SOLICITADO
             const nombre = snap.data().nombre || "";
-            // Si el nombre ya contiene "Albergue", no lo duplicamos. Si no, lo ponemos.
             const displayName = nombre.toLowerCase().startsWith('albergue') ? nombre : "Albergue " + nombre;
             document.getElementById('public-albergue-name').innerText = displayName;
         } else {
@@ -59,7 +64,6 @@ window.iniciarRegistro = () => {
     document.getElementById('public-form-container').classList.remove('hidden');
 };
 
-window.iniciarSesion=async()=>{try{await signInWithEmailAndPassword(auth,document.getElementById('login-email').value,document.getElementById('login-pass').value);}catch(e){alert(e.message);}};
 window.cerrarSesion=()=>{signOut(auth);location.reload();};
 window.recuperarContrasena = async () => { const email = prompt("Email:"); if(email) try{ await sendPasswordResetEmail(auth,email); alert("Correo enviado."); } catch(e){ alert(e.message); } };
 
@@ -126,7 +130,6 @@ function configurarDashboard(){
 }
 
 window.cambiarPestana = (t) => {
-    // FIX: Use classList for hidden to avoid css conflicts
     if (t === 'prefiliacion') {
         document.getElementById('tab-prefiliacion').classList.remove('hidden');
         document.getElementById('tab-filiacion').classList.add('hidden');
@@ -153,7 +156,7 @@ function safeVal(id){ const el=document.getElementById(id); return el?el.value:"
 function setVal(id,val){ const el=document.getElementById(id); if(el)el.value=val; }
 window.formatearFecha=(i)=>{let v=i.value.replace(/\D/g,'').slice(0,8);if(v.length>=5)i.value=`${v.slice(0,2)}/${v.slice(2,4)}/${v.slice(4)}`;else if(v.length>=3)i.value=`${v.slice(0,2)}/${v.slice(2)}`;else i.value=v;};
 window.verificarMenor=(p)=>{const t=document.getElementById(`${p}-tipo-doc`).value;const i=document.getElementById(`${p}-doc-num`);if(t==='MENOR'){i.value="MENOR-SIN-DNI";i.disabled=true;}else{i.disabled=false;if(i.value==="MENOR-SIN-DNI")i.value="";}};
-window.validarDocumento=(p)=>{return true;} // Simplified for stability
+window.validarDocumento=(p)=>{return true;}
 function limpiarFormulario(p){
     ['nombre','ap1','ap2','doc-num','fecha','tel'].forEach(f=>{ const el=document.getElementById(`${p}-${f}`); if(el)el.value=""; });
     const i=document.getElementById(`${p}-doc-num`); if(i)i.disabled=false;
@@ -288,7 +291,7 @@ window.cargarUsuarios=(filtro="")=>{
 };
 window.filtrarUsuarios=()=>{window.cargarUsuarios();};
 
-// --- MANTENIMIENTO (BOTONES RESTAURADOS) ---
+// --- MANTENIMIENTO ---
 window.cargarAlberguesMantenimiento=()=>{
     const c=document.getElementById('mto-container');
     const isSuper = currentUserData.rol==='super_admin';
@@ -648,6 +651,7 @@ window.abrirModalInfoCama=(p)=>{
 };
 
 async function guardarCama(c){
+    // REASSIGNMENT BLOCK
     if(window.personaEnGestion.cama){
         alert(`Error: ${window.personaEnGestion.nombre} ya tiene asignada la cama ${window.personaEnGestion.cama}. Debes liberarla primero.`);
         return;

@@ -27,13 +27,19 @@ window.onload=async()=>{
         document.getElementById('public-welcome-screen').classList.remove('hidden');
         document.getElementById('public-form-container').classList.add('hidden');
         
-        // FETCH SHELTER NAME FOR WELCOME
+        // FETCH SHELTER NAME FOR WELCOME (Robust Fetch)
         try {
-            const snap = await getDoc(doc(db, "albergues", currentAlbergueId));
+            const docRef = doc(db, "albergues", currentAlbergueId);
+            const snap = await getDoc(docRef);
             if(snap.exists()){
                 document.getElementById('public-albergue-name').innerText = snap.data().nombre;
+            } else {
+                document.getElementById('public-albergue-name').innerText = "Registro de Entrada";
             }
-        } catch(e) { console.error(e); }
+        } catch(e) { 
+            console.error("Error fetching name:", e);
+            document.getElementById('public-albergue-name').innerText = "Registro de Entrada"; 
+        }
     }
 };
 
@@ -92,7 +98,7 @@ window.navegar=(p)=>{
     } else if(p==='operativa'){
         document.getElementById('screen-operativa').classList.remove('hidden');
         document.getElementById('nav-albergues').classList.add('active');
-        window.cambiarPestana('filiacion'); // DEFAULT TAB V34
+        window.cambiarPestana('filiacion');
     }
     // Update active class
     document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
@@ -115,7 +121,6 @@ function configurarDashboard(){
 }
 
 window.cambiarPestana = (t) => {
-    // FIX: Use classList for hidden to avoid css conflicts
     if (t === 'prefiliacion') {
         document.getElementById('tab-prefiliacion').classList.remove('hidden');
         document.getElementById('tab-filiacion').classList.add('hidden');
@@ -142,7 +147,7 @@ function safeVal(id){ const el=document.getElementById(id); return el?el.value:"
 function setVal(id,val){ const el=document.getElementById(id); if(el)el.value=val; }
 window.formatearFecha=(i)=>{let v=i.value.replace(/\D/g,'').slice(0,8);if(v.length>=5)i.value=`${v.slice(0,2)}/${v.slice(2,4)}/${v.slice(4)}`;else if(v.length>=3)i.value=`${v.slice(0,2)}/${v.slice(2)}`;else i.value=v;};
 window.verificarMenor=(p)=>{const t=document.getElementById(`${p}-tipo-doc`).value;const i=document.getElementById(`${p}-doc-num`);if(t==='MENOR'){i.value="MENOR-SIN-DNI";i.disabled=true;}else{i.disabled=false;if(i.value==="MENOR-SIN-DNI")i.value="";}};
-window.validarDocumento=(p)=>{return true;} // Simplified for stability
+window.validarDocumento=(p)=>{return true;}
 function limpiarFormulario(p){
     ['nombre','ap1','ap2','doc-num','fecha','tel'].forEach(f=>{ const el=document.getElementById(`${p}-${f}`); if(el)el.value=""; });
     const i=document.getElementById(`${p}-doc-num`); if(i)i.disabled=false;
@@ -182,7 +187,7 @@ window.vincularAFamilia = async (target) => {
     });
     try {
         await batch.commit();
-        alert("Familias fusionadas.");
+        alert("Unidad Familiar actualizada.");
         document.getElementById('modal-vincular-familia').classList.add('hidden');
         if(window.personaEnGestion) seleccionarPersona(window.personaEnGestion);
     } catch (e) { alert("Error: " + e.message); }
@@ -352,8 +357,6 @@ window.cargarAlberguesActivos=()=>{
 
 window.entrarAlbergue=(id)=>{
     currentAlbergueId=id; window.navegar('operativa');
-    // V34 CHANGE: DEFAULT TAB FILIACION
-    // window.cambiarPestana('filiacion'); <-- MOVED TO NAVEGAR FUNCTION FOR CONSISTENCY
     
     onSnapshot(doc(db,"albergues",id),d=>{
         currentAlbergueData=d.data();

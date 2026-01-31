@@ -80,7 +80,7 @@ onAuthStateChanged(auth,async(u)=>{
     }
 });
 
-// --- SISTEMA DE LOGS (NUEVO V4.0.0) ---
+// --- SISTEMA DE LOGS (V4.1.0 UPDATED) ---
 window.registrarLog = async (personaId, accion, detalle = "") => {
     try {
         const usuarioLog = currentUserData ? currentUserData.nombre : "Auto-Registro QR";
@@ -95,15 +95,19 @@ window.registrarLog = async (personaId, accion, detalle = "") => {
     }
 };
 
-window.verHistorial = async () => {
-    if(!window.personaEnGestion) return;
+window.verHistorial = async (pId = null) => {
+    // Si no se pasa ID, intenta usar la persona en gestión actual
+    const targetId = pId || (window.personaEnGestion ? window.personaEnGestion.id : null);
+    
+    if(!targetId) return;
+    
     const modal = document.getElementById('modal-historial');
     const content = document.getElementById('historial-content');
     content.innerHTML = "Cargando...";
     modal.classList.remove('hidden');
 
     try {
-        const q = query(collection(db, "albergues", currentAlbergueId, "personas", window.personaEnGestion.id, "historial"), orderBy("fecha", "desc"));
+        const q = query(collection(db, "albergues", currentAlbergueId, "personas", targetId, "historial"), orderBy("fecha", "desc"));
         const snap = await getDocs(q);
         
         if(snap.empty){
@@ -114,10 +118,13 @@ window.verHistorial = async () => {
         let html = "";
         snap.forEach(doc => {
             const d = doc.data();
-            const date = d.fecha.toDate().toLocaleString();
+            // FORMATO FECHA V4.1.0 (dd/mm/aaaa hh:mm)
+            const f = d.fecha.toDate();
+            const fmt = `${f.getDate().toString().padStart(2,'0')}/${(f.getMonth()+1).toString().padStart(2,'0')}/${f.getFullYear()} ${f.getHours().toString().padStart(2,'0')}:${f.getMinutes().toString().padStart(2,'0')}`;
+            
             html += `<div class="log-item">
                 <strong>${d.accion}</strong>
-                <span>${date} - Por: ${d.usuario}</span>
+                <span>${fmt} - Por: ${d.usuario}</span>
                 ${d.detalle ? `<br><i>${d.detalle}</i>` : ''}
             </div>`;
         });
@@ -732,7 +739,31 @@ window.cancelarEdicionPref=()=>{
 };
 
 window.buscarPersonaEnAlbergue=()=>{const txt=safeVal('buscador-persona').toLowerCase();const res=document.getElementById('resultados-busqueda');if(txt.length<2){res.classList.add('hidden');return;}const hits=listaPersonasCache.filter(p=>(p.nombre||"").toLowerCase().includes(txt)||(p.docNum||"").toLowerCase().includes(txt));res.innerHTML="";if(hits.length===0){res.innerHTML=`<div class="search-item" style="color:#666">No encontrado</div>`;}else{hits.forEach(p=>{const dotClass=p.estado==='ingresado'?'dot-green':'dot-red';res.innerHTML+=`<div class="search-item" onclick="window.seleccionarPersona('${p.id}')"><div style="display:flex; justify-content:space-between; width:100%; align-items:center;"><div><strong>${p.nombre} ${p.ap1||''} ${p.ap2||''}</strong><div style="font-size:0.8rem; color:#666;">📄 ${p.docNum||'Sin Doc'} | 📞 ${p.telefono||'-'}</div></div><div class="status-dot ${dotClass}" title="${p.estado.toUpperCase()}"></div></div></div>`;});}res.classList.remove('hidden');};
-window.seleccionarPersona=(pid)=>{if(typeof pid!=='string')pid=pid.id;const p=listaPersonasCache.find(x=>x.id===pid);if(!p)return;window.personaEnGestion=p;document.getElementById('resultados-busqueda').classList.add('hidden');document.getElementById('panel-gestion-persona').classList.remove('hidden');document.getElementById('gestion-nombre-titulo').innerText=p.nombre;document.getElementById('gestion-estado').innerText=p.estado.toUpperCase();document.getElementById('gestion-cama-info').innerText=p.cama?`Cama: ${p.cama}`:"";setVal('edit-nombre',p.nombre);setVal('edit-ap1',p.ap1);setVal('edit-ap2',p.ap2);setVal('edit-tipo-doc',p.tipoDoc);setVal('edit-doc-num',p.docNum);setVal('edit-fecha',p.fechaNac);setVal('edit-tel',p.telefono);const fam=listaPersonasCache.filter(x=>x.familiaId&&x.familiaId===p.familiaId);document.getElementById('info-familia-resumen').innerText=fam.length>1?`Familia (${fam.length})`:"Individual";const flist=document.getElementById('info-familia-lista');flist.innerHTML="";fam.forEach(f=>{if(f.id!==p.id){const isIngresado=f.estado==='ingresado';const colorStyle=isIngresado?'color:var(--success);':'color:var(--warning);';const iconClass=isIngresado?'fa-solid fa-bed':'fa-solid fa-clock';flist.innerHTML+=`<div style="padding:10px;border-bottom:1px solid #eee;cursor:pointer;display:flex;justify-content:space-between;align-items:center;" onclick="window.seleccionarPersona('${f.id}')"><div><div style="font-weight:bold;font-size:0.95rem;">${f.nombre} ${f.ap1||''} ${f.ap2||''}</div><div style="font-size:0.85rem;color:#666;"><i class="fa-regular fa-id-card"></i> ${f.docNum||'-'} &nbsp;|&nbsp; <i class="fa-solid fa-phone"></i> ${f.telefono||'-'}</div></div><div style="font-size:1.2rem;${colorStyle}"><i class="${iconClass}"></i></div></div>`;}});};
+window.seleccionarPersona=(pid)=>{
+    if(typeof pid!=='string')pid=pid.id;
+    const p=listaPersonasCache.find(x=>x.id===pid);
+    if(!p)return;
+    window.personaEnGestion=p;
+    document.getElementById('resultados-busqueda').classList.add('hidden');
+    document.getElementById('panel-gestion-persona').classList.remove('hidden');
+    
+    // VISIBILIDAD BOTON HISTORIAL (V4.1.0)
+    const btnHist = document.getElementById('btn-historial-ficha');
+    if(['admin', 'super_admin'].includes(currentUserData.rol)) btnHist.classList.remove('hidden');
+    else btnHist.classList.add('hidden');
+
+    document.getElementById('gestion-nombre-titulo').innerText=p.nombre;
+    document.getElementById('gestion-estado').innerText=p.estado.toUpperCase();
+    document.getElementById('gestion-cama-info').innerText=p.cama?`Cama: ${p.cama}`:"";
+    setVal('edit-nombre',p.nombre);setVal('edit-ap1',p.ap1);setVal('edit-ap2',p.ap2);
+    setVal('edit-tipo-doc',p.tipoDoc);setVal('edit-doc-num',p.docNum);
+    setVal('edit-fecha',p.fechaNac);setVal('edit-tel',p.telefono);
+    
+    const fam=listaPersonasCache.filter(x=>x.familiaId&&x.familiaId===p.familiaId);
+    document.getElementById('info-familia-resumen').innerText=fam.length>1?`Familia (${fam.length})`:"Individual";
+    const flist=document.getElementById('info-familia-lista');flist.innerHTML="";
+    fam.forEach(f=>{if(f.id!==p.id){const isIngresado=f.estado==='ingresado';const colorStyle=isIngresado?'color:var(--success);':'color:var(--warning);';const iconClass=isIngresado?'fa-solid fa-bed':'fa-solid fa-clock';flist.innerHTML+=`<div style="padding:10px;border-bottom:1px solid #eee;cursor:pointer;display:flex;justify-content:space-between;align-items:center;" onclick="window.seleccionarPersona('${f.id}')"><div><div style="font-weight:bold;font-size:0.95rem;">${f.nombre} ${f.ap1||''} ${f.ap2||''}</div><div style="font-size:0.85rem;color:#666;"><i class="fa-regular fa-id-card"></i> ${f.docNum||'-'} &nbsp;|&nbsp; <i class="fa-solid fa-phone"></i> ${f.telefono||'-'}</div></div><div style="font-size:1.2rem;${colorStyle}"><i class="${iconClass}"></i></div></div>`;}});
+};
 window.guardarCambiosPersona=async()=>{if(!window.personaEnGestion)return;const p=getDatosFormulario('edit');await updateDoc(doc(db,"albergues",currentAlbergueId,"personas",window.personaEnGestion.id),p); window.registrarLog(window.personaEnGestion.id, "Actualización Datos", "Edición manual"); alert("Datos actualizados");};
 window.adminPrefiliarManual=async()=>{if(prefiliacionEdicionId){const p=getDatosFormulario('man');await updateDoc(doc(db,"albergues",currentAlbergueId,"personas",prefiliacionEdicionId),p); window.registrarLog(prefiliacionEdicionId, "Actualización Datos", "Edición pre-filiación"); if(adminFamiliaresTemp.length>0){const titular=listaPersonasCache.find(x=>x.id===prefiliacionEdicionId);const fid=titular.familiaId||new Date().getTime().toString();if(!titular.familiaId){await updateDoc(doc(db,"albergues",currentAlbergueId,"personas",prefiliacionEdicionId),{familiaId:fid,rolFamilia:'TITULAR'});}for(const f of adminFamiliaresTemp){const ref = await addDoc(collection(db,"albergues",currentAlbergueId,"personas"),{...f,estado:'espera',familiaId:fid,rolFamilia:'MIEMBRO',fechaRegistro:new Date()}); window.registrarLog(ref.id, "Nuevo Familiar", "Añadido en edición");}}alert("Actualizado");window.cancelarEdicionPref();return;}const n=safeVal('man-nombre');if(!n)return alert("Nombre obligatorio");const fid=new Date().getTime().toString();const titular=getDatosFormulario('man');titular.estado='espera';titular.familiaId=fid;titular.rolFamilia='TITULAR';titular.fechaRegistro=new Date();const refTit = await addDoc(collection(db,"albergues",currentAlbergueId,"personas"),titular); window.registrarLog(refTit.id, "Pre-Filiación", "Registro manual"); for(const f of adminFamiliaresTemp){const refFam = await addDoc(collection(db,"albergues",currentAlbergueId,"personas"),{...f,estado:'espera',familiaId:fid,rolFamilia:'MIEMBRO',fechaRegistro:new Date()}); window.registrarLog(refFam.id, "Pre-Filiación", "Registro familiar manual");}alert("Guardado");limpiarFormulario('man');adminFamiliaresTemp=[];document.getElementById('admin-lista-familiares-ui').innerHTML="Ninguno.";document.getElementById('existing-family-list-ui').innerHTML="";};
 window.cerrarMapaCamas=()=>{highlightedFamilyId=null;document.getElementById('modal-cama').classList.add('hidden');};
@@ -752,7 +783,22 @@ function mostrarGridCamas(){
     for(let i=1;i<=totalCapacidad;i++){const n=i.toString();const occupantName=camasOcupadas[n];const occupant=listaPersonasCache.find(p=>p.cama===n);const d=document.createElement('div');let classes="bed-box";let label=n;if(occupant&&highlightedFamilyId&&occupant.familiaId===highlightedFamilyId){classes+=" bed-family-highlight";}if(!window.modoMapaGeneral&&window.personaEnGestion&&window.personaEnGestion.cama===n){classes+=" bed-current";label+=" (Tú)";}else if(occupantName){classes+=" bed-busy";if(occupant){const full=`${occupant.nombre} ${occupant.ap1||''} ${occupant.ap2||''}`;label+=`<div style="font-size:0.6rem;font-weight:normal;margin-top:2px;line-height:1.1;">${full}<br><i class="fa-solid fa-phone"></i> ${occupant.telefono||'-'}</div>`;}}else{classes+=" bed-free";if(shadowMap[n]){classes+=" bed-shadow";}}if(!window.modoMapaGeneral&&!occupantName&&!(!window.modoMapaGeneral&&window.personaEnGestion&&window.personaEnGestion.cama===n)){if(assignedMembers.length>0){if(shadowMap[n]===myFamId)classes+=" bed-suggest-target";}else{let fit=true;for(let k=0;k<neededForMe;k++){if(camasOcupadas[(i+k).toString()])fit=false;}if(fit&&neededForMe>1)classes+=" bed-suggest-block";}}d.className=classes;d.innerHTML=label;d.onclick=()=>{if(occupant){if(highlightedFamilyId===occupant.familiaId)highlightedFamilyId=null;else highlightedFamilyId=occupant.familiaId;mostrarGridCamas();}else if(!window.modoMapaGeneral){guardarCama(n);}};d.ondblclick=()=>{if(occupant)window.abrirModalInfoCama(occupant);};g.appendChild(d);}document.getElementById('modal-cama').classList.remove('hidden');
 }
 
-window.abrirModalInfoCama=(p)=>{document.getElementById('info-cama-num').innerText=p.cama;document.getElementById('info-nombre-completo').innerText=`${p.nombre} ${p.ap1||''} ${p.ap2||''}`;document.getElementById('info-telefono').innerText=p.telefono||"No consta";const container=document.getElementById('info-familia-detalle');const fam=listaPersonasCache.filter(x=>x.familiaId===p.familiaId);let html=`<table class="fam-table"><thead><tr><th>Nombre</th><th>Apellidos</th><th>Teléfono</th><th>Cama</th></tr></thead><tbody>`;fam.forEach(f=>{const isCurrent=f.id===p.id?'fam-row-current':'';html+=`<tr class="${isCurrent}"><td>${f.nombre}</td><td>${f.ap1||''} ${f.ap2||''}</td><td>${f.telefono||'-'}</td><td><strong>${f.cama||'-'}</strong></td></tr>`;});html+=`</tbody></table>`;container.innerHTML=html;document.getElementById('modal-bed-info').classList.remove('hidden');};
+window.abrirModalInfoCama=(p)=>{
+    document.getElementById('info-cama-num').innerText=p.cama;
+    document.getElementById('info-nombre-completo').innerText=`${p.nombre} ${p.ap1||''} ${p.ap2||''}`;
+    document.getElementById('info-telefono').innerText=p.telefono||"No consta";
+    
+    // VISIBILIDAD BOTON HISTORIAL (V4.1.0)
+    const btnHist = document.getElementById('btn-historial-cama');
+    if(['admin', 'super_admin'].includes(currentUserData.rol)) {
+        btnHist.classList.remove('hidden');
+        btnHist.onclick = () => window.verHistorial(p.id); // LINK AL ID ESPECÍFICO
+    } else {
+        btnHist.classList.add('hidden');
+    }
+
+    const container=document.getElementById('info-familia-detalle');const fam=listaPersonasCache.filter(x=>x.familiaId===p.familiaId);let html=`<table class="fam-table"><thead><tr><th>Nombre</th><th>Apellidos</th><th>Teléfono</th><th>Cama</th></tr></thead><tbody>`;fam.forEach(f=>{const isCurrent=f.id===p.id?'fam-row-current':'';html+=`<tr class="${isCurrent}"><td>${f.nombre}</td><td>${f.ap1||''} ${f.ap2||''}</td><td>${f.telefono||'-'}</td><td><strong>${f.cama||'-'}</strong></td></tr>`;});html+=`</tbody></table>`;container.innerHTML=html;document.getElementById('modal-bed-info').classList.remove('hidden');
+};
 async function guardarCama(c){if(window.personaEnGestion.cama){alert(`Error: ${window.personaEnGestion.nombre} ya tiene asignada la cama ${window.personaEnGestion.cama}. Debes liberarla primero.`);return;}await updateDoc(doc(db,"albergues",currentAlbergueId,"personas",window.personaEnGestion.id),{estado:'ingresado',cama:c.toString(),fechaIngreso:new Date()}); window.registrarLog(window.personaEnGestion.id, "Asignación Cama", `Cama ${c}`); window.cerrarMapaCamas();}
 window.liberarCamaMantener=async()=>{ const oldCama = window.personaEnGestion.cama; await updateDoc(doc(db,"albergues",currentAlbergueId,"personas",window.personaEnGestion.id),{cama:null}); window.registrarLog(window.personaEnGestion.id, "Liberar Cama", `Liberada cama ${oldCama}`); };
 window.regresarPrefiliacion=async()=>{ const oldCama = window.personaEnGestion.cama; await updateDoc(doc(db,"albergues",currentAlbergueId,"personas",window.personaEnGestion.id),{estado:'espera',cama:null}); window.registrarLog(window.personaEnGestion.id, "Retorno Pre-filiación", `Liberada cama ${oldCama}`); };

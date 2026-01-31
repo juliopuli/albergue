@@ -162,7 +162,7 @@ button.dark { background: #334155; color: white; }
 .prog-fill.med { background: var(--warning); }
 .prog-fill.low { background: var(--success); }
 
-/* HISTORIAL (V4.0.0) */
+/* HISTORIAL */
 .log-item { padding: 12px; border-left: 3px solid #cbd5e1; background: #f8fafc; margin-bottom: 10px; border-radius: 0 8px 8px 0; font-size: 0.9rem; }
 .log-item strong { display: block; color: var(--primary); }
 .log-item span { color: #64748b; font-size: 0.8em; }

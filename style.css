@@ -9,8 +9,8 @@
     --success: #10b981;
     --warning: #f59e0b;
     --danger: #ef4444;
-    --health: #e11d48; /* Nuevo: Color Sanitario */
-    --psycho: #7c3aed; /* Nuevo: Color Psicosocial */
+    --health: #e11d48;
+    --psycho: #7c3aed;
     --radius: 12px;
 }
 
@@ -101,23 +101,26 @@ button.dark { background: #334155; color: white; }
 .fam-table td { padding: 8px; border-bottom: 1px solid #f1f5f9; }
 .fam-row-current { background-color: #e0e7ff; font-weight: bold; color: var(--primary); }
 
-/* --- 8. UTILS & TABS ESPECIALES (V3.4.0) --- */
+/* --- 8. UTILS & TABS --- */
 .hidden { display: none !important; }
 .sticky-header { position: sticky; top: 130px; z-index: 80; background: var(--surface); margin: -30px -30px 20px -30px; padding: 20px 30px; border-bottom: 1px solid #e2e8f0; border-radius: var(--radius) var(--radius) 0 0; }
 
 .tabs { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
 .tab-btn { padding: 10px 20px; border: none; background: transparent; cursor: pointer; border-radius: 8px; color: var(--text-light); font-weight: 600; transition: 0.2s; display: flex; align-items: center; gap: 8px; }
 .tab-btn:hover { background: #f1f5f9; }
-/* Estilos Activos por Tipo */
-.tab-btn.active { background: #e0e7ff; color: var(--primary); } /* Admin (Default) */
-.tab-btn-san.active { background: #ffe4e6 !important; color: var(--health) !important; } /* Sanitaria */
-.tab-btn-psi.active { background: #ede9fe !important; color: var(--psycho) !important; } /* Psicosocial */
+.tab-btn.active { background: #e0e7ff; color: var(--primary); }
+.tab-btn-san.active { background: #ffe4e6 !important; color: var(--health) !important; }
+.tab-btn-psi.active { background: #ede9fe !important; color: var(--psycho) !important; }
 
 .search-results { background: white; border: 1px solid #e2e8f0; border-radius: 0 0 12px 12px; max-height: 250px; overflow-y: auto; margin-top: -15px; margin-bottom: 20px; box-shadow: var(--shadow-sm); display: block; }
-.search-item { padding: 12px; border-bottom: 1px solid #f1f5f9; cursor: pointer; font-size: 0.9rem; }
+.search-item { padding: 12px; border-bottom: 1px solid #f1f5f9; cursor: pointer; font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center; }
 .search-item:hover { background: #f8fafc; }
-.search-item strong { display: block; margin-bottom: 2px; color: var(--primary); }
+.search-item strong { display: block; margin-bottom: 2px; color: var(--text-main); }
 .search-item small { color: #64748b; font-size: 0.8em; }
+
+.status-dot { width: 14px; height: 14px; border-radius: 50%; display: inline-block; margin-left: 10px; flex-shrink: 0; }
+.dot-green { background-color: var(--success); box-shadow: 0 0 4px var(--success); }
+.dot-red { background-color: var(--danger); box-shadow: 0 0 4px var(--danger); } /* NUEVO ROJO */
 
 .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; display: inline-block; }
 
@@ -145,6 +148,8 @@ button.dark { background: #334155; color: white; }
 .obs-data-point { display: flex; flex-direction: column; margin-right: 20px; margin-top: 10px; }
 .obs-data-point span { font-size: 0.8rem; color: #64748b; text-transform: uppercase; font-weight: 600; }
 .obs-data-point strong { font-size: 1.2rem; color: var(--text-main); }
+.obs-clickable { cursor: pointer; text-decoration: underline; text-decoration-style: dotted; text-decoration-color: var(--primary); transition: 0.2s; }
+.obs-clickable:hover { color: var(--primary); }
 
 .prog-track { background: #e2e8f0; height: 10px; border-radius: 5px; overflow: hidden; width: 100%; margin-top: 10px; }
 .prog-fill { height: 100%; background: var(--primary); transition: width 0.5s; }

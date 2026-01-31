@@ -184,9 +184,10 @@ window.cargarObservatorio = async () => {
     detalleContainer.innerHTML = detailsHTML;
 };
 
-// --- GESTIÓN & OPERATIVA ---
+// --- GESTIÓN & OPERATIVA (FIX 0/0) ---
 window.cargarAlberguesActivos=()=>{
     const c=document.getElementById('lista-albergues-activos');
+    // FIX: NO ASYNC COUNTING IN LIST TO PREVENT CRASH
     onSnapshot(query(collection(db,"albergues"),where("activo","==",true)),s=>{
         c.innerHTML="";
         s.forEach(d=>{
@@ -197,7 +198,7 @@ window.cargarAlberguesActivos=()=>{
 };
 window.entrarAlbergue=(id)=>{
     currentAlbergueId=id; window.navegar('operativa');
-    window.cambiarPestana('filiacion'); // DEFAULT TAB V34
+    window.cambiarPestana('filiacion'); 
     
     onSnapshot(doc(db,"albergues",id),d=>{
         currentAlbergueData=d.data();
@@ -205,6 +206,7 @@ window.entrarAlbergue=(id)=>{
         totalCapacidad=parseInt(currentAlbergueData.capacidad||0);
         actualizarContadores();
     });
+    // SAFE SORT
     onSnapshot(collection(db,"albergues",id,"personas"),s=>{
         listaPersonasCache=[]; camasOcupadas={}; let c=0;
         s.forEach(d=>{
@@ -214,7 +216,10 @@ window.entrarAlbergue=(id)=>{
                 c++; if(p.cama) camasOcupadas[p.cama]=p.nombre;
             }
         });
-        listaPersonasCache.sort((a,b)=>(b.fechaRegistro?.seconds||0) - (a.fechaRegistro?.seconds||0));
+        try {
+             listaPersonasCache.sort((a,b)=>(b.fechaRegistro?.seconds||0) - (a.fechaRegistro?.seconds||0));
+        } catch(e) { console.log("Sort error suppressed"); }
+        
         ocupacionActual=c;
         actualizarContadores();
         if(window.personaEnGestion){

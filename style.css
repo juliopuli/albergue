@@ -40,7 +40,7 @@ body { background-color: var(--bg-body); color: var(--text-main); height: 100vh;
 .btn-key { background: #fef3c7; color: #d97706; }
 .btn-key:hover { background: #fde68a; }
 
-/* BOTÓN PEQUEÑO (NUEVO V4.1.1) */
+/* BOTÓN PEQUEÑO */
 .btn-icon-small { background: transparent; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer; padding: 4px 8px; color: var(--text-light); transition: 0.2s; font-size: 0.9rem; }
 .btn-icon-small:hover { background: #e0e7ff; color: var(--primary); border-color: var(--primary); }
 
@@ -137,6 +137,9 @@ button.dark { background: #334155; color: white; }
 .modal-content { background: white; width: 95%; max-width: 600px; padding: 30px; border-radius: 12px; max-height: 90vh; overflow-y: auto; position: relative; }
 .modal-lg { max-width: 900px; }
 
+/* FIX Z-INDEX (V4.1.2) */
+#modal-historial { z-index: 3200 !important; }
+
 .version-tag { position: fixed; bottom: 10px; right: 10px; color: #ccc; font-size: 0.8em; pointer-events: none; }
 .fam-list { margin-top: 15px; border-top: 2px dashed #eee; padding-top: 10px; }
 .fam-item { background: #f8fafc; padding: 10px; border-radius: 8px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #e2e8f0; }
@@ -170,9 +173,6 @@ button.dark { background: #334155; color: white; }
 .log-item { padding: 12px; border-left: 3px solid #cbd5e1; background: #f8fafc; margin-bottom: 10px; border-radius: 0 8px 8px 0; font-size: 0.9rem; }
 .log-item strong { display: block; color: var(--primary); }
 .log-item span { color: #64748b; font-size: 0.8em; }
-
-/* FIX Z-INDEX PARA QUE EL HISTORIAL SE VEA */
-#modal-historial { z-index: 3500 !important; }
 
 /* QR Welcome styles */
 .welcome-box { text-align: center; padding: 40px 20px; }

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión Albergue - Ver.3.8.0</title>
+    <title>Gestión Albergue - Ver.3.8.1</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     
@@ -12,7 +12,7 @@
 </head>
 <body>
 
-    <div class="version-tag">Ver.3.8.0</div>
+    <div class="version-tag">Ver.3.8.1</div>
 
     <div id="login-screen" class="">
         <div class="card">
@@ -164,12 +164,7 @@
                                     <div class="row"><div class="col"><label>Nombre (*)</label><input type="text" id="man-nombre"></div><div class="col"><label>Ap 1</label><input type="text" id="man-ap1"></div><div class="col"><label>Ap 2</label><input type="text" id="man-ap2"></div></div>
                                     <div class="row"><div class="col"><label>Doc</label><select id="man-tipo-doc"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Número</label><input type="text" id="man-doc-num"></div></div>
                                     <div class="row"><div class="col"><label>F. Nac</label><input type="tel" id="man-fecha" maxlength="10" oninput="window.formatearFecha(this)"></div><div class="col"><label>Teléfono</label><input type="tel" id="man-tel"></div></div>
-                                    <div class="fam-list">
-                                        <h4><i class="fa-solid fa-people-roof"></i> Integrantes</h4>
-                                        <div id="existing-family-list-ui"></div>
-                                        <div id="admin-lista-familiares-ui"><p style="color:#999; margin-top:5px;">Añade nuevos miembros abajo.</p></div>
-                                        <button class="secondary" onclick="window.abrirModalFamiliarAdmin()">+ Añadir Familiar</button>
-                                    </div>
+                                    <div class="fam-list"><h4><i class="fa-solid fa-people-roof"></i> Integrantes</h4><div id="existing-family-list-ui"></div><div id="admin-lista-familiares-ui"><p style="color:#999; margin-top:5px;">Añade nuevos miembros abajo.</p></div><button class="secondary" onclick="window.abrirModalFamiliarAdmin()">+ Añadir Familiar</button></div>
                                     <button id="btn-save-pref" class="success" style="width:100%; margin-top:20px;" onclick="window.adminPrefiliarManual()">💾 Guardar Nuevo</button>
                                 </div>
                             </div>
@@ -270,9 +265,7 @@
             <label>Email</label><input type="email" id="new-user-email">
             <label>Contraseña</label><input type="password" id="new-user-pass">
             <p id="edit-pass-warning" style="display:none;color:orange;font-size:0.8em;">Use reset email.</p>
-            <div class="btn-row">
-                <button class="primary" onclick="window.guardarUsuario()">Guardar</button>
-            </div>
+            <div class="btn-row"><button class="primary" onclick="window.guardarUsuario()">Guardar</button></div>
             <br>
             <button id="btn-delete-user" class="danger hidden" style="width:100%" onclick="window.eliminarUsuario()">Eliminar Usuario</button>
         </div>

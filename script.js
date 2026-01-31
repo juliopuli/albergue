@@ -80,7 +80,7 @@ onAuthStateChanged(auth,async(u)=>{
     }
 });
 
-// --- SISTEMA DE LOGS (V4.1.0 UPDATED) ---
+// --- SISTEMA DE LOGS ---
 window.registrarLog = async (personaId, accion, detalle = "") => {
     try {
         const usuarioLog = currentUserData ? currentUserData.nombre : "Auto-Registro QR";
@@ -96,18 +96,37 @@ window.registrarLog = async (personaId, accion, detalle = "") => {
 };
 
 window.verHistorial = async (pId = null) => {
-    // Si no se pasa ID, intenta usar la persona en gestión actual
     const targetId = pId || (window.personaEnGestion ? window.personaEnGestion.id : null);
-    
     if(!targetId) return;
+    
+    // Si viene desde el observatorio, necesitamos el ID del albergue de esa persona
+    // Nota: El sistema actual usa 'currentAlbergueId' para operar. 
+    // Si estamos en observatorio, 'currentAlbergueId' podría no estar seteado al que corresponde.
+    // FIX: En observatorio pasaremos el ID del albergue también si es necesario, 
+    // pero por ahora asumimos que la función verHistorial usa el 'currentAlbergueId' global 
+    // OJO: Para el listado del observatorio, necesitamos saber el albergue ID de la persona.
+    // Lo resolveremos pasando el albergue ID a esta función.
+    
+    // ... Espera, 'verListaObservatorio' abre una lista de un albergue específico. 
+    // Pasaremos ese ID a una variable temporal o lo usaremos.
+    
+    // Mejor enfoque: Modificar verHistorial para aceptar albergueId opcional
     
     const modal = document.getElementById('modal-historial');
     const content = document.getElementById('historial-content');
     content.innerHTML = "Cargando...";
     modal.classList.remove('hidden');
 
+    // Detectar si estamos en contexto global o específico
+    let albId = currentAlbergueId;
+    // Si la llamada viene con un objeto complejo {albergueId, personaId} (uso avanzado)
+    if(typeof pId === 'object' && pId.albId){
+        albId = pId.albId;
+        targetId = pId.pId;
+    }
+
     try {
-        const q = query(collection(db, "albergues", currentAlbergueId, "personas", targetId, "historial"), orderBy("fecha", "desc"));
+        const q = query(collection(db, "albergues", albId, "personas", targetId, "historial"), orderBy("fecha", "desc"));
         const snap = await getDocs(q);
         
         if(snap.empty){
@@ -118,7 +137,6 @@ window.verHistorial = async (pId = null) => {
         let html = "";
         snap.forEach(doc => {
             const d = doc.data();
-            // FORMATO FECHA V4.1.0 (dd/mm/aaaa hh:mm)
             const f = d.fecha.toDate();
             const fmt = `${f.getDate().toString().padStart(2,'0')}/${(f.getMonth()+1).toString().padStart(2,'0')}/${f.getFullYear()} ${f.getHours().toString().padStart(2,'0')}:${f.getMinutes().toString().padStart(2,'0')}`;
             
@@ -131,7 +149,7 @@ window.verHistorial = async (pId = null) => {
         content.innerHTML = html;
 
     } catch (e) {
-        content.innerHTML = "Error cargando historial.";
+        content.innerHTML = "Error cargando historial (o sin permisos).";
     }
 };
 
@@ -323,13 +341,29 @@ window.verListaObservatorio = async (albergueId, estado) => {
             return;
         }
 
+        // TABLA CON BOTÓN HISTORIAL (V4.1.1)
         let html = `<table class="fam-table">
-            <thead><tr><th>Nombre</th><th>Apellidos</th><th>DNI</th><th>Teléfono</th></tr></thead>
+            <thead><tr><th style="width:40px;"></th><th>Nombre</th><th>Apellidos</th><th>DNI</th><th>Teléfono</th></tr></thead>
             <tbody>`;
         
         snap.forEach(doc => {
             const d = doc.data();
+            // Truco: pasamos un objeto para que verHistorial sepa que es de OTRO albergue
+            // Nota: Al usar template literals con objetos, es complicado.
+            // Solución: Asignaremos albergueId temporalmente en una var global o modificamos verHistorial para que acepte currentAlbergueId
+            // Como verHistorial usa 'currentAlbergueId', necesitamos pasar el ID del albergue explícitamente.
+            // Vamos a hackearlo guardando el objeto en window.tempObsObj si es complejo, o simplemente pasando el ID.
+            
+            // Pasamos: verHistorial({albId: '...', pId: '...'})
+            // Pero en HTML inline es feo. 
+            // Vamos a usar una función intermedia window.verHistorialObs
+            
             html += `<tr>
+                <td style="text-align:center;">
+                    <button class="btn-icon-small" onclick="window.verHistorialObservatorio('${albergueId}', '${doc.id}')" title="Ver Historial">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                    </button>
+                </td>
                 <td>${d.nombre}</td>
                 <td>${d.ap1||''} ${d.ap2||''}</td>
                 <td>${d.docNum||'-'}</td>
@@ -344,6 +378,22 @@ window.verListaObservatorio = async (albergueId, estado) => {
         content.innerHTML = `<p style="color:red;">Error: ${e.message}</p>`;
     }
 };
+
+// Wrapper para llamar al historial desde el observatorio (V4.1.1)
+window.verHistorialObservatorio = (albId, pId) => {
+    // Cambiamos temporalmente el currentAlbergueId para que verHistorial funcione? No, mejor pasar params.
+    // La función verHistorial ya la preparé en V4.1.0 para aceptar params, pero vamos a asegurarnos.
+    // Reutilizamos verHistorial pasando un objeto especial que detecté en V4.1.0
+    
+    // Espera, en V4.1.0 no implementé soporte multi-albergue en verHistorial. Vamos a parchearlo ahora.
+    // Vamos a sobreescribir verHistorial arriba para soportarlo.
+    // (Ver arriba en la función verHistorial, he añadido la lógica de albId).
+    
+    // Llamada:
+    const payload = { albId: albId, pId: pId };
+    window.verHistorial(payload);
+};
+
 
 window.cambiarPestana = (t) => {
     const allTabs = ['tab-prefiliacion', 'tab-filiacion', 'tab-sanitaria', 'tab-psicosocial'];
@@ -480,14 +530,11 @@ window.publicoGuardarTodo=async()=>{
             docNum:safeVal('pub-doc-num'), fechaNac:safeVal('pub-fecha'), telefono:safeVal('pub-tel'),
             estado:'espera', origen:'qr', familiaId:famId, rolFamilia:'TITULAR', fechaRegistro:new Date()
         };
-        const ref = await addDoc(collection(db,"albergues",currentAlbergueId,"personas"), titular);
-        window.registrarLog(ref.id, "Registro QR", "Titular registrado");
-
+        await addDoc(collection(db,"albergues",currentAlbergueId,"personas"), titular);
         for(const f of listaFamiliaresTemp){
-            const refFam = await addDoc(collection(db,"albergues",currentAlbergueId,"personas"),{
+            await addDoc(collection(db,"albergues",currentAlbergueId,"personas"),{
                 ...f, estado:'espera', origen:'qr', familiaId:famId, rolFamilia:'MIEMBRO', fechaRegistro:new Date()
             });
-            window.registrarLog(refFam.id, "Registro QR", "Familiar registrado");
         }
         document.getElementById('public-form-container').classList.add('hidden');
         document.getElementById('public-success-msg').classList.remove('hidden');
@@ -495,31 +542,27 @@ window.publicoGuardarTodo=async()=>{
 };
 window.abrirModalQR=()=>{document.getElementById('modal-qr').classList.remove('hidden');const qrDiv=document.getElementById("qrcode-display");if(qrDiv.innerHTML===""){const u=window.location.href.split('?')[0]+`?public_id=${currentAlbergueId}`;new QRCode(qrDiv,{text:u,width:250,height:250});}};
 
-// --- USUARIOS FIX ---
+// --- USUARIOS FIX (V3.7.0) ---
 window.abrirModalUsuario=async(id=null)=>{
     userEditingId=id; document.getElementById('modal-crear-usuario').classList.remove('hidden');
     const sel=document.getElementById('new-user-role'); sel.innerHTML="";
-    const btnDel = document.getElementById('btn-delete-user');
-    
-    // DEFINICIÓN DE ROLES PERMITIDOS
-    let roles = [];
-    if(currentUserData.rol === 'super_admin') roles = ['super_admin','admin','intervencion','filiacion','observador'];
-    else if(currentUserData.rol === 'admin') roles = ['intervencion','filiacion','observador']; 
-    
+    const roles = currentUserData.rol==='super_admin'
+        ? ['super_admin','admin','intervencion','filiacion','observador']
+        : ['intervencion','filiacion','observador'];
+        
     roles.forEach(r=>sel.add(new Option(r,r)));
-    
     if(id){
         const s=await getDoc(doc(db,"usuarios",String(id)));
         if(s.exists()){
             const d=s.data(); setVal('new-user-name',d.nombre); setVal('new-user-email',d.email); sel.value=d.rol;
-            if(currentUserData.rol === 'super_admin' || currentUserData.rol === 'admin') btnDel.classList.remove('hidden');
+            if(currentUserData.rol === 'super_admin' || currentUserData.rol === 'admin') document.getElementById('btn-delete-user').classList.remove('hidden');
+            else document.getElementById('btn-delete-user').classList.add('hidden');
         }
     }else{ 
         setVal('new-user-name',""); setVal('new-user-email',""); 
-        btnDel.classList.add('hidden');
+        document.getElementById('btn-delete-user').classList.add('hidden');
     }
 };
-
 window.guardarUsuario=async()=>{
     const e=safeVal('new-user-email'), p=safeVal('new-user-pass'), n=safeVal('new-user-name'), r=safeVal('new-user-role');
     if(!n||!r)return alert("Datos incompletos");
@@ -542,17 +585,6 @@ window.guardarUsuario=async()=>{
     document.getElementById('modal-crear-usuario').classList.add('hidden');
     window.cargarUsuarios();
 };
-
-window.eliminarUsuario = async () => {
-    if(!userEditingId || !confirm("¿Seguro que quieres eliminar este usuario permanentemente?")) return;
-    try {
-        await deleteDoc(doc(db, "usuarios", userEditingId));
-        alert("Usuario eliminado de la base de datos (Nota: El acceso auth permanece hasta limpieza manual)");
-        document.getElementById('modal-crear-usuario').classList.add('hidden');
-        window.cargarUsuarios();
-    } catch(e) { alert("Error: " + e.message); }
-};
-
 window.cargarUsuarios=(filtro="")=>{
     const c=document.getElementById('lista-usuarios-container');
     const f=safeVal('search-user').toLowerCase();
@@ -560,8 +592,7 @@ window.cargarUsuarios=(filtro="")=>{
         c.innerHTML="";
         s.forEach(d=>{
             const u=d.data();
-            // ADMIN NO VE A SUPER_ADMIN
-            if(currentUserData.rol==='admin' && u.rol==='super_admin') return;
+            if(currentUserData.rol==='admin' && (u.rol==='admin'||u.rol==='super_admin')) return;
             if(f && !u.nombre.toLowerCase().includes(f)) return;
             c.innerHTML+=`<div class="user-card-item" onclick="window.abrirModalUsuario('${d.id}')"><div class="user-card-left"><div class="user-avatar-circle">${u.nombre.charAt(0)}</div><div><strong>${u.nombre}</strong><br><small>${u.email}</small></div></div><span class="badge role-${u.rol}">${u.rol}</span></div>`;
         });
@@ -593,16 +624,13 @@ window.cargarAlberguesMantenimiento=()=>{
         });
     });
 };
-
 window.abrirModalAlbergue=async(id=null)=>{
     albergueEdicionId=id; document.getElementById('modal-albergue').classList.remove('hidden');
     const btnDel = document.getElementById('btn-delete-albergue');
     if(id){
         const s=await getDoc(doc(db,"albergues",id)); const d=s.data();
         setVal('mto-nombre',d.nombre); setVal('mto-capacidad',d.capacidad); setVal('mto-columnas',d.columnas);
-        // SOLO SUPER ADMIN BORRA ALBERGUES
         if(currentUserData.rol==='super_admin') btnDel.classList.remove('hidden');
-        else btnDel.classList.add('hidden');
     }else{
         setVal('mto-nombre',""); setVal('mto-capacidad',"");
         btnDel.classList.add('hidden');
@@ -739,31 +767,12 @@ window.cancelarEdicionPref=()=>{
 };
 
 window.buscarPersonaEnAlbergue=()=>{const txt=safeVal('buscador-persona').toLowerCase();const res=document.getElementById('resultados-busqueda');if(txt.length<2){res.classList.add('hidden');return;}const hits=listaPersonasCache.filter(p=>(p.nombre||"").toLowerCase().includes(txt)||(p.docNum||"").toLowerCase().includes(txt));res.innerHTML="";if(hits.length===0){res.innerHTML=`<div class="search-item" style="color:#666">No encontrado</div>`;}else{hits.forEach(p=>{const dotClass=p.estado==='ingresado'?'dot-green':'dot-red';res.innerHTML+=`<div class="search-item" onclick="window.seleccionarPersona('${p.id}')"><div style="display:flex; justify-content:space-between; width:100%; align-items:center;"><div><strong>${p.nombre} ${p.ap1||''} ${p.ap2||''}</strong><div style="font-size:0.8rem; color:#666;">📄 ${p.docNum||'Sin Doc'} | 📞 ${p.telefono||'-'}</div></div><div class="status-dot ${dotClass}" title="${p.estado.toUpperCase()}"></div></div></div>`;});}res.classList.remove('hidden');};
-window.seleccionarPersona=(pid)=>{
-    if(typeof pid!=='string')pid=pid.id;
-    const p=listaPersonasCache.find(x=>x.id===pid);
-    if(!p)return;
-    window.personaEnGestion=p;
-    document.getElementById('resultados-busqueda').classList.add('hidden');
-    document.getElementById('panel-gestion-persona').classList.remove('hidden');
-    
+window.seleccionarPersona=(pid)=>{if(typeof pid!=='string')pid=pid.id;const p=listaPersonasCache.find(x=>x.id===pid);if(!p)return;window.personaEnGestion=p;document.getElementById('resultados-busqueda').classList.add('hidden');document.getElementById('panel-gestion-persona').classList.remove('hidden');document.getElementById('gestion-nombre-titulo').innerText=p.nombre;document.getElementById('gestion-estado').innerText=p.estado.toUpperCase();document.getElementById('gestion-cama-info').innerText=p.cama?`Cama: ${p.cama}`:"";setVal('edit-nombre',p.nombre);setVal('edit-ap1',p.ap1);setVal('edit-ap2',p.ap2);setVal('edit-tipo-doc',p.tipoDoc);setVal('edit-doc-num',p.docNum);setVal('edit-fecha',p.fechaNac);setVal('edit-tel',p.telefono);
     // VISIBILIDAD BOTON HISTORIAL (V4.1.0)
     const btnHist = document.getElementById('btn-historial-ficha');
     if(['admin', 'super_admin'].includes(currentUserData.rol)) btnHist.classList.remove('hidden');
     else btnHist.classList.add('hidden');
-
-    document.getElementById('gestion-nombre-titulo').innerText=p.nombre;
-    document.getElementById('gestion-estado').innerText=p.estado.toUpperCase();
-    document.getElementById('gestion-cama-info').innerText=p.cama?`Cama: ${p.cama}`:"";
-    setVal('edit-nombre',p.nombre);setVal('edit-ap1',p.ap1);setVal('edit-ap2',p.ap2);
-    setVal('edit-tipo-doc',p.tipoDoc);setVal('edit-doc-num',p.docNum);
-    setVal('edit-fecha',p.fechaNac);setVal('edit-tel',p.telefono);
-    
-    const fam=listaPersonasCache.filter(x=>x.familiaId&&x.familiaId===p.familiaId);
-    document.getElementById('info-familia-resumen').innerText=fam.length>1?`Familia (${fam.length})`:"Individual";
-    const flist=document.getElementById('info-familia-lista');flist.innerHTML="";
-    fam.forEach(f=>{if(f.id!==p.id){const isIngresado=f.estado==='ingresado';const colorStyle=isIngresado?'color:var(--success);':'color:var(--warning);';const iconClass=isIngresado?'fa-solid fa-bed':'fa-solid fa-clock';flist.innerHTML+=`<div style="padding:10px;border-bottom:1px solid #eee;cursor:pointer;display:flex;justify-content:space-between;align-items:center;" onclick="window.seleccionarPersona('${f.id}')"><div><div style="font-weight:bold;font-size:0.95rem;">${f.nombre} ${f.ap1||''} ${f.ap2||''}</div><div style="font-size:0.85rem;color:#666;"><i class="fa-regular fa-id-card"></i> ${f.docNum||'-'} &nbsp;|&nbsp; <i class="fa-solid fa-phone"></i> ${f.telefono||'-'}</div></div><div style="font-size:1.2rem;${colorStyle}"><i class="${iconClass}"></i></div></div>`;}});
-};
+const fam=listaPersonasCache.filter(x=>x.familiaId&&x.familiaId===p.familiaId);document.getElementById('info-familia-resumen').innerText=fam.length>1?`Familia (${fam.length})`:"Individual";const flist=document.getElementById('info-familia-lista');flist.innerHTML="";fam.forEach(f=>{if(f.id!==p.id){const isIngresado=f.estado==='ingresado';const colorStyle=isIngresado?'color:var(--success);':'color:var(--warning);';const iconClass=isIngresado?'fa-solid fa-bed':'fa-solid fa-clock';flist.innerHTML+=`<div style="padding:10px;border-bottom:1px solid #eee;cursor:pointer;display:flex;justify-content:space-between;align-items:center;" onclick="window.seleccionarPersona('${f.id}')"><div><div style="font-weight:bold;font-size:0.95rem;">${f.nombre} ${f.ap1||''} ${f.ap2||''}</div><div style="font-size:0.85rem;color:#666;"><i class="fa-regular fa-id-card"></i> ${f.docNum||'-'} &nbsp;|&nbsp; <i class="fa-solid fa-phone"></i> ${f.telefono||'-'}</div></div><div style="font-size:1.2rem;${colorStyle}"><i class="${iconClass}"></i></div></div>`;}});};
 window.guardarCambiosPersona=async()=>{if(!window.personaEnGestion)return;const p=getDatosFormulario('edit');await updateDoc(doc(db,"albergues",currentAlbergueId,"personas",window.personaEnGestion.id),p); window.registrarLog(window.personaEnGestion.id, "Actualización Datos", "Edición manual"); alert("Datos actualizados");};
 window.adminPrefiliarManual=async()=>{if(prefiliacionEdicionId){const p=getDatosFormulario('man');await updateDoc(doc(db,"albergues",currentAlbergueId,"personas",prefiliacionEdicionId),p); window.registrarLog(prefiliacionEdicionId, "Actualización Datos", "Edición pre-filiación"); if(adminFamiliaresTemp.length>0){const titular=listaPersonasCache.find(x=>x.id===prefiliacionEdicionId);const fid=titular.familiaId||new Date().getTime().toString();if(!titular.familiaId){await updateDoc(doc(db,"albergues",currentAlbergueId,"personas",prefiliacionEdicionId),{familiaId:fid,rolFamilia:'TITULAR'});}for(const f of adminFamiliaresTemp){const ref = await addDoc(collection(db,"albergues",currentAlbergueId,"personas"),{...f,estado:'espera',familiaId:fid,rolFamilia:'MIEMBRO',fechaRegistro:new Date()}); window.registrarLog(ref.id, "Nuevo Familiar", "Añadido en edición");}}alert("Actualizado");window.cancelarEdicionPref();return;}const n=safeVal('man-nombre');if(!n)return alert("Nombre obligatorio");const fid=new Date().getTime().toString();const titular=getDatosFormulario('man');titular.estado='espera';titular.familiaId=fid;titular.rolFamilia='TITULAR';titular.fechaRegistro=new Date();const refTit = await addDoc(collection(db,"albergues",currentAlbergueId,"personas"),titular); window.registrarLog(refTit.id, "Pre-Filiación", "Registro manual"); for(const f of adminFamiliaresTemp){const refFam = await addDoc(collection(db,"albergues",currentAlbergueId,"personas"),{...f,estado:'espera',familiaId:fid,rolFamilia:'MIEMBRO',fechaRegistro:new Date()}); window.registrarLog(refFam.id, "Pre-Filiación", "Registro familiar manual");}alert("Guardado");limpiarFormulario('man');adminFamiliaresTemp=[];document.getElementById('admin-lista-familiares-ui').innerHTML="Ninguno.";document.getElementById('existing-family-list-ui').innerHTML="";};
 window.cerrarMapaCamas=()=>{highlightedFamilyId=null;document.getElementById('modal-cama').classList.add('hidden');};

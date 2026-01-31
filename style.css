@@ -29,8 +29,8 @@ body { background-color: var(--bg-body); color: var(--text-main); height: 100vh;
 .btn-logout:hover { background: #fecaca; }
 
 /* --- 3. NAV --- */
-.app-nav { background: var(--surface); height: 70px; display: flex; justify-content: center; align-items: center; gap: 30px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); position: fixed; top: 60px; width: 100%; z-index: 90; }
-.nav-item { display: flex; flex-direction: column; align-items: center; color: var(--text-light); cursor: pointer; padding: 8px 15px; border-radius: var(--radius); transition: all 0.2s; font-size: 0.75rem; font-weight: 600; }
+.app-nav { background: var(--surface); height: 70px; display: flex; justify-content: center; align-items: center; gap: 40px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); position: fixed; top: 60px; width: 100%; z-index: 90; }
+.nav-item { display: flex; flex-direction: column; align-items: center; color: var(--text-light); cursor: pointer; padding: 10px 20px; border-radius: var(--radius); transition: all 0.2s; }
 .nav-item i { font-size: 1.4rem; margin-bottom: 4px; }
 .nav-item:hover, .nav-item.active { color: var(--primary); background: #e0e7ff; }
 .nav-item.active::after { content: ''; position: absolute; bottom: 0; width: 40%; height: 3px; background: var(--primary); }
@@ -44,75 +44,59 @@ body { background-color: var(--bg-body); color: var(--text-main); height: 100vh;
 .hero-icon { font-size: 4rem; color: var(--primary); margin-bottom: 15px; }
 
 /* --- 5. FORMULARIOS --- */
-input, select { width: 100%; padding: 12px 15px; margin-bottom: 15px; border: 1px solid #cbd5e1; border-radius: 8px; background: #f8fafc; font-size: 0.95rem; transition: 0.2s; }
-input:focus, select:focus { border-color: var(--primary); outline: none; background: #fff; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
-label { font-weight: 600; font-size: 0.9rem; color: var(--text-main); margin-bottom: 5px; display: block; }
+input, select { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #cbd5e1; border-radius: 8px; background: #f8fafc; font-size: 0.95rem; }
+label { font-weight: 600; font-size: 0.9rem; margin-bottom: 5px; display: block; }
 .row { display: flex; gap: 15px; flex-wrap: wrap; } .col { flex: 1; min-width: 200px; }
 
-button { padding: 12px 20px; border-radius: 8px; font-weight: 600; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: transform 0.1s; }
+button { padding: 12px 20px; border-radius: 8px; font-weight: 600; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
 button:hover { transform: translateY(-1px); }
-button:disabled { background: #cbd5e1; color: #64748b; cursor: not-allowed; transform: none; }
 button.primary { background: var(--primary); color: white; }
-button.secondary { background: var(--bg-body); color: var(--text-main); border: 1px solid #cbd5e1; }
+button.secondary { background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; }
+button.success { background: var(--success); color: white; }
 button.danger { background: var(--danger); color: white; }
 button.warning { background: var(--warning); color: white; }
 button.dark { background: #334155; color: white; }
-button.success { background: var(--success); color: white; }
 
 .btn-group-horizontal { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
 
 /* --- 6. LISTAS Y GRID --- */
 .mto-grid, .user-list-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin-top: 20px; }
 .mto-card, .user-card-item { background: white; border: 1px solid #e2e8f0; border-radius: var(--radius); padding: 20px; cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; justify-content: space-between; }
-.mto-card:hover, .user-card-item:hover { box-shadow: var(--shadow-md); border-color: var(--primary); transform: translateY(-3px); }
-.mto-card.add-new { border: 2px dashed #cbd5e1; background: #f8fafc; cursor: pointer; align-items: center; justify-content: center; min-height: 200px; font-size: 1.5rem; color: #94a3b8; }
+.mto-card:hover, .user-card-item:hover { border-color: var(--primary); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+.mto-card.add-new { border: 2px dashed #cbd5e1; align-items: center; justify-content: center; background: #f8fafc; color: #94a3b8; font-size: 1.5rem; }
 .mto-card.archived { background: #f1f5f9; border-left: 5px solid var(--warning); opacity: 0.8; }
 
 .user-card-left { display: flex; align-items: center; gap: 15px; }
-.user-avatar-circle { width: 45px; height: 45px; background: #e0e7ff; color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: bold; }
+.user-avatar-circle { width: 40px; height: 40px; background: #e0e7ff; color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
 
-/* --- 7. CAMAS --- */
-.bed-grid { display: grid; gap: 10px; margin-top: 25px; }
-.bed-box { 
-    min-height: 90px;
-    border-radius: 8px; font-weight: 700; 
-    display: flex; flex-direction: column; justify-content: center; align-items: center; 
-    cursor: pointer; border: 2px solid transparent; background: #f1f5f9; transition: 0.1s; 
-    text-align: center; padding: 5px; font-size: 0.9rem; user-select: none;
-}
+/* --- 7. CAMAS (ESTILO V40 SIMPLE) --- */
+.bed-grid { display: grid; gap: 10px; margin-top: 20px; }
+.bed-box { height: 60px; border-radius: 8px; font-weight: 700; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; border: 2px solid transparent; background: #f1f5f9; transition: 0.1s; }
 .bed-box span { font-size: 0.7em; font-weight: normal; margin-top: 2px; }
 .bed-free { background: var(--success-bg); color: #166534; border-color: #86efac; }
 .bed-busy { background: var(--danger-bg); color: #991b1b; border-color: #fca5a5; }
 .bed-current { background: #e0e7ff; color: #3730a3; border-color: #818cf8; border-width: 3px; }
 .bed-shadow { background: var(--warning-bg) !important; border: 2px dashed #f97316 !important; color: #c2410c; opacity: 0.8; }
-.bed-family-highlight { border: 3px solid #f97316 !important; background-color: #ffedd5 !important; box-shadow: 0 0 10px rgba(249, 115, 22, 0.5); transform: scale(1.05); z-index: 10; }
 
 /* --- 8. UTILS --- */
 .hidden { display: none !important; }
 .sticky-header { position: sticky; top: 130px; z-index: 80; background: var(--surface); margin: -30px -30px 20px -30px; padding: 20px 30px; border-bottom: 1px solid #e2e8f0; border-radius: var(--radius) var(--radius) 0 0; }
-.search-results { background: white; border: 1px solid #e2e8f0; border-radius: 0 0 12px 12px; max-height: 200px; overflow-y: auto; margin-top: -15px; margin-bottom: 20px; box-shadow: var(--shadow-sm); }
-.search-item { padding: 12px; border-bottom: 1px solid #f1f5f9; cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: 0.2s; }
+.search-results { background: white; border: 1px solid #e2e8f0; border-radius: 0 0 12px 12px; max-height: 200px; overflow-y: auto; margin-top: -15px; margin-bottom: 20px; box-shadow: var(--shadow-sm); display: block; }
+.search-item { padding: 10px; border-bottom: 1px solid #f1f5f9; cursor: pointer; font-size: 0.9rem; }
 .search-item:hover { background: #f8fafc; }
-.status-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-left: 10px; flex-shrink: 0; }
-.dot-green { background-color: var(--success); box-shadow: 0 0 4px var(--success); }
-.dot-orange { background-color: var(--warning); box-shadow: 0 0 4px var(--warning); }
 .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; display: inline-block; }
 
-.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 3000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(2px); }
-.modal-content { background: white; width: 95%; max-width: 600px; padding: 30px; border-radius: 12px; max-height: 90vh; overflow-y: auto; position: relative; }
-.modal-lg { max-width: 1000px; }
-.close-modal { position: absolute; top: 15px; right: 20px; font-size: 1.5rem; color: #94a3b8; cursor: pointer; transition: 0.2s; z-index: 10; }
-.close-modal:hover { color: var(--danger); transform: scale(1.1); }
-
-.fam-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9rem; }
-.fam-table th { text-align: left; padding: 8px; border-bottom: 2px solid #e2e8f0; color: var(--text-light); font-size: 0.8rem; text-transform: uppercase; }
-.fam-table td { padding: 8px; border-bottom: 1px solid #f1f5f9; }
-.fam-row-current { background-color: #e0e7ff; font-weight: bold; color: var(--primary); }
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3000; display: flex; justify-content: center; align-items: center; }
+.modal-content { background: white; width: 95%; max-width: 600px; padding: 30px; border-radius: 12px; max-height: 90vh; overflow-y: auto; }
 
 .version-tag { position: fixed; bottom: 10px; right: 10px; color: #ccc; font-size: 0.8em; pointer-events: none; }
 .fam-list { margin-top: 15px; border-top: 2px dashed #eee; padding-top: 10px; }
 .fam-item { background: #f8fafc; padding: 10px; border-radius: 8px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #e2e8f0; }
 
+.close-modal { position: absolute; top: 15px; right: 20px; font-size: 1.5rem; color: #94a3b8; cursor: pointer; transition: 0.2s; z-index: 10; }
+.close-modal:hover { color: var(--danger); transform: scale(1.1); }
+
+/* QR Welcome styles (V.39) */
 .welcome-box { text-align: center; padding: 40px 20px; }
 .welcome-icon { font-size: 3rem; color: var(--primary); margin-bottom: 15px; }
 .consent-box { background: #f1f5f9; padding: 15px; border-radius: 8px; text-align: left; margin: 20px 0; border-left: 4px solid var(--primary); font-size: 0.9rem; display: flex; align-items: flex-start; gap: 10px; }

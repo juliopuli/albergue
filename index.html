@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión Albergue - Ver.3.3.0</title>
+    <title>Gestión Albergue - Ver.3.4.0</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     
@@ -12,7 +12,7 @@
 </head>
 <body>
 
-    <div class="version-tag">Ver.3.3.0</div>
+    <div class="version-tag">Ver.3.4.0</div>
 
     <div id="login-screen" class="">
         <div class="card">
@@ -119,7 +119,6 @@
                         <div class="prog-track"><div class="prog-fill" id="kpi-bar" style="width:0%"></div></div>
                     </div>
                 </div>
-
                 <div class="card">
                     <h3>Detalle por Albergue</h3>
                     <div id="obs-list-container" style="margin-top:20px;">
@@ -142,6 +141,8 @@
                         <div class="tabs" style="margin-top:10px;">
                             <button id="btn-tab-pref" class="tab-btn active" onclick="window.cambiarPestana('prefiliacion')">📁 Prefiliación</button>
                             <button id="btn-tab-fil" class="tab-btn" onclick="window.cambiarPestana('filiacion')">📁 Filiación</button>
+                            <button id="btn-tab-san" class="tab-btn tab-btn-san" onclick="window.cambiarPestana('sanitaria')"><i class="fa-solid fa-notes-medical"></i> Sanitaria</button>
+                            <button id="btn-tab-psi" class="tab-btn tab-btn-psi" onclick="window.cambiarPestana('psicosocial')"><i class="fa-solid fa-users-rays"></i> Psicosocial</button>
                         </div>
                     </div>
 
@@ -163,14 +164,12 @@
                                     <div class="row"><div class="col"><label>Nombre (*)</label><input type="text" id="man-nombre"></div><div class="col"><label>Ap 1</label><input type="text" id="man-ap1"></div><div class="col"><label>Ap 2</label><input type="text" id="man-ap2"></div></div>
                                     <div class="row"><div class="col"><label>Doc</label><select id="man-tipo-doc"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Número</label><input type="text" id="man-doc-num"></div></div>
                                     <div class="row"><div class="col"><label>F. Nac</label><input type="tel" id="man-fecha" maxlength="10" oninput="window.formatearFecha(this)"></div><div class="col"><label>Teléfono</label><input type="tel" id="man-tel"></div></div>
-                                    
                                     <div class="fam-list">
                                         <h4><i class="fa-solid fa-people-roof"></i> Integrantes</h4>
                                         <div id="existing-family-list-ui"></div>
                                         <div id="admin-lista-familiares-ui"><p style="color:#999; margin-top:5px;">Añade nuevos miembros abajo.</p></div>
                                         <button class="secondary" onclick="window.abrirModalFamiliarAdmin()">+ Añadir Familiar</button>
                                     </div>
-                                    
                                     <button id="btn-save-pref" class="success" style="width:100%; margin-top:20px;" onclick="window.adminPrefiliarManual()">💾 Guardar Nuevo</button>
                                 </div>
                             </div>
@@ -181,11 +180,9 @@
                             <div id="panel-gestion-persona" class="hidden" style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:var(--radius); padding:25px; margin-top:10px;">
                                 <h3 id="gestion-nombre-titulo" style="color:var(--primary);">Nombre</h3>
                                 <p style="margin-bottom:15px;">Estado: <span id="gestion-estado" class="badge">...</span> <strong id="gestion-cama-info"></strong></p>
-                                
                                 <div class="row"><div class="col"><label>Nombre</label><input type="text" id="edit-nombre"></div><div class="col"><label>Ap 1</label><input type="text" id="edit-ap1"></div><div class="col"><label>Ap 2</label><input type="text" id="edit-ap2"></div></div>
                                 <div class="row"><div class="col"><label>Doc</label><select id="edit-tipo-doc"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Num</label><input type="text" id="edit-doc-num"></div></div>
                                 <div class="row"><div class="col"><label>F. Nac</label><input type="tel" id="edit-fecha" oninput="window.formatearFecha(this)" maxlength="10"></div><div class="col"><label>Tel</label><input type="tel" id="edit-tel"></div></div>
-                                
                                 <div class="btn-group-horizontal">
                                     <button class="primary" onclick="window.abrirSeleccionCama()">Asignar Cama</button>
                                     <button class="secondary" onclick="window.guardarCambiosPersona()">Guardar Datos</button>
@@ -199,6 +196,23 @@
                                 <button class="secondary" style="margin-top:10px;" onclick="window.abrirModalVincularFamilia()">Vincular a otra familia</button>
                             </div>
                         </div>
+
+                        <div id="tab-sanitaria" class="tab-content hidden">
+                            <div style="background:#fff1f2; border:1px solid #fda4af; padding:25px; border-radius:12px;">
+                                <h3 style="color:var(--health); margin-bottom:15px;"><i class="fa-solid fa-notes-medical"></i> Atención Sanitaria</h3>
+                                <div class="row"><input type="text" placeholder="🔍 Buscar paciente..." style="background:white;"></div>
+                                <p style="color:#881337;">Módulo de gestión médica en construcción.</p>
+                            </div>
+                        </div>
+
+                        <div id="tab-psicosocial" class="tab-content hidden">
+                            <div style="background:#f5f3ff; border:1px solid #c4b5fd; padding:25px; border-radius:12px;">
+                                <h3 style="color:var(--psycho); margin-bottom:15px;"><i class="fa-solid fa-users-rays"></i> Atención Psicosocial</h3>
+                                <div class="row"><input type="text" placeholder="🔍 Buscar usuario..." style="background:white;"></div>
+                                <p style="color:#5b21b6;">Módulo de intervención social en construcción.</p>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -242,11 +256,8 @@
     </div>
 
     <div id="modal-qr" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content" style="text-align:center;"><span class="close-modal" onclick="document.getElementById('modal-qr').classList.add('hidden')">&times;</span><h3>Escanea para acceder</h3><div id="qrcode-display" style="display:inline-block; margin:20px;"></div><p style="color:#666;">Auto-registro móvil.</p></div></div>
-    
     <div id="modal-cama" class="modal-overlay hidden" onclick="if(event.target===this)window.cerrarMapaCamas()"><div class="modal-content modal-lg"><span class="close-modal" onclick="window.cerrarMapaCamas()">&times;</span><h3>Seleccionar Cama</h3><p style="font-size:0.8rem;color:#666;">Verde Borde=Sugerencia | Naranja=Reserva Familia</p><div id="grid-camas" class="bed-grid"></div></div></div>
-    
     <div id="modal-bed-info" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content modal-lg" style="text-align:center; padding:40px;"><span class="close-modal" onclick="document.getElementById('modal-bed-info').classList.add('hidden')">&times;</span><div style="font-size:3rem; color:var(--primary); margin-bottom:10px;"><i class="fa-solid fa-user-check"></i></div><h3 style="color:var(--text-light);">Cama <span id="info-cama-num"></span></h3><h2 id="info-nombre-completo" style="color:var(--primary);"></h2><p><span id="info-telefono"></span></p><div style="margin-top:20px; text-align:left;"><h4 style="border-bottom:1px solid #eee; padding-bottom:5px;">Unidad Familiar</h4><div id="info-familia-detalle"></div></div></div></div>
-    
     <div id="modal-vincular-familia" class="modal-overlay hidden" style="z-index: 2000;" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><span class="close-modal" onclick="document.getElementById('modal-vincular-familia').classList.add('hidden')">&times;</span><h3>Unir a Familia</h3><input type="text" id="search-vincular" placeholder="Buscar..." onkeyup="window.buscarParaVincular()" autocomplete="off"><div id="resultados-vincular" class="search-results hidden"></div></div></div>
     <div id="modal-albergue" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><span class="close-modal" onclick="document.getElementById('modal-albergue').classList.add('hidden')">&times;</span><h3 id="mto-modal-title">Nuevo</h3><label>Nombre</label><input type="text" id="mto-nombre"><div class="row"><div class="col"><label>Cap</label><input type="number" id="mto-capacidad"></div><div class="col"><label>Cols</label><input type="number" id="mto-columnas" value="8"></div></div><div class="btn-row"><button class="primary" onclick="window.guardarAlbergue()">Guardar</button></div><br><button id="btn-delete-albergue" class="danger hidden" style="width:100%" onclick="window.eliminarAlbergueActual()">Eliminar Albergue</button></div></div>
     <div id="modal-crear-usuario" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><span class="close-modal" onclick="document.getElementById('modal-crear-usuario').classList.add('hidden')">&times;</span><h3 id="user-modal-title">Usuario</h3><label>Nombre</label><input type="text" id="new-user-name"><label>Rol</label><select id="new-user-role"></select><label>Email</label><input type="email" id="new-user-email"><label>Contraseña</label><input type="password" id="new-user-pass"><p id="edit-pass-warning" style="display:none;color:orange;font-size:0.8em;">Use reset email.</p><div class="btn-row"><button class="primary" onclick="window.guardarUsuario()">Guardar</button></div></div></div>

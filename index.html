@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión Albergue - Ver.3.2.0</title>
+    <title>Gestión Albergue - Ver.3.3.0</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     
@@ -12,7 +12,7 @@
 </head>
 <body>
 
-    <div class="version-tag">Ver.3.2.0</div>
+    <div class="version-tag">Ver.3.3.0</div>
 
     <div id="login-screen" class="">
         <div class="card">
@@ -100,10 +100,31 @@
             </div>
 
             <div id="screen-observatorio" class="hidden">
-                <div class="hero-container">
-                    <i class="fa-solid fa-binoculars hero-icon" style="color:var(--text-light);"></i>
-                    <h2>Observatorio</h2>
-                    <p>Panel de información en construcción.</p>
+                <div class="obs-grid">
+                    <div class="obs-card">
+                        <div class="obs-label">Personas en Espera</div>
+                        <div class="obs-val" id="kpi-espera" style="color:var(--warning);">0</div>
+                    </div>
+                    <div class="obs-card">
+                        <div class="obs-label">Personas Alojadas</div>
+                        <div class="obs-val" id="kpi-alojados" style="color:var(--success);">0</div>
+                    </div>
+                    <div class="obs-card">
+                        <div class="obs-label">Camas Disponibles</div>
+                        <div class="obs-val" id="kpi-libres" style="color:var(--primary);">0</div>
+                    </div>
+                    <div class="obs-card">
+                        <div class="obs-label">Ocupación Global</div>
+                        <div class="obs-val" id="kpi-percent">0%</div>
+                        <div class="prog-track"><div class="prog-fill" id="kpi-bar" style="width:0%"></div></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Detalle por Albergue</h3>
+                    <div id="obs-list-container" style="margin-top:20px;">
+                        <p style="color:#666; text-align:center;">Cargando datos...</p>
+                    </div>
                 </div>
             </div>
 

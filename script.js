@@ -123,59 +123,12 @@ function configurarDashboard(){
     else btnUsers.classList.add('hidden');
 
     const m=document.getElementById('nav-mto');
-    if(['super_admin','admin','avanzado'].includes(r))m.classList.remove('disabled');else m.classList.add('disabled');
+    // NUEVA LÓGICA V3.7.0: Solo admins ven mantenimiento
+    if(['super_admin','admin'].includes(r)) m.classList.remove('disabled');
+    else m.classList.add('disabled');
+    
     if(r==='super_admin') document.getElementById('container-ver-ocultos').classList.remove('hidden');
 }
-
-// --- GESTIÓN PESTAÑAS (REPARADO V3.6.0) ---
-window.cambiarPestana = (t) => {
-    // 1. Hide all potential contents safely
-    const tabs = ['tab-prefiliacion', 'tab-filiacion', 'tab-sanitaria', 'tab-psicosocial'];
-    tabs.forEach(id => {
-        const el = document.getElementById(id);
-        if(el) el.classList.add('hidden');
-    });
-
-    // 2. Deactivate all buttons safely
-    const btns = ['btn-tab-pref', 'btn-tab-fil', 'btn-tab-san', 'btn-tab-psi'];
-    btns.forEach(id => {
-        const el = document.getElementById(id);
-        if(el) el.classList.remove('active');
-    });
-
-    // 3. Activate selected
-    if (t === 'prefiliacion') {
-        document.getElementById('tab-prefiliacion').classList.remove('hidden');
-        document.getElementById('btn-tab-pref').classList.add('active');
-        
-        // Reset Logic
-        limpiarFormulario('man'); 
-        adminFamiliaresTemp = []; 
-        actualizarListaFamiliaresAdminUI();
-        const listUi = document.getElementById('existing-family-list-ui');
-        if(listUi) listUi.innerHTML = ""; 
-        const panel = document.getElementById('panel-gestion-persona');
-        if(panel) panel.classList.add('hidden');
-        window.cancelarEdicionPref();
-        
-    } else if (t === 'filiacion') {
-        document.getElementById('tab-filiacion').classList.remove('hidden');
-        document.getElementById('btn-tab-fil').classList.add('active');
-        
-        document.getElementById('buscador-persona').value = ""; 
-        document.getElementById('resultados-busqueda').classList.add('hidden'); 
-        const panel = document.getElementById('panel-gestion-persona');
-        if(panel) panel.classList.add('hidden');
-        
-    } else if (t === 'sanitaria') {
-        document.getElementById('tab-sanitaria').classList.remove('hidden');
-        document.getElementById('btn-tab-san').classList.add('active');
-        
-    } else if (t === 'psicosocial') {
-        document.getElementById('tab-psicosocial').classList.remove('hidden');
-        document.getElementById('btn-tab-psi').classList.add('active');
-    }
-};
 
 // --- OBSERVATORIO (V3.5.0) ---
 window.cargarObservatorio = async () => {
@@ -296,6 +249,35 @@ window.verListaObservatorio = async (albergueId, estado) => {
     }
 };
 
+window.cambiarPestana = (t) => {
+    if (t === 'prefiliacion') {
+        document.getElementById('tab-prefiliacion').classList.remove('hidden');
+        document.getElementById('tab-filiacion').classList.add('hidden');
+        document.getElementById('btn-tab-pref').className = 'tab-btn active';
+        document.getElementById('btn-tab-fil').className = 'tab-btn';
+        
+        limpiarFormulario('man'); adminFamiliaresTemp = []; actualizarListaFamiliaresAdminUI();
+        document.getElementById('existing-family-list-ui').innerHTML = ""; 
+        document.getElementById('panel-gestion-persona').classList.add('hidden');
+        window.cancelarEdicionPref();
+        
+    } else if (t === 'filiacion') {
+        document.getElementById('tab-filiacion').classList.remove('hidden');
+        document.getElementById('btn-tab-fil').classList.add('active');
+        
+        document.getElementById('buscador-persona').value = ""; 
+        document.getElementById('resultados-busqueda').classList.add('hidden'); 
+        document.getElementById('panel-gestion-persona').classList.add('hidden');
+        
+    } else if (t === 'sanitaria') {
+        document.getElementById('tab-sanitaria').classList.remove('hidden');
+        document.getElementById('btn-tab-san').classList.add('active');
+        
+    } else if (t === 'psicosocial') {
+        document.getElementById('tab-psicosocial').classList.remove('hidden');
+        document.getElementById('btn-tab-psi').classList.add('active');
+    }
+};
 
 // --- UTILS & FORM (SAFE) ---
 function safeVal(id){ const el=document.getElementById(id); return el?el.value:""; }
@@ -404,10 +386,15 @@ window.publicoGuardarTodo=async()=>{
 };
 window.abrirModalQR=()=>{document.getElementById('modal-qr').classList.remove('hidden');const qrDiv=document.getElementById("qrcode-display");if(qrDiv.innerHTML===""){const u=window.location.href.split('?')[0]+`?public_id=${currentAlbergueId}`;new QRCode(qrDiv,{text:u,width:250,height:250});}};
 
+// --- USUARIOS FIX (V3.7.0 UPDATED ROLES) ---
 window.abrirModalUsuario=async(id=null)=>{
     userEditingId=id; document.getElementById('modal-crear-usuario').classList.remove('hidden');
     const sel=document.getElementById('new-user-role'); sel.innerHTML="";
-    const roles = currentUserData.rol==='super_admin'?['super_admin','admin','avanzado','medio']:['avanzado','medio'];
+    // NUEVOS ROLES
+    const roles = currentUserData.rol==='super_admin'
+        ? ['super_admin','admin','intervencion','filiacion']
+        : ['intervencion','filiacion'];
+        
     roles.forEach(r=>sel.add(new Option(r,r)));
     if(id){
         const s=await getDoc(doc(db,"usuarios",String(id)));
@@ -617,86 +604,10 @@ window.cancelarEdicionPref=()=>{
     document.getElementById('btn-cancelar-edicion-pref').classList.add('hidden');
 };
 
-window.buscarPersonaEnAlbergue=()=>{
-    const txt=safeVal('buscador-persona').toLowerCase();
-    const res=document.getElementById('resultados-busqueda');
-    if(txt.length<2){res.classList.add('hidden');return;}
-    
-    // SAFE FILTER
-    const hits=listaPersonasCache.filter(p=> (p.nombre||"").toLowerCase().includes(txt) || (p.docNum||"").toLowerCase().includes(txt));
-    
-    res.innerHTML="";
-    if(hits.length===0){
-        res.innerHTML=`<div class="search-item" style="color:#666">No encontrado</div>`;
-    } else {
-        hits.forEach(p=>{
-            // DOT LOGIC (RED/GREEN requested)
-            const dotClass = p.estado === 'ingresado' ? 'dot-green' : 'dot-red';
-            
-            res.innerHTML+=`<div class="search-item" onclick="window.seleccionarPersona('${p.id}')">
-                <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
-                    <div>
-                        <strong>${p.nombre} ${p.ap1||''} ${p.ap2||''}</strong>
-                        <div style="font-size:0.8rem; color:#666;">
-                            📄 ${p.docNum||'Sin Doc'} | 📞 ${p.telefono||'-'}
-                        </div>
-                    </div>
-                    <div class="status-dot ${dotClass}" title="${p.estado.toUpperCase()}"></div>
-                </div>
-            </div>`;
-        });
-    }
-    res.classList.remove('hidden');
-};
-
+window.buscarPersonaEnAlbergue=()=>{const txt=safeVal('buscador-persona').toLowerCase();const res=document.getElementById('resultados-busqueda');if(txt.length<2){res.classList.add('hidden');return;}const hits=listaPersonasCache.filter(p=>(p.nombre||"").toLowerCase().includes(txt)||(p.docNum||"").toLowerCase().includes(txt));res.innerHTML="";if(hits.length===0){res.innerHTML=`<div class="search-item" style="color:#666">No encontrado</div>`;}else{hits.forEach(p=>{const dotClass=p.cama?'dot-green':'dot-orange';res.innerHTML+=`<div class="search-item" onclick="window.seleccionarPersona('${p.id}')"><div style="display:flex;justify-content:space-between;width:100%;"><div><strong>${p.nombre} ${p.ap1||''} ${p.ap2||''}</strong> <br><small>${p.docNum||''}</small></div><div class="status-dot ${dotClass}"></div></div></div>`;});}res.classList.remove('hidden');};
 window.seleccionarPersona=(pid)=>{if(typeof pid!=='string')pid=pid.id;const p=listaPersonasCache.find(x=>x.id===pid);if(!p)return;window.personaEnGestion=p;document.getElementById('resultados-busqueda').classList.add('hidden');document.getElementById('panel-gestion-persona').classList.remove('hidden');document.getElementById('gestion-nombre-titulo').innerText=p.nombre;document.getElementById('gestion-estado').innerText=p.estado.toUpperCase();document.getElementById('gestion-cama-info').innerText=p.cama?`Cama: ${p.cama}`:"";setVal('edit-nombre',p.nombre);setVal('edit-ap1',p.ap1);setVal('edit-ap2',p.ap2);setVal('edit-tipo-doc',p.tipoDoc);setVal('edit-doc-num',p.docNum);setVal('edit-fecha',p.fechaNac);setVal('edit-tel',p.telefono);const fam=listaPersonasCache.filter(x=>x.familiaId&&x.familiaId===p.familiaId);document.getElementById('info-familia-resumen').innerText=fam.length>1?`Familia (${fam.length})`:"Individual";const flist=document.getElementById('info-familia-lista');flist.innerHTML="";fam.forEach(f=>{if(f.id!==p.id){const isIngresado=f.estado==='ingresado';const colorStyle=isIngresado?'color:var(--success);':'color:var(--warning);';const iconClass=isIngresado?'fa-solid fa-bed':'fa-solid fa-clock';flist.innerHTML+=`<div style="padding:10px;border-bottom:1px solid #eee;cursor:pointer;display:flex;justify-content:space-between;align-items:center;" onclick="window.seleccionarPersona('${f.id}')"><div><div style="font-weight:bold;font-size:0.95rem;">${f.nombre} ${f.ap1||''} ${f.ap2||''}</div><div style="font-size:0.85rem;color:#666;"><i class="fa-regular fa-id-card"></i> ${f.docNum||'-'} &nbsp;|&nbsp; <i class="fa-solid fa-phone"></i> ${f.telefono||'-'}</div></div><div style="font-size:1.2rem;${colorStyle}"><i class="${iconClass}"></i></div></div>`;}});};
 window.guardarCambiosPersona=async()=>{if(!window.personaEnGestion)return;const p=getDatosFormulario('edit');await updateDoc(doc(db,"albergues",currentAlbergueId,"personas",window.personaEnGestion.id),p);alert("Datos actualizados");};
-
-// --- ADMIN PREFILIACION (UPDATED V3.2.0) ---
-window.adminPrefiliarManual=async()=>{
-    if(prefiliacionEdicionId){
-        // UPDATE MODE
-        const p = getDatosFormulario('man');
-        await updateDoc(doc(db,"albergues",currentAlbergueId,"personas",prefiliacionEdicionId), p);
-        
-        // SI HAY NUEVOS FAMILIARES EN EL ARRAY TEMP, LOS AÑADIMOS AHORA
-        if(adminFamiliaresTemp.length > 0) {
-            // Necesitamos el familiaId del titular que estamos editando
-            const titular = listaPersonasCache.find(x => x.id === prefiliacionEdicionId);
-            const fid = titular.familiaId || new Date().getTime().toString(); 
-            
-            // Si no tenía familiaId, se lo ponemos ahora
-            if(!titular.familiaId) {
-                await updateDoc(doc(db,"albergues",currentAlbergueId,"personas",prefiliacionEdicionId), { familiaId: fid, rolFamilia: 'TITULAR' });
-            }
-
-            for(const f of adminFamiliaresTemp){
-                await addDoc(collection(db,"albergues",currentAlbergueId,"personas"),{
-                    ...f, estado:'espera', familiaId: fid, rolFamilia:'MIEMBRO', fechaRegistro:new Date()
-                });
-            }
-        }
-
-        alert("Actualizado");
-        window.cancelarEdicionPref();
-        return;
-    }
-    // NEW MODE
-    const n=safeVal('man-nombre');
-    if(!n) return alert("Nombre obligatorio");
-    const fid=new Date().getTime().toString();
-    const titular=getDatosFormulario('man');
-    titular.estado='espera'; titular.familiaId=fid; titular.rolFamilia='TITULAR'; titular.fechaRegistro=new Date();
-    await addDoc(collection(db,"albergues",currentAlbergueId,"personas"), titular);
-    for(const f of adminFamiliaresTemp){
-        await addDoc(collection(db,"albergues",currentAlbergueId,"personas"),{...f,estado:'espera',familiaId:fid,rolFamilia:'MIEMBRO',fechaRegistro:new Date()});
-    }
-    alert("Guardado");
-    limpiarFormulario('man'); adminFamiliaresTemp=[];
-    document.getElementById('admin-lista-familiares-ui').innerHTML="Ninguno.";
-    document.getElementById('existing-family-list-ui').innerHTML="";
-};
-
+window.adminPrefiliarManual=async()=>{if(prefiliacionEdicionId){const p=getDatosFormulario('man');await updateDoc(doc(db,"albergues",currentAlbergueId,"personas",prefiliacionEdicionId),p);if(adminFamiliaresTemp.length>0){const titular=listaPersonasCache.find(x=>x.id===prefiliacionEdicionId);const fid=titular.familiaId||new Date().getTime().toString();if(!titular.familiaId){await updateDoc(doc(db,"albergues",currentAlbergueId,"personas",prefiliacionEdicionId),{familiaId:fid,rolFamilia:'TITULAR'});}for(const f of adminFamiliaresTemp){await addDoc(collection(db,"albergues",currentAlbergueId,"personas"),{...f,estado:'espera',familiaId:fid,rolFamilia:'MIEMBRO',fechaRegistro:new Date()});}}alert("Actualizado");window.cancelarEdicionPref();return;}const n=safeVal('man-nombre');if(!n)return alert("Nombre obligatorio");const fid=new Date().getTime().toString();const titular=getDatosFormulario('man');titular.estado='espera';titular.familiaId=fid;titular.rolFamilia='TITULAR';titular.fechaRegistro=new Date();await addDoc(collection(db,"albergues",currentAlbergueId,"personas"),titular);for(const f of adminFamiliaresTemp){await addDoc(collection(db,"albergues",currentAlbergueId,"personas"),{...f,estado:'espera',familiaId:fid,rolFamilia:'MIEMBRO',fechaRegistro:new Date()});}alert("Guardado");limpiarFormulario('man');adminFamiliaresTemp=[];document.getElementById('admin-lista-familiares-ui').innerHTML="Ninguno.";document.getElementById('existing-family-list-ui').innerHTML="";};
 window.cerrarMapaCamas=()=>{highlightedFamilyId=null;document.getElementById('modal-cama').classList.add('hidden');};
 window.highlightFamily=(pid)=>{const occupant=listaPersonasCache.find(p=>p.id===pid);if(!occupant||!occupant.familiaId)return;if(highlightedFamilyId===occupant.familiaId){highlightedFamilyId=null;}else{highlightedFamilyId=occupant.familiaId;}mostrarGridCamas();};
 window.abrirSeleccionCama=()=>{window.modoMapaGeneral=false;mostrarGridCamas();};

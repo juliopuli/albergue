@@ -71,14 +71,14 @@ button.success { background: var(--success); color: white; }
 .user-card-left { display: flex; align-items: center; gap: 15px; }
 .user-avatar-circle { width: 45px; height: 45px; background: #e0e7ff; color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: bold; }
 
-/* --- 7. CAMAS (UPDATED V34) --- */
+/* --- 7. CAMAS --- */
 .bed-grid { display: grid; gap: 10px; margin-top: 25px; }
 .bed-box { 
-    min-height: 85px; /* AUMENTADO PARA MÁS DATOS */
+    min-height: 90px; /* MÁS ALTO PARA QUE QUEPA TODO */
     border-radius: 8px; font-weight: 700; 
     display: flex; flex-direction: column; justify-content: center; align-items: center; 
     cursor: pointer; border: 2px solid transparent; background: #f1f5f9; transition: 0.1s; 
-    text-align: center; padding: 5px;
+    text-align: center; padding: 5px; font-size: 0.9rem;
 }
 .bed-box span { font-size: 0.7em; font-weight: normal; margin-top: 2px; }
 .bed-free { background: var(--success-bg); color: #166534; border-color: #86efac; }
@@ -89,19 +89,23 @@ button.success { background: var(--success); color: white; }
 /* --- 8. UTILS --- */
 .hidden { display: none !important; }
 .sticky-header { position: sticky; top: 130px; z-index: 80; background: var(--surface); margin: -30px -30px 20px -30px; padding: 20px 30px; border-bottom: 1px solid #e2e8f0; border-radius: var(--radius) var(--radius) 0 0; }
-
-/* BUSCADOR CON PUNTITOS */
 .search-results { background: white; border: 1px solid #e2e8f0; border-radius: 0 0 12px 12px; max-height: 200px; overflow-y: auto; margin-top: -15px; margin-bottom: 20px; box-shadow: var(--shadow-sm); }
 .search-item { padding: 12px; border-bottom: 1px solid #f1f5f9; cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: 0.2s; }
 .search-item:hover { background: #f8fafc; }
 .status-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-left: 10px; flex-shrink: 0; }
 .dot-green { background-color: var(--success); box-shadow: 0 0 4px var(--success); }
 .dot-orange { background-color: var(--warning); box-shadow: 0 0 4px var(--warning); }
-
 .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; display: inline-block; }
 
-.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3000; display: flex; justify-content: center; align-items: center; }
-.modal-content { background: white; width: 95%; max-width: 600px; padding: 30px; border-radius: 12px; max-height: 90vh; overflow-y: auto; }
+/* MODALES MEJORADOS */
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 3000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(2px); }
+.modal-content { background: white; width: 95%; max-width: 600px; padding: 30px; border-radius: 12px; max-height: 90vh; overflow-y: auto; position: relative; }
+/* Modal Grande para Camas */
+.modal-lg { max-width: 1000px; }
+
+/* BOTON CERRAR X */
+.close-modal { position: absolute; top: 15px; right: 20px; font-size: 1.5rem; color: #94a3b8; cursor: pointer; transition: 0.2s; z-index: 10; }
+.close-modal:hover { color: var(--danger); transform: scale(1.1); }
 
 .version-tag { position: fixed; bottom: 10px; right: 10px; color: #ccc; font-size: 0.8em; pointer-events: none; }
 .fam-list { margin-top: 15px; border-top: 2px dashed #eee; padding-top: 10px; }

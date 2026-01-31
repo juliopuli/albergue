@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión Albergue - Ver.2.0.2</title>
+    <title>Gestión Albergue - Ver.2.0.3</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     
@@ -12,7 +12,7 @@
 </head>
 <body>
 
-    <div class="version-tag">Ver.2.0.2</div>
+    <div class="version-tag">Ver.2.0.3</div>
 
     <div id="login-screen" class="">
         <div class="card">
@@ -100,31 +100,10 @@
             </div>
 
             <div id="screen-observatorio" class="hidden">
-                <div class="dashboard-grid">
-                    <div class="stat-card">
-                        <div class="stat-label">Albergues Activos</div>
-                        <div class="stat-number" id="obs-total-albergues">0</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Total Alojados</div>
-                        <div class="stat-number" id="obs-total-personas">0</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Plazas Libres</div>
-                        <div class="stat-number" id="obs-total-libres">0</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Ocupación Global</div>
-                        <div class="stat-number" id="obs-global-percent">0%</div>
-                        <div class="progress-bg"><div class="progress-fill" id="obs-global-bar" style="width:0%"></div></div>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <h3>Estado por Centro</h3>
-                    <div id="obs-detalle-container" class="obs-table-container">
-                        <p style="color:#666;">Cargando datos...</p>
-                    </div>
+                <div class="hero-container">
+                    <i class="fa-solid fa-binoculars hero-icon" style="color:var(--text-light);"></i>
+                    <h2>Observatorio</h2>
+                    <p>Panel de información en construcción.</p>
                 </div>
             </div>
 
@@ -146,7 +125,6 @@
                     </div>
 
                     <div style="margin-top:25px;">
-                        
                         <div id="tab-prefiliacion" class="tab-content active">
                             <div style="border: 2px dashed #cbd5e1; padding: 25px; border-radius: var(--radius);">
                                 <h3 style="color:var(--primary);">📝 Ficha de Ingreso</h3>

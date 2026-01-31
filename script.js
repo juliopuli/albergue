@@ -15,14 +15,37 @@ let prefiliacionEdicionId = null;
 let isPublicMode = false;
 
 // --- AUTH & HOME ---
-window.onload=()=>{
+window.onload=async()=>{
     const p=new URLSearchParams(window.location.search);
     if(p.get('public_id')){
         isPublicMode = true; currentAlbergueId=p.get('public_id');
         document.getElementById('login-screen').classList.add('hidden');
         document.getElementById('app-shell').classList.add('hidden');
+        
+        // SHOW WELCOME SCREEN FIRST
         document.getElementById('public-register-screen').classList.remove('hidden');
+        document.getElementById('public-welcome-screen').classList.remove('hidden');
+        document.getElementById('public-form-container').classList.add('hidden');
+        
+        // FETCH SHELTER NAME FOR WELCOME
+        try {
+            const snap = await getDoc(doc(db, "albergues", currentAlbergueId));
+            if(snap.exists()){
+                document.getElementById('public-albergue-name').innerText = snap.data().nombre;
+            }
+        } catch(e) { console.error(e); }
     }
+};
+
+window.toggleStartButton = () => {
+    const chk = document.getElementById('check-consent');
+    const btn = document.getElementById('btn-start-public');
+    btn.disabled = !chk.checked;
+};
+
+window.iniciarRegistro = () => {
+    document.getElementById('public-welcome-screen').classList.add('hidden');
+    document.getElementById('public-form-container').classList.remove('hidden');
 };
 
 window.iniciarSesion=async()=>{try{await signInWithEmailAndPassword(auth,document.getElementById('login-email').value,document.getElementById('login-pass').value);}catch(e){alert(e.message);}};
@@ -69,7 +92,7 @@ window.navegar=(p)=>{
     } else if(p==='operativa'){
         document.getElementById('screen-operativa').classList.remove('hidden');
         document.getElementById('nav-albergues').classList.add('active');
-        window.cambiarPestana('prefiliacion');
+        window.cambiarPestana('filiacion'); // DEFAULT TAB V34
     }
     // Update active class
     document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
@@ -503,7 +526,7 @@ window.adminPrefiliarManual=async()=>{
     document.getElementById('admin-lista-familiares-ui').innerHTML="Ninguno.";
 };
 
-// --- MAPA CAMAS ---
+// --- MAPA CAMAS (V34) ---
 window.abrirSeleccionCama=()=>{window.modoMapaGeneral=false;mostrarGridCamas();};window.abrirMapaGeneral=()=>{window.modoMapaGeneral=true;mostrarGridCamas();};
 function mostrarGridCamas(){const g=document.getElementById('grid-camas');g.innerHTML="";const cols=(currentAlbergueData&&currentAlbergueData.columnas)?currentAlbergueData.columnas:8;g.style.gridTemplateColumns=`repeat(${cols}, 1fr)`;let shadowMap={};let famGroups={};listaPersonasCache.forEach(p=>{if(p.familiaId){if(!famGroups[p.familiaId])famGroups[p.familiaId]={members:[],beds:[]};famGroups[p.familiaId].members.push(p);if(p.cama)famGroups[p.familiaId].beds.push(parseInt(p.cama));}});Object.values(famGroups).forEach(fam=>{let assigned=fam.beds.length;let total=fam.members.length;let needed=total-assigned;if(assigned>0&&needed>0){let startBed=Math.max(...fam.beds);let placed=0;let check=startBed+1;while(placed<needed&&check<=totalCapacidad){if(!camasOcupadas[check.toString()]){shadowMap[check.toString()]=fam.members[0].familiaId;placed++;}check++;}}});let myFamId,famMembers=[],assignedMembers=[],neededForMe=1;if(!window.modoMapaGeneral&&window.personaEnGestion){myFamId=window.personaEnGestion.familiaId;if(myFamId)famMembers=listaPersonasCache.filter(m=>m.familiaId===myFamId);else famMembers=[window.personaEnGestion];assignedMembers=famMembers.filter(m=>m.cama&&m.id!==window.personaEnGestion.id);neededForMe=famMembers.length-assignedMembers.length;}for(let i=1;i<=totalCapacidad;i++){const n=i.toString();const occupantName=camasOcupadas[n];const occupant=listaPersonasCache.find(p=>p.cama===n);const d=document.createElement('div');let esMiCama=(!window.modoMapaGeneral&&window.personaEnGestion&&window.personaEnGestion.cama===n);let classes="bed-box";let label=n;if(esMiCama){classes+=" bed-current";label+=" (Tú)";}else if(occupantName){classes+=" bed-busy";
         if(occupant){

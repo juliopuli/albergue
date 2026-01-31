@@ -92,7 +92,7 @@ window.navegar=(p)=>{
     } else if(p==='operativa'){
         document.getElementById('screen-operativa').classList.remove('hidden');
     } else if(p==='observatorio'){
-        document.getElementById('screen-observatorio').classList.remove('hidden'); window.cargarObservatorio();
+        document.getElementById('screen-observatorio').classList.remove('hidden');
     }
     
     // Update active class
@@ -116,87 +116,19 @@ function configurarDashboard(){
     if(r==='super_admin') document.getElementById('container-ver-ocultos').classList.remove('hidden');
 }
 
-// --- OBSERVATORIO (NUEVO VER 2.0.0) ---
-window.cargarObservatorio = async () => {
-    const totalAlberguesEl = document.getElementById('obs-total-albergues');
-    const totalPersonasEl = document.getElementById('obs-total-personas');
-    const totalLibresEl = document.getElementById('obs-total-libres');
-    const percentEl = document.getElementById('obs-global-percent');
-    const barEl = document.getElementById('obs-global-bar');
-    const detalleContainer = document.getElementById('obs-detalle-container');
-
-    detalleContainer.innerHTML = '<p style="color:#666; text-align:center;">Analizando datos...</p>';
-
-    // Fetch active shelters
-    const q = query(collection(db, "albergues"), where("activo", "==", true));
-    const querySnapshot = await getDocs(q);
-    
-    let activeCount = 0;
-    let totalCap = 0;
-    let totalOcc = 0;
-    let detailsHTML = '<div class="mto-grid">';
-
-    // Iterate
-    for (const docSnap of querySnapshot.docs) {
-        const data = docSnap.data();
-        activeCount++;
-        const cap = parseInt(data.capacidad || 0);
-        totalCap += cap;
-
-        // Get Occupancy
-        const occSnap = await getDocs(query(collection(db, "albergues", docSnap.id, "personas"), where("estado", "==", "ingresado")));
-        const occ = occSnap.size;
-        totalOcc += occ;
-
-        // Calculate per shelter percent
-        const pct = cap > 0 ? Math.round((occ / cap) * 100) : 0;
-        let colorClass = 'low';
-        if(pct > 75) colorClass = 'med';
-        if(pct > 90) colorClass = 'high';
-
-        detailsHTML += `
-            <div class="mto-card" style="text-align:left;">
-                <h4 style="margin:0;">${data.nombre}</h4>
-                <div style="font-size:0.85rem; color:#666; margin-top:5px; display:flex; justify-content:space-between;">
-                    <span>${occ} / ${cap}</span>
-                    <strong>${pct}%</strong>
-                </div>
-                <div class="progress-bg"><div class="progress-fill ${colorClass}" style="width:${pct}%"></div></div>
-            </div>
-        `;
-    }
-    detailsHTML += '</div>';
-
-    // Global Stats
-    const globalFree = totalCap - totalOcc;
-    const globalPct = totalCap > 0 ? Math.round((totalOcc / totalCap) * 100) : 0;
-    let globalColor = 'low';
-    if(globalPct > 75) globalColor = 'med';
-    if(globalPct > 90) globalColor = 'high';
-
-    // Render
-    totalAlberguesEl.innerText = activeCount;
-    totalPersonasEl.innerText = totalOcc;
-    totalLibresEl.innerText = globalFree;
-    percentEl.innerText = globalPct + "%";
-    barEl.style.width = globalPct + "%";
-    barEl.className = `progress-fill ${globalColor}`;
-    
-    detalleContainer.innerHTML = detailsHTML;
-};
-
-// --- GESTIÓN & OPERATIVA (FIX 0/0) ---
+// --- GESTIÓN & OPERATIVA (RESTORED V42 EXACTLY) ---
 window.cargarAlberguesActivos=()=>{
     const c=document.getElementById('lista-albergues-activos');
-    // FIX: NO ASYNC COUNTING IN LIST TO PREVENT CRASH
     onSnapshot(query(collection(db,"albergues"),where("activo","==",true)),s=>{
         c.innerHTML="";
-        s.forEach(d=>{
+        s.forEach(async d=>{
             const a=d.data();
-            c.innerHTML+=`<div class="mto-card" onclick="window.entrarAlbergue('${d.id}')"><h3>${a.nombre}</h3><div class="mto-info">Capacidad: ${a.capacidad}</div></div>`;
+            const snap = await getDocs(query(collection(db,"albergues",d.id,"personas"),where("estado","==","ingresado")));
+            c.innerHTML+=`<div class="mto-card" onclick="window.entrarAlbergue('${d.id}')"><h3>${a.nombre}</h3><div class="mto-info">Ocupación: <strong>${snap.size}</strong> / ${a.capacidad}</div></div>`;
         });
     });
 };
+
 window.entrarAlbergue=(id)=>{
     currentAlbergueId=id; window.navegar('operativa');
     window.cambiarPestana('filiacion'); 
@@ -207,7 +139,6 @@ window.entrarAlbergue=(id)=>{
         totalCapacidad=parseInt(currentAlbergueData.capacidad||0);
         actualizarContadores();
     });
-    // SAFE SORT
     onSnapshot(collection(db,"albergues",id,"personas"),s=>{
         listaPersonasCache=[]; camasOcupadas={}; let c=0;
         s.forEach(d=>{
@@ -234,7 +165,7 @@ function actualizarContadores(){
     document.getElementById('capacidad-total').innerText=totalCapacidad;
 }
 
-// --- RESTO DE FUNCIONES (MANTENIDAS) ---
+// --- RESTO DE FUNCIONES (MANTENIDAS V42) ---
 window.buscarEnPrefiliacion=()=>{const txt=safeVal('buscador-pref').toLowerCase();const res=document.getElementById('resultados-pref');if(txt.length<2){res.classList.add('hidden');return;}const hits=listaPersonasCache.filter(p=>p.estado==='espera' && (p.nombre||"").toLowerCase().includes(txt));res.innerHTML="";hits.forEach(p=>{res.innerHTML+=`<div class="search-item" onclick="window.cargarParaEdicionPref('${p.id}')"><strong>${p.nombre}</strong> (${p.docNum||'-'})</div>`;});res.classList.remove('hidden');};
 window.cargarParaEdicionPref=(pid)=>{const p=listaPersonasCache.find(x=>x.id===pid);if(!p)return;prefiliacionEdicionId=p.id;document.getElementById('resultados-pref').classList.add('hidden');document.getElementById('buscador-pref').value="";setVal('man-nombre',p.nombre);setVal('man-ap1',p.ap1);setVal('man-ap2',p.ap2);setVal('man-tipo-doc',p.tipoDoc);setVal('man-doc-num',p.docNum);setVal('man-fecha',p.fechaNac);setVal('man-tel',p.telefono);document.getElementById('btn-save-pref').innerText="Actualizar Registro";document.getElementById('btn-cancelar-edicion-pref').classList.remove('hidden');};
 window.cancelarEdicionPref=()=>{prefiliacionEdicionId=null;limpiarFormulario('man');document.getElementById('btn-save-pref').innerText="Guardar Nuevo";document.getElementById('btn-cancelar-edicion-pref').classList.add('hidden');};

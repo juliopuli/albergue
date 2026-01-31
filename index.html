@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión Albergue - V.33.0.0</title>
+    <title>Gestión Albergue - V.34.0.0</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     
@@ -12,7 +12,7 @@
 </head>
 <body>
 
-    <div class="version-tag">V.33.0.0</div>
+    <div class="version-tag">V.34.0.0</div>
 
     <div id="login-screen" class="">
         <div class="card">
@@ -108,14 +108,14 @@
                             </div>
                         </div>
                         <div class="tabs" style="margin-top:10px;">
-                            <button id="btn-tab-pref" class="tab-btn active" onclick="window.cambiarPestana('prefiliacion')">📁 Prefiliación</button>
-                            <button id="btn-tab-fil" class="tab-btn" onclick="window.cambiarPestana('filiacion')">📁 Filiación</button>
+                            <button id="btn-tab-pref" class="tab-btn" onclick="window.cambiarPestana('prefiliacion')">📁 Prefiliación</button>
+                            <button id="btn-tab-fil" class="tab-btn active" onclick="window.cambiarPestana('filiacion')">📁 Filiación</button>
                         </div>
                     </div>
 
                     <div style="margin-top:25px;">
                         
-                        <div id="tab-prefiliacion" class="tab-content active">
+                        <div id="tab-prefiliacion" class="tab-content hidden">
                             <div style="border: 2px dashed #cbd5e1; padding: 25px; border-radius: var(--radius);">
                                 <h3 style="color:var(--primary);">📝 Ficha de Ingreso</h3>
                                 <div style="background:#e0e7ff; padding:15px; border-radius:8px; margin-bottom:20px;">
@@ -137,7 +137,7 @@
                             </div>
                         </div>
 
-                        <div id="tab-filiacion" class="tab-content hidden">
+                        <div id="tab-filiacion" class="tab-content">
                             <div class="row"><div class="col"><input type="text" id="buscador-persona" placeholder="🔍 Buscar por Nombre, Apellidos, DNI..." onkeyup="window.buscarPersonaEnAlbergue()" autocomplete="off"><div id="resultados-busqueda" class="search-results hidden"></div></div></div>
                             <div id="panel-gestion-persona" class="hidden" style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:var(--radius); padding:25px; margin-top:10px;">
                                 <h3 id="gestion-nombre-titulo" style="color:var(--primary);">Nombre</h3>

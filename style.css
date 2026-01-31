@@ -24,12 +24,13 @@ body { background-color: var(--bg-body); color: var(--text-main); height: 100vh;
 .user-info { text-align: right; line-height: 1.2; font-size: 0.9rem; margin-right: 5px; }
 .user-name { font-weight: 700; display: block; }
 
+/* ROLES DE USUARIO (NUEVO V3.7.0) */
 .user-role { font-size: 0.75rem; color: var(--text-light); text-transform: uppercase; font-weight: 600; }
 .role-badge { padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: white; display: inline-block; margin-top: 2px; }
-.role-super_admin { background-color: #7c3aed; }
-.role-admin { background-color: #ef4444; }
-.role-avanzado { background-color: #f59e0b; }
-.role-medio { background-color: #10b981; }
+.role-super_admin { background-color: #7c3aed; } /* Violeta */
+.role-admin { background-color: #ef4444; }       /* Rojo */
+.role-intervencion { background-color: #f59e0b; } /* Naranja (Técnicos) */
+.role-filiacion { background-color: #10b981; }    /* Verde (Registro) */
 
 .btn-icon { background: #e0e7ff; color: var(--primary); border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; transition: 0.2s; font-size: 1rem; }
 .btn-icon:hover { background: #c7d2fe; }

@@ -414,7 +414,7 @@ window.buscarPersonaEnAlbergue=()=>{
             
             res.innerHTML+=`<div class="search-item" onclick="window.seleccionarPersona('${p.id}')">
                 <div style="display:flex; justify-content:space-between; width:100%;">
-                    <div><strong>${p.nombre}</strong> <br><small>${p.docNum||''}</small></div>
+                    <div><strong>${p.nombre} ${p.ap1||''} ${p.ap2||''}</strong> <br><small>${p.docNum||''}</small></div>
                     <div class="status-dot ${dotClass}"></div>
                 </div>
             </div>`;
@@ -439,12 +439,29 @@ window.seleccionarPersona=(pid)=>{
     setVal('edit-tipo-doc', p.tipoDoc); setVal('edit-doc-num', p.docNum); 
     setVal('edit-fecha', p.fechaNac); setVal('edit-tel', p.telefono);
     
-    // Familia
+    // Familia (UPDATED V33)
     const fam = listaPersonasCache.filter(x=>x.familiaId && x.familiaId === p.familiaId);
     document.getElementById('info-familia-resumen').innerText = fam.length>1 ? `Familia (${fam.length})` : "Individual";
     const flist = document.getElementById('info-familia-lista'); flist.innerHTML="";
     fam.forEach(f=>{
-        if(f.id!==p.id) flist.innerHTML+=`<div style="padding:5px; border-bottom:1px solid #eee; cursor:pointer;" onclick="window.seleccionarPersona('${f.id}')">${f.nombre}</div>`;
+        if(f.id!==p.id) {
+            const isIngresado = f.estado === 'ingresado';
+            const colorStyle = isIngresado ? 'color:var(--success);' : 'color:var(--warning);';
+            const iconClass = isIngresado ? 'fa-solid fa-bed' : 'fa-solid fa-clock';
+            
+            flist.innerHTML += `
+            <div style="padding:10px; border-bottom:1px solid #eee; cursor:pointer; display:flex; justify-content:space-between; align-items:center;" onclick="window.seleccionarPersona('${f.id}')">
+                <div>
+                    <div style="font-weight:bold; font-size:0.95rem;">${f.nombre} ${f.ap1||''} ${f.ap2||''}</div>
+                    <div style="font-size:0.85rem; color:#666;">
+                        <i class="fa-regular fa-id-card"></i> ${f.docNum||'-'} &nbsp;|&nbsp; <i class="fa-solid fa-phone"></i> ${f.telefono||'-'}
+                    </div>
+                </div>
+                <div style="font-size:1.2rem; ${colorStyle}">
+                    <i class="${iconClass}"></i>
+                </div>
+            </div>`;
+        }
     });
 };
 

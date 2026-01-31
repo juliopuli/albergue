@@ -1,5 +1,5 @@
 import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, createUserWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, createUserWithEmailAndPassword, sendPasswordResetEmail, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
 import { getFirestore, collection, addDoc, setDoc, query, where, getDocs, doc, updateDoc, onSnapshot, orderBy, deleteDoc, getDoc, writeBatch } 
 from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
@@ -147,11 +147,9 @@ function configurarDashboard(){
     if(r==='super_admin') document.getElementById('container-ver-ocultos').classList.remove('hidden');
 }
 
-// --- CONFIGURAR TABS POR ROL (LA FUNCIÓN QUE FALTABA) ---
+// --- CONFIGURAR TABS POR ROL ---
 function configurarTabsPorRol() {
     const r = currentUserData.rol;
-    
-    // 1. Reset defaults (mostrar todo)
     ['btn-tab-pref','btn-tab-fil','btn-tab-san','btn-tab-psi'].forEach(id => {
         const el = document.getElementById(id);
         if(el) el.classList.remove('hidden');
@@ -166,7 +164,7 @@ function configurarTabsPorRol() {
         document.getElementById('btn-tab-psi').classList.add('hidden');
         return 'prefiliacion';
     }
-    return 'prefiliacion'; // Default admin/super_admin
+    return 'prefiliacion';
 }
 
 // --- OBSERVATORIO ---
@@ -293,7 +291,6 @@ window.verListaObservatorio = async (albergueId, estado) => {
     }
 };
 
-// --- GESTIÓN PESTAÑAS (V3.8.2) ---
 window.cambiarPestana = (t) => {
     const allTabs = ['tab-prefiliacion', 'tab-filiacion', 'tab-sanitaria', 'tab-psicosocial'];
     allTabs.forEach(id => {
@@ -332,7 +329,7 @@ window.cambiarPestana = (t) => {
     }
 };
 
-// --- UTILS & FORM (SAFE) ---
+// --- UTILS & FORM ---
 function safeVal(id){ const el=document.getElementById(id); return el?el.value:""; }
 function setVal(id,val){ const el=document.getElementById(id); if(el)el.value=val; }
 window.formatearFecha=(i)=>{let v=i.value.replace(/\D/g,'').slice(0,8);if(v.length>=5)i.value=`${v.slice(0,2)}/${v.slice(2,4)}/${v.slice(4)}`;else if(v.length>=3)i.value=`${v.slice(0,2)}/${v.slice(2)}`;else i.value=v;};
@@ -439,7 +436,7 @@ window.publicoGuardarTodo=async()=>{
 };
 window.abrirModalQR=()=>{document.getElementById('modal-qr').classList.remove('hidden');const qrDiv=document.getElementById("qrcode-display");if(qrDiv.innerHTML===""){const u=window.location.href.split('?')[0]+`?public_id=${currentAlbergueId}`;new QRCode(qrDiv,{text:u,width:250,height:250});}};
 
-// --- USUARIOS FIX (V3.8.0 - ROLES & DELETE) ---
+// --- USUARIOS FIX ---
 window.abrirModalUsuario=async(id=null)=>{
     userEditingId=id; document.getElementById('modal-crear-usuario').classList.remove('hidden');
     const sel=document.getElementById('new-user-role'); sel.innerHTML="";
@@ -448,7 +445,7 @@ window.abrirModalUsuario=async(id=null)=>{
     // DEFINICIÓN DE ROLES PERMITIDOS
     let roles = [];
     if(currentUserData.rol === 'super_admin') roles = ['super_admin','admin','intervencion','filiacion','observador'];
-    else if(currentUserData.rol === 'admin') roles = ['intervencion','filiacion','observador']; // Admin NO crea admins
+    else if(currentUserData.rol === 'admin') roles = ['intervencion','filiacion','observador']; 
     
     roles.forEach(r=>sel.add(new Option(r,r)));
     
@@ -504,7 +501,6 @@ window.cargarUsuarios=(filtro="")=>{
         c.innerHTML="";
         s.forEach(d=>{
             const u=d.data();
-            // ADMIN NO VE A SUPER_ADMIN
             if(currentUserData.rol==='admin' && u.rol==='super_admin') return;
             if(f && !u.nombre.toLowerCase().includes(f)) return;
             c.innerHTML+=`<div class="user-card-item" onclick="window.abrirModalUsuario('${d.id}')"><div class="user-card-left"><div class="user-avatar-circle">${u.nombre.charAt(0)}</div><div><strong>${u.nombre}</strong><br><small>${u.email}</small></div></div><span class="badge role-${u.rol}">${u.rol}</span></div>`;
@@ -544,7 +540,6 @@ window.abrirModalAlbergue=async(id=null)=>{
     if(id){
         const s=await getDoc(doc(db,"albergues",id)); const d=s.data();
         setVal('mto-nombre',d.nombre); setVal('mto-capacidad',d.capacidad); setVal('mto-columnas',d.columnas);
-        // SOLO SUPER ADMIN BORRA ALBERGUES
         if(currentUserData.rol==='super_admin') btnDel.classList.remove('hidden');
         else btnDel.classList.add('hidden');
     }else{
@@ -708,3 +703,44 @@ async function guardarCama(c){if(window.personaEnGestion.cama){alert(`Error: ${w
 window.liberarCamaMantener=async()=>await updateDoc(doc(db,"albergues",currentAlbergueId,"personas",window.personaEnGestion.id),{cama:null});
 window.regresarPrefiliacion=async()=>await updateDoc(doc(db,"albergues",currentAlbergueId,"personas",window.personaEnGestion.id),{estado:'espera',cama:null});
 function generarQR(){const u=window.location.href.split('?')[0]+`?public_id=${currentAlbergueId}`;document.getElementById("qrcode").innerHTML="";new QRCode(document.getElementById("qrcode"),{text:u,width:100,height:100});}
+
+// --- NUEVAS FUNCIONES DE CAMBIO DE CONTRASEÑA (V3.9.0) ---
+window.abrirModalCambioPass = () => {
+    setVal('chg-old-pass', '');
+    setVal('chg-new-pass', '');
+    setVal('chg-confirm-pass', '');
+    document.getElementById('modal-change-pass').classList.remove('hidden');
+};
+
+window.ejecutarCambioPass = async () => {
+    const oldPass = safeVal('chg-old-pass');
+    const newPass = safeVal('chg-new-pass');
+    const confirmPass = safeVal('chg-confirm-pass');
+    
+    if(!oldPass || !newPass || !confirmPass) return alert("Rellena todos los campos");
+    if(newPass !== confirmPass) return alert("Las contraseñas nuevas no coinciden");
+    if(newPass.length < 6) return alert("La contraseña debe tener al menos 6 caracteres");
+    
+    try {
+        const user = auth.currentUser;
+        if(!user) return alert("Sesión inválida");
+        
+        // RE-AUTH
+        const credential = EmailAuthProvider.credential(user.email, oldPass);
+        await reauthenticateWithCredential(user, credential);
+        
+        // UPDATE
+        await updatePassword(user, newPass);
+        
+        alert("Contraseña actualizada correctamente. Por favor, inicia sesión de nuevo.");
+        document.getElementById('modal-change-pass').classList.add('hidden');
+        window.cerrarSesion();
+        
+    } catch(e) {
+        if(e.code === 'auth/wrong-password'){
+            alert("La contraseña actual no es correcta.");
+        } else {
+            alert("Error: " + e.message);
+        }
+    }
+};

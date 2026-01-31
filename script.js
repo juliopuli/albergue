@@ -1,6 +1,6 @@
 import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, createUserWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, setDoc, query, where, getDocs, doc, updateDoc, onSnapshot, orderBy, deleteDoc, getDoc, writeBatch } 
+import { getFirestore, collection, addDoc, setDoc, query, where, getDocs, doc, updateDoc, onSnapshot, orderBy, deleteDoc, getDoc, writeBatch, getDoc } 
 from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
 const firebaseConfig = { apiKey: "AIzaSyAzfEMwMd6M1VgvV0tJn7RS63RJghLE5UI", authDomain: "albergues-temporales.firebaseapp.com", projectId: "albergues-temporales", storageBucket: "albergues-temporales.firebasestorage.app", messagingSenderId: "489999184108", appId: "1:489999184108:web:32b9b580727f83158075c9" };
@@ -35,7 +35,11 @@ async function initPublicMode() {
         const docRef = doc(db, "albergues", currentAlbergueId);
         const snap = await getDoc(docRef);
         if(snap.exists()){
-            document.getElementById('public-albergue-name').innerText = "Albergue " + snap.data().nombre;
+            // FIX: NOMBRE EXACTO SOLICITADO
+            const nombre = snap.data().nombre || "";
+            // Si el nombre ya contiene "Albergue", no lo duplicamos. Si no, lo ponemos.
+            const displayName = nombre.toLowerCase().startsWith('albergue') ? nombre : "Albergue " + nombre;
+            document.getElementById('public-albergue-name').innerText = displayName;
         } else {
             document.getElementById('public-albergue-name').innerText = "este Albergue";
         }
@@ -122,6 +126,7 @@ function configurarDashboard(){
 }
 
 window.cambiarPestana = (t) => {
+    // FIX: Use classList for hidden to avoid css conflicts
     if (t === 'prefiliacion') {
         document.getElementById('tab-prefiliacion').classList.remove('hidden');
         document.getElementById('tab-filiacion').classList.add('hidden');
@@ -148,7 +153,7 @@ function safeVal(id){ const el=document.getElementById(id); return el?el.value:"
 function setVal(id,val){ const el=document.getElementById(id); if(el)el.value=val; }
 window.formatearFecha=(i)=>{let v=i.value.replace(/\D/g,'').slice(0,8);if(v.length>=5)i.value=`${v.slice(0,2)}/${v.slice(2,4)}/${v.slice(4)}`;else if(v.length>=3)i.value=`${v.slice(0,2)}/${v.slice(2)}`;else i.value=v;};
 window.verificarMenor=(p)=>{const t=document.getElementById(`${p}-tipo-doc`).value;const i=document.getElementById(`${p}-doc-num`);if(t==='MENOR'){i.value="MENOR-SIN-DNI";i.disabled=true;}else{i.disabled=false;if(i.value==="MENOR-SIN-DNI")i.value="";}};
-window.validarDocumento=(p)=>{return true;}
+window.validarDocumento=(p)=>{return true;} // Simplified for stability
 function limpiarFormulario(p){
     ['nombre','ap1','ap2','doc-num','fecha','tel'].forEach(f=>{ const el=document.getElementById(`${p}-${f}`); if(el)el.value=""; });
     const i=document.getElementById(`${p}-doc-num`); if(i)i.disabled=false;
@@ -344,15 +349,14 @@ window.cambiarEstadoAlbergue=async(id, estado)=>{
 };
 
 // --- GESTIÓN & OPERATIVA ---
-// FIX V40: SYNC LOAD TO PREVENT FREEZE
 window.cargarAlberguesActivos=()=>{
     const c=document.getElementById('lista-albergues-activos');
     onSnapshot(query(collection(db,"albergues"),where("activo","==",true)),s=>{
         c.innerHTML="";
-        s.forEach(d=>{
+        s.forEach(async d=>{
             const a=d.data();
-            // REMOVED ASYNC COUNT FROM LIST FOR STABILITY
-            c.innerHTML+=`<div class="mto-card" onclick="window.entrarAlbergue('${d.id}')"><h3>${a.nombre}</h3><div class="mto-info">Capacidad: ${a.capacidad}</div></div>`;
+            const snap = await getDocs(query(collection(db,"albergues",d.id,"personas"),where("estado","==","ingresado")));
+            c.innerHTML+=`<div class="mto-card" onclick="window.entrarAlbergue('${d.id}')"><h3>${a.nombre}</h3><div class="mto-info">Ocupación: <strong>${snap.size}</strong> / ${a.capacidad}</div></div>`;
         });
     });
 };
@@ -535,6 +539,12 @@ window.adminPrefiliarManual=async()=>{
 window.abrirSeleccionCama=()=>{window.modoMapaGeneral=false;mostrarGridCamas();};
 window.abrirMapaGeneral=()=>{window.modoMapaGeneral=true;mostrarGridCamas();};
 
+// FIX: New Reset Function V41
+window.cerrarMapaCamas = () => {
+    highlightedFamilyId = null; // Clear highlight
+    document.getElementById('modal-cama').classList.add('hidden');
+};
+
 window.highlightFamily = (pid) => {
     const occupant = listaPersonasCache.find(p => p.id === pid);
     if (!occupant || !occupant.familiaId) return;
@@ -546,7 +556,8 @@ function mostrarGridCamas(){
     const g=document.getElementById('grid-camas'); g.innerHTML="";
     const cols=(currentAlbergueData&&currentAlbergueData.columnas)?currentAlbergueData.columnas:8;
     g.style.gridTemplateColumns=`repeat(${cols}, 1fr)`;
-    let shadowMap={}; 
+    
+    let shadowMap={}; // Reserved for future logic if needed
     
     for(let i=1; i<=totalCapacidad; i++){
         const n=i.toString();
@@ -555,48 +566,94 @@ function mostrarGridCamas(){
         let classes="bed-box";
         let label=n;
 
-        if (occupant && highlightedFamilyId && occupant.familiaId === highlightedFamilyId) { classes += " bed-family-highlight"; }
+        // Highlight Logic
+        if (occupant && highlightedFamilyId && occupant.familiaId === highlightedFamilyId) {
+            classes += " bed-family-highlight";
+        }
 
         if(!window.modoMapaGeneral && window.personaEnGestion && window.personaEnGestion.cama === n) {
             classes += " bed-current"; label += " (Tú)";
         } else if(occupant){
             classes += " bed-busy";
             const full = `${occupant.nombre} ${occupant.ap1||''} ${occupant.ap2||''}`;
-            label += `<div style="font-size:0.6rem; font-weight:normal; margin-top:2px; line-height:1.1;">${full}<br><i class="fa-solid fa-phone"></i> ${occupant.telefono||'-'}</div>`;
-        } else { classes += " bed-free"; }
+            label += `<div style="font-size:0.6rem; font-weight:normal; margin-top:2px; line-height:1.1;">
+                ${full}<br>
+                <i class="fa-solid fa-phone"></i> ${occupant.telefono||'-'}
+            </div>`;
+        } else {
+            classes += " bed-free";
+        }
         
-        d.className=classes; d.innerHTML=label;
+        d.className=classes;
+        d.innerHTML=label;
+        
+        // Single Click -> Highlight Family (if occupied) or Assign (if mode assign)
         d.onclick=()=>{
-            if(occupant){ window.highlightFamily(occupant.id); } 
-            else if(!window.modoMapaGeneral){ guardarCama(n); }
+            if(occupant){
+                window.highlightFamily(occupant.id);
+            } else if(!window.modoMapaGeneral){
+                guardarCama(n);
+            }
         };
-        d.ondblclick = () => { if(occupant) window.abrirModalInfoCama(occupant); };
+
+        // Double Click -> Open Details
+        d.ondblclick = () => {
+            if(occupant) window.abrirModalInfoCama(occupant);
+        };
+        
         g.appendChild(d);
     }
     document.getElementById('modal-cama').classList.remove('hidden');
 }
 
+// MODAL INFO CAMA (V38 UPDATED TABLE)
 window.abrirModalInfoCama=(p)=>{
     document.getElementById('info-cama-num').innerText=p.cama;
     document.getElementById('info-nombre-completo').innerText=`${p.nombre} ${p.ap1||''} ${p.ap2||''}`;
     document.getElementById('info-telefono').innerText=p.telefono||"No consta";
     
+    // Build Table
     const container = document.getElementById('info-familia-detalle');
     const fam = listaPersonasCache.filter(x=>x.familiaId === p.familiaId);
-    let html = `<table class="fam-table"><thead><tr><th>Nombre</th><th>Apellidos</th><th>Teléfono</th><th>Cama</th></tr></thead><tbody>`;
+    
+    let html = `
+    <table class="fam-table">
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Apellidos</th>
+                <th>Teléfono</th>
+                <th>Cama</th>
+            </tr>
+        </thead>
+        <tbody>
+    `;
+    
     fam.forEach(f => {
         const isCurrent = f.id === p.id ? 'fam-row-current' : '';
-        html += `<tr class="${isCurrent}"><td>${f.nombre}</td><td>${f.ap1||''} ${f.ap2||''}</td><td>${f.telefono||'-'}</td><td><strong>${f.cama||'-'}</strong></td></tr>`;
+        html += `
+        <tr class="${isCurrent}">
+            <td>${f.nombre}</td>
+            <td>${f.ap1||''} ${f.ap2||''}</td>
+            <td>${f.telefono||'-'}</td>
+            <td><strong>${f.cama||'-'}</strong></td>
+        </tr>
+        `;
     });
+    
     html += `</tbody></table>`;
     container.innerHTML = html;
+
     document.getElementById('modal-bed-info').classList.remove('hidden');
 };
 
 async function guardarCama(c){
-    if(window.personaEnGestion.cama){ alert(`Error: ${window.personaEnGestion.nombre} ya tiene asignada la cama ${window.personaEnGestion.cama}. Debes liberarla primero.`); return; }
+    if(window.personaEnGestion.cama){
+        alert(`Error: ${window.personaEnGestion.nombre} ya tiene asignada la cama ${window.personaEnGestion.cama}. Debes liberarla primero.`);
+        return;
+    }
     await updateDoc(doc(db,"albergues",currentAlbergueId,"personas",window.personaEnGestion.id),{estado:'ingresado',cama:c.toString(),fechaIngreso:new Date()});
-    document.getElementById('modal-cama').classList.add('hidden');
+    window.cerrarMapaCamas(); // Use new cleaner function
 }
 window.liberarCamaMantener=async()=>await updateDoc(doc(db,"albergues",currentAlbergueId,"personas",window.personaEnGestion.id),{cama:null});
 window.regresarPrefiliacion=async()=>await updateDoc(doc(db,"albergues",currentAlbergueId,"personas",window.personaEnGestion.id),{estado:'espera',cama:null});

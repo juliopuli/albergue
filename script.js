@@ -93,14 +93,12 @@ function limpiarListeners() {
 window.navegar = (p) => {
     limpiarListeners();
     
-    // Hide all
     ['screen-home', 'screen-usuarios', 'screen-gestion-albergues', 'screen-mantenimiento', 'screen-operativa', 'screen-observatorio']
         .forEach(id => {
             const el = document.getElementById(id);
             if(el) el.classList.add('hidden');
         });
     
-    // NORMALIZE ROLE
     const r = (currentUserData.rol || "").toLowerCase().trim();
 
     if(p === 'home'){
@@ -273,6 +271,7 @@ window.entrarAlbergue = (id) => {
         try { listaPersonasCache.sort((a,b)=>(b.fechaRegistro?.seconds||0) - (a.fechaRegistro?.seconds||0)); } catch(e){}
         ocupacionActual = c;
         actualizarContadores();
+        
         if(window.personaEnGestion){
             const upd = listaPersonasCache.find(x => x.id === window.personaEnGestion.id);
             if(upd) window.seleccionarPersona(upd);
@@ -307,9 +306,16 @@ function configurarTabsPorRol() {
 
 window.cambiarPestana = (t) => {
     const allTabs = ['tab-prefiliacion', 'tab-filiacion', 'tab-sanitaria', 'tab-psicosocial'];
-    allTabs.forEach(id => { const el=document.getElementById(id); if(el) el.classList.add('hidden'); });
+    allTabs.forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.classList.add('hidden');
+    });
+
     const allBtns = ['btn-tab-pref', 'btn-tab-fil', 'btn-tab-san', 'btn-tab-psi'];
-    allBtns.forEach(id => { const el=document.getElementById(id); if(el) el.classList.remove('active'); });
+    allBtns.forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.classList.remove('active');
+    });
 
     if (t === 'prefiliacion') {
         document.getElementById('tab-prefiliacion').classList.remove('hidden');
@@ -318,18 +324,21 @@ window.cambiarPestana = (t) => {
         const existingUi = document.getElementById('existing-family-list-ui'); if(existingUi) existingUi.innerHTML = ""; 
         const panel = document.getElementById('panel-gestion-persona'); if(panel) panel.classList.add('hidden');
         window.cancelarEdicionPref();
+        
     } else if (t === 'filiacion') {
-        document.getElementById('tab-filiacion').classList.remove('hidden');
-        document.getElementById('btn-tab-fil').classList.add('active');
+        const el = document.getElementById('tab-filiacion').classList.remove('hidden');
+        const btn = document.getElementById('btn-tab-fil').classList.add('active');
         document.getElementById('buscador-persona').value = ""; 
         document.getElementById('resultados-busqueda').classList.add('hidden'); 
         document.getElementById('panel-gestion-persona').classList.add('hidden');
+        
     } else if (t === 'sanitaria') {
-        document.getElementById('tab-sanitaria').classList.remove('hidden');
-        document.getElementById('btn-tab-san').classList.add('active');
+        const el = document.getElementById('tab-sanitaria').classList.remove('hidden');
+        const btn = document.getElementById('btn-tab-san').classList.add('active');
+        
     } else if (t === 'psicosocial') {
-        document.getElementById('tab-psicosocial').classList.remove('hidden');
-        document.getElementById('btn-tab-psi').classList.add('active');
+        const el = document.getElementById('tab-psicosocial').classList.remove('hidden');
+        const btn = document.getElementById('btn-tab-psi').classList.add('active');
     }
 };
 
@@ -447,13 +456,15 @@ window.eliminarAlbergueActual=async()=>{if(albergueEdicionId&&confirm("¿Borrar 
 window.cambiarEstadoAlbergue=async(id,st)=>{await updateDoc(doc(db,"albergues",id),{activo:st});};
 window.abrirModalCambioPass=()=>{setVal('chg-old-pass','');setVal('chg-new-pass','');setVal('chg-confirm-pass','');document.getElementById('modal-change-pass').classList.remove('hidden');};
 window.ejecutarCambioPass=async()=>{const o=safeVal('chg-old-pass'),n=safeVal('chg-new-pass'),c=safeVal('chg-confirm-pass');if(!o||!n||!c)return alert("Rellena todo");if(n!==c)return alert("No coinciden");if(n.length<6)return alert("Min 6 chars");try{const u=auth.currentUser;await reauthenticateWithCredential(u,EmailAuthProvider.credential(u.email,o));await updatePassword(u,n);alert("OK. Relogin");document.getElementById('modal-change-pass').classList.add('hidden');window.cerrarSesion();}catch(e){alert("Error: "+e.message);}};
-// --- VINCULAR FAMILIA FIX V4.6.1 ---
+
+// --- VINCULAR FAMILIA FIX V4.6.2 ---
 window.buscarParaVincular=()=>{
     const txt=document.getElementById('search-vincular').value.toLowerCase();
     const res=document.getElementById('resultados-vincular');
     res.innerHTML="";
     if(txt.length<2){res.classList.add('hidden');return;}
     
+    // Filtro original
     const hits=listaPersonasCache.filter(p=>
         p.id!==window.personaEnGestion.id && 
         ((p.nombre||"").toLowerCase().includes(txt) || (p.docNum||"").toLowerCase().includes(txt))
@@ -465,7 +476,14 @@ window.buscarParaVincular=()=>{
         hits.forEach(p=>{
             const d=document.createElement('div');
             d.className='search-item';
-            d.innerHTML=`<strong>${p.nombre} ${p.ap1||''} ${p.ap2||''}</strong><br><small>📄 ${p.docNum||'-'} | 📞 ${p.telefono||'-'}</small>`;
+            // CAMBIO ESPECÍFICO PEDIDO: NOMBRE + AP1 + AP2 + DNI + TLF
+            d.innerHTML=`
+                <strong>${p.nombre} ${p.ap1||''} ${p.ap2||''}</strong>
+                <div style="font-size:0.8rem; color:#666;">
+                    <i class="fa-regular fa-id-card"></i> ${p.docNum||'-'} &nbsp;|&nbsp; 
+                    <i class="fa-solid fa-phone"></i> ${p.telefono||'-'}
+                </div>
+            `;
             d.onclick=()=>window.vincularAFamilia(p);
             res.appendChild(d);
         });

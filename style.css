@@ -37,7 +37,7 @@ body { background-color: var(--bg-body); color: var(--text-main); height: 100vh;
 .btn-icon:hover { background: #c7d2fe; }
 .btn-logout { background: var(--danger-bg); color: var(--danger); }
 .btn-logout:hover { background: #fecaca; }
-.btn-key { background: #fef3c7; color: #d97706; } /* Nuevo estilo botón llave */
+.btn-key { background: #fef3c7; color: #d97706; }
 .btn-key:hover { background: #fde68a; }
 
 /* --- 3. NAV --- */
@@ -161,6 +161,11 @@ button.dark { background: #334155; color: white; }
 .prog-fill.high { background: var(--danger); }
 .prog-fill.med { background: var(--warning); }
 .prog-fill.low { background: var(--success); }
+
+/* HISTORIAL (V4.0.0) */
+.log-item { padding: 12px; border-left: 3px solid #cbd5e1; background: #f8fafc; margin-bottom: 10px; border-radius: 0 8px 8px 0; font-size: 0.9rem; }
+.log-item strong { display: block; color: var(--primary); }
+.log-item span { color: #64748b; font-size: 0.8em; }
 
 /* QR Welcome styles */
 .welcome-box { text-align: center; padding: 40px 20px; }

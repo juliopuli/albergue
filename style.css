@@ -82,7 +82,7 @@ button.dark { background: #334155; color: white; }
     min-height: 80px; 
     border-radius: 8px; font-weight: 700; 
     display: flex; flex-direction: column; justify-content: center; align-items: center; 
-    cursor: pointer; border: 3px solid transparent; /* Más borde para el highlight */
+    cursor: pointer; border: 3px solid transparent; 
     background: #f1f5f9; transition: 0.1s; 
     user-select: none;
 }
@@ -91,17 +91,15 @@ button.dark { background: #334155; color: white; }
 .bed-busy { background: var(--danger-bg); color: #991b1b; border-color: #fca5a5; }
 .bed-current { background: #e0e7ff; color: #3730a3; border-color: #818cf8; }
 .bed-shadow { background: var(--warning-bg) !important; border: 2px dashed #f97316 !important; color: #c2410c; opacity: 0.8; }
-
-/* RESALTADO DE FAMILIA (NUEVO V3.1.0) */
 .bed-family-highlight { 
-    border-color: #f97316 !important; /* Naranja fuerte */
-    background-color: #ffedd5 !important; /* Fondo naranja claro */
-    transform: scale(1.05); /* Efecto pop */
+    border-color: #f97316 !important; 
+    background-color: #ffedd5 !important; 
+    transform: scale(1.05); 
     z-index: 10;
     box-shadow: 0 0 10px rgba(249, 115, 22, 0.5);
 }
 
-/* TABLA FAMILIA EN MODAL (NUEVO V3.1.0) */
+/* TABLA FAMILIA EN MODAL */
 .fam-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9rem; }
 .fam-table th { text-align: left; padding: 8px; border-bottom: 2px solid #e2e8f0; color: var(--text-light); font-size: 0.8rem; text-transform: uppercase; }
 .fam-table td { padding: 8px; border-bottom: 1px solid #f1f5f9; }
@@ -110,9 +108,14 @@ button.dark { background: #334155; color: white; }
 /* --- 8. UTILS --- */
 .hidden { display: none !important; }
 .sticky-header { position: sticky; top: 130px; z-index: 80; background: var(--surface); margin: -30px -30px 20px -30px; padding: 20px 30px; border-bottom: 1px solid #e2e8f0; border-radius: var(--radius) var(--radius) 0 0; }
-.search-results { background: white; border: 1px solid #e2e8f0; border-radius: 0 0 12px 12px; max-height: 200px; overflow-y: auto; margin-top: -15px; margin-bottom: 20px; box-shadow: var(--shadow-sm); display: block; }
-.search-item { padding: 10px; border-bottom: 1px solid #f1f5f9; cursor: pointer; font-size: 0.9rem; }
+
+/* BÚSQUEDA MEJORADA (V3.2.0) */
+.search-results { background: white; border: 1px solid #e2e8f0; border-radius: 0 0 12px 12px; max-height: 250px; overflow-y: auto; margin-top: -15px; margin-bottom: 20px; box-shadow: var(--shadow-sm); display: block; }
+.search-item { padding: 12px; border-bottom: 1px solid #f1f5f9; cursor: pointer; font-size: 0.9rem; }
 .search-item:hover { background: #f8fafc; }
+.search-item strong { display: block; margin-bottom: 2px; color: var(--primary); }
+.search-item small { color: #64748b; font-size: 0.8em; }
+
 .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; display: inline-block; }
 
 .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3000; display: flex; justify-content: center; align-items: center; }
@@ -122,6 +125,7 @@ button.dark { background: #334155; color: white; }
 .version-tag { position: fixed; bottom: 10px; right: 10px; color: #ccc; font-size: 0.8em; pointer-events: none; }
 .fam-list { margin-top: 15px; border-top: 2px dashed #eee; padding-top: 10px; }
 .fam-item { background: #f8fafc; padding: 10px; border-radius: 8px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #e2e8f0; }
+.fam-item.existing { background: #fff7ed; border-color: #fdba74; } /* Estilo para familia existente */
 
 .close-modal { position: absolute; top: 15px; right: 20px; font-size: 1.5rem; color: #94a3b8; cursor: pointer; transition: 0.2s; z-index: 10; }
 .close-modal:hover { color: var(--danger); transform: scale(1.1); }

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión Albergue - Ver.3.1.0</title>
+    <title>Gestión Albergue - Ver.3.2.0</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     
@@ -12,7 +12,7 @@
 </head>
 <body>
 
-    <div class="version-tag">Ver.3.1.0</div>
+    <div class="version-tag">Ver.3.2.0</div>
 
     <div id="login-screen" class="">
         <div class="card">
@@ -125,6 +125,7 @@
                     </div>
 
                     <div style="margin-top:25px;">
+                        
                         <div id="tab-prefiliacion" class="tab-content active">
                             <div style="border: 2px dashed #cbd5e1; padding: 25px; border-radius: var(--radius);">
                                 <h3 style="color:var(--primary);">📝 Ficha de Ingreso</h3>
@@ -141,7 +142,14 @@
                                     <div class="row"><div class="col"><label>Nombre (*)</label><input type="text" id="man-nombre"></div><div class="col"><label>Ap 1</label><input type="text" id="man-ap1"></div><div class="col"><label>Ap 2</label><input type="text" id="man-ap2"></div></div>
                                     <div class="row"><div class="col"><label>Doc</label><select id="man-tipo-doc"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Número</label><input type="text" id="man-doc-num"></div></div>
                                     <div class="row"><div class="col"><label>F. Nac</label><input type="tel" id="man-fecha" maxlength="10" oninput="window.formatearFecha(this)"></div><div class="col"><label>Teléfono</label><input type="tel" id="man-tel"></div></div>
-                                    <div class="fam-list"><h4><i class="fa-solid fa-people-roof"></i> Integrantes</h4><div id="admin-lista-familiares-ui"><p style="color:#999;">Ninguno.</p></div><button class="secondary" onclick="window.abrirModalFamiliarAdmin()">+ Añadir Familiar</button></div>
+                                    
+                                    <div class="fam-list">
+                                        <h4><i class="fa-solid fa-people-roof"></i> Integrantes</h4>
+                                        <div id="existing-family-list-ui"></div>
+                                        <div id="admin-lista-familiares-ui"><p style="color:#999; margin-top:5px;">Añade nuevos miembros abajo.</p></div>
+                                        <button class="secondary" onclick="window.abrirModalFamiliarAdmin()">+ Añadir Familiar</button>
+                                    </div>
+                                    
                                     <button id="btn-save-pref" class="success" style="width:100%; margin-top:20px;" onclick="window.adminPrefiliarManual()">💾 Guardar Nuevo</button>
                                 </div>
                             </div>
@@ -152,16 +160,22 @@
                             <div id="panel-gestion-persona" class="hidden" style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:var(--radius); padding:25px; margin-top:10px;">
                                 <h3 id="gestion-nombre-titulo" style="color:var(--primary);">Nombre</h3>
                                 <p style="margin-bottom:15px;">Estado: <span id="gestion-estado" class="badge">...</span> <strong id="gestion-cama-info"></strong></p>
-                                <div class="family-box"><div style="display:flex;justify-content:space-between;align-items:center;"><span id="info-familia-resumen" style="font-weight:bold;">...</span><button class="secondary" style="padding:5px 10px;font-size:0.8rem;" onclick="window.abrirModalVincularFamilia()">🔗 Unir</button></div><div id="info-familia-lista" style="margin-top:10px;"></div></div>
+                                
                                 <div class="row"><div class="col"><label>Nombre</label><input type="text" id="edit-nombre"></div><div class="col"><label>Ap 1</label><input type="text" id="edit-ap1"></div><div class="col"><label>Ap 2</label><input type="text" id="edit-ap2"></div></div>
                                 <div class="row"><div class="col"><label>Doc</label><select id="edit-tipo-doc"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Num</label><input type="text" id="edit-doc-num"></div></div>
                                 <div class="row"><div class="col"><label>F. Nac</label><input type="tel" id="edit-fecha" oninput="window.formatearFecha(this)" maxlength="10"></div><div class="col"><label>Tel</label><input type="tel" id="edit-tel"></div></div>
-                                <div class="btn-row">
+                                
+                                <div class="btn-group-horizontal">
                                     <button class="primary" onclick="window.abrirSeleccionCama()">Asignar Cama</button>
                                     <button class="secondary" onclick="window.guardarCambiosPersona()">Guardar Datos</button>
                                     <button class="warning" onclick="window.liberarCamaMantener()">Liberar Cama</button>
                                     <button id="btn-regresar-pref" class="danger hidden" onclick="window.regresarPrefiliacion()">Prefiliación</button>
                                 </div>
+                                <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
+                                <h4>Familia</h4>
+                                <div id="info-familia-resumen" style="font-weight:bold; margin-bottom:5px;"></div>
+                                <div id="info-familia-lista"></div>
+                                <button class="secondary" style="margin-top:10px;" onclick="window.abrirModalVincularFamilia()">Vincular a otra familia</button>
                             </div>
                         </div>
                     </div>

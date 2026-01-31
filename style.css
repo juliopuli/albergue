@@ -53,7 +53,6 @@ label { font-weight: 600; font-size: 0.9rem; color: var(--text-main); margin-bot
 button { padding: 12px 20px; border-radius: 8px; font-weight: 600; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: transform 0.1s; }
 button:hover { transform: translateY(-1px); }
 button:disabled { background: #cbd5e1; color: #64748b; cursor: not-allowed; transform: none; }
-
 button.primary { background: var(--primary); color: white; }
 button.secondary { background: var(--bg-body); color: var(--text-main); border: 1px solid #cbd5e1; }
 button.danger { background: var(--danger); color: white; }
@@ -73,20 +72,29 @@ button.success { background: var(--success); color: white; }
 .user-card-left { display: flex; align-items: center; gap: 15px; }
 .user-avatar-circle { width: 45px; height: 45px; background: #e0e7ff; color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: bold; }
 
-/* --- 7. CAMAS --- */
+/* --- 7. CAMAS (V38 UPDATED) --- */
 .bed-grid { display: grid; gap: 10px; margin-top: 25px; }
 .bed-box { 
     min-height: 90px;
     border-radius: 8px; font-weight: 700; 
     display: flex; flex-direction: column; justify-content: center; align-items: center; 
     cursor: pointer; border: 2px solid transparent; background: #f1f5f9; transition: 0.1s; 
-    text-align: center; padding: 5px; font-size: 0.9rem;
+    text-align: center; padding: 5px; font-size: 0.9rem; user-select: none;
 }
 .bed-box span { font-size: 0.7em; font-weight: normal; margin-top: 2px; }
 .bed-free { background: var(--success-bg); color: #166534; border-color: #86efac; }
 .bed-busy { background: var(--danger-bg); color: #991b1b; border-color: #fca5a5; }
 .bed-current { background: #e0e7ff; color: #3730a3; border-color: #818cf8; border-width: 3px; }
 .bed-shadow { background: var(--warning-bg) !important; border: 2px dashed #f97316 !important; color: #c2410c; opacity: 0.8; }
+
+/* NUEVO: Resaltado de familia en el mapa */
+.bed-family-highlight { 
+    border: 3px solid #f97316 !important; 
+    background-color: #ffedd5 !important;
+    box-shadow: 0 0 10px rgba(249, 115, 22, 0.5);
+    transform: scale(1.05);
+    z-index: 10;
+}
 
 /* --- 8. UTILS --- */
 .hidden { display: none !important; }
@@ -104,6 +112,12 @@ button.success { background: var(--success); color: white; }
 .modal-lg { max-width: 1000px; }
 .close-modal { position: absolute; top: 15px; right: 20px; font-size: 1.5rem; color: #94a3b8; cursor: pointer; transition: 0.2s; z-index: 10; }
 .close-modal:hover { color: var(--danger); transform: scale(1.1); }
+
+/* TABLA FAMILIA EN MODAL */
+.fam-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9rem; }
+.fam-table th { text-align: left; padding: 8px; border-bottom: 2px solid #e2e8f0; color: var(--text-light); font-size: 0.8rem; text-transform: uppercase; }
+.fam-table td { padding: 8px; border-bottom: 1px solid #f1f5f9; }
+.fam-row-current { background-color: #e0e7ff; font-weight: bold; color: var(--primary); }
 
 .version-tag { position: fixed; bottom: 10px; right: 10px; color: #ccc; font-size: 0.8em; pointer-events: none; }
 .fam-list { margin-top: 15px; border-top: 2px dashed #eee; padding-top: 10px; }

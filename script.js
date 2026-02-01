@@ -75,7 +75,7 @@ async function publicoGuardarTodo() {
 function actualizarListaFamiliaresAdminUI(){
     const d = document.getElementById('admin-lista-familiares-ui'); d.innerHTML = "";
     if (adminFamiliaresTemp.length === 0) { d.innerHTML = '<p style="color:#999;font-style:italic;">Ninguno.</p>'; return; }
-    adminFamiliaresTemp.forEach((f, i) => { d.innerHTML += `<div class="fam-item"><div><strong>${f.nombre}</strong></div><button class="danger" style="margin:0;padding:2px 8px;width:auto;" onclick="window.borrarFamiliarAdminTemp(${i})">X</button></div>`; });
+    adminFamiliaresTemp.forEach((f, i) => { d.innerHTML += `<div class="fam-item"><div><strong>${f.nombre} ${f.ap1}</strong> <small>(${f.docNum})</small></div><button class="danger" style="margin:0;padding:2px 8px;width:auto;" onclick="window.borrarFamiliarAdminTemp(${i})">X</button></div>`; });
 }
 function borrarFamiliarAdminTemp(i) { adminFamiliaresTemp.splice(i, 1); actualizarListaFamiliaresAdminUI(); }
 function abrirModalFamiliarAdmin() { limpiarFormulario('adm-fam'); document.getElementById('modal-admin-add-familiar').classList.remove('hidden'); document.getElementById('adm-fam-tipo-doc').value="MENOR"; verificarMenor('adm-fam'); }
@@ -284,9 +284,6 @@ function mostrarGridCamas() {
     const g=document.getElementById('grid-camas'); g.innerHTML="";
     const cols = (currentAlbergueData && currentAlbergueData.columnas) ? currentAlbergueData.columnas : 8;
     g.style.gridTemplateColumns=`repeat(${cols}, 1fr)`;
-    // Logic for grid... (Simplified for export block)
-    // Full logic is in V9.6.0, assume it works or re-paste if needed.
-    // RE-PASTING FULL LOGIC TO BE SAFE:
     let shadowMap={}; listaPersonasCache.forEach(p=>{if(p.familiaId)shadowMap[p.cama]=p.familiaId;});
     for(let i=1;i<=totalCapacidad;i++){
         const n=i.toString(); const occ=listaPersonasCache.find(p=>p.cama===n);

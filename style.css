@@ -137,8 +137,13 @@ button.dark { background: #334155; color: white; }
 .modal-content { background: white; width: 95%; max-width: 600px; padding: 30px; border-radius: 12px; max-height: 90vh; overflow-y: auto; position: relative; }
 .modal-lg { max-width: 900px; }
 
-/* FIX Z-INDEX PARA MODALES */
-#modal-historial { z-index: 3500 !important; }
+/* FIX Z-INDEX: JERARQUÍA ESTRICTA (V9.2.0) */
+/* 1. Modales base */
+.modal-overlay { z-index: 3500; }
+/* 2. Modales encima de modales (Historial y Ficha Cama) */
+#modal-historial, #modal-bed-info { z-index: 4000 !important; }
+/* 3. Loading Overlay (Siempre arriba de todo) */
+#loading-overlay { z-index: 5000; }
 
 .version-tag { position: fixed; bottom: 10px; right: 10px; color: #ccc; font-size: 0.8em; pointer-events: none; }
 .fam-list { margin-top: 15px; border-top: 2px dashed #eee; padding-top: 10px; }
@@ -191,7 +196,7 @@ button.dark { background: #334155; color: white; }
 #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%); display: flex; align-items: center; justify-content: center; z-index: 3000; }
 #login-screen .card { width: 100%; max-width: 400px; text-align: center; }
 
-/* LOADING SCREEN (V9.1.0) */
-#loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
-.spinner { width: 60px; height: 60px; border: 6px solid #e0e7ff; border-top: 6px solid var(--primary); border-radius: 50%; animation: spin 1.5s linear infinite; margin-bottom: 20px; }
+/* LOADING SCREEN */
+#loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.98); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.spinner { width: 60px; height: 60px; border: 6px solid #e0e7ff; border-top: 6px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }

@@ -340,6 +340,7 @@ function conectarListenersBackground(id) {
     });
 }
 
+// --- STANDARD FUNCTIONS (Rest of the app) ---
 window.cargarAlberguesActivos = () => {
     const c = document.getElementById('lista-albergues-activos');
     if (!c) return;
@@ -523,7 +524,7 @@ window.buscarPersonaEnAlbergue=()=>{
     else{
         hits.forEach(p=>{
             const dc=p.estado==='ingresado'?'dot-green':'dot-red';
-            res.innerHTML+=`<div class="search-item" onclick="window.seleccionarPersona('${p.id}')"><div style="display:flex;justify-content:space-between;width:100%;align-items:center;"><div><strong>${p.nombre} ${p.ap1||''} ${p.ap2||''}</strong><div style="font-size:0.8rem;color:#666;">📄 ${p.docNum||'-'} | 📞 ${p.telefono||'-'}</div></div><div class="status-dot ${dc}"></div></div></div>`;
+            res.innerHTML+=`<div class="search-item" onclick="window.seleccionarPersona('${p.id}')"><div style="display:flex;justify-content:space-between;width:100%;align-items:center;"><div><strong>${p.nombre} ${p.ap1||''} ${p.ap2||''}</strong><div style="font-size:0.8rem;color:#666;">📄 ${p.docNum||'-'} | 📞 ${p.telefono||'-'}</div></div><div class="status-dot ${dc}" title="${p.estado.toUpperCase()}"></div></div></div>`;
         });
     }
     res.classList.remove('hidden');

@@ -113,37 +113,33 @@ button.dark { background: #334155; color: white; }
 .dot-green { background-color: #10b981; box-shadow: 0 0 4px #10b981; }
 .dot-red { background-color: #ef4444; box-shadow: 0 0 4px #ef4444; }
 
-/* MODALS - CAPAS CORREGIDAS */
+/* MODALS */
 .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 8000; display: flex; justify-content: center; align-items: center; }
 .modal-content { background: white; width: 95%; max-width: 600px; padding: 30px; border-radius: 12px; max-height: 90vh; overflow-y: auto; position: relative; }
 .modal-lg { max-width: 900px; }
-
-/* FIX: HISTORIAL SIEMPRE ENCIMA */
-#modal-historial { z-index: 9500 !important; }
-#modal-bed-info, #modal-add-familiar, #modal-admin-add-familiar { z-index: 8000 !important; }
+#modal-historial, #modal-bed-info, #modal-add-familiar, #modal-admin-add-familiar { z-index: 8000 !important; }
 #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
 
-/* PUBLIC SCREEN - AJUSTE SCROLL MÓVIL */
+/* PUBLIC SCREEN - SCROLL FIX */
 #public-register-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 6000; overflow-y: auto; background: white; }
 
-/* QR COMPACTO CON SCROLL */
 #public-form-container {
     width: 95%;
     max-width: 500px;
-    padding: 10px 15px 40px 15px; /* Extra padding bottom para el botón */
+    padding: 15px;
+    padding-bottom: 80px; /* EXTRA PADDING PARA SCROLL */
     margin: 10px auto;
     border: 1px solid #e2e8f0;
     box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-    max-height: 85vh; /* Menos altura para forzar scroll interno si es necesario */
-    overflow-y: scroll; /* Scroll forzado */
+    max-height: 85vh;
+    overflow-y: auto; /* SCROLL ACTIVO */
 }
 #public-form-container h2 { font-size: 1.2rem; margin-bottom: 10px; }
 #public-form-container input, #public-form-container select {
-    padding: 10px;
-    margin-bottom: 10px;
-    font-size: 0.95rem;
+    padding: 8px; margin-bottom: 8px; font-size: 0.95rem;
 }
 #public-form-container .row { gap: 8px; margin-bottom: 2px; }
+
 
 .version-tag { position: fixed; bottom: 10px; right: 10px; color: #ccc; font-size: 0.8em; pointer-events: none; }
 .close-modal { position: absolute; top: 15px; right: 20px; font-size: 1.5rem; color: #94a3b8; cursor: pointer; transition: 0.2s; z-index: 10; }
@@ -159,7 +155,6 @@ button.dark { background: #334155; color: white; }
 .obs-data-point { display: flex; flex-direction: column; margin-right: 20px; margin-top: 10px; min-width: 80px; }
 .obs-data-point span { font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; }
 .obs-data-point strong { font-size: 1.4rem; color: var(--text-main); margin-top: 6px; display: block; }
-
 .obs-clickable { cursor: pointer; text-decoration: underline; text-decoration-style: dotted; text-decoration-color: var(--primary); transition: 0.2s; position: relative; z-index: 10; }
 .obs-clickable:hover { color: var(--primary-dark); }
 

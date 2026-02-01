@@ -463,13 +463,22 @@ window.cambiarEstadoAlbergue=async(id,st)=>{await updateDoc(doc(db,"albergues",i
 window.abrirModalCambioPass=()=>{setVal('chg-old-pass','');setVal('chg-new-pass','');setVal('chg-confirm-pass','');document.getElementById('modal-change-pass').classList.remove('hidden');};
 window.ejecutarCambioPass=async()=>{const o=safeVal('chg-old-pass'),n=safeVal('chg-new-pass'),c=safeVal('chg-confirm-pass');if(!o||!n||!c)return alert("Rellena todo");if(n!==c)return alert("No coinciden");if(n.length<6)return alert("Min 6 chars");try{const u=auth.currentUser;await reauthenticateWithCredential(u,EmailAuthProvider.credential(u.email,o));await updatePassword(u,n);alert("OK. Relogin");document.getElementById('modal-change-pass').classList.add('hidden');window.cerrarSesion();}catch(e){alert("Error: "+e.message);}};
 
-// --- VINCULAR FAMILIA FIX V6.1.0 ---
-window.buscarParaVincular=()=>{const txt=document.getElementById('search-vincular').value.toLowerCase().trim();const res=document.getElementById('resultados-vincular');res.innerHTML="";if(txt.length<2){res.classList.add('hidden');return;}const hits=listaPersonasCache.filter(p=>{if(p.id===window.personaEnGestion.id)return false;const fullName=`${p.nombre} ${p.ap1||''} ${p.ap2||''}`.toLowerCase();return fullName.includes(txt)||(p.docNum||"").toLowerCase().includes(txt)||(p.telefono||"").includes(txt);});if(hits.length===0){res.innerHTML="<div class='search-item' style='color:#999;'>No hay coincidencias.</div>";}else{hits.forEach(p=>{const d=document.createElement('div');d.className='search-item';d.innerHTML=`<strong>${p.nombre} ${p.ap1||''} ${p.ap2||''}</strong><br><small>📄 ${p.docNum||'-'} | 📞 ${p.telefono||'-'}</small>`;d.onclick=()=>window.vincularAFamilia(p);res.appendChild(d);});}res.classList.remove('hidden');};
-window.liberarCamaMantener=async()=>await updateDoc(doc(db,"albergues",currentAlbergueId,"personas",window.personaEnGestion.id),{cama:null});
-window.regresarPrefiliacion=async()=>await updateDoc(doc(db,"albergues",currentAlbergueId,"personas",window.personaEnGestion.id),{estado:'espera',cama:null});
-function generarQR(){const u=window.location.href.split('?')[0]+`?public_id=${currentAlbergueId}`;document.getElementById("qrcode").innerHTML="";new QRCode(document.getElementById("qrcode"),{text:u,width:100,height:100});}
+// --- EXPORT TO WINDOW (CRITICAL FIX) ---
+window.safeVal = safeVal;
+window.setVal = setVal;
+window.limpiarFormulario = limpiarFormulario;
+window.getDatosFormulario = getDatosFormulario;
+window.actualizarContadores = actualizarContadores;
+window.actualizarListaFamiliaresUI = actualizarListaFamiliaresUI;
+window.actualizarListaFamiliaresAdminUI = actualizarListaFamiliaresAdminUI;
+window.configurarTabsPorRol = configurarTabsPorRol;
+window.configurarDashboard = configurarDashboard;
+window.limpiarListeners = limpiarListeners;
 
-// ... Resto de funciones que faltaban en V11.0.0 (Recuperadas de V16.0.0 pero puestas al final para no romper la estructura de V11)
+window.registrarLog = async (personaId, accion, detalle = "") => {try {const usuarioLog = currentUserData ? currentUserData.nombre : "Auto-Registro QR";await addDoc(collection(db, "albergues", currentAlbergueId, "personas", personaId, "historial"), {fecha: new Date(), usuario: usuarioLog, accion: accion, detalle: detalle});} catch (e) { console.error(e); }};
+window.verHistorial = async (pId = null, altAlbId = null) => {const targetId = pId || (personaEnGestion ? personaEnGestion.id : null);const targetAlbId = altAlbId || currentAlbergueId;if(!targetId || !targetAlbId) return;const modal = document.getElementById('modal-historial');const content = document.getElementById('historial-content');content.innerHTML = "Cargando...";modal.classList.remove('hidden');try {const q = query(collection(db, "albergues", targetAlbId, "personas", targetId, "historial"), orderBy("fecha", "desc"));const snap = await getDocs(q);if(snap.empty){ content.innerHTML = "<p>No hay movimientos.</p>"; return; }let html = "";snap.forEach(doc => {const d = doc.data();const f = d.fecha.toDate();const fmt = `${f.getDate().toString().padStart(2,'0')}/${(f.getMonth()+1).toString().padStart(2,'0')}/${f.getFullYear()} ${f.getHours().toString().padStart(2,'0')}:${f.getMinutes().toString().padStart(2,'0')}`;html += `<div class="log-item"><strong>${d.accion}</strong><span>${fmt} - Por: ${d.usuario}</span>${d.detalle ? `<br><i>${d.detalle}</i>` : ''}</div>`;});content.innerHTML = html;} catch (e) { content.innerHTML = "Error cargando historial."; }};
+window.verHistorialObservatorio = (albId, pId) => { window.verHistorial(pId, albId); };
+
 window.cargarAlberguesMantenimiento = () => {
     const c = document.getElementById('mto-container');
     const r = (currentUserData.rol || "").toLowerCase().trim();
@@ -478,8 +487,8 @@ window.cargarAlberguesMantenimiento = () => {
         c.innerHTML = "<div class='mto-card add-new' onclick='window.abrirModalAlbergue()'><h3>+</h3></div>";
         s.forEach(d => {
             const a = d.data();
-            let extraBtn = isSuper ? `<button class="warning" onclick="window.cambiarEstadoAlbergue('${d.id}', ${!a.activo})">${a.activo===false?'Activar':'Archivar'}</button>` : "";
-            c.innerHTML += `<div class="mto-card ${!a.activo?'archived':''}"><h3>${a.nombre}</h3><p>Cap: ${a.capacidad}</p><div class="btn-group-horizontal"><button class="secondary" onclick="window.abrirModalAlbergue('${d.id}')">Editar</button>${extraBtn}</div></div>`;
+            let extraBtn = isSuper ? `<button class="warning" onclick="window.cambiarEstadoAlbergue('${d.id}', ${!a.activo})">${a.activo === false ? 'Activar' : 'Archivar'}</button>` : "";
+            c.innerHTML += `<div class="mto-card ${!a.activo ? 'archived' : ''}"><h3>${a.nombre}</h3><p>Cap: ${a.capacidad}</p><div class="btn-group-horizontal"><button class="secondary" onclick="window.abrirModalAlbergue('${d.id}')">Editar</button>${extraBtn}</div></div>`;
         });
     });
 };

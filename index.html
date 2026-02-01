@@ -3,30 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión Albergue - Ver.13.0.0</title>
+    <title>Gestión Albergue - Ver.14.0.0</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-
-    <script>
-        window.logError = function(msg) {
-            const box = document.getElementById('debug-box');
-            if(box) {
-                box.innerHTML += `<div>> ${msg}</div>`;
-                box.scrollTop = box.scrollHeight;
-            }
-            console.log(msg);
-        };
-        window.onerror = function(message, source, lineno, colno, error) {
-            window.logError(`ERROR: ${message} at line ${lineno}`);
-        };
-    </script>
 </head>
 <body>
 
-    <div class="version-tag">Ver.13.0.0</div>
+    <div class="version-tag">Ver.14.0.0</div>
 
     <div id="loading-overlay" class="hidden">
         <div class="spinner"></div>
@@ -353,7 +339,7 @@
     
     <div id="modal-obs-detalle" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content modal-lg"><span class="close-modal" onclick="document.getElementById('modal-obs-detalle').classList.add('hidden')">&times;</span><h3 id="obs-modal-title">Listado</h3><div id="obs-modal-content" style="margin-top:20px;"></div></div></div>
 
-    <div id="debug-box"></div>
+    <div id="debug-box" style="display:none;"></div>
 
     <script type="module" src="script.js"></script>
 </body>

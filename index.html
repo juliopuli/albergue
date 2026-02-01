@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión Albergue - Ver.10.1.0</title>
+    <title>Gestión Albergue - Ver.9.7.1</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     
@@ -12,7 +12,7 @@
 </head>
 <body>
 
-    <div class="version-tag">Ver.10.1.0</div>
+    <div class="version-tag">Ver.9.7.1</div>
 
     <div id="loading-overlay" class="hidden">
         <div class="spinner"></div>
@@ -140,7 +140,7 @@
                 <div class="card">
                     <div class="sticky-header">
                         <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <div><h2 id="app-title" style="margin:0;">Albergue</h2><span class="badge badge-active">Ocupación: <span id="ocupacion-count">...</span> / <span id="capacidad-total">...</span></span></div>
+                            <div><h2 id="app-title" style="margin:0;">Albergue</h2><span class="badge badge-active">Ocupación: <span id="ocupacion-count">-</span> / <span id="capacidad-total">-</span></span></div>
                             <div class="btn-group-horizontal" style="margin-top:0;">
                                 <button class="dark" onclick="window.abrirModalQR()"><i class="fa-solid fa-qrcode"></i> QR</button>
                                 <button class="primary" onclick="window.abrirMapaGeneral()"><i class="fa-solid fa-bed"></i> Camas</button>
@@ -148,8 +148,8 @@
                             </div>
                         </div>
                         <div class="tabs" style="margin-top:10px;">
-                            <button id="btn-tab-pref" class="tab-btn tab-btn-pref active" onclick="window.cambiarPestana('prefiliacion')">📁 Prefiliación</button>
-                            <button id="btn-tab-fil" class="tab-btn tab-btn-fil" onclick="window.cambiarPestana('filiacion')">📁 Filiación</button>
+                            <button id="btn-tab-pref" class="tab-btn active" onclick="window.cambiarPestana('prefiliacion')">📁 Prefiliación</button>
+                            <button id="btn-tab-fil" class="tab-btn" onclick="window.cambiarPestana('filiacion')">📁 Filiación</button>
                             <button id="btn-tab-san" class="tab-btn tab-btn-san" onclick="window.cambiarPestana('sanitaria')"><i class="fa-solid fa-notes-medical"></i> Sanitaria</button>
                             <button id="btn-tab-psi" class="tab-btn tab-btn-psi" onclick="window.cambiarPestana('psicosocial')"><i class="fa-solid fa-users-rays"></i> Psicosocial</button>
                         </div>
@@ -158,14 +158,14 @@
                     <div style="margin-top:25px;">
                         
                         <div id="tab-prefiliacion" class="tab-content active">
-                            <div class="module-box module-pref">
-                                <h3><i class="fa-regular fa-clipboard"></i> Ficha de Ingreso</h3>
-                                <div style="position:relative;">
+                            <div style="border: 2px dashed #cbd5e1; padding: 25px; border-radius: var(--radius);">
+                                <h3 style="color:var(--primary);">📝 Ficha de Ingreso</h3>
+                                <div style="background:#e0e7ff; padding:15px; border-radius:8px; margin-bottom:20px;">
                                     <label>Buscar (Evitar duplicados):</label>
-                                    <input type="text" id="buscador-pref" placeholder="Nombre, DNI o Teléfono..." onkeyup="window.buscarEnPrefiliacion()" autocomplete="off">
+                                    <input type="text" id="buscador-pref" placeholder="Nombre, DNI o Teléfono..." onkeyup="window.buscarEnPrefiliacion()" autocomplete="off" style="background:white;">
                                     <div id="resultados-pref" class="search-results hidden"></div>
                                 </div>
-                                <div id="form-manual-container" style="margin-top:15px;">
+                                <div id="form-manual-container">
                                     <div style="display:flex; justify-content:space-between; align-items:center;">
                                         <h4>Datos del Titular</h4>
                                         <div>
@@ -183,14 +183,7 @@
                         </div>
 
                         <div id="tab-filiacion" class="tab-content hidden">
-                            <div class="module-box module-fil">
-                                <h3><i class="fa-solid fa-person-shelter"></i> Gestión de Alojados</h3>
-                                <div style="position:relative;">
-                                    <input type="text" id="buscador-persona" placeholder="🔍 Buscar por Nombre, Apellidos, DNI..." onkeyup="window.buscarPersonaEnAlbergue()" autocomplete="off">
-                                    <div id="resultados-busqueda" class="search-results hidden"></div>
-                                </div>
-                            </div>
-                            
+                            <div class="row"><div class="col"><input type="text" id="buscador-persona" placeholder="🔍 Buscar por Nombre, Apellidos, DNI..." onkeyup="window.buscarPersonaEnAlbergue()" autocomplete="off"><div id="resultados-busqueda" class="search-results hidden"></div></div></div>
                             <div id="panel-gestion-persona" class="hidden" style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:var(--radius); padding:25px; margin-top:10px;">
                                 <h3 id="gestion-nombre-titulo" style="color:var(--primary);">Nombre</h3>
                                 <p style="margin-bottom:15px;">Estado: <span id="gestion-estado" class="badge">...</span> <strong id="gestion-cama-info"></strong></p>
@@ -213,18 +206,18 @@
                         </div>
 
                         <div id="tab-sanitaria" class="tab-content hidden">
-                            <div class="module-box module-san">
-                                <h3><i class="fa-solid fa-notes-medical"></i> Atención Sanitaria</h3>
+                            <div style="background:#fff1f2; border:1px solid #fda4af; padding:25px; border-radius:12px;">
+                                <h3 style="color:var(--health); margin-bottom:15px;"><i class="fa-solid fa-notes-medical"></i> Atención Sanitaria</h3>
                                 <div class="row"><input type="text" placeholder="🔍 Buscar paciente..." style="background:white;"></div>
-                                <p style="color:#881337; margin-top:10px;">Módulo de gestión médica en construcción.</p>
+                                <p style="color:#881337;">Módulo de gestión médica en construcción.</p>
                             </div>
                         </div>
 
                         <div id="tab-psicosocial" class="tab-content hidden">
-                            <div class="module-box module-psi">
-                                <h3><i class="fa-solid fa-users-rays"></i> Atención Psicosocial</h3>
+                            <div style="background:#f5f3ff; border:1px solid #c4b5fd; padding:25px; border-radius:12px;">
+                                <h3 style="color:var(--psycho); margin-bottom:15px;"><i class="fa-solid fa-users-rays"></i> Atención Psicosocial</h3>
                                 <div class="row"><input type="text" placeholder="🔍 Buscar usuario..." style="background:white;"></div>
-                                <p style="color:#5b21b6; margin-top:10px;">Módulo de intervención social en construcción.</p>
+                                <p style="color:#5b21b6;">Módulo de intervención social en construcción.</p>
                             </div>
                         </div>
                     </div>

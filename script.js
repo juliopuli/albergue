@@ -15,14 +15,56 @@ let prefiliacionEdicionId = null;
 let isPublicMode = false;
 let highlightedFamilyId = null;
 
-// --- FUNCIONES CORE GLOBALES ---
+// --- UTILS & FORM (MOVED TO TOP FOR SAFETY) ---
+function safeVal(id){ const el=document.getElementById(id); return el?el.value:""; }
+function setVal(id,val){ const el=document.getElementById(id); if(el)el.value=val; }
+
+// Exposed globally to ensure access
+window.formatearFecha = (i) => {
+    let v=i.value.replace(/\D/g,'').slice(0,8);
+    if(v.length>=5)i.value=`${v.slice(0,2)}/${v.slice(2,4)}/${v.slice(4)}`;
+    else if(v.length>=3)i.value=`${v.slice(0,2)}/${v.slice(2)}`;
+    else i.value=v;
+};
+
+window.verificarMenor = (p) => {
+    const t=document.getElementById(`${p}-tipo-doc`).value;
+    const i=document.getElementById(`${p}-doc-num`);
+    if(t==='MENOR'){i.value="MENOR-SIN-DNI";i.disabled=true;}
+    else{i.disabled=false;if(i.value==="MENOR-SIN-DNI")i.value="";}
+};
+
+// CRITICAL FIX: Defined here before being called
+function limpiarFormulario(p){
+    ['nombre','ap1','ap2','doc-num','fecha','tel'].forEach(f=>{ 
+        const el=document.getElementById(`${p}-${f}`); if(el)el.value=""; 
+    });
+    const i=document.getElementById(`${p}-doc-num`); if(i)i.disabled=false;
+}
+
+function getDatosFormulario(p) {
+    return {
+        nombre: safeVal(`${p}-nombre`), ap1: safeVal(`${p}-ap1`), ap2: safeVal(`${p}-ap2`),
+        tipoDoc: safeVal(`${p}-tipo-doc`), docNum: safeVal(`${p}-doc-num`), 
+        fechaNac: safeVal(`${p}-fecha`), telefono: safeVal(`${p}-tel`)
+    };
+}
+
+// --- CORE FUNCTIONS ---
 window.iniciarSesion = async () => {
     try { await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-pass').value); }
     catch(e) { alert("Error: " + e.message); }
 };
 
 window.navegar = (p) => {
-    limpiarListeners();
+    // Clear Listeners
+    if(unsubscribeUsers) unsubscribeUsers();
+    if(unsubscribeAlberguesActivos) unsubscribeAlberguesActivos();
+    if(unsubscribeAlberguesMto) unsubscribeAlberguesMto();
+    if(unsubscribePersonas) unsubscribePersonas();
+    if(unsubscribeAlbergueDoc) unsubscribeAlbergueDoc();
+
+    // Hide Screens
     ['screen-home', 'screen-usuarios', 'screen-gestion-albergues', 'screen-mantenimiento', 'screen-operativa', 'screen-observatorio']
         .forEach(id => document.getElementById(id).classList.add('hidden'));
     
@@ -58,6 +100,7 @@ window.navegar = (p) => {
             window.cargarObservatorio(); 
         }
     }
+    
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     if(p==='home') document.getElementById('nav-home').classList.add('active');
     else if(p==='gestion-albergues' || p==='operativa') document.getElementById('nav-albergues').classList.add('active');
@@ -113,14 +156,6 @@ onAuthStateChanged(auth,async(u)=>{
         document.getElementById('login-screen').classList.remove('hidden');
     }
 });
-
-function limpiarListeners() {
-    if(unsubscribeUsers) unsubscribeUsers();
-    if(unsubscribeAlberguesActivos) unsubscribeAlberguesActivos();
-    if(unsubscribeAlberguesMto) unsubscribeAlberguesMto();
-    if(unsubscribePersonas) unsubscribePersonas();
-    if(unsubscribeAlbergueDoc) unsubscribeAlbergueDoc();
-}
 
 function configurarDashboard(){
     const r = (currentUserData.rol || "").toLowerCase().trim();
@@ -200,7 +235,7 @@ window.cargarAlberguesActivos = () => {
     });
 };
 
-// --- EL GRAN CAMBIO: PRE-CARGA COMPLETA (V9.0.0) ---
+// --- PRE-CARGA Y ENTRADA (V9.0.1) ---
 window.cargarDatosYEntrar = async (id) => {
     currentAlbergueId = id;
     
@@ -208,7 +243,7 @@ window.cargarDatosYEntrar = async (id) => {
     document.getElementById('loading-overlay').classList.remove('hidden');
 
     try {
-        // 2. Descargar TODO de golpe (Doc + Coleccion Personas)
+        // 2. Descargar TODO de golpe
         const [docSnap, querySnap] = await Promise.all([
             getDoc(doc(db, "albergues", id)),
             getDocs(collection(db, "albergues", id, "personas"))
@@ -231,7 +266,6 @@ window.cargarDatosYEntrar = async (id) => {
             }
         });
         
-        // Ordenar
         try { listaPersonasCache.sort((a,b)=>(b.fechaRegistro?.seconds||0) - (a.fechaRegistro?.seconds||0)); } catch(e){}
         ocupacionActual = c;
 
@@ -243,10 +277,10 @@ window.cargarDatosYEntrar = async (id) => {
         const initialTab = configurarTabsPorRol();
         window.cambiarPestana(initialTab);
 
-        // 4. Quitar Spinner (Ya tenemos datos, no habrá 0/0)
+        // 4. Quitar Spinner
         document.getElementById('loading-overlay').classList.add('hidden');
 
-        // 5. Conectar listeners silenciosos para el futuro
+        // 5. Conectar listeners silenciosos
         conectarListenersBackground(id);
 
     } catch(e) {

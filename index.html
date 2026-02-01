@@ -3,30 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión Albergue - Ver.31.0.0</title>
+    <title>Gestión Albergue - Ver.33.0.0</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script>
-        window.logError = function(msg) {
-            const box = document.getElementById('debug-box');
-            if(box) {
-                box.innerHTML += `<div style="border-bottom:1px solid #333;">> ${msg}</div>`;
-                box.scrollTop = box.scrollHeight;
-            }
-            console.log(msg);
-        };
-        window.onerror = function(message, source, lineno, colno, error) {
-            window.logError(`ERROR: ${message} at line ${lineno}`);
-        };
-    </script>
 </head>
 <body>
 
-    <div class="version-tag">Ver.31.0.0</div>
-
-    <div id="debug-box"><div>System logs started...</div></div>
+    <div class="version-tag">Ver.33.0.0</div>
 
     <div id="loading-overlay" class="hidden">
         <div class="spinner"></div>
@@ -316,7 +301,7 @@
             <label>Contraseña</label><input type="password" id="new-user-pass">
             <p id="edit-pass-warning" style="display:none;color:orange;font-size:0.8em;">Use reset email.</p>
             <div class="btn-row">
-                <button class="primary" onclick="window.guardarUsuario()">Guardar</button>
+                <button id="btn-save-user" class="primary" onclick="window.guardarUsuario()">Guardar</button>
             </div>
             <br>
             <button id="btn-delete-user" class="danger hidden" style="width:100%" onclick="window.eliminarUsuario()">Eliminar Usuario</button>

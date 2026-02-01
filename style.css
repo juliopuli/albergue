@@ -137,7 +137,7 @@ button.dark { background: #334155; color: white; }
 .modal-content { background: white; width: 95%; max-width: 600px; padding: 30px; border-radius: 12px; max-height: 90vh; overflow-y: auto; position: relative; }
 .modal-lg { max-width: 900px; }
 
-/* FIX Z-INDEX PARA MODALES (Vital para que se vean) */
+/* FIX Z-INDEX PARA MODALES */
 #modal-historial { z-index: 3500 !important; }
 
 .version-tag { position: fixed; bottom: 10px; right: 10px; color: #ccc; font-size: 0.8em; pointer-events: none; }

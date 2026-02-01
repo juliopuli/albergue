@@ -3,33 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión Albergue - Ver.16.0.0</title>
+    <title>Gestión Albergue - Ver.11.0.0</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script>
-        window.log = function(msg, type="info") {
-            const box = document.getElementById('debug-box');
-            if(box) {
-                const now = new Date().toLocaleTimeString();
-                box.innerHTML += `<div class="${type}">[${now}] ${msg}</div>`;
-                box.scrollTop = box.scrollHeight;
-            }
-            console.log(`[${type.toUpperCase()}] ${msg}`);
-        };
-        window.onerror = function(message, source, lineno, colno, error) {
-            window.log(`FATAL ERROR: ${message} at line ${lineno}`, "error");
-        };
-    </script>
 </head>
 <body>
 
-    <div class="version-tag">Ver.16.0.0</div>
-
-    <div id="debug-box">
-        <div class="info">Sistema de logs iniciado.</div>
-    </div>
+    <div class="version-tag">Ver.11.0.0</div>
 
     <div id="loading-overlay" class="hidden">
         <div class="spinner"></div>
@@ -55,21 +38,34 @@
                     <span class="user-name" id="user-name-display">...</span>
                     <span class="user-role" id="user-role-badge">...</span>
                 </div>
-                <button id="header-btn-users" class="btn-icon hidden" onclick="window.navegar('usuarios')" title="Gestionar Usuarios"><i class="fa-solid fa-users-gear"></i></button>
-                <button class="btn-icon btn-key" onclick="window.abrirModalCambioPass()" title="Cambiar Contraseña"><i class="fa-solid fa-key"></i></button>
+                <button id="header-btn-users" class="btn-icon hidden" onclick="window.navegar('usuarios')" title="Gestionar Usuarios">
+                    <i class="fa-solid fa-users-gear"></i>
+                </button>
+                <button class="btn-icon btn-key" onclick="window.abrirModalCambioPass()" title="Cambiar Contraseña">
+                    <i class="fa-solid fa-key"></i>
+                </button>
                 <button class="btn-logout" onclick="window.cerrarSesion()"><i class="fa-solid fa-power-off"></i></button>
             </div>
         </header>
 
         <nav class="app-nav">
-            <div class="nav-item" id="nav-home" onclick="window.navegar('home')"><i class="fa-solid fa-house"></i><span>Inicio</span></div>
-            <div class="nav-item" id="nav-albergues" onclick="window.navegar('gestion-albergues')"><i class="fa-solid fa-bed"></i><span>Gestión</span></div>
-            <div class="nav-item" id="nav-mto" onclick="window.navegar('mantenimiento')"><i class="fa-solid fa-screwdriver-wrench"></i><span>Mantenimiento</span></div>
-            <div class="nav-item" id="nav-obs" onclick="window.navegar('observatorio')"><i class="fa-solid fa-binoculars"></i><span>Observatorio</span></div>
+            <div class="nav-item" id="nav-home" onclick="window.navegar('home')">
+                <i class="fa-solid fa-house"></i><span>Inicio</span>
+            </div>
+            <div class="nav-item" id="nav-albergues" onclick="window.navegar('gestion-albergues')">
+                <i class="fa-solid fa-bed"></i><span>Gestión</span>
+            </div>
+            <div class="nav-item" id="nav-mto" onclick="window.navegar('mantenimiento')">
+                <i class="fa-solid fa-screwdriver-wrench"></i><span>Mantenimiento</span>
+            </div>
+            <div class="nav-item" id="nav-obs" onclick="window.navegar('observatorio')">
+                <i class="fa-solid fa-binoculars"></i><span>Observatorio</span>
+            </div>
             <div class="nav-item disabled"><i class="fa-solid fa-chart-pie"></i><span>Informes</span></div>
         </nav>
 
         <main class="main-content">
+            
             <div id="screen-home" class="hidden">
                 <div class="hero-container">
                     <i class="fa-solid fa-campground hero-icon"></i>
@@ -114,14 +110,29 @@
 
             <div id="screen-observatorio" class="hidden">
                 <div class="obs-grid">
-                    <div class="obs-card"><div class="obs-label">Personas en Espera</div><div class="obs-val" id="kpi-espera" style="color:var(--warning);">0</div></div>
-                    <div class="obs-card"><div class="obs-label">Personas Alojadas</div><div class="obs-val" id="kpi-alojados" style="color:var(--success);">0</div></div>
-                    <div class="obs-card"><div class="obs-label">Camas Disponibles</div><div class="obs-val" id="kpi-libres" style="color:var(--primary);">0</div></div>
-                    <div class="obs-card"><div class="obs-label">Ocupación Global</div><div class="obs-val" id="kpi-percent">0%</div><div class="prog-track"><div class="prog-fill" id="kpi-bar" style="width:0%"></div></div></div>
+                    <div class="obs-card">
+                        <div class="obs-label">Personas en Espera</div>
+                        <div class="obs-val" id="kpi-espera" style="color:var(--warning);">0</div>
+                    </div>
+                    <div class="obs-card">
+                        <div class="obs-label">Personas Alojadas</div>
+                        <div class="obs-val" id="kpi-alojados" style="color:var(--success);">0</div>
+                    </div>
+                    <div class="obs-card">
+                        <div class="obs-label">Camas Disponibles</div>
+                        <div class="obs-val" id="kpi-libres" style="color:var(--primary);">0</div>
+                    </div>
+                    <div class="obs-card">
+                        <div class="obs-label">Ocupación Global</div>
+                        <div class="obs-val" id="kpi-percent">0%</div>
+                        <div class="prog-track"><div class="prog-fill" id="kpi-bar" style="width:0%"></div></div>
+                    </div>
                 </div>
                 <div class="card">
                     <h3>Detalle por Albergue</h3>
-                    <div id="obs-list-container" style="margin-top:20px;"><p style="color:#666; text-align:center;">Cargando datos...</p></div>
+                    <div id="obs-list-container" style="margin-top:20px;">
+                        <p style="color:#666; text-align:center;">Cargando datos...</p>
+                    </div>
                 </div>
             </div>
 
@@ -145,6 +156,7 @@
                     </div>
 
                     <div style="margin-top:25px;">
+                        
                         <div id="tab-prefiliacion" class="tab-content active">
                             <div class="module-box module-pref">
                                 <h3><i class="fa-regular fa-clipboard"></i> Ficha de Ingreso</h3>
@@ -178,6 +190,7 @@
                                     <div id="resultados-busqueda" class="search-results hidden"></div>
                                 </div>
                             </div>
+                            
                             <div id="panel-gestion-persona" class="hidden" style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:var(--radius); padding:25px; margin-top:10px;">
                                 <h3 id="gestion-nombre-titulo" style="color:var(--primary);">Nombre</h3>
                                 <p style="margin-bottom:15px;">Estado: <span id="gestion-estado" class="badge">...</span> <strong id="gestion-cama-info"></strong></p>
@@ -227,6 +240,9 @@
                 <h2 style="color:var(--text-main); margin-bottom:10px;">Bienvenido/a</h2>
                 <p style="font-size:1.1rem; line-height:1.5; margin-bottom:20px; color:var(--text-main);">
                     Está a punto de rellenar la ficha de registro de sus datos y el de sus familiares para acceder al <strong id="public-albergue-name" style="color:var(--primary);">Albergue...</strong>
+                </p>
+                <p style="color:var(--text-light); font-size:0.95rem;">
+                    Por favor, una vez envíes los datos, dirígete a las mesas de entrada para validar tu acceso.
                 </p>
                 <div class="consent-box">
                     <input type="checkbox" id="check-consent" onchange="window.toggleStartButton()">
@@ -322,8 +338,6 @@
     <div id="modal-admin-add-familiar" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><span class="close-modal" onclick="window.cerrarModalFamiliarAdmin()">&times;</span><h3>Miembro (Admin)</h3><div class="row"><div class="col"><label>Nombre</label><input type="text" id="adm-fam-nombre"></div><div class="col"><label>Ap 1</label><input type="text" id="adm-fam-ap1"></div><div class="col"><label>Ap 2</label><input type="text" id="adm-fam-ap2"></div></div><div class="row"><div class="col"><label>Doc</label><select id="adm-fam-tipo-doc" onchange="window.verificarMenor('adm-fam')"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Num</label><input type="text" id="adm-fam-doc-num"></div></div><div class="row"><div class="col"><label>F. Nac</label><input type="tel" id="adm-fam-fecha" oninput="window.formatearFecha(this)" maxlength="10"></div><div class="col"><label>Tel</label><input type="tel" id="adm-fam-tel"></div></div><div class="btn-row"><button class="primary" onclick="window.guardarFamiliarAdmin()">Añadir</button></div></div></div>
     
     <div id="modal-obs-detalle" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content modal-lg"><span class="close-modal" onclick="document.getElementById('modal-obs-detalle').classList.add('hidden')">&times;</span><h3 id="obs-modal-title">Listado</h3><div id="obs-modal-content" style="margin-top:20px;"></div></div></div>
-
-    <div id="debug-box" style="display:none;"></div>
 
     <script type="module" src="script.js"></script>
 </body>

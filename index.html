@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión Albergue - Ver.9.6.0</title>
+    <title>Gestión Albergue - Ver.9.7.0</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     
@@ -12,7 +12,7 @@
 </head>
 <body>
 
-    <div class="version-tag">Ver.9.6.0</div>
+    <div class="version-tag">Ver.9.7.0</div>
 
     <div id="loading-overlay" class="hidden">
         <div class="spinner"></div>
@@ -231,6 +231,42 @@
                 </div>
             </div>
         </main>
+    </div>
+
+    <div id="public-register-screen" class="hidden" style="background:white; min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px;">
+        <div id="public-welcome-screen" class="card" style="max-width:500px; width:100%;">
+            <div class="welcome-box">
+                <i class="fa-solid fa-door-open welcome-icon"></i>
+                <h2 style="color:var(--text-main); margin-bottom:10px;">Bienvenido/a</h2>
+                <p style="font-size:1.1rem; line-height:1.5; margin-bottom:20px; color:var(--text-main);">
+                    Está a punto de rellenar la ficha de registro de sus datos y el de sus familiares para acceder al <strong id="public-albergue-name" style="color:var(--primary);">Albergue...</strong>
+                </p>
+                <p style="color:var(--text-light); font-size:0.95rem;">
+                    Por favor, una vez envíes los datos, dirígete a las mesas de entrada para validar tu acceso.
+                </p>
+                <div class="consent-box">
+                    <input type="checkbox" id="check-consent" onchange="window.toggleStartButton()">
+                    <label for="check-consent" style="cursor:pointer; margin:0; margin-left:5px;">He leído la información y acepto facilitar mis datos para el registro de entrada.</label>
+                </div>
+                <button id="btn-start-public" class="primary" style="width:100%; padding:15px; font-size:1.1rem;" disabled onclick="window.iniciarRegistro()">COMENZAR REGISTRO</button>
+            </div>
+        </div>
+
+        <div id="public-form-container" class="card hidden" style="max-width:600px; width:100%;">
+            <h2 style="text-align:center; color:var(--primary); margin-bottom:20px;">Tus Datos</h2>
+            <div class="row"><div class="col"><label>Nombre (*)</label><input type="text" id="pub-nombre"></div></div>
+            <div class="row"><div class="col"><label>Ap 1</label><input type="text" id="pub-ap1"></div><div class="col"><label>Ap 2</label><input type="text" id="pub-ap2"></div></div>
+            <div class="row"><div class="col"><label>Doc</label><select id="pub-tipo-doc" onchange="window.verificarMenor('pub')"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Num</label><input type="text" id="pub-doc-num"><div id="pub-doc-error" class="error-msg">Inválido</div></div></div>
+            <div class="row"><div class="col"><label>F. Nac</label><input type="tel" id="pub-fecha" placeholder="DD/MM/AAAA" maxlength="10" oninput="window.formatearFecha(this)"></div><div class="col"><label>Tel</label><input type="tel" id="pub-tel"></div></div>
+            <div class="fam-list"><h4>Acompañantes</h4><div id="lista-familiares-ui"><p style="color:#999;">Ninguno.</p></div><button class="secondary" onclick="window.abrirModalFamiliar()">+ Añadir Acompañante</button></div>
+            <br><button class="success" style="width:100%; padding:15px;" onclick="window.publicoGuardarTodo()">ENVIAR DATOS</button>
+        </div>
+
+        <div id="public-success-msg" class="hidden" style="text-align:center;">
+            <div class="success-icon"><i class="fa-solid fa-circle-check"></i></div>
+            <h1 style="margin-bottom:10px;">¡Datos Enviados!</h1>
+            <p style="font-size:1.2rem; color:var(--text-light);">Gracias. Por favor, acércate a la mesa de entrada.</p>
+        </div>
     </div>
 
     <div id="modal-qr" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content" style="text-align:center;"><span class="close-modal" onclick="document.getElementById('modal-qr').classList.add('hidden')">&times;</span><h3>Escanea para acceder</h3><div id="qrcode-display" style="display:inline-block; margin:20px;"></div><p style="color:#666;">Auto-registro móvil.</p></div></div>

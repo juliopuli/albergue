@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión Albergue - Ver.4.6.5</title>
+    <title>Gestión Albergue - Ver.4.7.0</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     
@@ -12,7 +12,7 @@
 </head>
 <body>
 
-    <div class="version-tag">Ver.4.6.5</div>
+    <div class="version-tag">Ver.4.7.0</div>
 
     <div id="login-screen" class="">
         <div class="card">
@@ -162,7 +162,10 @@
                                 <div id="form-manual-container">
                                     <div style="display:flex; justify-content:space-between; align-items:center;">
                                         <h4>Datos del Titular</h4>
-                                        <button id="btn-cancelar-edicion-pref" class="secondary hidden" style="font-size:0.7em; padding:4px 8px;" onclick="window.cancelarEdicionPref()">Cancelar Edición</button>
+                                        <div>
+                                            <button id="btn-historial-pref" class="dark hidden" style="font-size:0.7em; padding:4px 8px; margin-right:5px;" onclick="window.verHistorial(prefiliacionEdicionId)">📜 Historial</button>
+                                            <button id="btn-cancelar-edicion-pref" class="secondary hidden" style="font-size:0.7em; padding:4px 8px;" onclick="window.cancelarEdicionPref()">Cancelar Edición</button>
+                                        </div>
                                     </div>
                                     <div class="row"><div class="col"><label>Nombre (*)</label><input type="text" id="man-nombre"></div><div class="col"><label>Ap 1</label><input type="text" id="man-ap1"></div><div class="col"><label>Ap 2</label><input type="text" id="man-ap2"></div></div>
                                     <div class="row"><div class="col"><label>Doc</label><select id="man-tipo-doc"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Número</label><input type="text" id="man-doc-num"></div></div>

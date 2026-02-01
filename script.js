@@ -150,8 +150,7 @@ window.navegar=(p)=>{
         
     } else if(p==='usuarios'){
         if(['super_admin','admin'].includes(r)) {
-            document.getElementById('screen-usuarios').classList.remove('hidden'); 
-            window.cargarUsuarios();
+            document.getElementById('screen-usuarios').classList.remove('hidden'); window.cargarUsuarios();
         }
     } else if(p==='gestion-albergues'){
         if(['super_admin','admin','intervencion','filiacion'].includes(r)) {
@@ -332,21 +331,18 @@ window.verListaObservatorio = async (albId, est) => {
             return;
         }
 
-        // --- ORDENACIÓN V4.6.0 ---
         let dataArray = [];
         snap.forEach(doc => {
             dataArray.push({ id: doc.id, ...doc.data() });
         });
 
         if (est === 'ingresado') {
-            // Ordenar por cama numérica
             dataArray.sort((a, b) => (parseInt(a.cama)||0) - (parseInt(b.cama)||0));
         } else {
-            // Ordenar por fecha registro descendente (LIFO)
             dataArray.sort((a, b) => {
                 const dateA = a.fechaRegistro?.seconds || 0;
                 const dateB = b.fechaRegistro?.seconds || 0;
-                return dateB - dateA; // El más reciente (mayor timestamp) primero
+                return dateB - dateA; // LIFO
             });
         }
 
@@ -432,18 +428,23 @@ function getDatosFormulario(p) {
 // --- FAMILIA Y FUSION ---
 window.abrirModalVincularFamilia=()=>{document.getElementById('modal-vincular-familia').classList.remove('hidden');document.getElementById('search-vincular').value="";document.getElementById('resultados-vincular').innerHTML="";};
 
-// --- CAMBIO ESPECÍFICO DE VISUALIZACIÓN EN BÚSQUEDA ---
+// --- BÚSQUEDA INTELIGENTE V4.6.4 ---
 window.buscarParaVincular=()=>{
-    const txt=document.getElementById('search-vincular').value.toLowerCase();
+    const txt=document.getElementById('search-vincular').value.toLowerCase().trim();
     const res=document.getElementById('resultados-vincular');
     res.innerHTML="";
     if(txt.length<2){res.classList.add('hidden');return;}
     
-    // Filtro original
-    const hits=listaPersonasCache.filter(p=>
-        p.id!==window.personaEnGestion.id && 
-        ((p.nombre||"").toLowerCase().includes(txt) || (p.docNum||"").toLowerCase().includes(txt))
-    );
+    // Búsqueda concatenada (Nombre + Apellidos + DNI + Tel)
+    const hits=listaPersonasCache.filter(p=> {
+        if(p.id === window.personaEnGestion.id) return false;
+        
+        const fullName = `${p.nombre} ${p.ap1||''} ${p.ap2||''}`.toLowerCase();
+        const doc = (p.docNum || "").toLowerCase();
+        const tel = (p.telefono || "").toLowerCase();
+        
+        return fullName.includes(txt) || doc.includes(txt) || tel.includes(txt);
+    });
     
     if(hits.length===0){
         res.innerHTML="<div class='search-item' style='color:#999;'>No hay coincidencias.</div>";
@@ -451,7 +452,6 @@ window.buscarParaVincular=()=>{
         hits.forEach(p=>{
             const d=document.createElement('div');
             d.className='search-item';
-            // CAMBIO ESPECÍFICO PEDIDO: NOMBRE + AP1 + AP2 + DNI + TLF
             d.innerHTML=`
                 <strong>${p.nombre} ${p.ap1||''} ${p.ap2||''}</strong>
                 <div style="font-size:0.8rem; color:#666;">
@@ -729,10 +729,7 @@ window.entrarAlbergue=(id)=>{
                 c++; if(p.cama) camasOcupadas[p.cama]=p.nombre;
             }
         });
-        try {
-             listaPersonasCache.sort((a,b)=>(b.fechaRegistro?.seconds||0) - (a.fechaRegistro?.seconds||0));
-        } catch(e) { console.log("Sort error suppressed"); }
-        
+        try { listaPersonasCache.sort((a,b)=>(b.fechaRegistro?.seconds||0) - (a.fechaRegistro?.seconds||0)); } catch(e){}
         ocupacionActual=c;
         actualizarContadores();
         if(window.personaEnGestion){
@@ -746,12 +743,19 @@ function actualizarContadores(){
     document.getElementById('capacidad-total').innerText=totalCapacidad;
 }
 
+// BÚSQUEDA NORMAL 1 (Prefiliación)
 window.buscarEnPrefiliacion=()=>{
-    const txt=safeVal('buscador-pref').toLowerCase();
+    const txt=safeVal('buscador-pref').toLowerCase().trim(); // TRIM ADDED
     const res=document.getElementById('resultados-pref');
     if(txt.length<2){res.classList.add('hidden');return;}
     
-    const hits=listaPersonasCache.filter(p=>p.estado==='espera' && (p.nombre||"").toLowerCase().includes(txt));
+    // LÓGICA V4.6.4
+    const hits=listaPersonasCache.filter(p=>{
+        if(p.estado!=='espera') return false;
+        const full = `${p.nombre} ${p.ap1||''} ${p.ap2||''}`.toLowerCase();
+        return full.includes(txt) || (p.docNum||"").toLowerCase().includes(txt) || (p.telefono||"").includes(txt);
+    });
+
     res.innerHTML="";
     hits.forEach(p=>{
         res.innerHTML += `<div class="search-item" onclick="window.cargarParaEdicionPref('${p.id}')">
@@ -783,7 +787,7 @@ window.cargarParaEdicionPref=(pid)=>{
             familyMembers.forEach(f => {
                 existingList.innerHTML += `
                 <div class="fam-item existing">
-                    <div><strong>${f.nombre} ${f.ap1||''}</strong></div>
+                    <div><strong>${f.nombre}</strong></div>
                     <small>Ya registrado</small>
                 </div>`;
             });
@@ -802,7 +806,40 @@ window.cancelarEdicionPref=()=>{
     document.getElementById('btn-cancelar-edicion-pref').classList.add('hidden');
 };
 
-window.buscarPersonaEnAlbergue=()=>{const txt=safeVal('buscador-persona').toLowerCase();const res=document.getElementById('resultados-busqueda');if(txt.length<2){res.classList.add('hidden');return;}const hits=listaPersonasCache.filter(p=>(p.nombre||"").toLowerCase().includes(txt)||(p.docNum||"").toLowerCase().includes(txt));res.innerHTML="";if(hits.length===0){res.innerHTML=`<div class="search-item" style="color:#666">No encontrado</div>`;}else{hits.forEach(p=>{const dotClass=p.estado==='ingresado'?'dot-green':'dot-red';res.innerHTML+=`<div class="search-item" onclick="window.seleccionarPersona('${p.id}')"><div style="display:flex; justify-content:space-between; width:100%; align-items:center;"><div><strong>${p.nombre} ${p.ap1||''} ${p.ap2||''}</strong><div style="font-size:0.8rem; color:#666;">📄 ${p.docNum||'Sin Doc'} | 📞 ${p.telefono||'-'}</div></div><div class="status-dot ${dotClass}" title="${p.estado.toUpperCase()}"></div></div></div>`;});}res.classList.remove('hidden');};
+// BÚSQUEDA NORMAL 2 (Filiación)
+window.buscarPersonaEnAlbergue=()=>{
+    const txt=safeVal('buscador-persona').toLowerCase().trim(); // TRIM ADDED
+    const res=document.getElementById('resultados-busqueda');
+    if(txt.length<2){res.classList.add('hidden');return;}
+    
+    // LÓGICA V4.6.4
+    const hits=listaPersonasCache.filter(p=>{
+        const full = `${p.nombre} ${p.ap1||''} ${p.ap2||''}`.toLowerCase();
+        return full.includes(txt) || (p.docNum||"").toLowerCase().includes(txt);
+    });
+
+    res.innerHTML="";
+    if(hits.length===0){
+        res.innerHTML=`<div class="search-item" style="color:#666">No encontrado</div>`;
+    } else {
+        hits.forEach(p=>{
+            const dotClass=p.estado==='ingresado'?'dot-green':'dot-red';
+            res.innerHTML+=`<div class="search-item" onclick="window.seleccionarPersona('${p.id}')">
+                <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
+                    <div>
+                        <strong>${p.nombre} ${p.ap1||''} ${p.ap2||''}</strong>
+                        <div style="font-size:0.8rem; color:#666;">
+                            📄 ${p.docNum||'Sin Doc'} | 📞 ${p.telefono||'-'}
+                        </div>
+                    </div>
+                    <div class="status-dot ${dotClass}" title="${p.estado.toUpperCase()}"></div>
+                </div>
+            </div>`;
+        });
+    }
+    res.classList.remove('hidden');
+};
+
 window.seleccionarPersona=(pid)=>{
     if(typeof pid!=='string')pid=pid.id;const p=listaPersonasCache.find(x=>x.id===pid);if(!p)return;window.personaEnGestion=p;document.getElementById('resultados-busqueda').classList.add('hidden');document.getElementById('panel-gestion-persona').classList.remove('hidden');document.getElementById('gestion-nombre-titulo').innerText=p.nombre;document.getElementById('gestion-estado').innerText=p.estado.toUpperCase();document.getElementById('gestion-cama-info').innerText=p.cama?`Cama: ${p.cama}`:"";setVal('edit-nombre',p.nombre);setVal('edit-ap1',p.ap1);setVal('edit-ap2',p.ap2);setVal('edit-tipo-doc',p.tipoDoc);setVal('edit-doc-num',p.docNum);setVal('edit-fecha',p.fechaNac);setVal('edit-tel',p.telefono);
     const r = (currentUserData.rol || "").toLowerCase().trim();

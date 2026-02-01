@@ -40,7 +40,6 @@ body { background-color: var(--bg-body); color: var(--text-main); height: 100vh;
 .btn-key { background: #fef3c7; color: #d97706; }
 .btn-key:hover { background: #fde68a; }
 
-/* Botón pequeño historial tabla */
 .btn-icon-small { background: transparent; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer; padding: 4px 8px; color: var(--text-light); transition: 0.2s; font-size: 0.9rem; margin-right: 5px; }
 .btn-icon-small:hover { background: #e0e7ff; color: var(--primary); border-color: var(--primary); }
 
@@ -137,13 +136,8 @@ button.dark { background: #334155; color: white; }
 .modal-content { background: white; width: 95%; max-width: 600px; padding: 30px; border-radius: 12px; max-height: 90vh; overflow-y: auto; position: relative; }
 .modal-lg { max-width: 900px; }
 
-/* FIX Z-INDEX: JERARQUÍA ESTRICTA (V9.2.0) */
-/* 1. Modales base */
-.modal-overlay { z-index: 3500; }
-/* 2. Modales encima de modales (Historial y Ficha Cama) */
-#modal-historial, #modal-bed-info { z-index: 4000 !important; }
-/* 3. Loading Overlay (Siempre arriba de todo) */
-#loading-overlay { z-index: 5000; }
+/* FIX Z-INDEX */
+#modal-historial { z-index: 3500 !important; }
 
 .version-tag { position: fixed; bottom: 10px; right: 10px; color: #ccc; font-size: 0.8em; pointer-events: none; }
 .fam-list { margin-top: 15px; border-top: 2px dashed #eee; padding-top: 10px; }

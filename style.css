@@ -69,6 +69,8 @@ button.danger { background: #ef4444; color: white; }
 button.warning { background: #f59e0b; color: white; }
 button.dark { background: #334155; color: white; }
 .btn-group-horizontal { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
+.btn-icon { background: #e0e7ff; color: var(--primary); border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; }
+.btn-icon-small { background: transparent; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer; padding: 4px 8px; font-size: 0.9rem; margin-right: 5px; }
 
 /* LISTAS & GRID */
 .mto-grid, .user-list-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin-top: 20px; }
@@ -119,7 +121,7 @@ button.dark { background: #334155; color: white; }
 #modal-historial, #modal-bed-info, #modal-add-familiar, #modal-admin-add-familiar { z-index: 4000 !important; }
 #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
 
-/* PUBLIC SCREEN */
+/* PUBLIC SCREEN FIX */
 #public-register-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 6000; overflow-y: auto; background: white; }
 
 .version-tag { position: fixed; bottom: 170px; right: 10px; color: #ccc; font-size: 0.8em; pointer-events: none; }
@@ -155,7 +157,10 @@ button.dark { background: #334155; color: white; }
 #debug-box {
     position: fixed; bottom: 0; left: 0; width: 100%; height: 150px;
     background: #000; color: #0f0; z-index: 99999;
-    font-family: monospace; font-size: 12px; padding: 10px;
-    overflow-y: scroll; border-top: 2px solid #0f0;
-    opacity: 0.9;
+    font-family: 'Consolas', 'Monaco', monospace; font-size: 11px; padding: 10px;
+    overflow-y: scroll; border-top: 2px solid #0f0; box-shadow: 0 -5px 15px rgba(0,0,0,0.5);
 }
+#debug-box div { margin-bottom: 4px; border-bottom: 1px solid #333; }
+#debug-box .error { color: #ff5555; font-weight: bold; }
+#debug-box .success { color: #55ff55; }
+#debug-box .info { color: #aaaaff; }

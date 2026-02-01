@@ -8,18 +8,62 @@ const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db =
 
 // GLOBALS
 let currentUserData=null, currentAlbergueId=null, currentAlbergueData=null, totalCapacidad=0, ocupacionActual=0, camasOcupadas={}, listaPersonasCache=[];
-let unsubscribeUsers, unsubscribeAlberguesActivos, unsubscribeAlberguesMto, unsubscribePersonas;
+let unsubscribeUsers, unsubscribeAlberguesActivos, unsubscribeAlberguesMto, unsubscribePersonas, unsubscribeAlbergueDoc;
 window.personaSeleccionadaId=null; window.personaEnGestion=null; window.modoCambioCama=false; window.modoMapaGeneral=false;
 let listaFamiliaresTemp=[], adminFamiliaresTemp=[], userEditingId=null, albergueEdicionId=null;
 let prefiliacionEdicionId = null;
 let isPublicMode = false;
 let highlightedFamilyId = null;
 
-// --- LOGIN ---
+// --- FUNCIONES CORE GLOBALES (DEFINIDAS PRIMERO) ---
 window.iniciarSesion = async () => {
-    try {
-        await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-pass').value);
-    } catch(e) { alert("Error: " + e.message); }
+    try { await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-pass').value); }
+    catch(e) { alert("Error: " + e.message); }
+};
+
+window.navegar = (p) => {
+    limpiarListeners();
+    ['screen-home', 'screen-usuarios', 'screen-gestion-albergues', 'screen-mantenimiento', 'screen-operativa', 'screen-observatorio']
+        .forEach(id => document.getElementById(id).classList.add('hidden'));
+    
+    if(!currentUserData) return; // Guard
+    const r = (currentUserData.rol || "").toLowerCase().trim();
+
+    if(p === 'home'){
+        document.getElementById('screen-home').classList.remove('hidden');
+        document.getElementById('nav-home').classList.add('active');
+    } else if(p === 'usuarios'){
+        if(['super_admin','admin'].includes(r)) { document.getElementById('screen-usuarios').classList.remove('hidden'); window.cargarUsuarios(); }
+    } else if(p === 'gestion-albergues'){
+        if(['super_admin','admin','intervencion','filiacion'].includes(r)) {
+            window.cargarAlberguesActivos();
+            document.getElementById('screen-gestion-albergues').classList.remove('hidden');
+            document.getElementById('nav-albergues').classList.add('active');
+        }
+    } else if(p === 'mantenimiento'){
+        if(['super_admin','admin'].includes(r)) {
+            window.cargarAlberguesMantenimiento();
+            document.getElementById('screen-mantenimiento').classList.remove('hidden');
+            document.getElementById('nav-mto').classList.add('active');
+        }
+    } else if(p === 'operativa'){
+        document.getElementById('screen-operativa').classList.remove('hidden');
+        document.getElementById('nav-albergues').classList.add('active');
+        const t = configurarTabsPorRol();
+        window.cambiarPestana(t);
+    } else if(p === 'observatorio'){
+        if(['super_admin','admin','observador'].includes(r)) {
+            document.getElementById('screen-observatorio').classList.remove('hidden');
+            document.getElementById('nav-obs').classList.add('active');
+            window.cargarObservatorio(); 
+        }
+    }
+    
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    if(p==='home') document.getElementById('nav-home').classList.add('active');
+    else if(p==='gestion-albergues' || p==='operativa') document.getElementById('nav-albergues').classList.add('active');
+    else if(p==='mantenimiento') document.getElementById('nav-mto').classList.add('active');
+    else if(p==='observatorio') document.getElementById('nav-obs').classList.add('active');
 };
 
 // --- AUTH & HOME ---
@@ -44,10 +88,9 @@ async function initPublicMode() {
     document.getElementById('public-welcome-screen').classList.remove('hidden');
     document.getElementById('public-form-container').classList.add('hidden');
     try {
-        const docRef = doc(db, "albergues", currentAlbergueId);
-        const snap = await getDoc(docRef);
+        const snap = await getDoc(doc(db,"albergues",currentAlbergueId));
         if(snap.exists()) document.getElementById('public-albergue-name').innerText = snap.data().nombre;
-    } catch(e) { console.log(e); }
+    } catch(e) {}
 }
 
 window.toggleStartButton = () => { document.getElementById('btn-start-public').disabled = !document.getElementById('check-consent').checked; };
@@ -81,55 +124,10 @@ function limpiarListeners() {
     if(unsubscribeAlbergueDoc) unsubscribeAlbergueDoc();
 }
 
-// --- NAVEGACIÓN ---
-window.navegar = (p) => {
-    limpiarListeners();
-    ['screen-home', 'screen-usuarios', 'screen-gestion-albergues', 'screen-mantenimiento', 'screen-operativa', 'screen-observatorio']
-        .forEach(id => document.getElementById(id).classList.add('hidden'));
-    
-    const r = (currentUserData.rol || "").toLowerCase().trim();
-
-    if(p === 'home'){
-        document.getElementById('screen-home').classList.remove('hidden');
-        document.getElementById('nav-home').classList.add('active');
-    } else if(p === 'usuarios'){
-        if(['super_admin','admin'].includes(r)) { document.getElementById('screen-usuarios').classList.remove('hidden'); window.cargarUsuarios(); }
-    } else if(p === 'gestion-albergues'){
-        if(['super_admin','admin','intervencion','filiacion'].includes(r)) {
-            window.cargarAlberguesActivos();
-            document.getElementById('screen-gestion-albergues').classList.remove('hidden');
-            document.getElementById('nav-albergues').classList.add('active');
-        }
-    } else if(p === 'mantenimiento'){
-        if(['super_admin','admin'].includes(r)) {
-            window.cargarAlberguesMantenimiento();
-            document.getElementById('screen-mantenimiento').classList.remove('hidden');
-            document.getElementById('nav-mto').classList.add('active');
-        }
-    } else if(p === 'operativa'){
-        document.getElementById('screen-operativa').classList.remove('hidden');
-        document.getElementById('nav-albergues').classList.add('active');
-        const t = configurarTabsPorRol();
-        window.cambiarPestana(t);
-    } else if(p === 'observatorio'){
-        if(['super_admin','admin','observador'].includes(r)) {
-            document.getElementById('screen-observatorio').classList.remove('hidden');
-            document.getElementById('nav-obs').classList.add('active');
-            window.cargarObservatorio(); 
-        }
-    }
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    if(p==='home') document.getElementById('nav-home').classList.add('active');
-    else if(p==='gestion-albergues' || p==='operativa') document.getElementById('nav-albergues').classList.add('active');
-    else if(p==='mantenimiento') document.getElementById('nav-mto').classList.add('active');
-    else if(p==='observatorio') document.getElementById('nav-obs').classList.add('active');
-};
-
 function configurarDashboard(){
     const r = (currentUserData.rol || "").toLowerCase().trim();
     document.getElementById('user-name-display').innerText = currentUserData.nombre;
     document.getElementById('user-role-badge').innerText = r.toUpperCase();
-    document.getElementById('user-role-badge').className = `role-badge role-${r}`;
     
     const btnUsers = document.getElementById('header-btn-users');
     const navMto = document.getElementById('nav-mto');
@@ -204,26 +202,25 @@ window.cargarAlberguesActivos = () => {
     });
 };
 
-// --- ENTRAR ALBERGUE (LOADING OVERLAY) ---
+// --- ENTRAR ALBERGUE (CON LOADING OVERLAY) ---
 window.entrarAlbergue = (id) => {
     currentAlbergueId = id;
     
-    // 1. Mostrar Loading Overlay y Ocultar Dashboard
+    // 1. Mostrar pantalla de carga
     document.getElementById('loading-overlay').classList.remove('hidden');
-    // document.getElementById('screen-operativa').classList.add('hidden'); // Opcional, el overlay ya tapa
-
-    window.navegar('operativa'); // Esto prepara la vista base
+    
+    // 2. Preparar UI
+    window.navegar('operativa');
     const initialTab = configurarTabsPorRol();
     window.cambiarPestana(initialTab);
     
-    // Banderas de Sincronización
-    let loadedDoc = false;
-    let loadedColl = false;
-
-    // Función Check
-    const checkReady = () => {
-        if(loadedDoc && loadedColl) {
+    // 3. Flags de sincronización
+    let docLoaded = false;
+    let collLoaded = false;
+    const checkLoaded = () => {
+        if(docLoaded && collLoaded) {
             document.getElementById('loading-overlay').classList.add('hidden');
+            actualizarContadores();
         }
     };
 
@@ -233,10 +230,9 @@ window.entrarAlbergue = (id) => {
             currentAlbergueData = d.data();
             document.getElementById('app-title').innerText = currentAlbergueData.nombre;
             totalCapacidad = parseInt(currentAlbergueData.capacidad || 0);
-            actualizarContadores();
         }
-        loadedDoc = true;
-        checkReady();
+        docLoaded = true;
+        checkLoaded();
     });
 
     if(unsubscribePersonas) unsubscribePersonas();
@@ -251,14 +247,13 @@ window.entrarAlbergue = (id) => {
         });
         try { listaPersonasCache.sort((a,b)=>(b.fechaRegistro?.seconds||0) - (a.fechaRegistro?.seconds||0)); } catch(e){}
         ocupacionActual = c;
-        actualizarContadores();
         
         if(window.personaEnGestion){
             const upd = listaPersonasCache.find(x => x.id === window.personaEnGestion.id);
             if(upd) window.seleccionarPersona(upd);
         }
-        loadedColl = true;
-        checkReady();
+        collLoaded = true;
+        checkLoaded();
     });
 };
 
@@ -378,20 +373,16 @@ window.verListaObservatorio = async (albId, est) => {
     try {
         const s = await getDocs(query(collection(db, "albergues", albId, "personas"), where("estado", "==", est)));
         if (s.empty) { c.innerHTML = '<p>Sin registros.</p>'; return; }
-        
         let dataArray = [];
         s.forEach(doc => { dataArray.push({ id: doc.id, ...doc.data() }); });
-
         if (est === 'ingresado') {
             dataArray.sort((a, b) => (parseInt(a.cama)||0) - (parseInt(b.cama)||0));
         } else {
             dataArray.sort((a, b) => (b.fechaRegistro?.seconds||0) - (a.fechaRegistro?.seconds||0));
         }
-
         let h = `<table class="fam-table"><thead><tr><th style="width:40px;"></th>`;
         if(est==='ingresado') h+=`<th>Cama</th>`;
         h+=`<th>Nombre</th><th>DNI</th><th>Tel</th></tr></thead><tbody>`;
-        
         dataArray.forEach(d => { 
             h += `<tr><td style="text-align:center;"><button class="btn-icon-small" onclick="window.verHistorialObservatorio('${albId}', '${d.id}')"><i class="fa-solid fa-clock-rotate-left"></i></button></td>`;
             if(est==='ingresado') h+=`<td><strong>${d.cama||'-'}</strong></td>`;
@@ -401,7 +392,7 @@ window.verListaObservatorio = async (albId, est) => {
     } catch(e) { c.innerHTML = "Error."; }
 };
 
-// --- OTROS (Búsquedas, etc.) ---
+// --- BÚSQUEDAS & FICHAS ---
 window.buscarEnPrefiliacion=()=>{
     const t=safeVal('buscador-pref').toLowerCase().trim();
     const r=document.getElementById('resultados-pref');
@@ -428,8 +419,6 @@ window.cargarParaEdicionPref=(pid)=>{
     document.getElementById('buscador-pref').value="";
     setVal('man-nombre',p.nombre);setVal('man-ap1',p.ap1);setVal('man-ap2',p.ap2);setVal('man-tipo-doc',p.tipoDoc);setVal('man-doc-num',p.docNum);setVal('man-fecha',p.fechaNac);setVal('man-tel',p.telefono);
     const l=document.getElementById('existing-family-list-ui'); l.innerHTML="";
-    
-    // LISTA DETALLADA
     if(p.familiaId){
         const fs=listaPersonasCache.filter(x=>x.familiaId===p.familiaId&&x.id!==p.id);
         if(fs.length>0){
@@ -481,8 +470,6 @@ window.seleccionarPersona=(pid)=>{
     const flist=document.getElementById('info-familia-lista'); flist.innerHTML="";
     const fam=listaPersonasCache.filter(x=>x.familiaId&&x.familiaId===p.familiaId);
     document.getElementById('info-familia-resumen').innerText=fam.length>1?`Familia (${fam.length})`:"Individual";
-    
-    // LISTA DETALLADA
     fam.forEach(f=>{
         if(f.id!==p.id){
             const st=f.estado==='ingresado'?'color:var(--success);':'color:var(--warning);';
@@ -497,21 +484,6 @@ window.cerrarMapaCamas=()=>{highlightedFamilyId=null;document.getElementById('mo
 window.highlightFamily=(pid)=>{const o=listaPersonasCache.find(p=>p.id===pid);if(!o||!o.familiaId)return;highlightedFamilyId=(highlightedFamilyId===o.familiaId)?null:o.familiaId;mostrarGridCamas();};
 window.abrirSeleccionCama=()=>{window.modoMapaGeneral=false;mostrarGridCamas();};
 window.abrirMapaGeneral=()=>{window.modoMapaGeneral=true;mostrarGridCamas();};
-
-// --- GLOBAL FUNCTIONS (EXPOSED) ---
-window.guardarCama = async function(c){if(window.personaEnGestion.cama){alert(`Error: ${window.personaEnGestion.nombre} ya tiene asignada la cama ${window.personaEnGestion.cama}. Debes liberarla primero.`);return;}await updateDoc(doc(db,"albergues",currentAlbergueId,"personas",window.personaEnGestion.id),{estado:'ingresado',cama:c.toString(),fechaIngreso:new Date()}); window.registrarLog(window.personaEnGestion.id, "Asignación Cama", `Cama ${c}`); window.cerrarMapaCamas();}
-window.mostrarGridCamas = mostrarGridCamas;
-window.abrirModalInfoCama = abrirModalInfoCama;
-
-function mostrarGridCamas(){
-    const g=document.getElementById('grid-camas');g.innerHTML="";const cols=(currentAlbergueData&&currentAlbergueData.columnas)?currentAlbergueData.columnas:8;g.style.gridTemplateColumns=`repeat(${cols}, 1fr)`;let shadowMap={};let famGroups={};listaPersonasCache.forEach(p=>{if(p.familiaId){if(!famGroups[p.familiaId])famGroups[p.familiaId]={members:[],beds:[]};famGroups[p.familiaId].members.push(p);if(p.cama)famGroups[p.familiaId].beds.push(parseInt(p.cama));}});Object.values(famGroups).forEach(fam=>{let assigned=fam.beds.length;let total=fam.members.length;let needed=total-assigned;if(assigned>0&&needed>0){let startBed=Math.max(...fam.beds);let placed=0;let check=startBed+1;while(placed<needed&&check<=totalCapacidad){if(!camasOcupadas[check.toString()]){shadowMap[check.toString()]=fam.members[0].familiaId;placed++;}check++;}}});let myFamId,famMembers=[],assignedMembers=[],neededForMe=1;if(!window.modoMapaGeneral&&window.personaEnGestion){myFamId=window.personaEnGestion.familiaId;if(myFamId)famMembers=listaPersonasCache.filter(m=>m.familiaId===myFamId);else famMembers=[window.personaEnGestion];assignedMembers=famMembers.filter(m=>m.cama&&m.id!==window.personaEnGestion.id);neededForMe=famMembers.length-assignedMembers.length;}for(let i=1;i<=totalCapacidad;i++){const n=i.toString();const occName=camasOcupadas[n];const occ=listaPersonasCache.find(p=>p.cama===n);const d=document.createElement('div');let classes="bed-box";let label=n;if(occ&&highlightedFamilyId&&occ.familiaId===highlightedFamilyId){classes+=" bed-family-highlight";}if(!window.modoMapaGeneral&&window.personaEnGestion&&window.personaEnGestion.cama===n){classes+=" bed-current";label+=" (Tú)";}else if(occName){classes+=" bed-busy";if(occ){const f=`${occ.nombre} ${occ.ap1||''}`;lbl+=`<div style="font-size:0.6rem;font-weight:normal;margin-top:2px;">${f}<br><i class="fa-solid fa-phone"></i> ${occ.telefono||'-'}</div>`;}}else{classes+=" bed-free";if(shadowMap[n]){classes+=" bed-shadow";}}if(!window.modoMapaGeneral&&!occName&&!(!window.modoMapaGeneral&&window.personaEnGestion&&window.personaEnGestion.cama===n)){if(assignedMembers.length>0){if(shadowMap[n]===myFamId)classes+=" bed-suggest-target";}else{let fit=true;for(let k=0;k<neededForMe;k++){if(camasOcupadas[(i+k).toString()])fit=false;}if(fit&&neededForMe>1)cls+=" bed-suggest-block";}}d.className=cls;d.innerHTML=lbl;d.onclick=()=>{if(occ){if(highlightedFamilyId===occ.familiaId)highlightedFamilyId=null;else highlightedFamilyId=occ.familiaId;mostrarGridCamas();}else if(!window.modoMapaGeneral){window.guardarCama(n);}};d.ondblclick=()=>{if(occ)window.abrirModalInfoCama(occ);};g.appendChild(d);}document.getElementById('modal-cama').classList.remove('hidden');
-}
-
-function abrirModalInfoCama(p){
-    document.getElementById('info-cama-num').innerText=p.cama;document.getElementById('info-nombre-completo').innerText=`${p.nombre} ${p.ap1||''}`;document.getElementById('info-telefono').innerText=p.telefono||"No consta";
-    const bh=document.getElementById('btn-historial-cama');if(['admin','super_admin'].includes(currentUserData.rol)){bh.classList.remove('hidden');bh.onclick=()=>window.verHistorial(p.id);}else{bh.classList.add('hidden');}
-    const c=document.getElementById('info-familia-detalle');const fam=listaPersonasCache.filter(x=>x.familiaId===p.familiaId);let h=`<table class="fam-table"><thead><tr><th>Nombre</th><th>DNI/Tel</th><th>Cama</th></tr></thead><tbody>`;fam.forEach(f=>{const isCurrent=f.id===p.id?'fam-row-current':'';h+=`<tr class="${isCurrent}"><td>${f.nombre} ${f.ap1||''}</td><td><small>${f.docNum||'-'}<br>${f.telefono||'-'}</small></td><td><strong>${f.cama||'-'}</strong></td></tr>`;});h+=`</tbody></table>`;c.innerHTML=h;document.getElementById('modal-bed-info').classList.remove('hidden');
-};
 window.abrirModalAlbergue=async(id=null)=>{albergueEdicionId=id;document.getElementById('modal-albergue').classList.remove('hidden');const b=document.getElementById('btn-delete-albergue');if(id){const s=await getDoc(doc(db,"albergues",id));const d=s.data();setVal('mto-nombre',d.nombre);setVal('mto-capacidad',d.capacidad);setVal('mto-columnas',d.columnas);const r=(currentUserData.rol||"").toLowerCase().trim();if(r==='super_admin')b.classList.remove('hidden');else b.classList.add('hidden');}else{setVal('mto-nombre',"");setVal('mto-capacidad',"");b.classList.add('hidden');}};
 window.guardarAlbergue=async()=>{const n=safeVal('mto-nombre'),c=safeVal('mto-capacidad'),col=safeVal('mto-columnas');if(!n||!c)return alert("Datos inc.");if(albergueEdicionId)await updateDoc(doc(db,"albergues",albergueEdicionId),{nombre:n,capacidad:parseInt(c),columnas:parseInt(col)});else await addDoc(collection(db,"albergues"),{nombre:n,capacidad:parseInt(c),columnas:parseInt(col),activo:true});document.getElementById('modal-albergue').classList.add('hidden');};
 window.eliminarAlbergueActual=async()=>{if(albergueEdicionId&&confirm("¿Borrar todo?")){const ps=await getDocs(collection(db,"albergues",albergueEdicionId,"personas"));const b=writeBatch(db);ps.forEach(d=>b.delete(d.ref));await b.commit();await deleteDoc(doc(db,"albergues",albergueEdicionId));alert("Borrado");document.getElementById('modal-albergue').classList.add('hidden');}};
@@ -519,8 +491,69 @@ window.cambiarEstadoAlbergue=async(id,st)=>{await updateDoc(doc(db,"albergues",i
 window.abrirModalCambioPass=()=>{setVal('chg-old-pass','');setVal('chg-new-pass','');setVal('chg-confirm-pass','');document.getElementById('modal-change-pass').classList.remove('hidden');};
 window.ejecutarCambioPass=async()=>{const o=safeVal('chg-old-pass'),n=safeVal('chg-new-pass'),c=safeVal('chg-confirm-pass');if(!o||!n||!c)return alert("Rellena todo");if(n!==c)return alert("No coinciden");if(n.length<6)return alert("Min 6 chars");try{const u=auth.currentUser;await reauthenticateWithCredential(u,EmailAuthProvider.credential(u.email,o));await updatePassword(u,n);alert("OK. Relogin");document.getElementById('modal-change-pass').classList.add('hidden');window.cerrarSesion();}catch(e){alert("Error: "+e.message);}};
 
-// --- VINCULAR FAMILIA FIX V6.1.0 ---
-window.buscarParaVincular=()=>{const txt=document.getElementById('search-vincular').value.toLowerCase().trim();const res=document.getElementById('resultados-vincular');res.innerHTML="";if(txt.length<2){res.classList.add('hidden');return;}const hits=listaPersonasCache.filter(p=>{if(p.id===window.personaEnGestion.id)return false;const fullName=`${p.nombre} ${p.ap1||''} ${p.ap2||''}`.toLowerCase();return fullName.includes(txt)||(p.docNum||"").toLowerCase().includes(txt)||(p.telefono||"").includes(txt);});if(hits.length===0){res.innerHTML="<div class='search-item' style='color:#999;'>No hay coincidencias.</div>";}else{hits.forEach(p=>{const d=document.createElement('div');d.className='search-item';d.innerHTML=`<strong>${p.nombre} ${p.ap1||''} ${p.ap2||''}</strong><br><small>📄 ${p.docNum||'-'} | 📞 ${p.telefono||'-'}</small>`;d.onclick=()=>window.vincularAFamilia(p);res.appendChild(d);});}res.classList.remove('hidden');};
+// --- GLOBALIZADAS PARA ACCESO DESDE HTML/ONCLICK ---
+window.buscarParaVincular=()=>{
+    const txt=document.getElementById('search-vincular').value.toLowerCase().trim();
+    const res=document.getElementById('resultados-vincular');
+    res.innerHTML="";
+    if(txt.length<2){res.classList.add('hidden');return;}
+    
+    // FIX V6.4.0: Búsqueda completa y visualización rica
+    const hits=listaPersonasCache.filter(p=>{
+        if(p.id===window.personaEnGestion.id)return false;
+        const fullName=`${p.nombre} ${p.ap1||''} ${p.ap2||''}`.toLowerCase();
+        const doc=(p.docNum||"").toLowerCase();
+        const tel=(p.telefono||"").toLowerCase();
+        return fullName.includes(txt)||doc.includes(txt)||tel.includes(txt);
+    });
+    
+    if(hits.length===0){
+        res.innerHTML="<div class='search-item' style='color:#999;'>No hay coincidencias.</div>";
+    } else {
+        hits.forEach(p=>{
+            const d=document.createElement('div');
+            d.className='search-item';
+            d.innerHTML=`<strong>${p.nombre} ${p.ap1||''} ${p.ap2||''}</strong><br><small>📄 ${p.docNum||'-'} | 📞 ${p.telefono||'-'}</small>`;
+            d.onclick=()=>window.vincularAFamilia(p);
+            res.appendChild(d);
+        });
+    }
+    res.classList.remove('hidden');
+};
+
+window.vincularAFamilia = async (target) => {
+    if (!confirm(`¿Unir a ${window.personaEnGestion.nombre} con ${target.nombre}?`)) return;
+    let myFamId = window.personaEnGestion.familiaId;
+    let targetFamId = target.familiaId;
+    let finalFamId = myFamId;
+    const batch = writeBatch(db);
+    if (!finalFamId) {
+        finalFamId = new Date().getTime().toString() + "-FAM";
+        const myRef = doc(db, "albergues", currentAlbergueId, "personas", window.personaEnGestion.id);
+        batch.update(myRef, { familiaId: finalFamId, rolFamilia: 'TITULAR' });
+    }
+    let personasAmover = [target];
+    if (targetFamId) {
+        const otrosMiembros = listaPersonasCache.filter(p => p.familiaId === targetFamId);
+        personasAmover = [...otrosMiembros];
+    }
+    personasAmover = [...new Map(personasAmover.map(item => [item.id, item])).values()];
+    personasAmover.forEach(p => {
+        if(p.id !== window.personaEnGestion.id){
+            const ref = doc(db, "albergues", currentAlbergueId, "personas", p.id);
+            batch.update(ref, { familiaId: finalFamId, rolFamilia: 'MIEMBRO' });
+        }
+    });
+    await batch.commit();
+    alert("Familias fusionadas.");
+    document.getElementById('modal-vincular-familia').classList.add('hidden');
+    if(window.personaEnGestion) seleccionarPersona(window.personaEnGestion);
+};
+
+window.guardarCama = async function(c){if(window.personaEnGestion.cama){alert(`Error: ${window.personaEnGestion.nombre} ya tiene asignada la cama ${window.personaEnGestion.cama}. Debes liberarla primero.`);return;}await updateDoc(doc(db,"albergues",currentAlbergueId,"personas",window.personaEnGestion.id),{estado:'ingresado',cama:c.toString(),fechaIngreso:new Date()}); window.registrarLog(window.personaEnGestion.id, "Asignación Cama", `Cama ${c}`); window.cerrarMapaCamas();}
+window.mostrarGridCamas = mostrarGridCamas;
+window.abrirModalInfoCama = abrirModalInfoCama;
+
 window.liberarCamaMantener=async()=>await updateDoc(doc(db,"albergues",currentAlbergueId,"personas",window.personaEnGestion.id),{cama:null});
 window.regresarPrefiliacion=async()=>await updateDoc(doc(db,"albergues",currentAlbergueId,"personas",window.personaEnGestion.id),{estado:'espera',cama:null});
 function generarQR(){const u=window.location.href.split('?')[0]+`?public_id=${currentAlbergueId}`;document.getElementById("qrcode").innerHTML="";new QRCode(document.getElementById("qrcode"),{text:u,width:100,height:100});}

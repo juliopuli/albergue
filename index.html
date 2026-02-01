@@ -12,8 +12,14 @@
 <body>
 
     <div class="version-tag">Ver.37.0.0</div>
+
     <div id="toast">Guardado automático</div>
-    <div id="loading-overlay" class="hidden"><div class="spinner"></div><h2 style="color:var(--primary);">Cargando Datos...</h2></div>
+
+    <div id="loading-overlay" class="hidden">
+        <div class="spinner"></div>
+        <h2 style="color:var(--primary);">Cargando Datos...</h2>
+        <p style="color:#666;">Sincronizando información</p>
+    </div>
 
     <div id="login-screen" class="">
         <div class="card">
@@ -33,50 +39,102 @@
                     <span class="user-name" id="user-name-display">...</span>
                     <span class="user-role" id="user-role-badge">...</span>
                 </div>
-                <button id="header-btn-users" class="btn-icon hidden" onclick="window.navegar('usuarios')" title="Gestionar Usuarios"><i class="fa-solid fa-users-gear"></i></button>
-                <button class="btn-icon btn-key" onclick="window.abrirModalCambioPass()" title="Cambiar Contraseña"><i class="fa-solid fa-key"></i></button>
+                <button id="header-btn-users" class="btn-icon hidden" onclick="window.navegar('usuarios')" title="Gestionar Usuarios">
+                    <i class="fa-solid fa-users-gear"></i>
+                </button>
+                <button class="btn-icon btn-key" onclick="window.abrirModalCambioPass()" title="Cambiar Contraseña">
+                    <i class="fa-solid fa-key"></i>
+                </button>
                 <button class="btn-logout" onclick="window.cerrarSesion()"><i class="fa-solid fa-power-off"></i></button>
             </div>
         </header>
 
         <nav class="app-nav">
-            <div class="nav-item" id="nav-home" onclick="window.navegar('home')"><i class="fa-solid fa-house"></i><span>Inicio</span></div>
-            <div class="nav-item" id="nav-albergues" onclick="window.navegar('gestion-albergues')"><i class="fa-solid fa-bed"></i><span>Gestión</span></div>
-            <div class="nav-item" id="nav-mto" onclick="window.navegar('mantenimiento')"><i class="fa-solid fa-screwdriver-wrench"></i><span>Mantenimiento</span></div>
-            <div class="nav-item" id="nav-obs" onclick="window.navegar('observatorio')"><i class="fa-solid fa-binoculars"></i><span>Observatorio</span></div>
+            <div class="nav-item" id="nav-home" onclick="window.navegar('home')">
+                <i class="fa-solid fa-house"></i><span>Inicio</span>
+            </div>
+            <div class="nav-item" id="nav-albergues" onclick="window.navegar('gestion-albergues')">
+                <i class="fa-solid fa-bed"></i><span>Gestión</span>
+            </div>
+            <div class="nav-item" id="nav-mto" onclick="window.navegar('mantenimiento')">
+                <i class="fa-solid fa-screwdriver-wrench"></i><span>Mantenimiento</span>
+            </div>
+            <div class="nav-item" id="nav-obs" onclick="window.navegar('observatorio')">
+                <i class="fa-solid fa-binoculars"></i><span>Observatorio</span>
+            </div>
             <div class="nav-item disabled"><i class="fa-solid fa-chart-pie"></i><span>Informes</span></div>
         </nav>
 
         <main class="main-content">
+            
             <div id="screen-home" class="hidden">
-                <div class="hero-container"><i class="fa-solid fa-campground hero-icon"></i><h1 class="hero-title">Te damos la bienvenida</h1><p class="hero-subtitle">Sistema integral de control</p></div>
+                <div class="hero-container">
+                    <i class="fa-solid fa-campground hero-icon"></i>
+                    <h1 class="hero-title">Te damos la bienvenida</h1>
+                    <p class="hero-subtitle">Sistema integral de control de ocupación y filiación</p>
+                </div>
             </div>
 
             <div id="screen-usuarios" class="hidden">
                 <div class="card">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;"><h2>Gestión de Personal</h2><button class="success" onclick="window.abrirModalUsuario()">+ Nuevo</button></div>
-                    <div class="row"><input type="text" id="search-user" placeholder="🔍 Buscar..." onkeyup="window.filtrarUsuarios()"></div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                        <h2>Gestión de Personal</h2>
+                        <button class="success" onclick="window.abrirModalUsuario()">+ Nuevo</button>
+                    </div>
+                    <div class="row">
+                        <input type="text" id="search-user" placeholder="🔍 Buscar por nombre o email..." onkeyup="window.filtrarUsuarios()">
+                    </div>
                     <div id="lista-usuarios-container" class="user-list-grid"></div>
                 </div>
             </div>
 
             <div id="screen-gestion-albergues" class="hidden">
-                <div class="card"><h2>Selección de Albergue</h2><div id="lista-albergues-activos" class="mto-grid"></div></div>
+                <div class="card">
+                    <h2>Selección de Albergue</h2>
+                    <div id="lista-albergues-activos" class="mto-grid"></div>
+                </div>
             </div>
 
             <div id="screen-mantenimiento" class="hidden">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;"><h2><i class="fa-solid fa-tools"></i> Mantenimiento</h2><div id="container-ver-ocultos" class="hidden"><label class="toggle-switch"><input type="checkbox" class="toggle-input" id="check-ver-ocultos" onchange="window.cargarAlberguesMantenimiento()"><span class="toggle-slider"></span><span style="font-size:0.9rem; font-weight:600; margin-left:10px;">Mostrar Ocultos</span></label></div></div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                    <h2><i class="fa-solid fa-tools"></i> Mantenimiento</h2>
+                    <div id="container-ver-ocultos" class="hidden">
+                        <label class="toggle-switch">
+                            <input type="checkbox" class="toggle-input" id="check-ver-ocultos" onchange="window.cargarAlberguesMantenimiento()">
+                            <span class="toggle-slider"></span>
+                            <span style="font-size:0.9rem; font-weight:600; margin-left:10px;">Mostrar Ocultos</span>
+                        </label>
+                    </div>
+                </div>
                 <div id="mto-container" class="mto-grid"></div>
             </div>
 
             <div id="screen-observatorio" class="hidden">
                 <div class="obs-grid">
-                    <div class="obs-card"><div class="obs-label">Personas en Espera</div><div class="obs-val" id="kpi-espera" style="color:var(--warning);">0</div></div>
-                    <div class="obs-card"><div class="obs-label">Personas Alojadas</div><div class="obs-val" id="kpi-alojados" style="color:var(--success);">0</div></div>
-                    <div class="obs-card"><div class="obs-label">Camas Disponibles</div><div class="obs-val" id="kpi-libres" style="color:var(--primary);">0</div></div>
-                    <div class="obs-card"><div class="obs-label">Ocupación Global</div><div class="obs-val" id="kpi-percent">0%</div></div>
+                    <div class="obs-card">
+                        <div class="obs-label">Personas en Espera</div>
+                        <div class="obs-val" id="kpi-espera" style="color:var(--warning);">0</div>
+                    </div>
+                    <div class="obs-card">
+                        <div class="obs-label">Personas Alojadas</div>
+                        <div class="obs-val" id="kpi-alojados" style="color:var(--success);">0</div>
+                    </div>
+                    <div class="obs-card">
+                        <div class="obs-label">Camas Disponibles</div>
+                        <div class="obs-val" id="kpi-libres" style="color:var(--primary);">0</div>
+                    </div>
+                    <div class="obs-card">
+                        <div class="obs-label">Ocupación Global</div>
+                        <div class="obs-val" id="kpi-percent">0%</div>
+                        <div class="prog-track"><div class="prog-fill" id="kpi-bar" style="width:0%"></div></div>
+                    </div>
                 </div>
-                <div class="card"><h3>Detalle por Albergue</h3><div id="obs-list-container" style="margin-top:20px;"><p style="color:#666; text-align:center;">Cargando datos...</p></div></div>
+                <div class="card">
+                    <h3>Detalle por Albergue</h3>
+                    <div id="obs-list-container" style="margin-top:20px;">
+                        <p style="color:#666; text-align:center;">Cargando datos...</p>
+                    </div>
+                </div>
             </div>
 
             <div id="screen-operativa" class="hidden">
@@ -99,6 +157,7 @@
                     </div>
 
                     <div style="margin-top:25px;">
+                        
                         <div id="tab-prefiliacion" class="tab-content active">
                             <div class="module-box module-pref">
                                 <h3><i class="fa-regular fa-clipboard"></i> Ficha de Ingreso</h3>
@@ -132,6 +191,7 @@
                                     <div id="resultados-busqueda" class="search-results hidden"></div>
                                 </div>
                             </div>
+                            
                             <div id="panel-gestion-persona" class="hidden" style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:var(--radius); padding:25px; margin-top:10px;">
                                 <h3 id="gestion-nombre-titulo" style="color:var(--primary);">Nombre</h3>
                                 <p style="margin-bottom:15px;">Estado: <span id="gestion-estado" class="badge">...</span> <strong id="gestion-cama-info"></strong></p>
@@ -209,14 +269,72 @@
 
     <div id="modal-qr" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content" style="text-align:center;"><span class="close-modal" onclick="document.getElementById('modal-qr').classList.add('hidden')">&times;</span><h3>Escanea para acceder</h3><div id="qrcode-display" style="display:inline-block; margin:20px;"></div><p style="color:#666;">Auto-registro móvil.</p></div></div>
     <div id="modal-cama" class="modal-overlay hidden" onclick="if(event.target===this)window.cerrarMapaCamas()"><div class="modal-content modal-lg"><span class="close-modal" onclick="window.cerrarMapaCamas()">&times;</span><h3>Seleccionar Cama</h3><p style="font-size:0.8rem;color:#666;">Verde Borde=Sugerencia | Naranja=Reserva Familia</p><div id="grid-camas" class="bed-grid"></div></div></div>
-    <div id="modal-bed-info" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content modal-lg" style="text-align:center; padding:40px;"><span class="close-modal" onclick="document.getElementById('modal-bed-info').classList.add('hidden')">&times;</span><div style="font-size:3rem; color:var(--primary); margin-bottom:10px;"><i class="fa-solid fa-user-check"></i></div><h3 style="color:var(--text-light);">Cama <span id="info-cama-num"></span></h3><h2 id="info-nombre-completo" style="color:var(--primary);"></h2><p><span id="info-telefono"></span></p><br><button id="btn-historial-cama" class="dark hidden" style="margin-bottom:15px;">📜 Ver Historial</button><div style="margin-top:20px; text-align:left;"><h4 style="border-bottom:1px solid #eee; padding-bottom:5px;">Unidad Familiar</h4><div id="info-familia-detalle"></div></div></div></div>
+    
+    <div id="modal-bed-info" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
+        <div class="modal-content modal-lg" style="text-align:center; padding:40px;">
+            <span class="close-modal" onclick="document.getElementById('modal-bed-info').classList.add('hidden')">&times;</span>
+            <div style="font-size:3rem; color:var(--primary); margin-bottom:10px;"><i class="fa-solid fa-user-check"></i></div>
+            <h3 style="color:var(--text-light);">Cama <span id="info-cama-num"></span></h3>
+            <h2 id="info-nombre-completo" style="color:var(--primary);"></h2>
+            <p><span id="info-telefono"></span></p>
+            <br>
+            <button id="btn-historial-cama" class="dark hidden" style="margin-bottom:15px;">📜 Ver Historial</button>
+            <div style="margin-top:20px; text-align:left;">
+                <h4 style="border-bottom:1px solid #eee; padding-bottom:5px;">Unidad Familiar</h4>
+                <div id="info-familia-detalle"></div>
+            </div>
+        </div>
+    </div>
+
     <div id="modal-vincular-familia" class="modal-overlay hidden" style="z-index: 2000;" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><span class="close-modal" onclick="document.getElementById('modal-vincular-familia').classList.add('hidden')">&times;</span><h3>Unir a Familia</h3><input type="text" id="search-vincular" placeholder="Buscar..." onkeyup="window.buscarParaVincular()" autocomplete="off"><div id="resultados-vincular" class="search-results hidden"></div></div></div>
+    
     <div id="modal-albergue" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><span class="close-modal" onclick="document.getElementById('modal-albergue').classList.add('hidden')">&times;</span><h3 id="mto-modal-title">Nuevo</h3><label>Nombre</label><input type="text" id="mto-nombre"><div class="row"><div class="col"><label>Cap</label><input type="number" id="mto-capacidad"></div><div class="col"><label>Cols</label><input type="number" id="mto-columnas" value="8"></div></div><div class="btn-row"><button class="primary" onclick="window.guardarAlbergue()">Guardar</button></div><br><button id="btn-delete-albergue" class="danger hidden" style="width:100%" onclick="window.eliminarAlbergueActual()">Eliminar Albergue</button></div></div>
-    <div id="modal-crear-usuario" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><span class="close-modal" onclick="document.getElementById('modal-crear-usuario').classList.add('hidden')">&times;</span><h3 id="user-modal-title">Usuario</h3><label>Nombre</label><input type="text" id="new-user-name"><label>Rol</label><select id="new-user-role"></select><label>Email</label><input type="email" id="new-user-email"><label>Contraseña</label><input type="password" id="new-user-pass"><p id="edit-pass-warning" style="display:none;color:orange;font-size:0.8em;">Use reset email.</p><div class="btn-row"><button id="btn-save-user" class="primary" onclick="window.guardarUsuario()">Guardar</button></div><br><button id="btn-delete-user" class="danger hidden" style="width:100%" onclick="window.eliminarUsuario()">Eliminar Usuario</button></div></div>
-    <div id="modal-change-pass" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><span class="close-modal" onclick="document.getElementById('modal-change-pass').classList.add('hidden')">&times;</span><h3>Cambiar Contraseña</h3><label>Contraseña Actual</label><input type="password" id="chg-old-pass"><label>Nueva Contraseña</label><input type="password" id="chg-new-pass"><label>Confirmar Nueva</label><input type="password" id="chg-confirm-pass"><div class="btn-row"><button class="primary" onclick="window.ejecutarCambioPass()">Actualizar</button></div></div></div>
-    <div id="modal-historial" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><span class="close-modal" onclick="document.getElementById('modal-historial').classList.add('hidden')">&times;</span><h3>Historial de Movimientos</h3><div id="historial-content" style="max-height:60vh; overflow-y:auto; margin-top:15px;"></div></div></div>
+    
+    <div id="modal-crear-usuario" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
+        <div class="modal-content">
+            <span class="close-modal" onclick="document.getElementById('modal-crear-usuario').classList.add('hidden')">&times;</span>
+            <h3 id="user-modal-title">Usuario</h3>
+            <label>Nombre</label><input type="text" id="new-user-name">
+            <label>Rol</label><select id="new-user-role"></select>
+            <label>Email</label><input type="email" id="new-user-email">
+            <label>Contraseña</label><input type="password" id="new-user-pass">
+            <p id="edit-pass-warning" style="display:none;color:orange;font-size:0.8em;">Use reset email.</p>
+            <div class="btn-row">
+                <button id="btn-save-user" class="primary" onclick="window.guardarUsuario()">Guardar</button>
+            </div>
+            <br>
+            <button id="btn-delete-user" class="danger hidden" style="width:100%" onclick="window.eliminarUsuario()">Eliminar Usuario</button>
+        </div>
+    </div>
+    
+    <div id="modal-change-pass" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
+        <div class="modal-content">
+            <span class="close-modal" onclick="document.getElementById('modal-change-pass').classList.add('hidden')">&times;</span>
+            <h3>Cambiar Contraseña</h3>
+            <label>Contraseña Actual</label>
+            <input type="password" id="chg-old-pass" placeholder="Verificación de seguridad">
+            <label>Nueva Contraseña</label>
+            <input type="password" id="chg-new-pass" placeholder="Mínimo 6 caracteres">
+            <label>Confirmar Nueva</label>
+            <input type="password" id="chg-confirm-pass" placeholder="Repite la nueva contraseña">
+            <div class="btn-row">
+                <button class="primary" onclick="window.ejecutarCambioPass()">Actualizar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-historial" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
+        <div class="modal-content">
+            <span class="close-modal" onclick="document.getElementById('modal-historial').classList.add('hidden')">&times;</span>
+            <h3>Historial de Movimientos</h3>
+            <div id="historial-content" style="max-height:60vh; overflow-y:auto; margin-top:15px;"></div>
+        </div>
+    </div>
+
     <div id="modal-add-familiar" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><span class="close-modal" onclick="window.cerrarModalFamiliar()">&times;</span><h3>Familiar (QR)</h3><div class="row"><div class="col"><label>Nombre</label><input type="text" id="fam-nombre"></div></div><div class="row"><div class="col"><label>Ap 1</label><input type="text" id="fam-ap1"></div><div class="col"><label>Ap 2</label><input type="text" id="fam-ap2"></div></div><div class="row"><div class="col"><label>Doc</label><select id="fam-tipo-doc" onchange="window.verificarMenor('fam')"><option value="MENOR">MENOR</option><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option></select></div><div class="col"><label>Num</label><input type="text" id="fam-doc-num" disabled></div></div><div class="row"><div class="col"><label>F. Nac</label><input type="tel" id="fam-fecha" oninput="window.formatearFecha(this)" maxlength="10"></div></div><div class="btn-row"><button class="primary" onclick="window.guardarFamiliarEnLista()">Añadir</button></div></div></div>
+    
     <div id="modal-admin-add-familiar" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><span class="close-modal" onclick="window.cerrarModalFamiliarAdmin()">&times;</span><h3>Miembro (Admin)</h3><div class="row"><div class="col"><label>Nombre</label><input type="text" id="adm-fam-nombre"></div><div class="col"><label>Ap 1</label><input type="text" id="adm-fam-ap1"></div><div class="col"><label>Ap 2</label><input type="text" id="adm-fam-ap2"></div></div><div class="row"><div class="col"><label>Doc</label><select id="adm-fam-tipo-doc" onchange="window.verificarMenor('adm-fam')"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Num</label><input type="text" id="adm-fam-doc-num"></div></div><div class="row"><div class="col"><label>F. Nac</label><input type="tel" id="adm-fam-fecha" oninput="window.formatearFecha(this)" maxlength="10"></div><div class="col"><label>Tel</label><input type="tel" id="adm-fam-tel"></div></div><div class="btn-row"><button class="primary" onclick="window.guardarFamiliarAdmin()">Añadir</button></div></div></div>
+    
     <div id="modal-obs-detalle" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content modal-lg"><span class="close-modal" onclick="document.getElementById('modal-obs-detalle').classList.add('hidden')">&times;</span><h3 id="obs-modal-title">Listado</h3><div id="obs-modal-content" style="margin-top:20px;"></div></div></div>
 
     <script type="module" src="script.js"></script>

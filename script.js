@@ -94,7 +94,7 @@ window.actualizarContadores = function() {
     if (elCap) elCap.innerText = totalCapacidad;
 }
 
-// --- 4. LÓGICA QR PÚBLICA ---
+// --- 4. LÓGICA QR PÚBLICA (CON FIX AUTH ANÓNIMO) ---
 window.actualizarListaFamiliaresUI = function() {
     const d = window.el('lista-familiares-ui'); 
     if(!d) return;
@@ -114,7 +114,14 @@ window.publicoGuardarTodo = async function() {
     if(!mainData.nombre) return alert("Nombre titular obligatorio.");
     if(!currentAlbergueId) return alert("Error ID");
     
-    if(!auth.currentUser) { try { await signInAnonymously(auth); } catch(e) { return alert("Error conexión: " + e.message); } }
+    // FIX AUTH ANONIMO: Try to sign in anonymously if not signed in
+    if(!auth.currentUser) { 
+        try { await signInAnonymously(auth); } 
+        catch(e) { 
+            if(window.logError) window.logError("Auth Anonima Fallo: " + e.message);
+            // Continue anyway to try open write
+        } 
+    }
 
     try {
         const fid = new Date().getTime().toString(); const b = writeBatch(db);

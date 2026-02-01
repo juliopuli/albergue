@@ -115,13 +115,13 @@ button.dark { background: #334155; color: white; }
 .dot-red { background-color: #ef4444; box-shadow: 0 0 4px #ef4444; }
 
 /* MODALS */
-.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3500; display: flex; justify-content: center; align-items: center; }
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 8000; display: flex; justify-content: center; align-items: center; }
 .modal-content { background: white; width: 95%; max-width: 600px; padding: 30px; border-radius: 12px; max-height: 90vh; overflow-y: auto; position: relative; }
 .modal-lg { max-width: 900px; }
-#modal-historial, #modal-bed-info, #modal-add-familiar, #modal-admin-add-familiar { z-index: 4000 !important; }
+#modal-historial, #modal-bed-info, #modal-add-familiar, #modal-admin-add-familiar { z-index: 8000 !important; }
 #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
 
-/* PUBLIC SCREEN FIX */
+/* PUBLIC SCREEN - LOWER THAN MODALS (6000 vs 8000) */
 #public-register-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 6000; overflow-y: auto; background: white; }
 
 .version-tag { position: fixed; bottom: 170px; right: 10px; color: #ccc; font-size: 0.8em; pointer-events: none; }
@@ -156,7 +156,7 @@ button.dark { background: #334155; color: white; }
 /* --- DEBUG BOX --- */
 #debug-box {
     position: fixed; bottom: 0; left: 0; width: 100%; height: 150px;
-    background: #000; color: #0f0; z-index: 99999;
+    background: rgba(0,0,0,0.9); color: #0f0; z-index: 99999;
     font-family: 'Consolas', 'Monaco', monospace; font-size: 11px; padding: 10px;
     overflow-y: scroll; border-top: 2px solid #0f0; box-shadow: 0 -5px 15px rgba(0,0,0,0.5);
 }

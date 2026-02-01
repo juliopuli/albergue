@@ -70,7 +70,6 @@ button.warning { background: #f59e0b; color: white; }
 button.dark { background: #334155; color: white; }
 .btn-group-horizontal { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
 .btn-icon { background: #e0e7ff; color: var(--primary); border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; }
-.btn-icon-small { background: transparent; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer; padding: 4px 8px; font-size: 0.9rem; margin-right: 5px; }
 
 /* LISTAS & GRID */
 .mto-grid, .user-list-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin-top: 20px; }
@@ -118,7 +117,10 @@ button.dark { background: #334155; color: white; }
 .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 8000; display: flex; justify-content: center; align-items: center; }
 .modal-content { background: white; width: 95%; max-width: 600px; padding: 30px; border-radius: 12px; max-height: 90vh; overflow-y: auto; position: relative; }
 .modal-lg { max-width: 900px; }
-#modal-historial, #modal-bed-info, #modal-add-familiar, #modal-admin-add-familiar { z-index: 8000 !important; }
+
+/* FIX: HISTORIAL ABOVE ALL OTHER MODALS */
+#modal-historial { z-index: 9000 !important; }
+#modal-bed-info, #modal-add-familiar, #modal-admin-add-familiar { z-index: 8000 !important; }
 #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
 
 /* PUBLIC SCREEN - LOWER THAN MODALS (6000 vs 8000) */
@@ -135,7 +137,7 @@ button.dark { background: #334155; color: white; }
 .obs-label { text-transform: uppercase; font-size: 0.75rem; color: #64748b; font-weight: 700; letter-spacing: 1px; }
 .obs-row { background: white; border: 1px solid #e2e8f0; padding: 20px; border-radius: 12px; margin-bottom: 15px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; transition: 0.2s; }
 .obs-clickable { cursor: pointer; text-decoration: underline; text-decoration-style: dotted; text-decoration-color: var(--primary); transition: 0.2s; }
-.obs-clickable:hover { color: var(--primary-dark); } /* Feedback visual */
+.obs-clickable:hover { color: var(--primary-dark); }
 .prog-track { background: #e2e8f0; height: 10px; border-radius: 5px; overflow: hidden; width: 100%; margin-top: 10px; }
 .prog-fill { height: 100%; background: var(--primary); transition: width 0.5s; }
 .prog-fill.high { background: var(--danger); }
@@ -158,7 +160,7 @@ button.dark { background: #334155; color: white; }
 #debug-box {
     position: fixed; bottom: 0; left: 0; width: 100%; height: 150px;
     background: rgba(0,0,0,0.9); color: #0f0; z-index: 99999;
-    font-family: 'Consolas', 'Monaco', monospace; font-size: 11px; padding: 10px;
+    font-family: 'Consolas', 'Monaco', monospace; font-size: 12px; padding: 10px;
     overflow-y: scroll; border-top: 2px solid #0f0; box-shadow: 0 -5px 15px rgba(0,0,0,0.5);
 }
 #debug-box div { margin-bottom: 4px; border-bottom: 1px solid #333; }

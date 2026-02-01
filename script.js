@@ -15,10 +15,54 @@ let prefiliacionEdicionId = null;
 let isPublicMode = false;
 let highlightedFamilyId = null;
 
-// --- LOGIN ---
+// --- FUNCIONES CORE GLOBALES ---
 window.iniciarSesion = async () => {
     try { await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-pass').value); }
     catch(e) { alert("Error: " + e.message); }
+};
+
+window.navegar = (p) => {
+    limpiarListeners();
+    ['screen-home', 'screen-usuarios', 'screen-gestion-albergues', 'screen-mantenimiento', 'screen-operativa', 'screen-observatorio']
+        .forEach(id => document.getElementById(id).classList.add('hidden'));
+    
+    if(!currentUserData) return;
+    const r = (currentUserData.rol || "").toLowerCase().trim();
+
+    if(p === 'home'){
+        document.getElementById('screen-home').classList.remove('hidden');
+        document.getElementById('nav-home').classList.add('active');
+    } else if(p === 'usuarios'){
+        if(['super_admin','admin'].includes(r)) { document.getElementById('screen-usuarios').classList.remove('hidden'); window.cargarUsuarios(); }
+    } else if(p === 'gestion-albergues'){
+        if(['super_admin','admin','intervencion','filiacion'].includes(r)) {
+            window.cargarAlberguesActivos();
+            document.getElementById('screen-gestion-albergues').classList.remove('hidden');
+            document.getElementById('nav-albergues').classList.add('active');
+        }
+    } else if(p === 'mantenimiento'){
+        if(['super_admin','admin'].includes(r)) {
+            window.cargarAlberguesMantenimiento();
+            document.getElementById('screen-mantenimiento').classList.remove('hidden');
+            document.getElementById('nav-mto').classList.add('active');
+        }
+    } else if(p === 'operativa'){
+        document.getElementById('screen-operativa').classList.remove('hidden');
+        document.getElementById('nav-albergues').classList.add('active');
+        const t = configurarTabsPorRol();
+        window.cambiarPestana(t);
+    } else if(p === 'observatorio'){
+        if(['super_admin','admin','observador'].includes(r)) {
+            document.getElementById('screen-observatorio').classList.remove('hidden');
+            document.getElementById('nav-obs').classList.add('active');
+            window.cargarObservatorio(); 
+        }
+    }
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    if(p==='home') document.getElementById('nav-home').classList.add('active');
+    else if(p==='gestion-albergues' || p==='operativa') document.getElementById('nav-albergues').classList.add('active');
+    else if(p==='mantenimiento') document.getElementById('nav-mto').classList.add('active');
+    else if(p==='observatorio') document.getElementById('nav-obs').classList.add('active');
 };
 
 // --- AUTH & HOME ---
@@ -70,7 +114,6 @@ onAuthStateChanged(auth,async(u)=>{
     }
 });
 
-// --- HELPER: Limpiar Listeners ---
 function limpiarListeners() {
     if(unsubscribeUsers) unsubscribeUsers();
     if(unsubscribeAlberguesActivos) unsubscribeAlberguesActivos();
@@ -78,51 +121,6 @@ function limpiarListeners() {
     if(unsubscribePersonas) unsubscribePersonas();
     if(unsubscribeAlbergueDoc) unsubscribeAlbergueDoc();
 }
-
-// --- NAVEGACIÓN ---
-window.navegar = (p) => {
-    limpiarListeners();
-    ['screen-home', 'screen-usuarios', 'screen-gestion-albergues', 'screen-mantenimiento', 'screen-operativa', 'screen-observatorio']
-        .forEach(id => document.getElementById(id).classList.add('hidden'));
-    
-    if(!currentUserData) return;
-    const r = (currentUserData.rol || "").toLowerCase().trim();
-
-    if(p === 'home'){
-        document.getElementById('screen-home').classList.remove('hidden');
-        document.getElementById('nav-home').classList.add('active');
-    } else if(p === 'usuarios'){
-        if(['super_admin','admin'].includes(r)) { document.getElementById('screen-usuarios').classList.remove('hidden'); window.cargarUsuarios(); }
-    } else if(p === 'gestion-albergues'){
-        if(['super_admin','admin','intervencion','filiacion'].includes(r)) {
-            window.cargarAlberguesActivos();
-            document.getElementById('screen-gestion-albergues').classList.remove('hidden');
-            document.getElementById('nav-albergues').classList.add('active');
-        }
-    } else if(p === 'mantenimiento'){
-        if(['super_admin','admin'].includes(r)) {
-            window.cargarAlberguesMantenimiento();
-            document.getElementById('screen-mantenimiento').classList.remove('hidden');
-            document.getElementById('nav-mto').classList.add('active');
-        }
-    } else if(p === 'operativa'){
-        document.getElementById('screen-operativa').classList.remove('hidden');
-        document.getElementById('nav-albergues').classList.add('active');
-        const t = configurarTabsPorRol();
-        window.cambiarPestana(t);
-    } else if(p === 'observatorio'){
-        if(['super_admin','admin','observador'].includes(r)) {
-            document.getElementById('screen-observatorio').classList.remove('hidden');
-            document.getElementById('nav-obs').classList.add('active');
-            window.cargarObservatorio(); 
-        }
-    }
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    if(p==='home') document.getElementById('nav-home').classList.add('active');
-    else if(p==='gestion-albergues' || p==='operativa') document.getElementById('nav-albergues').classList.add('active');
-    else if(p==='mantenimiento') document.getElementById('nav-mto').classList.add('active');
-    else if(p==='observatorio') document.getElementById('nav-obs').classList.add('active');
-};
 
 function configurarDashboard(){
     const r = (currentUserData.rol || "").toLowerCase().trim();
@@ -190,7 +188,7 @@ window.cargarAlberguesActivos = () => {
             const a = d.data();
             const div = document.createElement('div');
             div.className = "mto-card";
-            div.onclick = () => window.entrarAlbergue(d.id);
+            div.onclick = () => window.cargarDatosYEntrar(d.id);
             div.innerHTML = `<h3>${a.nombre}</h3><div class="mto-info" id="info-${d.id}">Calculando...</div>`;
             c.appendChild(div);
             getDocs(query(collection(db,"albergues",d.id,"personas"),where("estado","==","ingresado")))
@@ -202,31 +200,71 @@ window.cargarAlberguesActivos = () => {
     });
 };
 
-// --- ENTRAR ALBERGUE (FIXED DOUBLE LISTENER) ---
-window.entrarAlbergue = (id) => {
+// --- EL GRAN CAMBIO: PRE-CARGA COMPLETA (V9.0.0) ---
+window.cargarDatosYEntrar = async (id) => {
     currentAlbergueId = id;
-    window.navegar('operativa');
-    const initialTab = configurarTabsPorRol();
-    window.cambiarPestana(initialTab);
     
-    // RESET FORZADO A CERO PARA EVITAR -/-
-    totalCapacidad = 0; 
-    ocupacionActual = 0;
-    document.getElementById('ocupacion-count').innerText = "0";
-    document.getElementById('capacidad-total').innerText = "0";
+    // 1. Mostrar Spinner
+    document.getElementById('loading-overlay').classList.remove('hidden');
 
-    // 1. Escuchar datos del edificio
+    try {
+        // 2. Descargar TODO de golpe (Doc + Coleccion Personas)
+        const [docSnap, querySnap] = await Promise.all([
+            getDoc(doc(db, "albergues", id)),
+            getDocs(collection(db, "albergues", id, "personas"))
+        ]);
+
+        if (docSnap.exists()) {
+            currentAlbergueData = docSnap.data();
+            totalCapacidad = parseInt(currentAlbergueData.capacidad || 0);
+        }
+
+        listaPersonasCache = []; 
+        camasOcupadas = {}; 
+        let c = 0;
+
+        querySnap.forEach(d => {
+            const p = d.data(); p.id = d.id;
+            listaPersonasCache.push(p);
+            if(p.estado === 'ingresado') {
+                c++; if(p.cama) camasOcupadas[p.cama] = p.nombre;
+            }
+        });
+        
+        // Ordenar
+        try { listaPersonasCache.sort((a,b)=>(b.fechaRegistro?.seconds||0) - (a.fechaRegistro?.seconds||0)); } catch(e){}
+        ocupacionActual = c;
+
+        // 3. Preparar Interfaz
+        window.navegar('operativa');
+        document.getElementById('app-title').innerText = currentAlbergueData.nombre;
+        actualizarContadores();
+        
+        const initialTab = configurarTabsPorRol();
+        window.cambiarPestana(initialTab);
+
+        // 4. Quitar Spinner (Ya tenemos datos, no habrá 0/0)
+        document.getElementById('loading-overlay').classList.add('hidden');
+
+        // 5. Conectar listeners silenciosos para el futuro
+        conectarListenersBackground(id);
+
+    } catch(e) {
+        alert("Error cargando albergue: " + e.message);
+        document.getElementById('loading-overlay').classList.add('hidden');
+    }
+};
+
+function conectarListenersBackground(id) {
     if(unsubscribeAlbergueDoc) unsubscribeAlbergueDoc();
     unsubscribeAlbergueDoc = onSnapshot(doc(db,"albergues",id), d => {
         if(d.exists()){
             currentAlbergueData = d.data();
-            document.getElementById('app-title').innerText = currentAlbergueData.nombre;
             totalCapacidad = parseInt(currentAlbergueData.capacidad || 0);
             actualizarContadores();
         }
     });
 
-    // 2. Escuchar lista de personas
     if(unsubscribePersonas) unsubscribePersonas();
     unsubscribePersonas = onSnapshot(collection(db,"albergues",id,"personas"), s => {
         listaPersonasCache = []; camasOcupadas = {}; let c = 0;
@@ -246,17 +284,14 @@ window.entrarAlbergue = (id) => {
             if(upd) window.seleccionarPersona(upd);
         }
     });
-};
-
-function actualizarContadores(){
-    // Defensa contra nulos
-    const oc = (typeof ocupacionActual === 'number') ? ocupacionActual : 0;
-    const cap = (typeof totalCapacidad === 'number') ? totalCapacidad : 0;
-    document.getElementById('ocupacion-count').innerText = oc;
-    document.getElementById('capacidad-total').innerText = cap;
 }
 
-// --- TABS ---
+function actualizarContadores(){
+    document.getElementById('ocupacion-count').innerText = ocupacionActual;
+    document.getElementById('capacidad-total').innerText = totalCapacidad;
+}
+
+// --- TABS & CONFIGURATION ---
 function configurarTabsPorRol() {
     const r = (currentUserData.rol || "").toLowerCase().trim();
     ['btn-tab-pref','btn-tab-fil','btn-tab-san','btn-tab-psi'].forEach(id => {

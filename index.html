@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión Albergue - Ver.6.3.0</title>
+    <title>Gestión Albergue - Ver.6.4.0</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     
@@ -12,12 +12,12 @@
 </head>
 <body>
 
-    <div class="version-tag">Ver.6.3.0</div>
+    <div class="version-tag">Ver.6.4.0</div>
 
     <div id="loading-overlay" class="hidden">
         <div class="spinner"></div>
-        <h2 style="color:var(--primary);">Cargando Albergue...</h2>
-        <p style="color:#666;">Sincronizando datos</p>
+        <h2 style="color:var(--primary);">Cargando Datos...</h2>
+        <p style="color:#666;">Sincronizando información</p>
     </div>
 
     <div id="login-screen" class="">
@@ -140,7 +140,7 @@
                 <div class="card">
                     <div class="sticky-header">
                         <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <div><h2 id="app-title" style="margin:0;">Albergue</h2><span class="badge badge-active">Ocupación: <span id="ocupacion-count">-</span> / <span id="capacidad-total">-</span></span></div>
+                            <div><h2 id="app-title" style="margin:0;">Albergue</h2><span class="badge badge-active">Ocupación: <span id="ocupacion-count">...</span> / <span id="capacidad-total">...</span></span></div>
                             <div class="btn-group-horizontal" style="margin-top:0;">
                                 <button class="dark" onclick="window.abrirModalQR()"><i class="fa-solid fa-qrcode"></i> QR</button>
                                 <button class="primary" onclick="window.abrirMapaGeneral()"><i class="fa-solid fa-bed"></i> Camas</button>

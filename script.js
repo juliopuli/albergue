@@ -58,7 +58,6 @@ window.navegar = (p) => {
             window.cargarObservatorio(); 
         }
     }
-    
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     if(p==='home') document.getElementById('nav-home').classList.add('active');
     else if(p==='gestion-albergues' || p==='operativa') document.getElementById('nav-albergues').classList.add('active');
@@ -66,7 +65,7 @@ window.navegar = (p) => {
     else if(p==='observatorio') document.getElementById('nav-obs').classList.add('active');
 };
 
-// --- AUTH ---
+// --- AUTH & HOME ---
 window.onload = () => {
     const p = new URLSearchParams(window.location.search);
     if(p.get('public_id')){
@@ -146,6 +145,7 @@ function configurarDashboard(){
     if(r==='super_admin') document.getElementById('container-ver-ocultos').classList.remove('hidden');
 }
 
+// --- LOGS ---
 window.registrarLog = async (personaId, accion, detalle = "") => {
     try {
         const usuarioLog = currentUserData ? currentUserData.nombre : "Auto-Registro QR";
@@ -191,6 +191,7 @@ window.cargarAlberguesActivos = () => {
             div.onclick = () => window.entrarAlbergue(d.id);
             div.innerHTML = `<h3>${a.nombre}</h3><div class="mto-info" id="info-${d.id}">Calculando...</div>`;
             c.appendChild(div);
+            // ESTA ES LA CLAVE QUE FUNCIONABA, REPLICADA ABAJO
             getDocs(query(collection(db,"albergues",d.id,"personas"),where("estado","==","ingresado")))
                 .then(snap => {
                     const el = document.getElementById(`info-${d.id}`);
@@ -200,76 +201,31 @@ window.cargarAlberguesActivos = () => {
     });
 };
 
-// --- ENTRAR ALBERGUE V.7.0.0 (ESTRATEGIA OBSERVATORIO) ---
-window.entrarAlbergue = async (id) => {
+// --- ENTRAR ALBERGUE (RÉPLICA EXACTA DE LA LÓGICA DE LISTA) ---
+window.entrarAlbergue = (id) => {
     currentAlbergueId = id;
-    
-    // 1. Mostrar pantalla de carga
-    document.getElementById('loading-overlay').classList.remove('hidden');
-    
-    // 2. Navegar a la pantalla (HTML visible)
     window.navegar('operativa');
     const initialTab = configurarTabsPorRol();
     window.cambiarPestana(initialTab);
+    
+    // RESET VISUAL (Guiones iniciales)
+    document.getElementById('ocupacion-count').innerText = "-";
+    document.getElementById('capacidad-total').innerText = "-";
 
-    try {
-        // 3. FETCH INICIAL (Como Observatorio: descarga de una vez)
-        // Esto garantiza que tengas datos ANTES de quitar el overlay
-        const [docSnap, querySnap] = await Promise.all([
-            getDoc(doc(db, "albergues", id)),
-            getDocs(collection(db, "albergues", id, "personas"))
-        ]);
-
-        if (docSnap.exists()) {
-            currentAlbergueData = docSnap.data();
-            document.getElementById('app-title').innerText = currentAlbergueData.nombre;
-            totalCapacidad = parseInt(currentAlbergueData.capacidad || 0);
-        }
-
-        listaPersonasCache = []; 
-        camasOcupadas = {}; 
-        let c = 0;
-
-        querySnap.forEach(d => {
-            const p = d.data(); p.id = d.id;
-            listaPersonasCache.push(p);
-            if(p.estado === 'ingresado') {
-                c++; if(p.cama) camasOcupadas[p.cama] = p.nombre;
-            }
-        });
-        
-        // Ordenar inicialmente
-        try { listaPersonasCache.sort((a,b)=>(b.fechaRegistro?.seconds||0) - (a.fechaRegistro?.seconds||0)); } catch(e){}
-        ocupacionActual = c;
-
-        // 4. Actualizar UI con datos firmes
-        actualizarContadores();
-        
-        // 5. Ocultar Overlay (YA TIENES LOS DATOS, ADIÓS 0/0)
-        document.getElementById('loading-overlay').classList.add('hidden');
-
-        // 6. Activar Listeners en segundo plano (para actualizaciones futuras)
-        setupListeners(id);
-
-    } catch (e) {
-        alert("Error cargando albergue: " + e.message);
-        document.getElementById('loading-overlay').classList.add('hidden');
-    }
-};
-
-function setupListeners(id) {
+    // 1. Escuchar datos del edificio (Nombre y Capacidad)
     if(unsubscribeAlbergueDoc) unsubscribeAlbergueDoc();
     unsubscribeAlbergueDoc = onSnapshot(doc(db,"albergues",id), d => {
         if(d.exists()){
             currentAlbergueData = d.data();
+            document.getElementById('app-title').innerText = currentAlbergueData.nombre;
             totalCapacidad = parseInt(currentAlbergueData.capacidad || 0);
             actualizarContadores();
         }
     });
 
+    // 2. Escuchar lista de personas (Para calcular ocupación en tiempo real)
     if(unsubscribePersonas) unsubscribePersonas();
     unsubscribePersonas = onSnapshot(collection(db,"albergues",id,"personas"), s => {
-        // Actualización silenciosa en background
         listaPersonasCache = []; camasOcupadas = {}; let c = 0;
         s.forEach(d => {
             const p = d.data(); p.id = d.id;
@@ -280,19 +236,21 @@ function setupListeners(id) {
         });
         try { listaPersonasCache.sort((a,b)=>(b.fechaRegistro?.seconds||0) - (a.fechaRegistro?.seconds||0)); } catch(e){}
         ocupacionActual = c;
-        actualizarContadores();
+        actualizarContadores(); // Se actualiza cada vez que cambia algo
         
-        // Refrescar ficha si está abierta
         if(window.personaEnGestion){
             const upd = listaPersonasCache.find(x => x.id === window.personaEnGestion.id);
             if(upd) window.seleccionarPersona(upd);
         }
     });
-}
+};
 
 function actualizarContadores(){
-    document.getElementById('ocupacion-count').innerText=ocupacionActual;
-    document.getElementById('capacidad-total').innerText=totalCapacidad;
+    // Solo actualizamos si tenemos datos numéricos válidos
+    const oc = (typeof ocupacionActual === 'number') ? ocupacionActual : "-";
+    const cap = (typeof totalCapacidad === 'number') ? totalCapacidad : "-";
+    document.getElementById('ocupacion-count').innerText = oc;
+    document.getElementById('capacidad-total').innerText = cap;
 }
 
 // --- TABS & CONFIGURATION ---
@@ -365,6 +323,70 @@ window.cargarAlberguesMantenimiento = () => {
     });
 };
 
+// --- OBSERVATORIO ---
+window.cargarObservatorio = async () => {
+    const listContainer = document.getElementById('obs-list-container');
+    if(!listContainer) return;
+    listContainer.innerHTML = '<p style="color:#666; text-align:center;">Analizando datos...</p>';
+    let gWait=0, gHosted=0, gCap=0;
+    try {
+        const sSnap = await getDocs(query(collection(db, "albergues"), where("activo", "==", true)));
+        let htmlList = "";
+        for (const docS of sSnap.docs) {
+            const data = docS.data();
+            const cap = parseInt(data.capacidad || 0); gCap += cap;
+            const pSnap = await getDocs(collection(db, "albergues", docS.id, "personas"));
+            let sWait=0, sHosted=0;
+            pSnap.forEach(p => { const pd=p.data(); if(pd.estado==='espera')sWait++; if(pd.estado==='ingresado')sHosted++; });
+            gWait += sWait; gHosted += sHosted;
+            const sFree = Math.max(0, cap - sHosted);
+            const sPct = cap > 0 ? Math.round((sHosted / cap) * 100) : 0;
+            let color = "low"; if(sPct > 70) color = "med"; if(sPct > 90) color = "high";
+            htmlList += `<div class="obs-row"><div class="obs-row-title">${data.nombre}</div><div style="display:flex; width:100%; justify-content:space-between; flex-wrap:wrap;"><div class="obs-data-point"><span>Espera</span><strong class="obs-clickable" onclick="window.verListaObservatorio('${docS.id}', 'espera')">${sWait}</strong></div><div class="obs-data-point"><span>Alojados</span><strong class="obs-clickable" onclick="window.verListaObservatorio('${docS.id}', 'ingresado')">${sHosted}</strong></div><div class="obs-data-point"><span>Libres</span><strong>${sFree} / ${cap}</strong></div><div class="obs-data-point" style="flex:1; min-width:150px; margin-right:0;"><span>Ocupación ${sPct}%</span><div class="prog-track"><div class="prog-fill ${color}" style="width:${sPct}%"></div></div></div></div></div>`;
+        }
+        document.getElementById('kpi-espera').innerText = gWait; document.getElementById('kpi-alojados').innerText = gHosted;
+        const gFree = Math.max(0, gCap - gHosted); document.getElementById('kpi-libres').innerText = `${gFree} / ${gCap}`;
+        const gPct = gCap > 0 ? Math.round((gHosted / gCap) * 100) : 0;
+        document.getElementById('kpi-percent').innerText = gPct + "%";
+        const bar = document.getElementById('kpi-bar'); bar.style.width = gPct + "%";
+        if(gPct > 90) bar.className = "prog-fill high"; else if(gPct > 70) bar.className = "prog-fill med"; else bar.className = "prog-fill low";
+        listContainer.innerHTML = htmlList;
+    } catch(e) { listContainer.innerHTML = `<p style="color:red;">Error: ${e.message}</p>`; }
+};
+
+window.verListaObservatorio = async (albId, est) => {
+    const m = document.getElementById('modal-obs-detalle');
+    const c = document.getElementById('obs-modal-content');
+    const t = document.getElementById('obs-modal-title');
+    c.innerHTML = '<p>Cargando...</p>';
+    t.innerText = est === 'espera' ? 'En Espera' : 'Alojados';
+    m.classList.remove('hidden');
+    try {
+        const s = await getDocs(query(collection(db, "albergues", albId, "personas"), where("estado", "==", est)));
+        if (s.empty) { c.innerHTML = '<p>Sin registros.</p>'; return; }
+        
+        let dataArray = [];
+        s.forEach(doc => { dataArray.push({ id: doc.id, ...doc.data() }); });
+
+        if (est === 'ingresado') {
+            dataArray.sort((a, b) => (parseInt(a.cama)||0) - (parseInt(b.cama)||0));
+        } else {
+            dataArray.sort((a, b) => (b.fechaRegistro?.seconds||0) - (a.fechaRegistro?.seconds||0));
+        }
+
+        let h = `<table class="fam-table"><thead><tr><th style="width:40px;"></th>`;
+        if(est==='ingresado') h+=`<th>Cama</th>`;
+        h+=`<th>Nombre</th><th>DNI</th><th>Tel</th></tr></thead><tbody>`;
+        
+        dataArray.forEach(d => { 
+            h += `<tr><td style="text-align:center;"><button class="btn-icon-small" onclick="window.verHistorialObservatorio('${albId}', '${d.id}')"><i class="fa-solid fa-clock-rotate-left"></i></button></td>`;
+            if(est==='ingresado') h+=`<td><strong>${d.cama||'-'}</strong></td>`;
+            h+=`<td>${d.nombre} ${d.ap1||''}</td><td>${d.docNum||'-'}</td><td>${d.telefono||'-'}</td></tr>`; 
+        });
+        h += '</tbody></table>'; c.innerHTML = h;
+    } catch(e) { c.innerHTML = "Error."; }
+};
+
 // --- OTROS (Búsquedas, etc.) ---
 window.buscarEnPrefiliacion=()=>{
     const t=safeVal('buscador-pref').toLowerCase().trim();
@@ -428,7 +450,12 @@ window.buscarPersonaEnAlbergue=()=>{
     else{
         hits.forEach(p=>{
             const dc=p.estado==='ingresado'?'dot-green':'dot-red';
-            res.innerHTML+=`<div class="search-item" onclick="window.seleccionarPersona('${p.id}')"><div style="display:flex;justify-content:space-between;width:100%;align-items:center;"><div><strong>${p.nombre} ${p.ap1||''} ${p.ap2||''}</strong><div style="font-size:0.8rem;color:#666;">📄 ${p.docNum||'-'} | 📞 ${p.telefono||'-'}</div></div><div class="status-dot ${dc}"></div></div></div>`;
+            res.innerHTML+=`<div class="search-item" onclick="window.seleccionarPersona('${p.id}')">
+                <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
+                    <div><strong>${p.nombre} ${p.ap1||''} ${p.ap2||''}</strong><div style="font-size:0.8rem;color:#666;">📄 ${p.docNum||'-'} | 📞 ${p.telefono||'-'}</div></div>
+                    <div class="status-dot ${dc}"></div>
+                </div>
+            </div>`;
         });
     }
     res.classList.remove('hidden');
@@ -464,8 +491,7 @@ window.mostrarGridCamas = mostrarGridCamas;
 window.abrirModalInfoCama = abrirModalInfoCama;
 
 function mostrarGridCamas(){
-    const g=document.getElementById('grid-camas');g.innerHTML="";const cols=(currentAlbergueData&&currentAlbergueData.columnas)?currentAlbergueData.columnas:8;g.style.gridTemplateColumns=`repeat(${cols}, 1fr)`;let shadowMap={};let famGroups={};listaPersonasCache.forEach(p=>{if(p.familiaId){if(!famGroups[p.familiaId])famGroups[p.familiaId]={members:[],beds:[]};famGroups[p.familiaId].members.push(p);if(p.cama)famGroups[p.familiaId].beds.push(parseInt(p.cama));}});Object.values(famGroups).forEach(fam=>{let assigned=fam.beds.length;let total=fam.members.length;let needed=total-assigned;if(assigned>0&&needed>0){let startBed=Math.max(...fam.beds);let placed=0;let check=startBed+1;while(placed<needed&&check<=totalCapacidad){if(!camasOcupadas[check.toString()]){shadowMap[check.toString()]=fam.members[0].familiaId;placed++;}check++;}}});let myFamId,famMembers=[],assignedMembers=[],neededForMe=1;if(!window.modoMapaGeneral&&window.personaEnGestion){myFamId=window.personaEnGestion.familiaId;if(myFamId)famMembers=listaPersonasCache.filter(m=>m.familiaId===myFamId);else famMembers=[window.personaEnGestion];assignedMembers=famMembers.filter(m=>m.cama&&m.id!==window.personaEnGestion.id);neededForMe=famMembers.length-assignedMembers.length;}for(let i=1;i<=totalCapacidad;i++){const n=i.toString();const occName=camasOcupadas[n];const occ=listaPersonasCache.find(p=>p.cama===n);const d=document.createElement('div');let classes="bed-box";let label=n;if(occ&&highlightedFamilyId&&occ.familiaId===highlightedFamilyId){classes+=" bed-family-highlight";}if(!window.modoMapaGeneral&&window.personaEnGestion&&window.personaEnGestion.cama===n){classes+=" bed-current";label+=" (Tú)";}else if(occName){classes+=" bed-busy";if(occ){const f=`${occ.nombre} ${occ.ap1||''}`;lbl+=`<div style="font-size:0.6rem;font-weight:normal;margin-top:2px;">${f}<br><i class="fa-solid fa-phone"></i> ${occ.telefono||'-'}</div>`;}}else{classes+=" bed-free";if(shadowMap[n]){classes+=" bed-shadow";}}if(!window.modoMapaGeneral&&!occName&&!(!window.modoMapaGeneral&&window.personaEnGestion&&window.personaEnGestion.cama===n)){if(assignedMembers.length>0){if(shadowMap[n]===myFamId)classes+=" bed-suggest-target";}else{let fit=true;for(let k=0;k<neededForMe;k++){if(camasOcupadas[(i+k).toString()])fit=false;}if(fit&&neededForMe>1)classes+=" bed-suggest-block";}}d.className=cls;d.innerHTML=lbl;d.onclick=()=>{if(occ){if(highlightedFamilyId===occ.familiaId)highlightedFamilyId=null;else highlightedFamilyId=occ.familiaId;mostrarGridCamas();}else if(!window.modoMapaGeneral){window.guardarCama(n);}};d.ondblclick=()=>{if(occ)window.abrirModalInfoCama(occ);};g.appendChild(d);}document.getElementById('modal-cama').classList.remove('hidden');
-}
+    const g=document.getElementById('grid-camas');g.innerHTML="";const cols=(currentAlbergueData&&currentAlbergueData.columnas)?currentAlbergueData.columnas:8;g.style.gridTemplateColumns=`repeat(${cols}, 1fr)`;let shadowMap={};let famGroups={};listaPersonasCache.forEach(p=>{if(p.familiaId){if(!famGroups[p.familiaId])famGroups[p.familiaId]={members:[],beds:[]};famGroups[p.familiaId].members.push(p);if(p.cama)famGroups[p.familiaId].beds.push(parseInt(p.cama));}});Object.values(famGroups).forEach(fam=>{let assigned=fam.beds.length;let total=fam.members.length;let needed=total-assigned;if(assigned>0&&needed>0){let startBed=Math.max(...fam.beds);let placed=0;let check=startBed+1;while(placed<needed&&check<=totalCapacidad){if(!camasOcupadas[check.toString()]){shadowMap[check.toString()]=fam.members[0].familiaId;placed++;}check++;}}});let myFamId,famMembers=[],assignedMembers=[],neededForMe=1;if(!window.modoMapaGeneral&&window.personaEnGestion){myFamId=window.personaEnGestion.familiaId;if(myFamId)famMembers=listaPersonasCache.filter(m=>m.familiaId===myFamId);else famMembers=[window.personaEnGestion];assignedMembers=famMembers.filter(m=>m.cama&&m.id!==window.personaEnGestion.id);neededForMe=famMembers.length-assignedMembers.length;}for(let i=1;i<=totalCapacidad;i++){const n=i.toString();const occName=camasOcupadas[n];const occ=listaPersonasCache.find(p=>p.cama===n);const d=document.createElement('div');let classes="bed-box";let label=n;if(occ&&highlightedFamilyId&&occ.familiaId===highlightedFamilyId){classes+=" bed-family-highlight";}if(!window.modoMapaGeneral&&window.personaEnGestion&&window.personaEnGestion.cama===n){classes+=" bed-current";label+=" (Tú)";}else if(occName){classes+=" bed-busy";if(occ){const f=`${occ.nombre} ${occ.ap1||''}`;lbl+=`<div style="font-size:0.6rem;font-weight:normal;margin-top:2px;">${f}<br><i class="fa-solid fa-phone"></i> ${occ.telefono||'-'}</div>`;}}else{classes+=" bed-free";if(shadowMap[n]){classes+=" bed-shadow";}}if(!window.modoMapaGeneral&&!occName&&!(!window.modoMapaGeneral&&window.personaEnGestion&&window.personaEnGestion.cama===n)){if(assignedMembers.length>0){if(shadowMap[n]===myFamId)classes+=" bed-suggest-target";}else{let fit=true;for(let k=0;k<neededForMe;k++){if(camasOcupadas[(i+k).toString()])fit=false;}if(fit&&neededForMe>1)cls+=" bed-suggest-block";}}d.className=cls;d.innerHTML=lbl;d.onclick=()=>{if(occ){if(highlightedFamilyId===occ.familiaId)highlightedFamilyId=null;else highlightedFamilyId=occ.familiaId;mostrarGridCamas();}else if(!window.modoMapaGeneral){window.guardarCama(n);}};d.ondblclick=()=>{if(occ)window.abrirModalInfoCama(occ);};g.appendChild(d);}document.getElementById('modal-cama').classList.remove('hidden');}
 
 function abrirModalInfoCama(p){
     document.getElementById('info-cama-num').innerText=p.cama;document.getElementById('info-nombre-completo').innerText=`${p.nombre} ${p.ap1||''}`;document.getElementById('info-telefono').innerText=p.telefono||"No consta";

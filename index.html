@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión Albergue - Ver.4.7.2</title>
+    <title>Gestión Albergue - Ver.4.8.0</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     
@@ -12,7 +12,7 @@
 </head>
 <body>
 
-    <div class="version-tag">Ver.4.7.2</div>
+    <div class="version-tag">Ver.4.8.0</div>
 
     <div id="login-screen" class="">
         <div class="card">
@@ -163,7 +163,7 @@
                                     <div style="display:flex; justify-content:space-between; align-items:center;">
                                         <h4>Datos del Titular</h4>
                                         <div>
-                                            <button id="btn-historial-pref" class="dark hidden" style="font-size:0.7em; padding:4px 8px; margin-right:5px;" onclick="window.verHistorial(prefiliacionEdicionId)">📜 Historial</button>
+                                            <button id="btn-historial-pref" class="dark hidden" style="font-size:0.7em; padding:4px 8px; margin-right:5px;">📜 Historial</button>
                                             <button id="btn-cancelar-edicion-pref" class="secondary hidden" style="font-size:0.7em; padding:4px 8px;" onclick="window.cancelarEdicionPref()">Cancelar Edición</button>
                                         </div>
                                     </div>
@@ -258,23 +258,7 @@
 
     <div id="modal-qr" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content" style="text-align:center;"><span class="close-modal" onclick="document.getElementById('modal-qr').classList.add('hidden')">&times;</span><h3>Escanea para acceder</h3><div id="qrcode-display" style="display:inline-block; margin:20px;"></div><p style="color:#666;">Auto-registro móvil.</p></div></div>
     <div id="modal-cama" class="modal-overlay hidden" onclick="if(event.target===this)window.cerrarMapaCamas()"><div class="modal-content modal-lg"><span class="close-modal" onclick="window.cerrarMapaCamas()">&times;</span><h3>Seleccionar Cama</h3><p style="font-size:0.8rem;color:#666;">Verde Borde=Sugerencia | Naranja=Reserva Familia</p><div id="grid-camas" class="bed-grid"></div></div></div>
-    
-    <div id="modal-bed-info" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
-        <div class="modal-content modal-lg" style="text-align:center; padding:40px;">
-            <span class="close-modal" onclick="document.getElementById('modal-bed-info').classList.add('hidden')">&times;</span>
-            <div style="font-size:3rem; color:var(--primary); margin-bottom:10px;"><i class="fa-solid fa-user-check"></i></div>
-            <h3 style="color:var(--text-light);">Cama <span id="info-cama-num"></span></h3>
-            <h2 id="info-nombre-completo" style="color:var(--primary);"></h2>
-            <p><span id="info-telefono"></span></p>
-            <br>
-            <button id="btn-historial-cama" class="dark hidden" style="margin-bottom:15px;">📜 Ver Historial</button>
-            <div style="margin-top:20px; text-align:left;">
-                <h4 style="border-bottom:1px solid #eee; padding-bottom:5px;">Unidad Familiar</h4>
-                <div id="info-familia-detalle"></div>
-            </div>
-        </div>
-    </div>
-
+    <div id="modal-bed-info" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content modal-lg" style="text-align:center; padding:40px;"><span class="close-modal" onclick="document.getElementById('modal-bed-info').classList.add('hidden')">&times;</span><div style="font-size:3rem; color:var(--primary); margin-bottom:10px;"><i class="fa-solid fa-user-check"></i></div><h3 style="color:var(--text-light);">Cama <span id="info-cama-num"></span></h3><h2 id="info-nombre-completo" style="color:var(--primary);"></h2><p><span id="info-telefono"></span></p><div style="margin-top:20px; text-align:left;"><h4 style="border-bottom:1px solid #eee; padding-bottom:5px;">Unidad Familiar</h4><div id="info-familia-detalle"></div></div></div></div>
     <div id="modal-vincular-familia" class="modal-overlay hidden" style="z-index: 2000;" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><span class="close-modal" onclick="document.getElementById('modal-vincular-familia').classList.add('hidden')">&times;</span><h3>Unir a Familia</h3><input type="text" id="search-vincular" placeholder="Buscar..." onkeyup="window.buscarParaVincular()" autocomplete="off"><div id="resultados-vincular" class="search-results hidden"></div></div></div>
     
     <div id="modal-albergue" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><span class="close-modal" onclick="document.getElementById('modal-albergue').classList.add('hidden')">&times;</span><h3 id="mto-modal-title">Nuevo</h3><label>Nombre</label><input type="text" id="mto-nombre"><div class="row"><div class="col"><label>Cap</label><input type="number" id="mto-capacidad"></div><div class="col"><label>Cols</label><input type="number" id="mto-columnas" value="8"></div></div><div class="btn-row"><button class="primary" onclick="window.guardarAlbergue()">Guardar</button></div><br><button id="btn-delete-albergue" class="danger hidden" style="width:100%" onclick="window.eliminarAlbergueActual()">Eliminar Albergue</button></div></div>

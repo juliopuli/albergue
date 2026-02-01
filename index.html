@@ -6,20 +6,21 @@
     <title>Gestión Albergue - Ver.25.0.0</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    
     <script>
-        window.log = function(msg, type="info") {
+        window.logError = function(msg) {
             const box = document.getElementById('debug-box');
             if(box) {
-                const now = new Date().toLocaleTimeString();
-                box.innerHTML += `<div class="${type}">[${now}] ${msg}</div>`;
+                box.innerHTML += `<div style="border-bottom:1px solid #333;">> ${msg}</div>`;
                 box.scrollTop = box.scrollHeight;
             }
-            console.log(`[${type.toUpperCase()}] ${msg}`);
+            console.log(msg);
         };
         window.onerror = function(message, source, lineno, colno, error) {
-            window.log(`FATAL ERROR: ${message} at line ${lineno}`, "error");
+            window.logError(`ERROR: ${message} at line ${lineno}`);
         };
     </script>
 </head>
@@ -27,9 +28,7 @@
 
     <div class="version-tag">Ver.25.0.0</div>
 
-    <div id="debug-box">
-        <div class="info">Sistema de logs iniciado.</div>
-    </div>
+    <div id="debug-box"><div>System logs started...</div></div>
 
     <div id="loading-overlay" class="hidden">
         <div class="spinner"></div>
@@ -55,21 +54,34 @@
                     <span class="user-name" id="user-name-display">...</span>
                     <span class="user-role" id="user-role-badge">...</span>
                 </div>
-                <button id="header-btn-users" class="btn-icon hidden" onclick="window.navegar('usuarios')" title="Gestionar Usuarios"><i class="fa-solid fa-users-gear"></i></button>
-                <button class="btn-icon btn-key" onclick="window.abrirModalCambioPass()" title="Cambiar Contraseña"><i class="fa-solid fa-key"></i></button>
+                <button id="header-btn-users" class="btn-icon hidden" onclick="window.navegar('usuarios')" title="Gestionar Usuarios">
+                    <i class="fa-solid fa-users-gear"></i>
+                </button>
+                <button class="btn-icon btn-key" onclick="window.abrirModalCambioPass()" title="Cambiar Contraseña">
+                    <i class="fa-solid fa-key"></i>
+                </button>
                 <button class="btn-logout" onclick="window.cerrarSesion()"><i class="fa-solid fa-power-off"></i></button>
             </div>
         </header>
 
         <nav class="app-nav">
-            <div class="nav-item" id="nav-home" onclick="window.navegar('home')"><i class="fa-solid fa-house"></i><span>Inicio</span></div>
-            <div class="nav-item" id="nav-albergues" onclick="window.navegar('gestion-albergues')"><i class="fa-solid fa-bed"></i><span>Gestión</span></div>
-            <div class="nav-item" id="nav-mto" onclick="window.navegar('mantenimiento')"><i class="fa-solid fa-screwdriver-wrench"></i><span>Mantenimiento</span></div>
-            <div class="nav-item" id="nav-obs" onclick="window.navegar('observatorio')"><i class="fa-solid fa-binoculars"></i><span>Observatorio</span></div>
+            <div class="nav-item" id="nav-home" onclick="window.navegar('home')">
+                <i class="fa-solid fa-house"></i><span>Inicio</span>
+            </div>
+            <div class="nav-item" id="nav-albergues" onclick="window.navegar('gestion-albergues')">
+                <i class="fa-solid fa-bed"></i><span>Gestión</span>
+            </div>
+            <div class="nav-item" id="nav-mto" onclick="window.navegar('mantenimiento')">
+                <i class="fa-solid fa-screwdriver-wrench"></i><span>Mantenimiento</span>
+            </div>
+            <div class="nav-item" id="nav-obs" onclick="window.navegar('observatorio')">
+                <i class="fa-solid fa-binoculars"></i><span>Observatorio</span>
+            </div>
             <div class="nav-item disabled"><i class="fa-solid fa-chart-pie"></i><span>Informes</span></div>
         </nav>
 
         <main class="main-content">
+            
             <div id="screen-home" class="hidden">
                 <div class="hero-container">
                     <i class="fa-solid fa-campground hero-icon"></i>
@@ -114,14 +126,29 @@
 
             <div id="screen-observatorio" class="hidden">
                 <div class="obs-grid">
-                    <div class="obs-card"><div class="obs-label">Personas en Espera</div><div class="obs-val" id="kpi-espera" style="color:var(--warning);">0</div></div>
-                    <div class="obs-card"><div class="obs-label">Personas Alojadas</div><div class="obs-val" id="kpi-alojados" style="color:var(--success);">0</div></div>
-                    <div class="obs-card"><div class="obs-label">Camas Disponibles</div><div class="obs-val" id="kpi-libres" style="color:var(--primary);">0</div></div>
-                    <div class="obs-card"><div class="obs-label">Ocupación Global</div><div class="obs-val" id="kpi-percent">0%</div><div class="prog-track"><div class="prog-fill" id="kpi-bar" style="width:0%"></div></div></div>
+                    <div class="obs-card">
+                        <div class="obs-label">Personas en Espera</div>
+                        <div class="obs-val" id="kpi-espera" style="color:var(--warning);">0</div>
+                    </div>
+                    <div class="obs-card">
+                        <div class="obs-label">Personas Alojadas</div>
+                        <div class="obs-val" id="kpi-alojados" style="color:var(--success);">0</div>
+                    </div>
+                    <div class="obs-card">
+                        <div class="obs-label">Camas Disponibles</div>
+                        <div class="obs-val" id="kpi-libres" style="color:var(--primary);">0</div>
+                    </div>
+                    <div class="obs-card">
+                        <div class="obs-label">Ocupación Global</div>
+                        <div class="obs-val" id="kpi-percent">0%</div>
+                        <div class="prog-track"><div class="prog-fill" id="kpi-bar" style="width:0%"></div></div>
+                    </div>
                 </div>
                 <div class="card">
                     <h3>Detalle por Albergue</h3>
-                    <div id="obs-list-container" style="margin-top:20px;"><p style="color:#666; text-align:center;">Cargando datos...</p></div>
+                    <div id="obs-list-container" style="margin-top:20px;">
+                        <p style="color:#666; text-align:center;">Cargando datos...</p>
+                    </div>
                 </div>
             </div>
 
@@ -145,6 +172,7 @@
                     </div>
 
                     <div style="margin-top:25px;">
+                        
                         <div id="tab-prefiliacion" class="tab-content active">
                             <div class="module-box module-pref">
                                 <h3><i class="fa-regular fa-clipboard"></i> Ficha de Ingreso</h3>
@@ -178,6 +206,7 @@
                                     <div id="resultados-busqueda" class="search-results hidden"></div>
                                 </div>
                             </div>
+                            
                             <div id="panel-gestion-persona" class="hidden" style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:var(--radius); padding:25px; margin-top:10px;">
                                 <h3 id="gestion-nombre-titulo" style="color:var(--primary);">Nombre</h3>
                                 <p style="margin-bottom:15px;">Estado: <span id="gestion-estado" class="badge">...</span> <strong id="gestion-cama-info"></strong></p>

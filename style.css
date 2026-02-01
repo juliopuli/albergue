@@ -21,7 +21,7 @@
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-body { background-color: var(--bg-body); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; }
+body { background-color: var(--bg-body); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; padding-bottom: 160px; /* Espacio para log */ }
 
 /* --- 2. HEADER --- */
 .app-header { background: var(--surface); padding: 0 25px; height: 60px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; position: fixed; top: 0; width: 100%; z-index: 100; }
@@ -168,10 +168,10 @@ button.dark { background: #334155; color: white; }
 #modal-historial, #modal-bed-info, #modal-add-familiar, #modal-admin-add-familiar { z-index: 4000 !important; }
 #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
 
-/* PUBLIC SCREEN FIX */
-#public-register-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 6000; overflow-y: auto; background: white; }
-
-.version-tag { position: fixed; bottom: 170px; right: 10px; color: #ccc; font-size: 0.8em; pointer-events: none; }
+.version-tag { position: fixed; bottom: 10px; right: 10px; color: #ccc; font-size: 0.8em; pointer-events: none; }
+.fam-list { margin-top: 15px; border-top: 2px dashed #eee; padding-top: 10px; }
+.fam-item { background: #f8fafc; padding: 10px; border-radius: 8px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #e2e8f0; }
+.fam-item.existing { background: #fff7ed; border-color: #fdba74; }
 .close-modal { position: absolute; top: 15px; right: 20px; font-size: 1.5rem; color: #94a3b8; cursor: pointer; transition: 0.2s; z-index: 10; }
 .close-modal:hover { color: var(--danger); transform: scale(1.1); }
 
@@ -200,7 +200,7 @@ button.dark { background: #334155; color: white; }
 .spinner { width: 60px; height: 60px; border: 6px solid #e0e7ff; border-top: 6px solid var(--primary); border-radius: 50%; animation: spin 1.5s linear infinite; margin-bottom: 20px; }
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-/* LOGIN & SWITCH */
+/* LOGIN */
 #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%); display: flex; align-items: center; justify-content: center; z-index: 3000; }
 #login-screen .card { width: 100%; max-width: 400px; text-align: center; }
 
@@ -211,3 +211,21 @@ button.dark { background: #334155; color: white; }
 .toggle-slider::before { content: ''; position: absolute; width: 16px; height: 16px; background: white; border-radius: 50%; top: 2px; left: 2px; transition: 0.3s; }
 .toggle-input:checked + .toggle-slider { background: var(--primary); }
 .toggle-input:checked + .toggle-slider::before { transform: translateX(20px); }
+
+/* --- DEBUG BOX (ADDED FOR V21) --- */
+#debug-box {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 150px;
+    background: #000;
+    color: #0f0;
+    font-family: monospace;
+    font-size: 12px;
+    padding: 10px;
+    z-index: 99999;
+    overflow-y: scroll;
+    border-top: 2px solid #0f0;
+    opacity: 0.9;
+}

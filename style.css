@@ -1,306 +1,201 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión Albergue - Ver.9.5.1</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
+/* --- 1. VARIABLES & RESET --- */
+:root {
+    --primary: #4f46e5;
+    --primary-dark: #4338ca;
+    --bg-body: #f8fafc;
+    --surface: #ffffff;
+    --text-main: #1e293b;
+    --text-light: #64748b;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --health: #e11d48;
+    --psycho: #7c3aed;
+    --radius: 12px;
     
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-</head>
-<body>
+    /* COLORES MÓDULOS */
+    --pref-bg: #fff7ed; --pref-border: #fdba74; --pref-text: #c2410c;
+    --fil-bg: #f0fdf4;  --fil-border: #86efac;  --fil-text: #15803d;
+    --san-bg: #fff1f2;  --san-border: #fda4af;  --san-text: #be123c;
+    --psi-bg: #f5f3ff;  --psi-border: #c4b5fd;  --psi-text: #6d28d9;
+}
 
-    <div class="version-tag">Ver.9.5.1</div>
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+body { background-color: var(--bg-body); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; }
 
-    <div id="loading-overlay" class="hidden">
-        <div class="spinner"></div>
-        <h2 style="color:var(--primary);">Cargando Datos...</h2>
-        <p style="color:#666;">Sincronizando información</p>
-    </div>
+/* --- 2. HEADER --- */
+.app-header { background: var(--surface); padding: 0 25px; height: 60px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; position: fixed; top: 0; width: 100%; z-index: 100; }
+.brand { font-size: 1.2rem; font-weight: 800; color: var(--primary); }
+.user-profile { display: flex; align-items: center; gap: 10px; }
+.user-info { text-align: right; line-height: 1.2; font-size: 0.9rem; margin-right: 5px; }
+.user-name { font-weight: 700; display: block; }
 
-    <div id="login-screen" class="">
-        <div class="card">
-            <h1 style="color:var(--primary); margin-bottom:20px;"><i class="fa-solid fa-hotel"></i> Acceso</h1>
-            <input type="email" id="login-email" placeholder="Correo electrónico">
-            <input type="password" id="login-pass" placeholder="Contraseña">
-            <button class="primary" style="width:100%" onclick="window.iniciarSesion()">Iniciar Sesión</button>
-            <p class="forgot-password" onclick="window.recuperarContrasena()">¿Olvidaste tu contraseña?</p>
-        </div>
-    </div>
+.user-role { font-size: 0.75rem; color: var(--text-light); text-transform: uppercase; font-weight: 600; }
+.role-badge { padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: white; display: inline-block; margin-top: 2px; }
+.role-super_admin { background-color: #7c3aed; }
+.role-admin { background-color: #ef4444; }
+.role-intervencion { background-color: #f59e0b; }
+.role-filiacion { background-color: #10b981; }
+.role-observador { background-color: #64748b; }
 
-    <div id="app-shell" class="hidden">
-        <header class="app-header">
-            <div class="brand"><i class="fa-solid fa-campground"></i> ALBERGUE PRO</div>
-            <div class="user-profile">
-                <div class="user-info">
-                    <span class="user-name" id="user-name-display">...</span>
-                    <span class="user-role" id="user-role-badge">...</span>
-                </div>
-                <button id="header-btn-users" class="btn-icon hidden" onclick="window.navegar('usuarios')" title="Gestionar Usuarios">
-                    <i class="fa-solid fa-users-gear"></i>
-                </button>
-                <button class="btn-icon btn-key" onclick="window.abrirModalCambioPass()" title="Cambiar Contraseña">
-                    <i class="fa-solid fa-key"></i>
-                </button>
-                <button class="btn-logout" onclick="window.cerrarSesion()"><i class="fa-solid fa-power-off"></i></button>
-            </div>
-        </header>
+.btn-icon { background: #e0e7ff; color: var(--primary); border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; transition: 0.2s; font-size: 1rem; }
+.btn-icon:hover { background: #c7d2fe; }
+.btn-logout { background: var(--danger-bg); color: var(--danger); }
+.btn-logout:hover { background: #fecaca; }
+.btn-key { background: #fef3c7; color: #d97706; }
+.btn-key:hover { background: #fde68a; }
+.btn-icon-small { background: transparent; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer; padding: 4px 8px; color: var(--text-light); transition: 0.2s; font-size: 0.9rem; margin-right: 5px; }
+.btn-icon-small:hover { background: #e0e7ff; color: var(--primary); border-color: var(--primary); }
 
-        <nav class="app-nav">
-            <div class="nav-item" id="nav-home" onclick="window.navegar('home')">
-                <i class="fa-solid fa-house"></i><span>Inicio</span>
-            </div>
-            <div class="nav-item" id="nav-albergues" onclick="window.navegar('gestion-albergues')">
-                <i class="fa-solid fa-bed"></i><span>Gestión</span>
-            </div>
-            <div class="nav-item" id="nav-mto" onclick="window.navegar('mantenimiento')">
-                <i class="fa-solid fa-screwdriver-wrench"></i><span>Mantenimiento</span>
-            </div>
-            <div class="nav-item" id="nav-obs" onclick="window.navegar('observatorio')">
-                <i class="fa-solid fa-binoculars"></i><span>Observatorio</span>
-            </div>
-            <div class="nav-item disabled"><i class="fa-solid fa-chart-pie"></i><span>Informes</span></div>
-        </nav>
+/* --- 3. NAV --- */
+.app-nav { background: var(--surface); height: 70px; display: flex; justify-content: center; align-items: center; gap: 40px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); position: fixed; top: 60px; width: 100%; z-index: 90; }
+.nav-item { display: flex; flex-direction: column; align-items: center; color: var(--text-light); cursor: pointer; padding: 10px 20px; border-radius: var(--radius); transition: all 0.2s; }
+.nav-item i { font-size: 1.4rem; margin-bottom: 4px; }
+.nav-item:hover, .nav-item.active { color: var(--primary); background: #e0e7ff; }
+.nav-item.active::after { content: ''; position: absolute; bottom: 0; width: 40%; height: 3px; background: var(--primary); }
+.nav-item.disabled { opacity: 0.3; pointer-events: none; }
+.nav-item.hidden { display: none !important; }
 
-        <main class="main-content">
-            
-            <div id="screen-home" class="hidden">
-                <div class="hero-container">
-                    <i class="fa-solid fa-campground hero-icon"></i>
-                    <h1 class="hero-title">Te damos la bienvenida</h1>
-                    <p class="hero-subtitle">Sistema integral de control de ocupación y filiación</p>
-                </div>
-            </div>
+/* --- 4. CONTENIDO --- */
+.main-content { margin-top: 140px; padding: 25px; max-width: 1200px; margin-left: auto; margin-right: auto; width: 100%; flex: 1; }
+.card { background: var(--surface); padding: 30px; border-radius: var(--radius); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 20px; }
+.hero-container { text-align: center; padding: 50px; background: white; border-radius: var(--radius); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+.hero-icon { font-size: 4rem; color: var(--primary); margin-bottom: 15px; }
 
-            <div id="screen-usuarios" class="hidden">
-                <div class="card">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                        <h2>Gestión de Personal</h2>
-                        <button class="success" onclick="window.abrirModalUsuario()">+ Nuevo</button>
-                    </div>
-                    <div class="row">
-                        <input type="text" id="search-user" placeholder="🔍 Buscar por nombre o email..." onkeyup="window.filtrarUsuarios()">
-                    </div>
-                    <div id="lista-usuarios-container" class="user-list-grid"></div>
-                </div>
-            </div>
+/* MÓDULOS DE COLOR */
+.module-box { padding: 25px; border-radius: 12px; border: 1px solid transparent; margin-bottom: 20px; transition: 0.3s; }
+.module-box h3 { margin-bottom: 15px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+.module-pref { background: var(--pref-bg); border-color: var(--pref-border); }
+.module-pref h3 { color: var(--pref-text); }
+.module-fil { background: var(--fil-bg); border-color: var(--fil-border); }
+.module-fil h3 { color: var(--fil-text); }
+.module-san { background: var(--san-bg); border-color: var(--san-border); }
+.module-san h3 { color: var(--san-text); }
+.module-psi { background: var(--psi-bg); border-color: var(--psi-border); }
+.module-psi h3 { color: var(--psi-text); }
 
-            <div id="screen-gestion-albergues" class="hidden">
-                <div class="card">
-                    <h2>Selección de Albergue</h2>
-                    <div id="lista-albergues-activos" class="mto-grid"></div>
-                </div>
-            </div>
+/* --- 5. FORMULARIOS --- */
+input, select { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff; font-size: 0.95rem; }
+label { font-weight: 600; font-size: 0.9rem; margin-bottom: 5px; display: block; }
+.row { display: flex; gap: 15px; flex-wrap: wrap; } .col { flex: 1; min-width: 200px; }
 
-            <div id="screen-mantenimiento" class="hidden">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                    <h2><i class="fa-solid fa-tools"></i> Mantenimiento</h2>
-                    <div id="container-ver-ocultos" class="hidden">
-                        <label class="toggle-switch">
-                            <input type="checkbox" class="toggle-input" id="check-ver-ocultos" onchange="window.cargarAlberguesMantenimiento()">
-                            <span class="toggle-slider"></span>
-                            <span style="font-size:0.9rem; font-weight:600; margin-left:10px;">Mostrar Ocultos</span>
-                        </label>
-                    </div>
-                </div>
-                <div id="mto-container" class="mto-grid"></div>
-            </div>
+button { padding: 12px 20px; border-radius: 8px; font-weight: 600; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
+button:hover { transform: translateY(-1px); }
+button.primary { background: var(--primary); color: white; }
+button.secondary { background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; }
+button.success { background: #10b981; color: white; }
+button.danger { background: #ef4444; color: white; }
+button.warning { background: #f59e0b; color: white; }
+button.dark { background: #334155; color: white; }
 
-            <div id="screen-observatorio" class="hidden">
-                <div class="obs-grid">
-                    <div class="obs-card">
-                        <div class="obs-label">Personas en Espera</div>
-                        <div class="obs-val" id="kpi-espera" style="color:var(--warning);">0</div>
-                    </div>
-                    <div class="obs-card">
-                        <div class="obs-label">Personas Alojadas</div>
-                        <div class="obs-val" id="kpi-alojados" style="color:var(--success);">0</div>
-                    </div>
-                    <div class="obs-card">
-                        <div class="obs-label">Camas Disponibles</div>
-                        <div class="obs-val" id="kpi-libres" style="color:var(--primary);">0</div>
-                    </div>
-                    <div class="obs-card">
-                        <div class="obs-label">Ocupación Global</div>
-                        <div class="obs-val" id="kpi-percent">0%</div>
-                        <div class="prog-track"><div class="prog-fill" id="kpi-bar" style="width:0%"></div></div>
-                    </div>
-                </div>
-                <div class="card">
-                    <h3>Detalle por Albergue</h3>
-                    <div id="obs-list-container" style="margin-top:20px;">
-                        <p style="color:#666; text-align:center;">Cargando datos...</p>
-                    </div>
-                </div>
-            </div>
+.btn-group-horizontal { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
 
-            <div id="screen-operativa" class="hidden">
-                <div class="card">
-                    <div class="sticky-header">
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <div><h2 id="app-title" style="margin:0;">Albergue</h2><span class="badge badge-active">Ocupación: <span id="ocupacion-count">...</span> / <span id="capacidad-total">...</span></span></div>
-                            <div class="btn-group-horizontal" style="margin-top:0;">
-                                <button class="dark" onclick="window.abrirModalQR()"><i class="fa-solid fa-qrcode"></i> QR</button>
-                                <button class="primary" onclick="window.abrirMapaGeneral()"><i class="fa-solid fa-bed"></i> Camas</button>
-                                <button class="secondary" onclick="window.navegar('gestion-albergues')">Salir</button>
-                            </div>
-                        </div>
-                        <div class="tabs" style="margin-top:10px;">
-                            <button id="btn-tab-pref" class="tab-btn tab-btn-pref active" onclick="window.cambiarPestana('prefiliacion')">📁 Prefiliación</button>
-                            <button id="btn-tab-fil" class="tab-btn tab-btn-fil" onclick="window.cambiarPestana('filiacion')">📁 Filiación</button>
-                            <button id="btn-tab-san" class="tab-btn tab-btn-san" onclick="window.cambiarPestana('sanitaria')"><i class="fa-solid fa-notes-medical"></i> Sanitaria</button>
-                            <button id="btn-tab-psi" class="tab-btn tab-btn-psi" onclick="window.cambiarPestana('psicosocial')"><i class="fa-solid fa-users-rays"></i> Psicosocial</button>
-                        </div>
-                    </div>
+/* --- 6. LISTAS Y GRID --- */
+.mto-grid, .user-list-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin-top: 20px; }
+.mto-card, .user-card-item { background: white; border: 1px solid #e2e8f0; border-radius: var(--radius); padding: 20px; cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; justify-content: space-between; }
+.mto-card:hover, .user-card-item:hover { border-color: var(--primary); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+.mto-card.add-new { border: 2px dashed #cbd5e1; align-items: center; justify-content: center; background: #f8fafc; color: #94a3b8; font-size: 1.5rem; }
+.mto-card.archived { background: #f1f5f9; border-left: 5px solid var(--warning); opacity: 0.8; }
 
-                    <div style="margin-top:25px;">
-                        
-                        <div id="tab-prefiliacion" class="tab-content active">
-                            <div class="module-box module-pref">
-                                <h3><i class="fa-regular fa-clipboard"></i> Ficha de Ingreso</h3>
-                                <div style="position:relative;">
-                                    <label>Buscar (Evitar duplicados):</label>
-                                    <input type="text" id="buscador-pref" placeholder="Nombre, DNI o Teléfono..." onkeyup="window.buscarEnPrefiliacion()" autocomplete="off">
-                                    <div id="resultados-pref" class="search-results hidden"></div>
-                                </div>
-                                <div id="form-manual-container" style="margin-top:15px;">
-                                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                                        <h4>Datos del Titular</h4>
-                                        <div>
-                                            <button id="btn-historial-pref" class="dark hidden" style="font-size:0.7em; padding:4px 8px; margin-right:5px;" onclick="window.verHistorial(prefiliacionEdicionId)">📜 Historial</button>
-                                            <button id="btn-cancelar-edicion-pref" class="secondary hidden" style="font-size:0.7em; padding:4px 8px;" onclick="window.cancelarEdicionPref()">Cancelar Edición</button>
-                                        </div>
-                                    </div>
-                                    <div class="row"><div class="col"><label>Nombre (*)</label><input type="text" id="man-nombre"></div><div class="col"><label>Ap 1</label><input type="text" id="man-ap1"></div><div class="col"><label>Ap 2</label><input type="text" id="man-ap2"></div></div>
-                                    <div class="row"><div class="col"><label>Doc</label><select id="man-tipo-doc"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Número</label><input type="text" id="man-doc-num"></div></div>
-                                    <div class="row"><div class="col"><label>F. Nac</label><input type="tel" id="man-fecha" maxlength="10" oninput="window.formatearFecha(this)"></div><div class="col"><label>Teléfono</label><input type="tel" id="man-tel"></div></div>
-                                    <div class="fam-list"><h4><i class="fa-solid fa-people-roof"></i> Integrantes</h4><div id="existing-family-list-ui"></div><div id="admin-lista-familiares-ui"><p style="color:#999; margin-top:5px;">Añade nuevos miembros abajo.</p></div><button class="secondary" onclick="window.abrirModalFamiliarAdmin()">+ Añadir Familiar</button></div>
-                                    <button id="btn-save-pref" class="success" style="width:100%; margin-top:20px;" onclick="window.adminPrefiliarManual()">💾 Guardar Nuevo</button>
-                                </div>
-                            </div>
-                        </div>
+.user-card-left { display: flex; align-items: center; gap: 15px; }
+.user-avatar-circle { width: 40px; height: 40px; background: #e0e7ff; color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
 
-                        <div id="tab-filiacion" class="tab-content hidden">
-                            <div class="module-box module-fil">
-                                <h3><i class="fa-solid fa-person-shelter"></i> Gestión de Alojados</h3>
-                                <div style="position:relative;">
-                                    <input type="text" id="buscador-persona" placeholder="🔍 Buscar por Nombre, Apellidos, DNI..." onkeyup="window.buscarPersonaEnAlbergue()" autocomplete="off">
-                                    <div id="resultados-busqueda" class="search-results hidden"></div>
-                                </div>
-                            </div>
-                            
-                            <div id="panel-gestion-persona" class="hidden" style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:var(--radius); padding:25px; margin-top:10px;">
-                                <h3 id="gestion-nombre-titulo" style="color:var(--primary);">Nombre</h3>
-                                <p style="margin-bottom:15px;">Estado: <span id="gestion-estado" class="badge">...</span> <strong id="gestion-cama-info"></strong></p>
-                                <div class="row"><div class="col"><label>Nombre</label><input type="text" id="edit-nombre"></div><div class="col"><label>Ap 1</label><input type="text" id="edit-ap1"></div><div class="col"><label>Ap 2</label><input type="text" id="edit-ap2"></div></div>
-                                <div class="row"><div class="col"><label>Doc</label><select id="edit-tipo-doc"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Num</label><input type="text" id="edit-doc-num"></div></div>
-                                <div class="row"><div class="col"><label>F. Nac</label><input type="tel" id="edit-fecha" oninput="window.formatearFecha(this)" maxlength="10"></div><div class="col"><label>Tel</label><input type="tel" id="edit-tel"></div></div>
-                                <div class="btn-group-horizontal">
-                                    <button class="primary" onclick="window.abrirSeleccionCama()">Asignar Cama</button>
-                                    <button class="secondary" onclick="window.guardarCambiosPersona()">Guardar Datos</button>
-                                    <button class="warning" onclick="window.liberarCamaMantener()">Liberar Cama</button>
-                                    <button id="btn-historial-ficha" class="dark hidden" onclick="window.verHistorial()">📜 Historial</button>
-                                    <button id="btn-regresar-pref" class="danger hidden" onclick="window.regresarPrefiliacion()">Prefiliación</button>
-                                </div>
-                                <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
-                                <h4>Familia</h4>
-                                <div id="info-familia-resumen" style="font-weight:bold; margin-bottom:5px;"></div>
-                                <div id="info-familia-lista"></div>
-                                <button class="secondary" style="margin-top:10px;" onclick="window.abrirModalVincularFamilia()">Vincular a otra familia</button>
-                            </div>
-                        </div>
+/* --- 7. CAMAS --- */
+.bed-grid { display: grid; gap: 10px; margin-top: 20px; }
+.bed-box { 
+    min-height: 80px; border-radius: 8px; font-weight: 700; 
+    display: flex; flex-direction: column; justify-content: center; align-items: center; 
+    cursor: pointer; border: 3px solid transparent; 
+    background: #f1f5f9; transition: 0.1s; user-select: none;
+}
+.bed-box span { font-size: 0.7em; font-weight: normal; margin-top: 2px; }
+.bed-free { background: #dcfce7; color: #166534; border-color: #86efac; }
+.bed-busy { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
+.bed-current { background: #e0e7ff; color: #3730a3; border-color: #818cf8; }
+.bed-shadow { background: #ffedd5 !important; border: 2px dashed #f97316 !important; color: #c2410c; opacity: 0.8; }
+.bed-family-highlight { border-color: #f97316 !important; background-color: #ffedd5 !important; transform: scale(1.05); z-index: 10; box-shadow: 0 0 10px rgba(249, 115, 22, 0.5); }
 
-                        <div id="tab-sanitaria" class="tab-content hidden">
-                            <div class="module-box module-san">
-                                <h3><i class="fa-solid fa-notes-medical"></i> Atención Sanitaria</h3>
-                                <div class="row"><input type="text" placeholder="🔍 Buscar paciente..." style="background:white;"></div>
-                                <p style="color:#881337; margin-top:10px;">Módulo de gestión médica en construcción.</p>
-                            </div>
-                        </div>
+.fam-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9rem; }
+.fam-table th { text-align: left; padding: 8px; border-bottom: 2px solid #e2e8f0; color: var(--text-light); font-size: 0.8rem; text-transform: uppercase; }
+.fam-table td { padding: 8px; border-bottom: 1px solid #f1f5f9; }
+.fam-row-current { background-color: #e0e7ff; font-weight: bold; color: var(--primary); }
 
-                        <div id="tab-psicosocial" class="tab-content hidden">
-                            <div class="module-box module-psi">
-                                <h3><i class="fa-solid fa-users-rays"></i> Atención Psicosocial</h3>
-                                <div class="row"><input type="text" placeholder="🔍 Buscar usuario..." style="background:white;"></div>
-                                <p style="color:#5b21b6; margin-top:10px;">Módulo de intervención social en construcción.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </main>
-    </div>
+/* --- 8. UTILS & TABS --- */
+.hidden { display: none !important; }
+.sticky-header { position: sticky; top: 130px; z-index: 80; background: var(--surface); margin: -30px -30px 20px -30px; padding: 20px 30px; border-bottom: 1px solid #e2e8f0; border-radius: var(--radius) var(--radius) 0 0; }
 
-    <div id="modal-qr" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content" style="text-align:center;"><span class="close-modal" onclick="document.getElementById('modal-qr').classList.add('hidden')">&times;</span><h3>Escanea para acceder</h3><div id="qrcode-display" style="display:inline-block; margin:20px;"></div><p style="color:#666;">Auto-registro móvil.</p></div></div>
-    <div id="modal-cama" class="modal-overlay hidden" onclick="if(event.target===this)window.cerrarMapaCamas()"><div class="modal-content modal-lg"><span class="close-modal" onclick="window.cerrarMapaCamas()">&times;</span><h3>Seleccionar Cama</h3><p style="font-size:0.8rem;color:#666;">Verde Borde=Sugerencia | Naranja=Reserva Familia</p><div id="grid-camas" class="bed-grid"></div></div></div>
-    
-    <div id="modal-bed-info" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
-        <div class="modal-content modal-lg" style="text-align:center; padding:40px;">
-            <span class="close-modal" onclick="document.getElementById('modal-bed-info').classList.add('hidden')">&times;</span>
-            <div style="font-size:3rem; color:var(--primary); margin-bottom:10px;"><i class="fa-solid fa-user-check"></i></div>
-            <h3 style="color:var(--text-light);">Cama <span id="info-cama-num"></span></h3>
-            <h2 id="info-nombre-completo" style="color:var(--primary);"></h2>
-            <p><span id="info-telefono"></span></p>
-            <br>
-            <button id="btn-historial-cama" class="dark hidden" style="margin-bottom:15px;">📜 Ver Historial</button>
-            <div style="margin-top:20px; text-align:left;">
-                <h4 style="border-bottom:1px solid #eee; padding-bottom:5px;">Unidad Familiar</h4>
-                <div id="info-familia-detalle"></div>
-            </div>
-        </div>
-    </div>
+.tabs { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
+.tab-btn { padding: 10px 20px; border: none; background: transparent; cursor: pointer; border-radius: 8px; color: var(--text-light); font-weight: 600; transition: 0.2s; display: flex; align-items: center; gap: 8px; }
+.tab-btn:hover { background: #f1f5f9; }
 
-    <div id="modal-vincular-familia" class="modal-overlay hidden" style="z-index: 2000;" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><span class="close-modal" onclick="document.getElementById('modal-vincular-familia').classList.add('hidden')">&times;</span><h3>Unir a Familia</h3><input type="text" id="search-vincular" placeholder="Buscar..." onkeyup="window.buscarParaVincular()" autocomplete="off"><div id="resultados-vincular" class="search-results hidden"></div></div></div>
-    
-    <div id="modal-albergue" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><span class="close-modal" onclick="document.getElementById('modal-albergue').classList.add('hidden')">&times;</span><h3 id="mto-modal-title">Nuevo</h3><label>Nombre</label><input type="text" id="mto-nombre"><div class="row"><div class="col"><label>Cap</label><input type="number" id="mto-capacidad"></div><div class="col"><label>Cols</label><input type="number" id="mto-columnas" value="8"></div></div><div class="btn-row"><button class="primary" onclick="window.guardarAlbergue()">Guardar</button></div><br><button id="btn-delete-albergue" class="danger hidden" style="width:100%" onclick="window.eliminarAlbergueActual()">Eliminar Albergue</button></div></div>
-    
-    <div id="modal-crear-usuario" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
-        <div class="modal-content">
-            <span class="close-modal" onclick="document.getElementById('modal-crear-usuario').classList.add('hidden')">&times;</span>
-            <h3 id="user-modal-title">Usuario</h3>
-            <label>Nombre</label><input type="text" id="new-user-name">
-            <label>Rol</label><select id="new-user-role"></select>
-            <label>Email</label><input type="email" id="new-user-email">
-            <label>Contraseña</label><input type="password" id="new-user-pass">
-            <p id="edit-pass-warning" style="display:none;color:orange;font-size:0.8em;">Use reset email.</p>
-            <div class="btn-row">
-                <button class="primary" onclick="window.guardarUsuario()">Guardar</button>
-            </div>
-            <br>
-            <button id="btn-delete-user" class="danger hidden" style="width:100%" onclick="window.eliminarUsuario()">Eliminar Usuario</button>
-        </div>
-    </div>
-    
-    <div id="modal-change-pass" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
-        <div class="modal-content">
-            <span class="close-modal" onclick="document.getElementById('modal-change-pass').classList.add('hidden')">&times;</span>
-            <h3>Cambiar Contraseña</h3>
-            <label>Contraseña Actual</label>
-            <input type="password" id="chg-old-pass" placeholder="Verificación de seguridad">
-            <label>Nueva Contraseña</label>
-            <input type="password" id="chg-new-pass" placeholder="Mínimo 6 caracteres">
-            <label>Confirmar Nueva</label>
-            <input type="password" id="chg-confirm-pass" placeholder="Repite la nueva contraseña">
-            <div class="btn-row">
-                <button class="primary" onclick="window.ejecutarCambioPass()">Actualizar</button>
-            </div>
-        </div>
-    </div>
+/* TAB COLORS */
+.tab-btn.active { background: #e0e7ff; color: var(--primary); }
+.tab-btn-pref.active { background: var(--pref-bg) !important; color: var(--pref-text) !important; border: 1px solid var(--pref-border); }
+.tab-btn-fil.active { background: var(--fil-bg) !important; color: var(--fil-text) !important; border: 1px solid var(--fil-border); }
+.tab-btn-san.active { background: var(--san-bg) !important; color: var(--san-text) !important; border: 1px solid var(--san-border); }
+.tab-btn-psi.active { background: var(--psi-bg) !important; color: var(--psi-text) !important; border: 1px solid var(--psi-border); }
 
-    <div id="modal-historial" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
-        <div class="modal-content">
-            <span class="close-modal" onclick="document.getElementById('modal-historial').classList.add('hidden')">&times;</span>
-            <h3>Historial de Movimientos</h3>
-            <div id="historial-content" style="max-height:60vh; overflow-y:auto; margin-top:15px;"></div>
-        </div>
-    </div>
+.search-results { background: white; border: 1px solid #e2e8f0; border-radius: 0 0 12px 12px; max-height: 250px; overflow-y: auto; margin-top: -15px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); display: block; position: absolute; width: 100%; z-index: 50; }
+.search-item { padding: 12px; border-bottom: 1px solid #f1f5f9; cursor: pointer; font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center; }
+.search-item:hover { background: #f8fafc; }
+.search-item strong { display: block; margin-bottom: 2px; color: var(--text-main); }
+.search-item small { color: #64748b; font-size: 0.8em; }
 
-    <div id="modal-add-familiar" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><span class="close-modal" onclick="window.cerrarModalFamiliar()">&times;</span><h3>Familiar (QR)</h3><div class="row"><div class="col"><label>Nombre</label><input type="text" id="fam-nombre"></div></div><div class="row"><div class="col"><label>Ap 1</label><input type="text" id="fam-ap1"></div><div class="col"><label>Ap 2</label><input type="text" id="fam-ap2"></div></div><div class="row"><div class="col"><label>Doc</label><select id="fam-tipo-doc" onchange="window.verificarMenor('fam')"><option value="MENOR">MENOR</option><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option></select></div><div class="col"><label>Num</label><input type="text" id="fam-doc-num" disabled></div></div><div class="row"><div class="col"><label>F. Nac</label><input type="tel" id="fam-fecha" oninput="window.formatearFecha(this)" maxlength="10"></div></div><div class="btn-row"><button class="primary" onclick="window.guardarFamiliarEnLista()">Añadir</button></div></div></div>
-    <div id="modal-admin-add-familiar" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><span class="close-modal" onclick="window.cerrarModalFamiliarAdmin()">&times;</span><h3>Miembro (Admin)</h3><div class="row"><div class="col"><label>Nombre</label><input type="text" id="adm-fam-nombre"></div><div class="col"><label>Ap 1</label><input type="text" id="adm-fam-ap1"></div><div class="col"><label>Ap 2</label><input type="text" id="adm-fam-ap2"></div></div><div class="row"><div class="col"><label>Doc</label><select id="adm-fam-tipo-doc" onchange="window.verificarMenor('adm-fam')"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Num</label><input type="text" id="adm-fam-doc-num"></div></div><div class="row"><div class="col"><label>F. Nac</label><input type="tel" id="adm-fam-fecha" oninput="window.formatearFecha(this)" maxlength="10"></div><div class="col"><label>Tel</label><input type="tel" id="adm-fam-tel"></div></div><div class="btn-row"><button class="primary" onclick="window.guardarFamiliarAdmin()">Añadir</button></div></div></div>
-    <div id="modal-obs-detalle" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content modal-lg"><span class="close-modal" onclick="document.getElementById('modal-obs-detalle').classList.add('hidden')">&times;</span><h3 id="obs-modal-title">Listado</h3><div id="obs-modal-content" style="margin-top:20px;"></div></div></div>
+.status-dot { width: 14px; height: 14px; border-radius: 50%; display: inline-block; margin-left: 10px; flex-shrink: 0; }
+.dot-green { background-color: #10b981; box-shadow: 0 0 4px #10b981; }
+.dot-red { background-color: #ef4444; box-shadow: 0 0 4px #ef4444; }
 
-    <script type="module" src="script.js"></script>
-</body>
-</html>
+.badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; display: inline-block; }
+
+/* MODALS */
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3500; display: flex; justify-content: center; align-items: center; }
+.modal-content { background: white; width: 95%; max-width: 600px; padding: 30px; border-radius: 12px; max-height: 90vh; overflow-y: auto; position: relative; }
+.modal-lg { max-width: 900px; }
+
+/* Z-INDEX HIERARCHY */
+#modal-historial, #modal-bed-info { z-index: 4000 !important; }
+#loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+
+.version-tag { position: fixed; bottom: 10px; right: 10px; color: #ccc; font-size: 0.8em; pointer-events: none; }
+.fam-list { margin-top: 15px; border-top: 2px dashed #eee; padding-top: 10px; }
+.fam-item { background: #f8fafc; padding: 10px; border-radius: 8px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #e2e8f0; }
+.fam-item.existing { background: #fff7ed; border-color: #fdba74; }
+.close-modal { position: absolute; top: 15px; right: 20px; font-size: 1.5rem; color: #94a3b8; cursor: pointer; transition: 0.2s; z-index: 10; }
+.close-modal:hover { color: var(--danger); transform: scale(1.1); }
+
+/* OBSERVATORIO */
+.obs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 30px; }
+.obs-card { background: white; padding: 25px; border-radius: var(--radius); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); text-align: center; border: 1px solid #e2e8f0; }
+.obs-val { font-size: 2.5rem; font-weight: 800; color: var(--primary); margin: 5px 0; }
+.obs-label { text-transform: uppercase; font-size: 0.75rem; color: #64748b; font-weight: 700; letter-spacing: 1px; }
+
+.obs-row { background: white; border: 1px solid #e2e8f0; padding: 20px; border-radius: 12px; margin-bottom: 15px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; transition: 0.2s; }
+.obs-row:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: var(--primary); }
+.obs-row-title { font-weight: 700; font-size: 1.1rem; color: var(--text-main); margin-bottom: 5px; width: 100%; }
+.obs-data-point { display: flex; flex-direction: column; margin-right: 20px; margin-top: 10px; }
+.obs-data-point span { font-size: 0.8rem; color: #64748b; text-transform: uppercase; font-weight: 600; }
+.obs-data-point strong { font-size: 1.2rem; color: var(--text-main); }
+.obs-clickable { cursor: pointer; text-decoration: underline; text-decoration-style: dotted; text-decoration-color: var(--primary); transition: 0.2s; }
+.obs-clickable:hover { color: var(--primary); }
+
+.prog-track { background: #e2e8f0; height: 10px; border-radius: 5px; overflow: hidden; width: 100%; margin-top: 10px; }
+.prog-fill { height: 100%; background: var(--primary); transition: width 0.5s; }
+.prog-fill.high { background: var(--danger); }
+.prog-fill.med { background: var(--warning); }
+.prog-fill.low { background: var(--success); }
+
+/* SPINNER */
+.spinner { width: 60px; height: 60px; border: 6px solid #e0e7ff; border-top: 6px solid var(--primary); border-radius: 50%; animation: spin 1.5s linear infinite; margin-bottom: 20px; }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+/* LOGIN */
+#login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%); display: flex; align-items: center; justify-content: center; z-index: 3000; }
+#login-screen .card { width: 100%; max-width: 400px; text-align: center; }
+
+/* SWITCH */
+.toggle-switch { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.toggle-input { display: none; }
+.toggle-slider { width: 40px; height: 20px; background: #cbd5e1; border-radius: 20px; position: relative; transition: 0.3s; }
+.toggle-slider::before { content: ''; position: absolute; width: 16px; height: 16px; background: white; border-radius: 50%; top: 2px; left: 2px; transition: 0.3s; }
+.toggle-input:checked + .toggle-slider { background: var(--primary); }
+.toggle-input:checked + .toggle-slider::before { transform: translateX(20px); }

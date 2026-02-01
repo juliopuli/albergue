@@ -138,7 +138,7 @@ button.dark { background: #334155; color: white; }
 .modal-lg { max-width: 900px; }
 
 /* FIX Z-INDEX */
-#modal-historial { z-index: 3200 !important; }
+#modal-historial { z-index: 3500 !important; }
 
 .version-tag { position: fixed; bottom: 10px; right: 10px; color: #ccc; font-size: 0.8em; pointer-events: none; }
 .fam-list { margin-top: 15px; border-top: 2px dashed #eee; padding-top: 10px; }

@@ -68,8 +68,7 @@ button.success { background: #10b981; color: white; }
 button.danger { background: #ef4444; color: white; }
 button.warning { background: #f59e0b; color: white; }
 button.dark { background: #334155; color: white; }
-button.salida { background: #7e22ce; color: white; } /* NEW: Botón Salida */
-
+button.salida { background: #7e22ce; color: white; } /* V38 Salida */
 .btn-group-horizontal { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
 .btn-icon { background: #e0e7ff; color: var(--primary); border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; }
 
@@ -115,18 +114,17 @@ button.salida { background: #7e22ce; color: white; } /* NEW: Botón Salida */
 .dot-green { background-color: #10b981; box-shadow: 0 0 4px #10b981; }
 .dot-red { background-color: #ef4444; box-shadow: 0 0 4px #ef4444; }
 
-/* NEW: Global Badge */
-.badge-global { background-color: #3b82f6; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7em; margin-left: 5px; }
-
 /* MODALS - HIGH Z-INDEX */
 .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 8000; display: flex; justify-content: center; align-items: center; }
 .modal-content { background: white; width: 95%; max-width: 600px; padding: 30px; border-radius: 12px; max-height: 90vh; overflow-y: auto; position: relative; }
 .modal-lg { max-width: 900px; }
+
+/* FIX: HISTORIAL ABOVE ALL OTHER MODALS */
 #modal-historial { z-index: 9500 !important; }
 #modal-bed-info, #modal-add-familiar, #modal-admin-add-familiar { z-index: 8000 !important; }
 #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
 
-/* PUBLIC SCREEN - SCROLL FIX */
+/* PUBLIC SCREEN - COMPACT QR */
 #public-register-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 6000; overflow-y: auto; background: white; }
 #public-form-container { width: 95%; max-width: 500px; padding: 10px 15px 40px 15px; margin: 10px auto; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.05); max-height: 85vh; overflow-y: scroll; }
 #public-form-container h2 { font-size: 1.2rem; margin-bottom: 10px; }
@@ -144,7 +142,16 @@ button.salida { background: #7e22ce; color: white; } /* NEW: Botón Salida */
 .obs-val { font-size: 2.5rem; font-weight: 800; color: var(--primary); margin: 5px 0; }
 .obs-label { text-transform: uppercase; font-size: 0.75rem; color: #64748b; font-weight: 700; letter-spacing: 1px; }
 
-.obs-row { background: white; border: 1px solid #e2e8f0; padding: 20px; border-radius: 12px; margin-bottom: 15px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; transition: 0.2s; }
+.obs-layout { display: flex; gap: 20px; align-items: flex-start; transition: 0.3s; }
+.obs-list-col { flex: 1; transition: 0.3s; }
+.obs-map-col { flex: 0; width: 0; overflow: hidden; opacity: 0; transition: 0.3s; background: white; border-radius: 12px; border: 1px solid #e2e8f0; }
+.obs-layout.active .obs-list-col { flex: 0 0 35%; max-width: 350px; }
+.obs-layout.active .obs-map-col { flex: 1; width: auto; opacity: 1; padding: 20px; }
+.obs-layout.active .obs-row { flex-direction: column; align-items: flex-start; padding: 15px; }
+.obs-layout.active .obs-data-point { margin-right: 0; margin-bottom: 10px; width: 100%; }
+
+.obs-row { background: white; border: 1px solid #e2e8f0; padding: 20px; border-radius: 12px; margin-bottom: 15px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; transition: 0.2s; cursor: pointer; }
+.obs-row:hover { border-color: var(--primary); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
 .obs-data-point { display: flex; flex-direction: column; margin-right: 20px; margin-top: 10px; min-width: 80px; }
 .obs-data-point span { font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; }
 .obs-data-point strong { font-size: 1.4rem; color: var(--text-main); margin-top: 6px; display: block; }
@@ -155,6 +162,14 @@ button.salida { background: #7e22ce; color: white; } /* NEW: Botón Salida */
 .prog-fill.high { background: var(--danger); }
 .prog-fill.med { background: var(--warning); }
 .prog-fill.low { background: var(--success); }
+
+.mini-map-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; }
+.mini-grid { display: grid; gap: 5px; margin-top: 10px; }
+.mini-bed { width: 100%; padding-top: 100%; position: relative; border-radius: 4px; }
+.mini-bed-content { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; font-size: 0.7rem; font-weight: bold; color: white; }
+.bg-free { background-color: #10b981; }
+.bg-busy { background-color: #ef4444; }
+
 .spinner { width: 60px; height: 60px; border: 6px solid #e0e7ff; border-top: 6px solid var(--primary); border-radius: 50%; animation: spin 1.5s linear infinite; margin-bottom: 20px; }
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 

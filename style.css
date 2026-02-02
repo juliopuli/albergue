@@ -68,7 +68,7 @@ button.success { background: #10b981; color: white; }
 button.danger { background: #ef4444; color: white; }
 button.warning { background: #f59e0b; color: white; }
 button.dark { background: #334155; color: white; }
-button.salida { background: #7e22ce; color: white; } /* V38 Salida */
+button.salida { background: #7e22ce; color: white; }
 .btn-group-horizontal { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
 .btn-icon { background: #e0e7ff; color: var(--primary); border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; }
 
@@ -114,12 +114,13 @@ button.salida { background: #7e22ce; color: white; } /* V38 Salida */
 .dot-green { background-color: #10b981; box-shadow: 0 0 4px #10b981; }
 .dot-red { background-color: #ef4444; box-shadow: 0 0 4px #ef4444; }
 
+/* NEW: Global Badge */
+.badge-global { background-color: #3b82f6; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7em; margin-left: 5px; }
+
 /* MODALS - HIGH Z-INDEX */
 .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 8000; display: flex; justify-content: center; align-items: center; }
 .modal-content { background: white; width: 95%; max-width: 600px; padding: 30px; border-radius: 12px; max-height: 90vh; overflow-y: auto; position: relative; }
 .modal-lg { max-width: 900px; }
-
-/* FIX: HISTORIAL ABOVE ALL OTHER MODALS */
 #modal-historial { z-index: 9500 !important; }
 #modal-bed-info, #modal-add-familiar, #modal-admin-add-familiar { z-index: 8000 !important; }
 #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
@@ -136,7 +137,7 @@ button.salida { background: #7e22ce; color: white; } /* V38 Salida */
 .close-modal { position: absolute; top: 15px; right: 20px; font-size: 1.5rem; color: #94a3b8; cursor: pointer; transition: 0.2s; z-index: 10; }
 .close-modal:hover { color: var(--danger); transform: scale(1.1); }
 
-/* OBSERVATORIO */
+/* OBSERVATORIO SPLIT VIEW */
 .obs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 30px; }
 .obs-card { background: white; padding: 25px; border-radius: var(--radius); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); text-align: center; border: 1px solid #e2e8f0; }
 .obs-val { font-size: 2.5rem; font-weight: 800; color: var(--primary); margin: 5px 0; }

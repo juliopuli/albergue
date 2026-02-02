@@ -3,28 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión Albergue - Ver.41.0.0</title>
+    <title>Gestión Albergue - Ver.42.0.0</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script>
         window.logError = function(msg) {
-            const box = document.getElementById('debug-box');
-            if(box) {
-                box.innerHTML += `<div style="border-bottom:1px solid #333;">> ${msg}</div>`;
-                box.scrollTop = box.scrollHeight;
-            }
             console.log(msg);
-        };
-        window.onerror = function(message, source, lineno, colno, error) {
-            window.logError(`ERROR: ${message} at line ${lineno}`);
         };
     </script>
 </head>
 <body>
 
-    <div class="version-tag">Ver.41.0.0</div>
+    <div class="version-tag">Ver.42.0.0</div>
     <div id="toast">Guardado automático</div>
     <div id="loading-overlay" class="hidden"><div class="spinner"></div><h2 style="color:var(--primary);">Cargando Datos...</h2></div>
 

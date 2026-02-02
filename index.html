@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión Albergue - Ver.42.0.0</title>
+    <title>Gestión Albergue - Ver.43.0.0</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -16,7 +16,7 @@
 </head>
 <body>
 
-    <div class="version-tag">Ver.42.0.0</div>
+    <div class="version-tag">Ver.43.0.0</div>
     <div id="toast">Guardado automático</div>
     <div id="loading-overlay" class="hidden"><div class="spinner"></div><h2 style="color:var(--primary);">Cargando Datos...</h2></div>
 
@@ -181,7 +181,7 @@
                                     </div>
                                     <div class="row"><div class="col"><label>Nombre (*)</label><input type="text" id="man-nombre"></div><div class="col"><label>Ap 1</label><input type="text" id="man-ap1"></div><div class="col"><label>Ap 2</label><input type="text" id="man-ap2"></div></div>
                                     <div class="row"><div class="col"><label>Doc</label><select id="man-tipo-doc"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Número</label><input type="text" id="man-doc-num"></div></div>
-                                    <div class="row"><div class="col"><label>F. Nac</label><input type="tel" id="man-fecha" maxlength="10" oninput="window.formatearFecha(this)"></div><div class="col"><label>Tel</label><input type="tel" id="man-tel"></div></div>
+                                    <div class="row"><div class="col"><label>F. Nac</label><input type="tel" id="man-fecha" maxlength="10" oninput="window.formatearFecha(this)"></div><div class="col"><label>Teléfono</label><input type="tel" id="man-tel"></div></div>
                                     
                                     <button id="btn-save-pref" class="success" style="width:100%; margin-top:20px;" onclick="window.crearNuevoEnPool()">💾 Crear Nuevo en Nube</button>
                                 </div>
@@ -258,7 +258,7 @@
             </div>
         </div>
 
-        <div id="public-form-container" class="card hidden" style="max-width:600px; width:100%;">
+        <div id="public-form-container" class="hidden">
             <h2 style="text-align:center; color:var(--primary); margin-bottom:15px;">Tus Datos</h2>
             <div class="row"><div class="col"><label>Nombre (*)</label><input type="text" id="pub-nombre"></div></div>
             <div class="row"><div class="col"><label>Ap 1</label><input type="text" id="pub-ap1"></div><div class="col"><label>Ap 2</label><input type="text" id="pub-ap2"></div></div>

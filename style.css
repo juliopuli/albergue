@@ -113,14 +113,15 @@ button.salida { background: #7e22ce; color: white; }
 .status-dot { width: 14px; height: 14px; border-radius: 50%; display: inline-block; margin-left: 10px; flex-shrink: 0; }
 .dot-green { background-color: #10b981; box-shadow: 0 0 4px #10b981; }
 .dot-red { background-color: #ef4444; box-shadow: 0 0 4px #ef4444; }
+.dot-orange { background-color: #f97316; box-shadow: 0 0 4px #f97316; } /* NEW V40 */
 
-/* NEW: Global Badge */
 .badge-global { background-color: #3b82f6; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7em; margin-left: 5px; }
 
 /* MODALS - HIGH Z-INDEX */
 .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 8000; display: flex; justify-content: center; align-items: center; }
 .modal-content { background: white; width: 95%; max-width: 600px; padding: 30px; border-radius: 12px; max-height: 90vh; overflow-y: auto; position: relative; }
 .modal-lg { max-width: 900px; }
+
 #modal-historial { z-index: 9500 !important; }
 #modal-bed-info, #modal-add-familiar, #modal-admin-add-familiar { z-index: 8000 !important; }
 #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
@@ -170,6 +171,7 @@ button.salida { background: #7e22ce; color: white; }
 .mini-bed-content { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; font-size: 0.7rem; font-weight: bold; color: white; }
 .bg-free { background-color: #10b981; }
 .bg-busy { background-color: #ef4444; }
+.bg-orange { background-color: #f97316; } /* NEW V40 */
 
 .spinner { width: 60px; height: 60px; border: 6px solid #e0e7ff; border-top: 6px solid var(--primary); border-radius: 50%; animation: spin 1.5s linear infinite; margin-bottom: 20px; }
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }

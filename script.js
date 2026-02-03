@@ -149,7 +149,7 @@ window.guardarCama = async function(c) {
     } catch(e) { alert("Error: " + e.message); }
 };
 
-// --- 8. PREFILIACIÓN ---
+// --- 9. PREFILIACIÓN ---
 window.buscarEnPrefiliacion = async function(){
     const t = window.safeVal('buscador-pref').toLowerCase().trim(); const r = window.el('resultados-pref');
     if(t.length < 2) { window.safeHide('resultados-pref'); return; }
@@ -169,7 +169,9 @@ window.cargarDesdePool = async function(pid) {
     window.safeHide('resultados-pref'); window.el('buscador-pref').value="";
     const snap = await getDoc(doc(db, "pool_prefiliacion", pid)); if(!snap.exists()) return;
     const p = snap.data(); prefiliacionEdicionId = pid;
-    window.setVal('man-nombre',p.nombre);window.setVal('man-ap1',p.ap1);window.setVal('man-ap2',p.ap2);window.setVal('man-tipo-doc',p.tipoDoc);window.setVal('man-doc-num',p.docNum);window.setVal('man-fecha',p.fechaNac);window.setVal('man-tel',p.telefono);
+    window.setVal('man-nombre',p.nombre);window.setVal('man-ap1',p.ap1);window.setVal('man-ap2',p.ap2);
+    window.setVal('man-tipo-doc',p.tipoDoc);window.setVal('man-doc-num',p.docNum);
+    window.setVal('man-fecha',p.fechaNac);window.setVal('man-tel',p.telefono);
     window.safeShow('btn-ingresar-global'); window.el('btn-save-pref').innerText = "Guardar Nuevo en Nube"; window.safeShow('btn-cancelar-edicion-pref');
 };
 window.ingresarDesdeGlobalAction = async function() {
@@ -194,7 +196,8 @@ window.darSalidaPersona = async function() {
     try {
         const batch = writeBatch(db); const p = personaEnGestion;
         const poolRef = doc(collection(db, "pool_prefiliacion"));
-        const poolData = { ...p, cama: null, estado: 'espera', ultimoAlbergue: currentAlbergueData.nombre, fechaSalida: new Date() }; delete poolData.id; batch.set(poolRef, poolData);
+        const poolData = { ...p, cama: null, estado: 'espera', ultimoAlbergue: currentAlbergueData.nombre, fechaSalida: new Date() }; delete poolData.id; 
+        batch.set(poolRef, poolData);
         const poolLogRef = doc(collection(db, "pool_prefiliacion", poolRef.id, "historial"));
         batch.set(poolLogRef, { fecha: new Date(), usuario: currentUserData.nombre, accion: `Salida del Albergue ${currentAlbergueData.nombre}`, detalle: "Transferido a Nube" });
         const localRef = doc(db, "albergues", currentAlbergueId, "personas", p.id); batch.delete(localRef);
@@ -297,14 +300,11 @@ window.verHistorial = async function(pId = null, altAlbId = null) {
     window.safeShow('modal-historial');const content = window.el('historial-content');content.innerHTML = "Cargando...";
     try {
         let q;
-        // DETECTAR SI ES GLOBAL O LOCAL PARA BUSCAR HISTORIAL CORRECTO
-        // Si venimos de la lista global (personaEnGestionEsGlobal es true), buscamos en pool_prefiliacion
         if(personaEnGestionEsGlobal) {
              q = query(collection(db, "pool_prefiliacion", targetId, "historial"), orderBy("fecha", "desc"));
         } else {
              q = query(collection(db, "albergues", currentAlbergueId, "personas", targetId, "historial"), orderBy("fecha", "desc"));
         }
-        
         const snap = await getDocs(q);
         if(snap.empty){ content.innerHTML = "<p>No hay movimientos.</p>"; return; }
         let html = "";

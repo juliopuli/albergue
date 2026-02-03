@@ -9,7 +9,7 @@
     --radius: 12px;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-body { background-color: var(--bg-body); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; }
+body { background-color: var(--bg-body); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; padding-bottom: 160px; }
 
 /* HEADER & NAV */
 .app-header { background: var(--surface); padding: 0 25px; height: 60px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; position: fixed; top: 0; width: 100%; z-index: 100; }
@@ -203,3 +203,6 @@ button.salida { background: #7e22ce; color: white; }
     overflow-y: scroll; border-top: 2px solid #0f0; box-shadow: 0 -5px 15px rgba(0,0,0,0.5);
 }
 #debug-box div { margin-bottom: 4px; border-bottom: 1px solid #333; }
+#debug-box .error { color: #ff5555; font-weight: bold; }
+#debug-box .success { color: #55ff55; }
+#debug-box .info { color: #aaaaff; }

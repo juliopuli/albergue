@@ -6,27 +6,39 @@ from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 const firebaseConfig = { apiKey: "AIzaSyAzfEMwMd6M1VgvV0tJn7RS63RJghLE5UI", authDomain: "albergues-temporales.firebaseapp.com", projectId: "albergues-temporales", storageBucket: "albergues-temporales.firebasestorage.app", messagingSenderId: "489999184108", appId: "1:489999184108:web:32b9b580727f83158075c9" };
 const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db = getFirestore(app);
 
-// --- GLOBALS ---
-let isPublicMode = false; let currentAlbergueId = null;
+// --- 1. DETECCIÓN PÚBLICA INMEDIATA ---
+let isPublicMode = false;
+let currentAlbergueId = null;
 const urlParams = new URLSearchParams(window.location.search);
-if (urlParams.get('public_id')) { isPublicMode = true; currentAlbergueId = urlParams.get('public_id'); }
+if (urlParams.get('public_id')) {
+    isPublicMode = true;
+    currentAlbergueId = urlParams.get('public_id');
+}
 
-let currentUserData = null; let currentAlbergueData = null;
-let totalCapacidad = 0; let ocupacionActual = 0;
-let camasOcupadas = {}; let listaPersonasCache = [];
+// --- 2. GLOBALES ---
+let currentUserData = null;
+let currentAlbergueData = null;
+let totalCapacidad = 0;
+let ocupacionActual = 0;
+let camasOcupadas = {};
+let listaPersonasCache = [];
 
 let unsubscribeUsers, unsubscribeAlberguesActivos, unsubscribeAlberguesMto, unsubscribePersonas, unsubscribeAlbergueDoc;
 
-let personaSeleccionadaId = null; 
+let personaSeleccionadaId = null;
 let personaEnGestion = null;
 let personaEnGestionEsGlobal = false;
-let modoCambioCama = false; let modoMapaGeneral = false;
-let prefiliacionEdicionId = null; let highlightedFamilyId = null;
+let modoCambioCama = false;
+let modoMapaGeneral = false;
+let prefiliacionEdicionId = null;
+let highlightedFamilyId = null;
 
-let listaFamiliaresTemp = []; let adminFamiliaresTemp = [];
-let userEditingId = null; let albergueEdicionId = null;
+let listaFamiliaresTemp = [];
+let adminFamiliaresTemp = [];
+let userEditingId = null;
+let albergueEdicionId = null;
 
-// --- UTILS ---
+// --- 3. UTILIDADES ---
 window.el = function(id) { return document.getElementById(id); };
 window.safeHide = function(id) { const e = window.el(id); if(e) e.classList.add('hidden'); };
 window.safeShow = function(id) { const e = window.el(id); if(e) e.classList.remove('hidden'); };
@@ -42,7 +54,11 @@ window.actualizarContadores = function() { const elOcc = window.el('ocupacion-co
 window.showToast = function(msg) { const t = window.el('toast'); if(t) { t.innerText = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2000); } };
 
 // --- 4. AUTH ---
-window.iniciarSesion = async function() { try { await signInWithEmailAndPassword(auth, window.el('login-email').value, window.el('login-pass').value); } catch(e){ alert(e.message); } };
+window.iniciarSesion = async function() { 
+    try { 
+        await signInWithEmailAndPassword(auth, window.el('login-email').value, window.el('login-pass').value); 
+    } catch(e){ alert(e.message); } 
+};
 window.cerrarSesion = function() { signOut(auth); location.reload(); };
 
 // --- 5. SMART SAVE ---
@@ -137,10 +153,20 @@ window.guardarCama = async function(c) {
         const localRef = doc(collection(db, "albergues", currentAlbergueId, "personas"));
         const data = { ...personaEnGestion }; delete data.id; delete data.isGlobal;
         batch.set(localRef, { ...data, estado: 'ingresado', cama: camaStr, fechaIngresoAlbergue: new Date(), origenGlobal: true });
+        
+        // Log Entry
         const logRef1 = doc(collection(db, "albergues", currentAlbergueId, "personas", localRef.id, "historial"));
         batch.set(logRef1, { fecha: new Date(), usuario: currentUserData.nombre, accion: `Entrada a Albergue ${currentAlbergueData.nombre}`, detalle: "Desde Nube" });
+        
+        // Log Bed
         const logRef2 = doc(collection(db, "albergues", currentAlbergueId, "personas", localRef.id, "historial"));
-        batch.set(logRef2, { fecha: new Date(), usuario: currentUserData.nombre, accion: "Asignación Cama", detalle: `Cama ${c}` });
+        // Firestore batch requires unique refs, so we use a sub-second diff or simpler: just one combined log, or rely on auto-id
+        // Since we are manually creating IDs for logs above with doc(), they are unique.
+        // Wait, I used collection() in logRef1 definition which generates auto ID. 
+        // Correct approach:
+        // const logRef2 = doc(collection(db, "albergues", currentAlbergueId, "personas", localRef.id, "historial"));
+        batch.set(doc(collection(db, "albergues", currentAlbergueId, "personas", localRef.id, "historial")), { fecha: new Date(), usuario: currentUserData.nombre, accion: "Asignación Cama", detalle: `Cama ${c}` });
+        
         const globalRef = doc(db, "pool_prefiliacion", personaEnGestion.id);
         batch.delete(globalRef);
         await batch.commit();

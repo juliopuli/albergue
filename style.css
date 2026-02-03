@@ -9,7 +9,7 @@
     --radius: 12px;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-body { background-color: var(--bg-body); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; padding-bottom: 160px; }
+body { background-color: var(--bg-body); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; }
 
 /* HEADER & NAV */
 .app-header { background: var(--surface); padding: 0 25px; height: 60px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; position: fixed; top: 0; width: 100%; z-index: 100; }
@@ -68,7 +68,7 @@ button.success { background: #10b981; color: white; }
 button.danger { background: #ef4444; color: white; }
 button.warning { background: #f59e0b; color: white; }
 button.dark { background: #334155; color: white; }
-button.salida { background: #7e22ce; color: white; } /* V49: Botón Salida */
+button.salida { background: #7e22ce; color: white; }
 
 .btn-group-horizontal { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
 .btn-icon { background: #e0e7ff; color: var(--primary); border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; }
@@ -203,6 +203,3 @@ button.salida { background: #7e22ce; color: white; } /* V49: Botón Salida */
     overflow-y: scroll; border-top: 2px solid #0f0; box-shadow: 0 -5px 15px rgba(0,0,0,0.5);
 }
 #debug-box div { margin-bottom: 4px; border-bottom: 1px solid #333; }
-#debug-box .error { color: #ff5555; font-weight: bold; }
-#debug-box .success { color: #55ff55; }
-#debug-box .info { color: #aaaaff; }

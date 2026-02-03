@@ -3,20 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión Albergue - Ver.47.0.0</title>
+    <title>Gestión Albergue - Ver.48.0.0</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script>
-        window.logError = function(msg) {
-            console.log(msg);
-        };
-    </script>
 </head>
 <body>
 
-    <div class="version-tag">Ver.47.0.0</div>
+    <div class="version-tag">Ver.48.0.0</div>
     <div id="toast">Guardado automático</div>
     <div id="loading-overlay" class="hidden"><div class="spinner"></div><h2 style="color:var(--primary);">Cargando Datos...</h2></div>
 
@@ -258,7 +253,7 @@
             </div>
         </div>
 
-        <div id="public-form-container" class="card hidden" style="max-width:600px; width:100%;">
+        <div id="public-form-container" class="hidden">
             <h2 style="text-align:center; color:var(--primary); margin-bottom:15px;">Tus Datos</h2>
             <div class="row"><div class="col"><label>Nombre (*)</label><input type="text" id="pub-nombre"></div></div>
             <div class="row"><div class="col"><label>Ap 1</label><input type="text" id="pub-ap1"></div><div class="col"><label>Ap 2</label><input type="text" id="pub-ap2"></div></div>

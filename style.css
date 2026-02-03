@@ -68,8 +68,7 @@ button.success { background: #10b981; color: white; }
 button.danger { background: #ef4444; color: white; }
 button.warning { background: #f59e0b; color: white; }
 button.dark { background: #334155; color: white; }
-button.salida { background: #9333ea; color: white; } /* NEW: Botón Salida Morado */
-
+button.salida { background: #7e22ce; color: white; }
 .btn-group-horizontal { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
 .btn-icon { background: #e0e7ff; color: var(--primary); border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; }
 
@@ -114,8 +113,8 @@ button.salida { background: #9333ea; color: white; } /* NEW: Botón Salida Morad
 .status-dot { width: 14px; height: 14px; border-radius: 50%; display: inline-block; margin-left: 10px; flex-shrink: 0; }
 .dot-green { background-color: #10b981; box-shadow: 0 0 4px #10b981; }
 .dot-red { background-color: #ef4444; box-shadow: 0 0 4px #ef4444; }
+.dot-orange { background-color: #f97316; box-shadow: 0 0 4px #f97316; }
 
-/* NEW: Global Badge */
 .badge-global { background-color: #3b82f6; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7em; margin-left: 5px; }
 
 /* MODALS */

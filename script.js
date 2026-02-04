@@ -1,16 +1,12 @@
-
 import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signInAnonymously, signOut, onAuthStateChanged, createUserWithEmailAndPassword, sendPasswordResetEmail, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
 import { getFirestore, collection, addDoc, setDoc, query, where, getDocs, doc, updateDoc, onSnapshot, orderBy, deleteDoc, getDoc, writeBatch } 
 from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
-// --- 0. INICIALIZACIÓN DE FIREBASE ---
 const firebaseConfig = { apiKey: "AIzaSyAzfEMwMd6M1VgvV0tJn7RS63RJghLE5UI", authDomain: "albergues-temporales.firebaseapp.com", projectId: "albergues-temporales", storageBucket: "albergues-temporales.firebasestorage.app", messagingSenderId: "489999184108", appId: "1:489999184108:web:32b9b580727f83158075c9" };
 const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db = getFirestore(app);
 
-// --- 1. SISTEMA DE LOGS Y ERRORES (CRÍTICO: DEFINIR PRIMERO) ---
-
-// Asignamos directamente a window para asegurar disponibilidad inmediata
+// --- 0. INICIALIZACIÓN DE FIREBASE ---
 window.sysLog = function(msg, type = 'info') {
     const c = document.getElementById('black-box-content');
     if (!c) { console.log(msg); return; } // Fallback a consola si no hay caja
@@ -33,7 +29,6 @@ window.sysLog = function(msg, type = 'info') {
     if(type === 'error') console.error(msg); else console.log(`[SYS] ${msg}`);
 };
 
-// Capturador Global de Errores (Conectado YA)
 window.onerror = function(message, source, lineno, colno, error) {
     window.sysLog(`CRITICAL: ${message} at line ${lineno}`, "error");
     const bb = document.getElementById('black-box-overlay');
@@ -353,13 +348,14 @@ window.rescatarDeGlobalDirecto = async function() {
         const familia = listaGlobalPrefiliacion.filter(x => x.familiaId === personaEnGestion.familiaId);
         const batch = writeBatch(db);
 
+        // Map old IDs to new IDs to keep reference if needed (optional)
         familia.forEach(member => {
             const localRef = doc(collection(db, "albergues", currentAlbergueId, "personas"));
             const memberData = {...member};
             delete memberData.id;
             memberData.fechaIngresoAlbergue = new Date();
             memberData.origenPoolId = member.id;
-            memberData.estado = 'espera'; 
+            memberData.estado = 'espera'; // Still waiting for bed, but INSIDE shelter
             
             batch.set(localRef, memberData);
             batch.delete(doc(db, "pool_prefiliacion", member.id));
@@ -369,9 +365,10 @@ window.rescatarDeGlobalDirecto = async function() {
         });
 
         await batch.commit();
-        window.sysLog(`Familia ingresada.`, "success");
+        window.sysLog(`Familia ingresada desde Nube.`, "success");
         window.showToast("Ingreso realizado. Asigne cama.");
         
+        // Clear selection to force refresh
         window.personaEnGestion = null;
         window.safeHide('panel-gestion-persona');
         window.el('buscador-persona').value = "";
@@ -624,14 +621,14 @@ onAuthStateChanged(auth, async (u) => {
         const s = await getDoc(doc(db,"usuarios",u.uid));
         if(s.exists()){
             currentUserData = {...s.data(), uid: u.uid};
-            window.sysLog(`Usuario: ${currentUserData.nombre}`, "success");
+            window.sysLog(`Usuario autenticado: ${currentUserData.nombre} (${currentUserData.rol})`, "success");
             window.safeHide('login-screen');
             window.safeShow('app-shell');
             window.configurarDashboard();
             window.navegar('home');
         }
     } else {
-        window.sysLog("Esperando login...", "info");
+        window.sysLog("Esperando inicio de sesión...", "info");
         window.safeHide('app-shell');
         window.safeShow('login-screen');
     }

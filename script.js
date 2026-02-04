@@ -172,6 +172,32 @@ window.cerrarMapaCamas = function(){
     window.safeHide('modal-cama');
 };
 
+// MOVIDA ARRIBA PARA EVITAR ERROR ONDBLCLICK
+window.abrirModalInfoCama=function(p){
+    window.el('info-cama-num').innerText=p.cama;
+    window.el('info-nombre-completo').innerText=p.nombre;
+    window.el('info-telefono').innerText=p.telefono||"No consta";
+    
+    const bh=window.el('btn-historial-cama');
+    if(['admin','super_admin'].includes(currentUserData.rol)){
+        window.safeShow('btn-historial-cama');
+        bh.onclick=()=>window.verHistorial(p.id);
+    }else{
+        window.safeHide('btn-historial-cama');
+    }
+    
+    const c=window.el('info-familia-detalle');
+    const fam=listaPersonasCache.filter(x=>x.familiaId===p.familiaId);
+    let h=`<table class="fam-table"><thead><tr><th>Nombre</th><th>DNI/Tel</th><th>Cama</th></tr></thead><tbody>`;
+    fam.forEach(f=>{
+        const isCurrent=f.id===p.id?'fam-row-current':'';
+        h+=`<tr class="${isCurrent}"><td>${f.nombre} ${f.ap1||''}</td><td><small>${f.docNum||'-'}<br>${f.telefono||'-'}</small></td><td><strong>${f.cama||'-'}</strong></td></tr>`;
+    });
+    h+=`</tbody></table>`;
+    c.innerHTML=h;
+    window.safeShow('modal-bed-info');
+};
+
 window.mostrarGridCamas=function(){
     const g=window.el('grid-camas');g.innerHTML="";const cols=(currentAlbergueData&&currentAlbergueData.columnas)?currentAlbergueData.columnas:8;g.style.gridTemplateColumns=`repeat(${cols}, 1fr)`;let shadowMap={};let famGroups={};listaPersonasCache.forEach(p=>{if(p.familiaId){if(!famGroups[p.familiaId])famGroups[p.familiaId]={members:[],beds:[]};famGroups[p.familiaId].members.push(p);if(p.cama)famGroups[p.familiaId].beds.push(parseInt(p.cama));}});Object.values(famGroups).forEach(fam=>{let assigned=fam.beds.length;let total=fam.members.length;let needed=total-assigned;if(assigned>0&&needed>0){let startBed=Math.max(...fam.beds);let placed=0;let check=startBed+1;while(placed<needed&&check<=totalCapacidad){if(!camasOcupadas[check.toString()]){shadowMap[check.toString()]=fam.members[0].familiaId;placed++;}check++;}}});let myFamId,famMembers=[],assignedMembers=[],neededForMe=1;if(!window.modoMapaGeneral&&window.personaEnGestion){myFamId=window.personaEnGestion.familiaId;if(myFamId)famMembers=listaPersonasCache.filter(m=>m.familiaId===myFamId);else famMembers=[window.personaEnGestion];assignedMembers=famMembers.filter(m=>m.cama&&m.id!==window.personaEnGestion.id);neededForMe=famMembers.length-assignedMembers.length;}
     for(let i=1;i<=totalCapacidad;i++){

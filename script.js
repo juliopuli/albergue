@@ -7,7 +7,7 @@ const firebaseConfig = { apiKey: "AIzaSyAzfEMwMd6M1VgvV0tJn7RS63RJghLE5UI", auth
 const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db = getFirestore(app);
 
 // ============================================
-// 0. DEFINICIONES GLOBALES CRÍTICAS
+// 0. DEFINICIONES GLOBALES
 // ============================================
 
 let isPublicMode = false;
@@ -23,8 +23,8 @@ let currentAlbergueData = null;
 let totalCapacidad = 0;
 let ocupacionActual = 0;
 let camasOcupadas = {};
-let listaPersonasCache = []; // Local
-let listaGlobalPrefiliacion = []; // Global
+let listaPersonasCache = []; 
+let listaGlobalPrefiliacion = []; 
 let unsubscribeUsers, unsubscribeAlberguesActivos, unsubscribeAlberguesMto, unsubscribePersonas, unsubscribeAlbergueDoc, unsubscribePool;
 
 let personaSeleccionadaId = null;
@@ -40,50 +40,6 @@ let adminFamiliaresTemp = [];
 let userEditingId = null;
 let albergueEdicionId = null;
 let isGlobalEdit = false; 
-
-// --- DOM UTILS ---
-window.el = function(id) { return document.getElementById(id); }
-window.safeHide = function(id) { const e = window.el(id); if(e) e.classList.add('hidden'); }
-window.safeShow = function(id) { const e = window.el(id); if(e) e.classList.remove('hidden'); }
-window.safeRemoveActive = function(id) { const e = window.el(id); if(e) e.classList.remove('active'); }
-window.safeAddActive = function(id) { const e = window.el(id); if(e) e.classList.add('active'); }
-window.safeVal = function(id) { const e = window.el(id); return e ? e.value : ""; }
-window.setVal = function(id, val) { const e = window.el(id); if (e) e.value = val; }
-
-window.formatearFecha = function(i) {
-    let v = i.value.replace(/\D/g, '').slice(0, 8);
-    if (v.length >= 5) i.value = `${v.slice(0, 2)}/${v.slice(2, 4)}/${v.slice(4)}`;
-    else if (v.length >= 3) i.value = `${v.slice(0, 2)}/${v.slice(2)}`;
-    else i.value = v;
-}
-
-window.verificarMenor = function(p) {
-    const t = window.el(`${p}-tipo-doc`).value;
-    const i = window.el(`${p}-doc-num`);
-    if (i && t === 'MENOR') {
-        i.value = "MENOR-SIN-DNI";
-        i.disabled = true;
-    } else if (i) {
-        i.disabled = false;
-        if (i.value === "MENOR-SIN-DNI") i.value = "";
-    }
-}
-
-window.limpiarFormulario = function(p) {
-    ['nombre', 'ap1', 'ap2', 'doc-num', 'fecha', 'tel'].forEach(f => {
-        const e = window.el(`${p}-${f}`);
-        if (e) e.value = "";
-    });
-    const i = window.el(`${p}-doc-num`);
-    if (i) i.disabled = false;
-}
-
-window.getDatosFormulario = function(p) {
-    return {
-        nombre: window.safeVal(`${p}-nombre`), ap1: window.safeVal(`${p}-ap1`), ap2: window.safeVal(`${p}-ap2`),
-        tipoDoc: window.safeVal(`${p}-tipo-doc`), docNum: window.safeVal(`${p}-doc-num`), fechaNac: window.safeVal(`${p}-fecha`), telefono: window.safeVal(`${p}-tel`)
-    };
-}
 
 // --- CAJA NEGRA ---
 window.toggleCajaNegra = function() {
@@ -133,9 +89,73 @@ window.onerror = function(message, source, lineno, colno, error) {
     if(bb && bb.classList.contains('hidden')) bb.classList.remove('hidden');
 };
 
-// ============================================
-// 0.5 FUNCIONES UI CRÍTICAS & LOGIN (PRIORIDAD ALTA)
-// ============================================
+if(isPublicMode) window.sysLog(`Modo Público Activado. Albergue: ${currentAlbergueId}`, "info");
+else window.sysLog("Sistema Iniciado (Modo Privado).", "info");
+
+
+// --- DOM UTILS ---
+window.el = function(id) { return document.getElementById(id); }
+window.safeHide = function(id) { const e = window.el(id); if(e) e.classList.add('hidden'); }
+window.safeShow = function(id) { const e = window.el(id); if(e) e.classList.remove('hidden'); }
+window.safeRemoveActive = function(id) { const e = window.el(id); if(e) e.classList.remove('active'); }
+window.safeAddActive = function(id) { const e = window.el(id); if(e) e.classList.add('active'); }
+window.safeVal = function(id) { const e = window.el(id); return e ? e.value : ""; }
+window.setVal = function(id, val) { const e = window.el(id); if (e) e.value = val; }
+
+window.formatearFecha = function(i) {
+    let v = i.value.replace(/\D/g, '').slice(0, 8);
+    if (v.length >= 5) i.value = `${v.slice(0, 2)}/${v.slice(2, 4)}/${v.slice(4)}`;
+    else if (v.length >= 3) i.value = `${v.slice(0, 2)}/${v.slice(2)}`;
+    else i.value = v;
+}
+
+window.verificarMenor = function(p) {
+    const t = window.el(`${p}-tipo-doc`).value;
+    const i = window.el(`${p}-doc-num`);
+    if (i && t === 'MENOR') {
+        i.value = "MENOR-SIN-DNI";
+        i.disabled = true;
+    } else if (i) {
+        i.disabled = false;
+        if (i.value === "MENOR-SIN-DNI") i.value = "";
+    }
+}
+
+window.limpiarFormulario = function(p) {
+    ['nombre', 'ap1', 'ap2', 'doc-num', 'fecha', 'tel'].forEach(f => {
+        const e = window.el(`${p}-${f}`);
+        if (e) e.value = "";
+    });
+    const i = window.el(`${p}-doc-num`);
+    if (i) i.disabled = false;
+}
+
+window.getDatosFormulario = function(p) {
+    return {
+        nombre: window.safeVal(`${p}-nombre`), ap1: window.safeVal(`${p}-ap1`), ap2: window.safeVal(`${p}-ap2`),
+        tipoDoc: window.safeVal(`${p}-tipo-doc`), docNum: window.safeVal(`${p}-doc-num`), fechaNac: window.safeVal(`${p}-fecha`), telefono: window.safeVal(`${p}-tel`)
+    };
+}
+
+// ----------------------------------------------------
+// BLOQUE 1: FUNCIONES UI Y NAVEGACIÓN (PRIORIDAD ALTA)
+// ----------------------------------------------------
+
+window.actualizarContadores = function() {
+    const elOcc = window.el('ocupacion-count');
+    const elCap = window.el('capacidad-total');
+    if (elOcc) elOcc.innerText = ocupacionActual;
+    if (elCap) elCap.innerText = totalCapacidad;
+}
+
+window.showToast = function(msg) {
+    const t = window.el('toast');
+    if(t) {
+        t.innerText = msg;
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 2000);
+    }
+}
 
 window.iniciarSesion = async function() { 
     try { 
@@ -151,6 +171,23 @@ window.iniciarSesion = async function() {
 window.cerrarSesion = function() { 
     window.sysLog("Cerrando sesión...", "warn");
     signOut(auth); location.reload(); 
+}
+
+window.configurarDashboard = function() {
+    window.sysLog("Configurando Dashboard...", "info");
+    const r=(currentUserData.rol||"").toLowerCase();
+    if(window.el('user-name-display')) window.el('user-name-display').innerText=currentUserData.nombre;
+    if(window.el('user-role-badge')) window.el('user-role-badge').innerText=r.toUpperCase();
+
+    window.safeHide('header-btn-users'); 
+    window.safeAddActive('nav-mto'); 
+    window.safeHide('nav-obs'); 
+    window.safeHide('nav-albergues');
+
+    if(['super_admin', 'admin'].includes(r)) { window.safeShow('header-btn-users'); if(window.el('nav-mto')) window.el('nav-mto').classList.remove('disabled'); }
+    if(['super_admin','admin','observador'].includes(r)) window.safeShow('nav-obs');
+    if(r !== 'observador') window.safeShow('nav-albergues');
+    if(r==='super_admin') window.safeShow('container-ver-ocultos');
 }
 
 window.navegar = function(p) {
@@ -173,45 +210,6 @@ window.navegar = function(p) {
     else if(p.includes('mantenimiento')) window.safeAddActive('nav-mto');
     else window.safeAddActive('nav-home');
 }
-
-window.configurarDashboard = function() {
-    window.sysLog("Configurando Dashboard...", "info");
-    const r=(currentUserData.rol||"").toLowerCase();
-    if(window.el('user-name-display')) window.el('user-name-display').innerText=currentUserData.nombre;
-    if(window.el('user-role-badge')) window.el('user-role-badge').innerText=r.toUpperCase();
-
-    window.safeHide('header-btn-users'); 
-    window.safeAddActive('nav-mto'); 
-    window.safeHide('nav-obs'); 
-    window.safeHide('nav-albergues');
-
-    if(['super_admin', 'admin'].includes(r)) { window.safeShow('header-btn-users'); if(window.el('nav-mto')) window.el('nav-mto').classList.remove('disabled'); }
-    if(['super_admin','admin','observador'].includes(r)) window.safeShow('nav-obs');
-    if(r !== 'observador') window.safeShow('nav-albergues');
-    if(r==='super_admin') window.safeShow('container-ver-ocultos');
-}
-
-// MOVIDAS ARRIBA: Funciones usadas por pestañas y búsqueda
-window.cancelarEdicionPref = function() {
-    prefiliacionEdicionId = null; window.limpiarFormulario('man');
-    if(window.el('existing-family-list-ui')) window.el('existing-family-list-ui').innerHTML="";
-    window.safeHide('btn-cancelar-edicion-pref');
-    window.safeHide('btn-ingresar-pref');
-}
-
-window.buscarEnPrefiliacion=function(){
-    const t=window.safeVal('buscador-pref').toLowerCase().trim();
-    const r=window.el('resultados-pref');
-    if(t.length<2){window.safeHide('resultados-pref');return;}
-    const hits=listaGlobalPrefiliacion.filter(p=>{
-        const full=`${p.nombre} ${p.ap1||''} ${p.ap2||''}`.toLowerCase();
-        return full.includes(t)||(p.docNum||"").toLowerCase().includes(t)||(p.telefono||"").includes(t);
-    });
-    r.innerHTML="";
-    if(hits.length === 0) r.innerHTML = "<div class='search-item'>Sin resultados en Pool Global</div>";
-    hits.forEach(p=>{r.innerHTML += `<div class="search-item" onclick="window.cargarParaEdicionPref('${p.id}')"><strong>${p.nombre} ${p.ap1||''} ${p.ap2||''}</strong><br><small>🌐 POOL | ${p.docNum||'-'} | ${p.telefono||'-'}</small></div>`;});
-    window.safeShow('resultados-pref');
-};
 
 window.abrirModalQR = function() {
     window.safeShow('modal-qr');
@@ -305,8 +303,14 @@ window.configurarTabsPorRol = function() {
     const r = (currentUserData.rol || "").toLowerCase().trim();
     ['btn-tab-pref', 'btn-tab-fil', 'btn-tab-san', 'btn-tab-psi'].forEach(id => window.safeShow(id));
     if (r === 'intervencion') { window.safeHide('btn-tab-pref'); window.safeHide('btn-tab-fil'); return 'sanitaria'; }
-    // DEFAULT RETURN: FILIACIÓN (to be active tab)
     return 'filiacion';
+}
+
+window.cancelarEdicionPref = function() {
+    prefiliacionEdicionId = null; window.limpiarFormulario('man');
+    if(window.el('existing-family-list-ui')) window.el('existing-family-list-ui').innerHTML="";
+    window.safeHide('btn-cancelar-edicion-pref');
+    window.safeHide('btn-ingresar-pref');
 }
 
 window.cambiarPestana = function(t) {
@@ -328,8 +332,48 @@ window.cambiarPestana = function(t) {
     }
 }
 
+// ----------------------------------------------------
+// BLOQUE 2: BÚSQUEDA Y GESTIÓN (MOVIDO ARRIBA)
+// ----------------------------------------------------
+
+window.buscarEnPrefiliacion=function(){
+    const t=window.safeVal('buscador-pref').toLowerCase().trim();
+    const r=window.el('resultados-pref');
+    if(t.length<2){window.safeHide('resultados-pref');return;}
+    const hits=listaGlobalPrefiliacion.filter(p=>{
+        const full=`${p.nombre} ${p.ap1||''} ${p.ap2||''}`.toLowerCase();
+        return full.includes(t)||(p.docNum||"").toLowerCase().includes(t)||(p.telefono||"").includes(t);
+    });
+    r.innerHTML="";
+    if(hits.length === 0) r.innerHTML = "<div class='search-item'>Sin resultados en Pool Global</div>";
+    hits.forEach(p=>{r.innerHTML += `<div class="search-item" onclick="window.cargarParaEdicionPref('${p.id}')"><strong>${p.nombre} ${p.ap1||''} ${p.ap2||''}</strong><br><small>🌐 POOL | ${p.docNum||'-'} | ${p.telefono||'-'}</small></div>`;});
+    window.safeShow('resultados-pref');
+};
+
+window.cargarParaEdicionPref=function(pid){
+    const p=listaGlobalPrefiliacion.find(x=>x.id===pid); 
+    if(!p)return;
+    prefiliacionEdicionId=p.id;
+    isGlobalEdit = true;
+    window.safeHide('resultados-pref');
+    window.el('buscador-pref').value="";
+    window.setVal('man-nombre',p.nombre);window.setVal('man-ap1',p.ap1);window.setVal('man-ap2',p.ap2);
+    window.setVal('man-tipo-doc',p.tipoDoc);window.setVal('man-doc-num',p.docNum);
+    window.setVal('man-fecha',p.fechaNac);window.setVal('man-tel',p.telefono);
+    const l=window.el('existing-family-list-ui'); l.innerHTML="";
+    if(p.familiaId){
+        const fs=listaGlobalPrefiliacion.filter(x=>x.familiaId===p.familiaId&&x.id!==p.id);
+        if(fs.length>0){
+            l.innerHTML="<h5>Familiares en Pool:</h5>";
+            fs.forEach(f=>{l.innerHTML+=`<div class="fam-item existing"><div><strong>${f.nombre} ${f.ap1||''}</strong><br><small style="color:#666;">${f.docNum||'-'}</small></div></div>`;});
+        }
+    }
+    window.el('btn-save-pref').innerText="Actualizar en Pool Global";
+    window.safeShow('btn-cancelar-edicion-pref');
+};
+
 // ============================================
-// 2. LÓGICA CORE (CARGA Y DATOS)
+// 3. LÓGICA DE DATOS
 // ============================================
 
 window.cargarDatosYEntrar = async function(id) {
@@ -340,20 +384,17 @@ window.cargarDatosYEntrar = async function(id) {
         const dS = await getDoc(doc(db,"albergues",id));
         if(dS.exists()) { currentAlbergueData = dS.data(); totalCapacidad = parseInt(currentAlbergueData.capacidad||0); }
         
-        // Listener Local (Filiación)
         if(unsubscribePersonas) unsubscribePersonas();
         unsubscribePersonas = onSnapshot(collection(db,"albergues",id,"personas"), s=>{
             listaPersonasCache=[]; camasOcupadas={}; let c=0;
             s.forEach(d=>{ const p=d.data(); p.id=d.id; listaPersonasCache.push(p); if(p.estado==='ingresado'){ c++; if(p.cama) camasOcupadas[p.cama]=p.nombre; } });
             ocupacionActual=c; window.actualizarContadores();
-            // Si estamos gestionando a alguien local y cambia, refrescar
             if(personaEnGestion && !personaEnGestionEsGlobal) { 
                 const u=listaPersonasCache.find(x=>x.id===personaEnGestion.id); 
                 if(u) window.seleccionarPersona(u, false); 
             }
         });
 
-        // Listener Global (Pool Prefiliación)
         if(unsubscribePool) unsubscribePool();
         unsubscribePool = onSnapshot(collection(db, "pool_prefiliacion"), s => {
             listaGlobalPrefiliacion = [];
@@ -379,23 +420,16 @@ window.conectarListenersBackground = function(id) {
     unsubscribeAlbergueDoc = onSnapshot(doc(db,"albergues",id), d=>{ if(d.exists()){ currentAlbergueData=d.data(); totalCapacidad=parseInt(currentAlbergueData.capacidad||0); window.actualizarContadores(); } });
 }
 
-// ============================================
-// 3. BÚSQUEDA Y GESTIÓN UNIFICADA (FILIACIÓN)
-// ============================================
-
 window.buscarPersonaEnAlbergue = function() {
     const txt = window.safeVal('buscador-persona').toLowerCase().trim();
     const res = window.el('resultados-busqueda');
     if(txt.length < 2) { window.safeHide('resultados-busqueda'); return; }
 
-    // 1. Buscar en LOCAL
     const localHits = listaPersonasCache.filter(p => {
         const full = `${p.nombre} ${p.ap1||''} ${p.ap2||''}`.toLowerCase();
         return full.includes(txt) || (p.docNum||"").toLowerCase().includes(txt);
     });
 
-    // 2. Buscar en GLOBAL (excluyendo si ya está en local por ID o DNI para evitar duplicados visuales)
-    // Aunque idealmente, si está en local NO debería estar en global.
     const globalHits = listaGlobalPrefiliacion.filter(p => {
         const full = `${p.nombre} ${p.ap1||''} ${p.ap2||''}`.toLowerCase();
         return full.includes(txt) || (p.docNum||"").toLowerCase().includes(txt);
@@ -405,13 +439,10 @@ window.buscarPersonaEnAlbergue = function() {
     if(localHits.length === 0 && globalHits.length === 0) {
         res.innerHTML = `<div class="search-item" style="color:#666">No encontrado</div>`;
     } else {
-        // Render Local Hits
         localHits.forEach(p => {
             const dc = p.estado === 'ingresado' ? 'dot-green' : 'dot-red';
             res.innerHTML += `<div class="search-item" onclick="window.seleccionarPersona('${p.id}', false)"><div style="display:flex;justify-content:space-between;width:100%;align-items:center;"><div><strong>${p.nombre} ${p.ap1||''}</strong> (Local)<div style="font-size:0.8rem;color:#666;">📄 ${p.docNum||'-'}</div></div><div class="status-dot ${dc}" title="${p.estado.toUpperCase()}"></div></div></div>`;
         });
-
-        // Render Global Hits
         globalHits.forEach(p => {
             res.innerHTML += `<div class="search-item" onclick="window.seleccionarPersona('${p.id}', true)"><div style="display:flex;justify-content:space-between;width:100%;align-items:center;"><div><strong>${p.nombre} ${p.ap1||''}</strong> (Nube)<div style="font-size:0.8rem;color:#666;">☁️ ${p.docNum||'-'}</div></div><div class="status-dot dot-cloud" title="EN NUBE"></div></div></div>`;
         });
@@ -420,20 +451,17 @@ window.buscarPersonaEnAlbergue = function() {
 };
 
 window.seleccionarPersona = function(pid, isGlobal) {
-    if(typeof pid !== 'string') pid = pid.id; // Safety check
-    
+    if(typeof pid !== 'string') pid = pid.id; 
     let p;
     if (isGlobal) {
         p = listaGlobalPrefiliacion.find(x => x.id === pid);
         personaEnGestionEsGlobal = true;
-        // Visual cues for Global
         window.safeShow('banner-nube');
         window.safeHide('btns-local-actions');
         window.safeShow('btns-cloud-actions');
     } else {
         p = listaPersonasCache.find(x => x.id === pid);
         personaEnGestionEsGlobal = false;
-        // Visual cues for Local
         window.safeHide('banner-nube');
         window.safeShow('btns-local-actions');
         window.safeHide('btns-cloud-actions');
@@ -441,7 +469,7 @@ window.seleccionarPersona = function(pid, isGlobal) {
 
     if(!p) return;
     personaEnGestion = p;
-    prefiliacionEdicionId = p.id; // For compatibility if using rescue logic
+    prefiliacionEdicionId = p.id; 
     isGlobalEdit = isGlobal;
 
     window.safeHide('resultados-busqueda');
@@ -455,7 +483,6 @@ window.seleccionarPersona = function(pid, isGlobal) {
     window.setVal('edit-tipo-doc', p.tipoDoc); window.setVal('edit-doc-num', p.docNum);
     window.setVal('edit-fecha', p.fechaNac); window.setVal('edit-tel', p.telefono);
 
-    // Familia (Logic to fetch from correct source)
     const flist = window.el('info-familia-lista'); flist.innerHTML = "";
     let fam = [];
     if(isGlobal) {
@@ -470,20 +497,13 @@ window.seleccionarPersona = function(pid, isGlobal) {
         if(f.id !== p.id) {
             const st = f.estado === 'ingresado' ? 'color:var(--success);' : 'color:var(--warning);';
             const ic = f.estado === 'ingresado' ? 'fa-solid fa-bed' : 'fa-solid fa-clock';
-            // Click on family member maintains the 'isGlobal' context
             flist.innerHTML += `<div style="padding:10px;border-bottom:1px solid #eee;cursor:pointer;display:flex;justify-content:space-between;align-items:center;" onclick="window.seleccionarPersona('${f.id}', ${isGlobal})"><div><div style="font-weight:bold;font-size:0.95rem;">${f.nombre} ${f.ap1||''}</div><div style="font-size:0.85rem;color:#666;"><i class="fa-regular fa-id-card"></i> ${f.docNum||'-'}</div></div><div style="font-size:1.2rem;${st}"><i class="${ic}"></i></div></div>`;
         }
     });
 
-    // Ensure autosave works
     if(!isGlobal) window.setupAutoSave();
 };
 
-// ============================================
-// 4. ACCIONES DE MOVIMIENTO (NUBE <-> LOCAL)
-// ============================================
-
-// A) RESCATAR (Nube -> Local)
 window.rescatarDeGlobalDirecto = async function() {
     if(!personaEnGestion || !personaEnGestionEsGlobal) return;
     if(!confirm(`¿Ingresar a ${personaEnGestion.nombre} (y familia) en este albergue?`)) return;
@@ -492,14 +512,13 @@ window.rescatarDeGlobalDirecto = async function() {
         const familia = listaGlobalPrefiliacion.filter(x => x.familiaId === personaEnGestion.familiaId);
         const batch = writeBatch(db);
 
-        // Map old IDs to new IDs to keep reference if needed (optional)
         familia.forEach(member => {
             const localRef = doc(collection(db, "albergues", currentAlbergueId, "personas"));
             const memberData = {...member};
             delete memberData.id;
             memberData.fechaIngresoAlbergue = new Date();
             memberData.origenPoolId = member.id;
-            memberData.estado = 'espera'; // Still waiting for bed, but INSIDE shelter
+            memberData.estado = 'espera'; 
             
             batch.set(localRef, memberData);
             batch.delete(doc(db, "pool_prefiliacion", member.id));
@@ -512,7 +531,6 @@ window.rescatarDeGlobalDirecto = async function() {
         window.sysLog(`Familia ingresada desde Nube.`, "success");
         alert("Ingreso realizado. Ahora asigne cama si es necesario.");
         
-        // Clear selection to force refresh
         window.personaEnGestion = null;
         window.safeHide('panel-gestion-persona');
         window.el('buscador-persona').value = "";
@@ -522,7 +540,6 @@ window.rescatarDeGlobalDirecto = async function() {
     }
 };
 
-// B) DAR SALIDA (Local -> Nube)
 window.darSalidaPersona = async function() {
     if(!personaEnGestion || personaEnGestionEsGlobal) return;
     if(!confirm(`¿Dar salida a ${personaEnGestion.nombre} y su familia? Volverán a la Nube Global.`)) return;
@@ -559,12 +576,7 @@ window.darSalidaPersona = async function() {
     }
 };
 
-// ============================================
-// 5. ASIGNACIÓN DE CAMA (INTELLIGENT)
-// ============================================
-
 window.guardarCama = async function(c) {
-    // Caso 1: Persona Global -> Primero importar, luego asignar cama
     if (personaEnGestionEsGlobal) {
         if(!confirm(`La persona está en la nube. ¿Ingresarla y asignarle la cama ${c}?`)) return;
         try {
@@ -608,18 +620,12 @@ window.guardarCama = async function(c) {
         return;
     }
 
-    // Caso 2: Persona Local (Standard)
     if(personaEnGestion.cama){ alert(`Error: Ya tiene cama.`); return; }
     await updateDoc(doc(db,"albergues",currentAlbergueId,"personas",personaEnGestion.id),{estado:'ingresado',cama:c.toString(),fechaIngreso:new Date()});
     window.registrarLog(personaEnGestion.id,"Asignación Cama",`Cama ${c}`);
     window.cerrarMapaCamas(); 
     window.sysLog(`Cama ${c} asignada a ${personaEnGestion.nombre}`, "success");
 }
-
-
-// ============================================
-// 6. FUNCIONES COMPLEMENTARIAS
-// ============================================
 
 window.setupAutoSave = function() {
     const inputsFil = ['edit-nombre','edit-ap1','edit-ap2','edit-doc-num','edit-tel','edit-fecha'];
@@ -633,7 +639,6 @@ window.setupAutoSave = function() {
     });
 }
 
-// ... (Rest of utils: QR, Logs, etc.)
 window.registrarLog = async function(personaId, accion, detalle = "", isPool = false) {
     try {
         const usuarioLog = currentUserData ? currentUserData.nombre : "Auto-Registro QR";
@@ -648,10 +653,9 @@ window.registrarLog = async function(personaId, accion, detalle = "", isPool = f
 
 window.verHistorial = async function(pId = null) {
     let targetId = pId;
-    let isPool = personaEnGestionEsGlobal; // Default context
+    let isPool = personaEnGestionEsGlobal; 
 
     if(!targetId && personaEnGestion) targetId = personaEnGestion.id;
-    // Check local cache just in case
     if(pId && listaPersonasCache.find(x=>x.id===pId)) isPool = false;
 
     if(!targetId) return;
@@ -696,10 +700,8 @@ window.publicoGuardarTodo = async function() {
 }
 
 window.adminPrefiliarManual=async function(silent=false){
-    // Saves to POOL_PREFILIACION always from Prefil tab
     if(silent && !prefiliacionEdicionId) return; 
     
-    // Check if we are editing existing global or creating new
     if(prefiliacionEdicionId && isGlobalEdit){
         const p=window.getDatosFormulario('man');
         await updateDoc(doc(db,"pool_prefiliacion",prefiliacionEdicionId),p);
@@ -724,11 +726,10 @@ window.adminPrefiliarManual=async function(silent=false){
     window.sysLog("Nuevo registro Pool creado.", "success");
 };
 
-// ... Standard local logic needed for other modals ...
+// ... Standard local logic ...
 window.abrirModalFamiliar = function() { window.limpiarFormulario('fam'); window.safeShow('modal-add-familiar'); if(window.el('fam-tipo-doc')) window.el('fam-tipo-doc').value="MENOR"; window.verificarMenor('fam'); }
 window.cerrarModalFamiliar = function() { window.safeHide('modal-add-familiar'); }
 window.guardarFamiliarEnLista = function() { const d=window.getDatosFormulario('fam'); if(!d.nombre) return alert("Nombre obligatorio"); listaFamiliaresTemp.push(d); window.actualizarListaFamiliaresUI(); window.cerrarModalFamiliar(); }
-window.actualizarListaFamiliaresUI = function() { const d = window.el('lista-familiares-ui'); if(!d) return; d.innerHTML = ""; if (listaFamiliaresTemp.length === 0) { d.innerHTML = '<p style="color:#999;font-style:italic;">Ninguno añadido.</p>'; return; } listaFamiliaresTemp.forEach((f, i) => { d.innerHTML += `<div class="fam-item"><div><strong>${f.nombre}</strong></div><button class="danger" style="margin:0;padding:2px 8px;width:auto;" onclick="window.borrarFamiliarTemp(${i})">X</button></div>`; }); }
 window.borrarFamiliarTemp = function(i) { listaFamiliaresTemp.splice(i, 1); window.actualizarListaFamiliaresUI(); }
 window.abrirModalVincularFamilia = function() { if(!personaEnGestion) return; if(window.el('search-vincular')) window.el('search-vincular').value=""; if(window.el('resultados-vincular')) window.el('resultados-vincular').innerHTML=""; window.safeShow('modal-vincular-familia'); }
 window.buscarParaVincular = function() { const t=window.safeVal('search-vincular').toLowerCase().trim(); const r=window.el('resultados-vincular'); r.innerHTML=""; if(t.length<2){window.safeAddActive('hidden');return;} const hits=listaPersonasCache.filter(p=>{ if(p.id===personaEnGestion.id)return false; return (p.nombre+" "+(p.ap1||"")).toLowerCase().includes(t); }); if(hits.length===0){ r.innerHTML="<div class='search-item'>Sin resultados</div>"; } else { hits.forEach(p=>{ const d=document.createElement('div'); d.className='search-item'; d.innerHTML=`<strong>${p.nombre}</strong>`; d.onclick=()=>window.vincularAFamilia(p); r.appendChild(d); }); } r.classList.remove('hidden'); }

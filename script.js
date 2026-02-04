@@ -7,7 +7,7 @@ const firebaseConfig = { apiKey: "AIzaSyAzfEMwMd6M1VgvV0tJn7RS63RJghLE5UI", auth
 const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db = getFirestore(app);
 
 // ============================================
-// 0. GLOBAL VARIABLES & UTILS
+// 0. DEFINICIONES GLOBALES CRÍTICAS
 // ============================================
 
 let isPublicMode = false;
@@ -40,6 +40,50 @@ let adminFamiliaresTemp = [];
 let userEditingId = null;
 let albergueEdicionId = null;
 let isGlobalEdit = false; 
+
+// --- DOM UTILS ---
+window.el = function(id) { return document.getElementById(id); }
+window.safeHide = function(id) { const e = window.el(id); if(e) e.classList.add('hidden'); }
+window.safeShow = function(id) { const e = window.el(id); if(e) e.classList.remove('hidden'); }
+window.safeRemoveActive = function(id) { const e = window.el(id); if(e) e.classList.remove('active'); }
+window.safeAddActive = function(id) { const e = window.el(id); if(e) e.classList.add('active'); }
+window.safeVal = function(id) { const e = window.el(id); return e ? e.value : ""; }
+window.setVal = function(id, val) { const e = window.el(id); if (e) e.value = val; }
+
+window.formatearFecha = function(i) {
+    let v = i.value.replace(/\D/g, '').slice(0, 8);
+    if (v.length >= 5) i.value = `${v.slice(0, 2)}/${v.slice(2, 4)}/${v.slice(4)}`;
+    else if (v.length >= 3) i.value = `${v.slice(0, 2)}/${v.slice(2)}`;
+    else i.value = v;
+}
+
+window.verificarMenor = function(p) {
+    const t = window.el(`${p}-tipo-doc`).value;
+    const i = window.el(`${p}-doc-num`);
+    if (i && t === 'MENOR') {
+        i.value = "MENOR-SIN-DNI";
+        i.disabled = true;
+    } else if (i) {
+        i.disabled = false;
+        if (i.value === "MENOR-SIN-DNI") i.value = "";
+    }
+}
+
+window.limpiarFormulario = function(p) {
+    ['nombre', 'ap1', 'ap2', 'doc-num', 'fecha', 'tel'].forEach(f => {
+        const e = window.el(`${p}-${f}`);
+        if (e) e.value = "";
+    });
+    const i = window.el(`${p}-doc-num`);
+    if (i) i.disabled = false;
+}
+
+window.getDatosFormulario = function(p) {
+    return {
+        nombre: window.safeVal(`${p}-nombre`), ap1: window.safeVal(`${p}-ap1`), ap2: window.safeVal(`${p}-ap2`),
+        tipoDoc: window.safeVal(`${p}-tipo-doc`), docNum: window.safeVal(`${p}-doc-num`), fechaNac: window.safeVal(`${p}-fecha`), telefono: window.safeVal(`${p}-tel`)
+    };
+}
 
 // --- CAJA NEGRA ---
 window.toggleCajaNegra = function() {
@@ -89,70 +133,6 @@ window.onerror = function(message, source, lineno, colno, error) {
     if(bb && bb.classList.contains('hidden')) bb.classList.remove('hidden');
 };
 
-if(isPublicMode) window.sysLog(`Modo Público Activado. Albergue: ${currentAlbergueId}`, "info");
-else window.sysLog("Sistema Iniciado (Modo Privado).", "info");
-
-
-// --- DOM UTILS ---
-window.el = function(id) { return document.getElementById(id); }
-window.safeHide = function(id) { const e = window.el(id); if(e) e.classList.add('hidden'); }
-window.safeShow = function(id) { const e = window.el(id); if(e) e.classList.remove('hidden'); }
-window.safeRemoveActive = function(id) { const e = window.el(id); if(e) e.classList.remove('active'); }
-window.safeAddActive = function(id) { const e = window.el(id); if(e) e.classList.add('active'); }
-window.safeVal = function(id) { const e = window.el(id); return e ? e.value : ""; }
-window.setVal = function(id, val) { const e = window.el(id); if (e) e.value = val; }
-
-window.formatearFecha = function(i) {
-    let v = i.value.replace(/\D/g, '').slice(0, 8);
-    if (v.length >= 5) i.value = `${v.slice(0, 2)}/${v.slice(2, 4)}/${v.slice(4)}`;
-    else if (v.length >= 3) i.value = `${v.slice(0, 2)}/${v.slice(2)}`;
-    else i.value = v;
-}
-
-window.verificarMenor = function(p) {
-    const t = window.el(`${p}-tipo-doc`).value;
-    const i = window.el(`${p}-doc-num`);
-    if (i && t === 'MENOR') {
-        i.value = "MENOR-SIN-DNI";
-        i.disabled = true;
-    } else if (i) {
-        i.disabled = false;
-        if (i.value === "MENOR-SIN-DNI") i.value = "";
-    }
-}
-
-window.limpiarFormulario = function(p) {
-    ['nombre', 'ap1', 'ap2', 'doc-num', 'fecha', 'tel'].forEach(f => {
-        const e = window.el(`${p}-${f}`);
-        if (e) e.value = "";
-    });
-    const i = window.el(`${p}-doc-num`);
-    if (i) i.disabled = false;
-}
-
-window.getDatosFormulario = function(p) {
-    return {
-        nombre: window.safeVal(`${p}-nombre`), ap1: window.safeVal(`${p}-ap1`), ap2: window.safeVal(`${p}-ap2`),
-        tipoDoc: window.safeVal(`${p}-tipo-doc`), docNum: window.safeVal(`${p}-doc-num`), fechaNac: window.safeVal(`${p}-fecha`), telefono: window.safeVal(`${p}-tel`)
-    };
-}
-
-window.actualizarContadores = function() {
-    const elOcc = window.el('ocupacion-count');
-    const elCap = window.el('capacidad-total');
-    if (elOcc) elOcc.innerText = ocupacionActual;
-    if (elCap) elCap.innerText = totalCapacidad;
-}
-
-window.showToast = function(msg) {
-    const t = window.el('toast');
-    if(t) {
-        t.innerText = msg;
-        t.classList.add('show');
-        setTimeout(() => t.classList.remove('show'), 2000);
-    }
-}
-
 // ============================================
 // 0.5 FUNCIONES UI CRÍTICAS & LOGIN (PRIORIDAD ALTA)
 // ============================================
@@ -171,23 +151,6 @@ window.iniciarSesion = async function() {
 window.cerrarSesion = function() { 
     window.sysLog("Cerrando sesión...", "warn");
     signOut(auth); location.reload(); 
-}
-
-window.configurarDashboard = function() {
-    window.sysLog("Configurando Dashboard...", "info");
-    const r=(currentUserData.rol||"").toLowerCase();
-    if(window.el('user-name-display')) window.el('user-name-display').innerText=currentUserData.nombre;
-    if(window.el('user-role-badge')) window.el('user-role-badge').innerText=r.toUpperCase();
-
-    window.safeHide('header-btn-users'); 
-    window.safeAddActive('nav-mto'); 
-    window.safeHide('nav-obs'); 
-    window.safeHide('nav-albergues');
-
-    if(['super_admin', 'admin'].includes(r)) { window.safeShow('header-btn-users'); if(window.el('nav-mto')) window.el('nav-mto').classList.remove('disabled'); }
-    if(['super_admin','admin','observador'].includes(r)) window.safeShow('nav-obs');
-    if(r !== 'observador') window.safeShow('nav-albergues');
-    if(r==='super_admin') window.safeShow('container-ver-ocultos');
 }
 
 window.navegar = function(p) {
@@ -211,6 +174,45 @@ window.navegar = function(p) {
     else window.safeAddActive('nav-home');
 }
 
+window.configurarDashboard = function() {
+    window.sysLog("Configurando Dashboard...", "info");
+    const r=(currentUserData.rol||"").toLowerCase();
+    if(window.el('user-name-display')) window.el('user-name-display').innerText=currentUserData.nombre;
+    if(window.el('user-role-badge')) window.el('user-role-badge').innerText=r.toUpperCase();
+
+    window.safeHide('header-btn-users'); 
+    window.safeAddActive('nav-mto'); 
+    window.safeHide('nav-obs'); 
+    window.safeHide('nav-albergues');
+
+    if(['super_admin', 'admin'].includes(r)) { window.safeShow('header-btn-users'); if(window.el('nav-mto')) window.el('nav-mto').classList.remove('disabled'); }
+    if(['super_admin','admin','observador'].includes(r)) window.safeShow('nav-obs');
+    if(r !== 'observador') window.safeShow('nav-albergues');
+    if(r==='super_admin') window.safeShow('container-ver-ocultos');
+}
+
+// MOVIDAS ARRIBA: Funciones usadas por pestañas y búsqueda
+window.cancelarEdicionPref = function() {
+    prefiliacionEdicionId = null; window.limpiarFormulario('man');
+    if(window.el('existing-family-list-ui')) window.el('existing-family-list-ui').innerHTML="";
+    window.safeHide('btn-cancelar-edicion-pref');
+    window.safeHide('btn-ingresar-pref');
+}
+
+window.buscarEnPrefiliacion=function(){
+    const t=window.safeVal('buscador-pref').toLowerCase().trim();
+    const r=window.el('resultados-pref');
+    if(t.length<2){window.safeHide('resultados-pref');return;}
+    const hits=listaGlobalPrefiliacion.filter(p=>{
+        const full=`${p.nombre} ${p.ap1||''} ${p.ap2||''}`.toLowerCase();
+        return full.includes(t)||(p.docNum||"").toLowerCase().includes(t)||(p.telefono||"").includes(t);
+    });
+    r.innerHTML="";
+    if(hits.length === 0) r.innerHTML = "<div class='search-item'>Sin resultados en Pool Global</div>";
+    hits.forEach(p=>{r.innerHTML += `<div class="search-item" onclick="window.cargarParaEdicionPref('${p.id}')"><strong>${p.nombre} ${p.ap1||''} ${p.ap2||''}</strong><br><small>🌐 POOL | ${p.docNum||'-'} | ${p.telefono||'-'}</small></div>`;});
+    window.safeShow('resultados-pref');
+};
+
 window.abrirModalQR = function() {
     window.safeShow('modal-qr');
     const d=window.el("qrcode-display");
@@ -223,12 +225,10 @@ window.cerrarMapaCamas = function(){
     window.safeHide('modal-cama');
 };
 
-// MOVIDA ARRIBA PARA EVITAR ERROR ONDBLCLICK
 window.abrirModalInfoCama=function(p){
     window.el('info-cama-num').innerText=p.cama;
     window.el('info-nombre-completo').innerText=p.nombre;
     window.el('info-telefono').innerText=p.telefono||"No consta";
-    
     const bh=window.el('btn-historial-cama');
     if(['admin','super_admin'].includes(currentUserData.rol)){
         window.safeShow('btn-historial-cama');
@@ -236,7 +236,6 @@ window.abrirModalInfoCama=function(p){
     }else{
         window.safeHide('btn-historial-cama');
     }
-    
     const c=window.el('info-familia-detalle');
     const fam=listaPersonasCache.filter(x=>x.familiaId===p.familiaId);
     let h=`<table class="fam-table"><thead><tr><th>Nombre</th><th>DNI/Tel</th><th>Cama</th></tr></thead><tbody>`;
@@ -257,7 +256,6 @@ window.mostrarGridCamas=function(){
         const occ=listaPersonasCache.find(p=>p.cama===n);
         let cls="bed-box"; 
         let lbl=n; 
-        
         if(occ&&highlightedFamilyId&&occ.familiaId===highlightedFamilyId){cls+=" bed-family-highlight";}
         if(!window.modoMapaGeneral&&window.personaEnGestion&&window.personaEnGestion.cama===n){cls+=" bed-current";lbl+=" (Tú)";}
         else if(occName){
@@ -267,7 +265,6 @@ window.mostrarGridCamas=function(){
             cls+=" bed-free";
             if(shadowMap[n]){cls+=" bed-shadow";}
         }
-        
         const d=document.createElement('div');
         d.className=cls;
         d.innerHTML=lbl;
@@ -731,6 +728,7 @@ window.adminPrefiliarManual=async function(silent=false){
 window.abrirModalFamiliar = function() { window.limpiarFormulario('fam'); window.safeShow('modal-add-familiar'); if(window.el('fam-tipo-doc')) window.el('fam-tipo-doc').value="MENOR"; window.verificarMenor('fam'); }
 window.cerrarModalFamiliar = function() { window.safeHide('modal-add-familiar'); }
 window.guardarFamiliarEnLista = function() { const d=window.getDatosFormulario('fam'); if(!d.nombre) return alert("Nombre obligatorio"); listaFamiliaresTemp.push(d); window.actualizarListaFamiliaresUI(); window.cerrarModalFamiliar(); }
+window.actualizarListaFamiliaresUI = function() { const d = window.el('lista-familiares-ui'); if(!d) return; d.innerHTML = ""; if (listaFamiliaresTemp.length === 0) { d.innerHTML = '<p style="color:#999;font-style:italic;">Ninguno añadido.</p>'; return; } listaFamiliaresTemp.forEach((f, i) => { d.innerHTML += `<div class="fam-item"><div><strong>${f.nombre}</strong></div><button class="danger" style="margin:0;padding:2px 8px;width:auto;" onclick="window.borrarFamiliarTemp(${i})">X</button></div>`; }); }
 window.borrarFamiliarTemp = function(i) { listaFamiliaresTemp.splice(i, 1); window.actualizarListaFamiliaresUI(); }
 window.abrirModalVincularFamilia = function() { if(!personaEnGestion) return; if(window.el('search-vincular')) window.el('search-vincular').value=""; if(window.el('resultados-vincular')) window.el('resultados-vincular').innerHTML=""; window.safeShow('modal-vincular-familia'); }
 window.buscarParaVincular = function() { const t=window.safeVal('search-vincular').toLowerCase().trim(); const r=window.el('resultados-vincular'); r.innerHTML=""; if(t.length<2){window.safeAddActive('hidden');return;} const hits=listaPersonasCache.filter(p=>{ if(p.id===personaEnGestion.id)return false; return (p.nombre+" "+(p.ap1||"")).toLowerCase().includes(t); }); if(hits.length===0){ r.innerHTML="<div class='search-item'>Sin resultados</div>"; } else { hits.forEach(p=>{ const d=document.createElement('div'); d.className='search-item'; d.innerHTML=`<strong>${p.nombre}</strong>`; d.onclick=()=>window.vincularAFamilia(p); r.appendChild(d); }); } r.classList.remove('hidden'); }

@@ -160,6 +160,21 @@ window.showToast = function(msg) {
 // 0.5 FUNCIONES UI CRÍTICAS (MOVIDAS ARRIBA)
 // ============================================
 
+window.iniciarSesion = async function() { 
+    try { 
+        window.sysLog("Intentando iniciar sesión...", "info");
+        await signInWithEmailAndPassword(auth, window.el('login-email').value, window.el('login-pass').value); 
+        window.sysLog("Login exitoso.", "success");
+    } catch(e){ 
+        window.sysLog("Error Login: " + e.message, "error");
+        alert(e.message); 
+    } 
+}
+window.cerrarSesion = function() { 
+    window.sysLog("Cerrando sesión...", "warn");
+    signOut(auth); location.reload(); 
+}
+
 window.abrirModalQR = function() {
     window.safeShow('modal-qr');
     const d=window.el("qrcode-display");

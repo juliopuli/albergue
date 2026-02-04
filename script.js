@@ -160,6 +160,13 @@ window.showToast = function(msg) {
 // 0.5 FUNCIONES UI CRÍTICAS (MOVIDAS ARRIBA)
 // ============================================
 
+window.abrirModalQR = function() {
+    window.safeShow('modal-qr');
+    const d=window.el("qrcode-display");
+    d.innerHTML="";
+    new QRCode(d,{text:window.location.href.split('?')[0]+`?public_id=${currentAlbergueId}`,width:250,height:250});
+};
+
 window.cerrarMapaCamas = function(){
     highlightedFamilyId=null;
     window.safeHide('modal-cama');
@@ -193,6 +200,16 @@ window.mostrarGridCamas=function(){
     }
     window.safeShow('modal-cama');
 }
+
+window.abrirMapaGeneral = function() { 
+    modoMapaGeneral=true; 
+    window.mostrarGridCamas(); 
+};
+
+window.abrirSeleccionCama = function() { 
+    modoMapaGeneral=false; 
+    window.mostrarGridCamas(); 
+};
 
 window.actualizarListaFamiliaresAdminUI = function() { 
     const d = window.el('admin-lista-familiares-ui'); 
@@ -514,15 +531,11 @@ window.darSalidaPersona = async function() {
 // 5. ASIGNACIÓN DE CAMA (INTELLIGENT)
 // ============================================
 
-window.abrirSeleccionCama = function() { modoMapaGeneral=false; window.mostrarGridCamas(); };
-
 window.guardarCama = async function(c) {
     // Caso 1: Persona Global -> Primero importar, luego asignar cama
     if (personaEnGestionEsGlobal) {
         if(!confirm(`La persona está en la nube. ¿Ingresarla y asignarle la cama ${c}?`)) return;
         try {
-            // Logic similar to rescatarDeGlobalDirecto but for specific person + bed
-            // We usually import whole family, but assign bed only to this one
             const familia = listaGlobalPrefiliacion.filter(x => x.familiaId === personaEnGestion.familiaId);
             const batch = writeBatch(db);
             let newLocalId = null;
@@ -536,19 +549,17 @@ window.guardarCama = async function(c) {
                 memberData.fechaIngresoAlbergue = new Date();
                 memberData.origenPoolId = member.id;
                 
-                // If this is the target person, assign bed immediately
                 if(member.id === personaEnGestion.id) {
                     memberData.estado = 'ingresado';
                     memberData.cama = c.toString();
                     memberData.fechaIngreso = new Date();
                 } else {
-                    memberData.estado = 'espera'; // Family waits
+                    memberData.estado = 'espera'; 
                 }
 
                 batch.set(localRef, memberData);
                 batch.delete(doc(db, "pool_prefiliacion", member.id));
                 
-                // Logs
                 const logRef = collection(db, "albergues", currentAlbergueId, "personas", localRef.id, "historial");
                 batch.set(doc(logRef), {fecha: new Date(), usuario: currentUserData.nombre, accion: "Ingreso + Cama", detalle: `Cama ${c}`});
             });
@@ -557,7 +568,7 @@ window.guardarCama = async function(c) {
             window.sysLog(`Ingreso automático y cama ${c} asignada.`, "success");
             window.cerrarMapaCamas();
             window.safeHide('panel-gestion-persona');
-            window.el('buscador-persona').value = ""; // Clear search
+            window.el('buscador-persona').value = ""; 
         } catch(e) {
             window.sysLog("Error asignando cama global: " + e.message, "error");
             alert("Error: " + e.message);

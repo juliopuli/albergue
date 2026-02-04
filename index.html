@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión Albergue - Ver.37.1.0</title>
+    <title>Gestión Albergue - Ver.37.2.0</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -11,7 +11,7 @@
 </head>
 <body>
 
-    <div class="version-tag">Ver.37.1.0</div>
+    <div class="version-tag">Ver.37.2.0</div>
     <div id="toast">Guardado automático</div>
     <div id="loading-overlay" class="hidden"><div class="spinner"></div><h2 style="color:var(--primary);">Cargando Datos...</h2></div>
 
@@ -104,27 +104,69 @@
                             </div>
                         </div>
                         <div class="tabs" style="margin-top:10px;">
-                            <button id="btn-tab-pref" class="tab-btn tab-btn-pref active" onclick="window.cambiarPestana('prefiliacion')">📁 Prefiliación (Global)</button>
-                            <button id="btn-tab-fil" class="tab-btn tab-btn-fil" onclick="window.cambiarPestana('filiacion')">📁 Filiación</button>
+                            <button id="btn-tab-fil" class="tab-btn tab-btn-fil active" onclick="window.cambiarPestana('filiacion')">📁 Filiación / Ingreso</button>
+                            <button id="btn-tab-pref" class="tab-btn tab-btn-pref" onclick="window.cambiarPestana('prefiliacion')">☁️ Monitor Nube</button>
                             <button id="btn-tab-san" class="tab-btn tab-btn-san" onclick="window.cambiarPestana('sanitaria')"><i class="fa-solid fa-notes-medical"></i> Sanitaria</button>
                             <button id="btn-tab-psi" class="tab-btn tab-btn-psi" onclick="window.cambiarPestana('psicosocial')"><i class="fa-solid fa-users-rays"></i> Psicosocial</button>
                         </div>
                     </div>
 
                     <div style="margin-top:25px;">
-                        <div id="tab-prefiliacion" class="tab-content active">
-                            <div class="module-box module-pref">
-                                <h3><i class="fa-regular fa-clipboard"></i> Ficha de Ingreso (Global Pool)</h3>
+                        
+                        <div id="tab-filiacion" class="tab-content active">
+                            <div class="module-box module-fil">
+                                <h3><i class="fa-solid fa-person-shelter"></i> Gestión de Alojados</h3>
+                                <p style="font-size:0.9rem; color:#666; margin-bottom:10px;">Busca aquí para encontrar personas en el albergue o rescatarlas de la nube (QR).</p>
                                 <div style="position:relative;">
-                                    <label>Buscar en Base de Datos Global:</label>
+                                    <input type="text" id="buscador-persona" placeholder="🔍 Buscar por Nombre, Apellidos, DNI..." onkeyup="window.buscarPersonaEnAlbergue()" autocomplete="off">
+                                    <div id="resultados-busqueda" class="search-results hidden"></div>
+                                </div>
+                            </div>
+                            
+                            <div id="panel-gestion-persona" class="hidden" style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:var(--radius); padding:25px; margin-top:10px;">
+                                <div class="banner-nube hidden" id="banner-nube">
+                                    <i class="fa-solid fa-cloud"></i> PERSONA EN LA NUBE (NO INGRESADA)
+                                </div>
+                                <h3 id="gestion-nombre-titulo" style="color:var(--primary);">Nombre</h3>
+                                <p style="margin-bottom:15px;">Estado: <span id="gestion-estado" class="badge">...</span> <strong id="gestion-cama-info"></strong></p>
+                                <div class="row"><div class="col"><label>Nombre</label><input type="text" id="edit-nombre"></div><div class="col"><label>Ap 1</label><input type="text" id="edit-ap1"></div><div class="col"><label>Ap 2</label><input type="text" id="edit-ap2"></div></div>
+                                <div class="row"><div class="col"><label>Doc</label><select id="edit-tipo-doc"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Num</label><input type="text" id="edit-doc-num"></div></div>
+                                <div class="row"><div class="col"><label>F. Nac</label><input type="tel" id="edit-fecha" oninput="window.formatearFecha(this)" maxlength="10"></div><div class="col"><label>Tel</label><input type="tel" id="edit-tel"></div></div>
+                                
+                                <div class="btn-group-horizontal" id="btns-local-actions">
+                                    <button class="primary" onclick="window.abrirSeleccionCama()">Asignar Cama</button>
+                                    <button class="secondary" onclick="window.guardarCambiosPersona()">Guardar Datos</button>
+                                    <button class="warning" onclick="window.liberarCamaMantener()">Liberar Cama</button>
+                                    <button class="btn-exit" onclick="window.darSalidaPersona()">Dar Salida (Al Pool)</button>
+                                    <button id="btn-historial-ficha" class="dark hidden" onclick="window.verHistorial()">📜 Historial</button>
+                                </div>
+
+                                <div class="btn-group-horizontal hidden" id="btns-cloud-actions">
+                                    <button class="success" style="width:100%; justify-content:center;" onclick="window.rescatarDeGlobalDirecto()">⬇ FORMALIZAR INGRESO EN ALBERGUE</button>
+                                    <button class="primary" onclick="window.abrirSeleccionCama()">🛏 ASIGNAR CAMA (INGRESO AUTOMÁTICO)</button>
+                                </div>
+
+                                <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
+                                <h4>Familia</h4>
+                                <div id="info-familia-resumen" style="font-weight:bold; margin-bottom:5px;"></div>
+                                <div id="info-familia-lista"></div>
+                                <button class="secondary" style="margin-top:10px;" onclick="window.abrirModalVincularFamilia()">Vincular a otra familia</button>
+                            </div>
+                        </div>
+
+                        <div id="tab-prefiliacion" class="tab-content hidden">
+                            <div class="module-box module-pref">
+                                <h3><i class="fa-solid fa-cloud"></i> Monitor Nube Global</h3>
+                                <p style="font-size:0.8rem; color:#666;">Utilice esta pantalla solo para verificar altas masivas o crear registros manuales en la nube. Para ingresar personas, use la pestaña "Filiación".</p>
+                                <div style="position:relative;">
+                                    <label>Buscar en Pool Global:</label>
                                     <input type="text" id="buscador-pref" placeholder="Nombre, DNI o Teléfono..." onkeyup="window.buscarEnPrefiliacion()" autocomplete="off">
                                     <div id="resultados-pref" class="search-results hidden"></div>
                                 </div>
                                 <div id="form-manual-container" style="margin-top:15px;">
                                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                                        <h4>Datos del Titular</h4>
+                                        <h4>Crear Nuevo Registro en Nube</h4>
                                         <div>
-                                            <button id="btn-historial-pref" class="dark hidden" style="font-size:0.7em; padding:4px 8px; margin-right:5px;" onclick="window.verHistorial(prefiliacionEdicionId)">📜 Historial</button>
                                             <button id="btn-cancelar-edicion-pref" class="secondary hidden" style="font-size:0.7em; padding:4px 8px;" onclick="window.cancelarEdicionPref()">Cancelar Edición</button>
                                         </div>
                                     </div>
@@ -132,41 +174,8 @@
                                     <div class="row"><div class="col"><label>Doc</label><select id="man-tipo-doc"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Número</label><input type="text" id="man-doc-num"></div></div>
                                     <div class="row"><div class="col"><label>F. Nac</label><input type="tel" id="man-fecha" maxlength="10" oninput="window.formatearFecha(this)"></div><div class="col"><label>Tel</label><input type="tel" id="man-tel"></div></div>
                                     <div class="fam-list"><h4><i class="fa-solid fa-people-roof"></i> Integrantes</h4><div id="existing-family-list-ui"></div><div id="admin-lista-familiares-ui"><p style="color:#999; margin-top:5px;">Añade nuevos miembros abajo.</p></div><button class="secondary" onclick="window.abrirModalFamiliarAdmin()">+ Añadir Familiar</button></div>
-                                    
-                                    <div class="btn-group-horizontal">
-                                         <button id="btn-save-pref" class="success" style="width:100%; margin-top:20px;" onclick="window.adminPrefiliarManual()">💾 Guardar en Pool Global</button>
-                                         <button id="btn-ingresar-pref" class="btn-exit hidden" style="width:100%; margin-top:20px; background-color: var(--primary);" onclick="window.rescatarDeGlobal()">⬇ INGRESAR EN ALBERGUE</button>
-                                    </div>
+                                    <button id="btn-save-pref" class="success" style="width:100%; margin-top:20px;" onclick="window.adminPrefiliarManual()">💾 Guardar en Pool Global</button>
                                 </div>
-                            </div>
-                        </div>
-
-                        <div id="tab-filiacion" class="tab-content hidden">
-                            <div class="module-box module-fil">
-                                <h3><i class="fa-solid fa-person-shelter"></i> Gestión de Alojados</h3>
-                                <div style="position:relative;">
-                                    <input type="text" id="buscador-persona" placeholder="🔍 Buscar por Nombre, Apellidos, DNI..." onkeyup="window.buscarPersonaEnAlbergue()" autocomplete="off">
-                                    <div id="resultados-busqueda" class="search-results hidden"></div>
-                                </div>
-                            </div>
-                            <div id="panel-gestion-persona" class="hidden" style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:var(--radius); padding:25px; margin-top:10px;">
-                                <h3 id="gestion-nombre-titulo" style="color:var(--primary);">Nombre</h3>
-                                <p style="margin-bottom:15px;">Estado: <span id="gestion-estado" class="badge">...</span> <strong id="gestion-cama-info"></strong></p>
-                                <div class="row"><div class="col"><label>Nombre</label><input type="text" id="edit-nombre"></div><div class="col"><label>Ap 1</label><input type="text" id="edit-ap1"></div><div class="col"><label>Ap 2</label><input type="text" id="edit-ap2"></div></div>
-                                <div class="row"><div class="col"><label>Doc</label><select id="edit-tipo-doc"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Num</label><input type="text" id="edit-doc-num"></div></div>
-                                <div class="row"><div class="col"><label>F. Nac</label><input type="tel" id="edit-fecha" oninput="window.formatearFecha(this)" maxlength="10"></div><div class="col"><label>Tel</label><input type="tel" id="edit-tel"></div></div>
-                                <div class="btn-group-horizontal">
-                                    <button class="primary" onclick="window.abrirSeleccionCama()">Asignar Cama</button>
-                                    <button class="secondary" onclick="window.guardarCambiosPersona()">Guardar Datos</button>
-                                    <button class="warning" onclick="window.liberarCamaMantener()">Liberar Cama</button>
-                                    <button class="btn-exit" onclick="window.darSalidaPersona()">Dar Salida (Salida al Pool)</button>
-                                    <button id="btn-historial-ficha" class="dark hidden" onclick="window.verHistorial()">📜 Historial</button>
-                                </div>
-                                <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
-                                <h4>Familia</h4>
-                                <div id="info-familia-resumen" style="font-weight:bold; margin-bottom:5px;"></div>
-                                <div id="info-familia-lista"></div>
-                                <button class="secondary" style="margin-top:10px;" onclick="window.abrirModalVincularFamilia()">Vincular a otra familia</button>
                             </div>
                         </div>
 

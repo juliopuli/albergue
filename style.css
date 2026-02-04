@@ -69,6 +69,9 @@ button.success { background: #10b981; color: white; }
 button.danger { background: #ef4444; color: white; }
 button.warning { background: #f59e0b; color: white; }
 button.dark { background: #334155; color: white; }
+.btn-exit { background: #7c3aed; color: white; } /* Morado para salida */
+.btn-exit:hover { background: #6d28d9; }
+
 .btn-group-horizontal { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
 .btn-icon { background: #e0e7ff; color: var(--primary); border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; }
 

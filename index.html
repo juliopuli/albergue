@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión Albergue - Ver.37.2.1</title>
+    <title>Gestión Albergue - Ver.37.3.0</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -11,7 +11,7 @@
 </head>
 <body>
 
-    <div class="version-tag">Ver.37.2.1</div>
+    <div class="version-tag">Ver.37.3.0</div>
     <div id="toast">Guardado automático</div>
     <div id="loading-overlay" class="hidden"><div class="spinner"></div><h2 style="color:var(--primary);">Cargando Datos...</h2></div>
 
@@ -103,9 +103,10 @@
                                 <button class="secondary" onclick="window.navegar('gestion-albergues')">Salir</button>
                             </div>
                         </div>
+                        
                         <div class="tabs" style="margin-top:10px;">
-                            <button id="btn-tab-fil" class="tab-btn tab-btn-fil active" onclick="window.cambiarPestana('filiacion')">📁 Filiación / Ingreso</button>
                             <button id="btn-tab-pref" class="tab-btn tab-btn-pref" onclick="window.cambiarPestana('prefiliacion')">☁️ Monitor Nube</button>
+                            <button id="btn-tab-fil" class="tab-btn tab-btn-fil active" onclick="window.cambiarPestana('filiacion')">📁 Filiación / Ingreso</button>
                             <button id="btn-tab-san" class="tab-btn tab-btn-san" onclick="window.cambiarPestana('sanitaria')"><i class="fa-solid fa-notes-medical"></i> Sanitaria</button>
                             <button id="btn-tab-psi" class="tab-btn tab-btn-psi" onclick="window.cambiarPestana('psicosocial')"><i class="fa-solid fa-users-rays"></i> Psicosocial</button>
                         </div>

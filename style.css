@@ -6,7 +6,7 @@
     --fil-bg: #f0fdf4;  --fil-border: #86efac;  --fil-text: #15803d;
     --san-bg: #fff1f2;  --san-border: #fda4af;  --san-text: #be123c;
     --psi-bg: #f5f3ff;  --psi-border: #c4b5fd;  --psi-text: #6d28d9;
-    --cloud-bg: #e0f2fe; --cloud-border: #7dd3fc; --cloud-text: #0284c7; /* Nueva paleta Nube */
+    --cloud-bg: #e0f2fe; --cloud-border: #7dd3fc; --cloud-text: #0284c7;
     --radius: 12px;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
@@ -117,7 +117,7 @@ button.dark { background: #334155; color: white; }
 .status-dot { width: 14px; height: 14px; border-radius: 50%; display: inline-block; margin-left: 10px; flex-shrink: 0; }
 .dot-green { background-color: #10b981; box-shadow: 0 0 4px #10b981; }
 .dot-red { background-color: #ef4444; box-shadow: 0 0 4px #ef4444; }
-.dot-cloud { background-color: #0ea5e9; box-shadow: 0 0 4px #0ea5e9; } /* Nuevo punto para nube */
+.dot-cloud { background-color: #0ea5e9; box-shadow: 0 0 4px #0ea5e9; }
 
 .banner-nube {
     background-color: var(--cloud-bg);

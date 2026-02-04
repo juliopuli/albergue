@@ -7,9 +7,19 @@ const firebaseConfig = { apiKey: "AIzaSyAzfEMwMd6M1VgvV0tJn7RS63RJghLE5UI", auth
 const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db = getFirestore(app);
 
 // ============================================
-// 0. DEFINICIONES GLOBALES & UTILS
+// 0. DEFINICIONES GLOBALES CRÍTICAS (MOVED UP)
 // ============================================
 
+// --- 1. DETECCIÓN PÚBLICA INMEDIATA (FIXED POSITION) ---
+let isPublicMode = false;
+let currentAlbergueId = null;
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get('public_id')) {
+    isPublicMode = true;
+    currentAlbergueId = urlParams.get('public_id');
+}
+
+// Global Variables
 let currentUserData = null;
 let currentAlbergueData = null;
 let totalCapacidad = 0;
@@ -21,7 +31,7 @@ let unsubscribeUsers, unsubscribeAlberguesActivos, unsubscribeAlberguesMto, unsu
 
 let personaSeleccionadaId = null;
 let personaEnGestion = null;
-let personaEnGestionEsGlobal = false; // Flag crucial para saber origen
+let personaEnGestionEsGlobal = false;
 
 let modoCambioCama = false;
 let modoMapaGeneral = false;
@@ -80,6 +90,11 @@ window.onerror = function(message, source, lineno, colno, error) {
     const bb = document.getElementById('black-box-overlay');
     if(bb && bb.classList.contains('hidden')) bb.classList.remove('hidden');
 };
+
+// Initial Log
+if(isPublicMode) window.sysLog(`Modo Público Activado. Albergue: ${currentAlbergueId}`, "info");
+else window.sysLog("Sistema Iniciado (Modo Privado).", "info");
+
 
 // --- DOM UTILS ---
 window.el = function(id) { return document.getElementById(id); }
@@ -145,7 +160,6 @@ window.showToast = function(msg) {
 // 1. NAVEGACIÓN Y DASHBOARD
 // ============================================
 
-// IMPORTANTE: Definida antes de su uso para evitar error
 window.configurarDashboard = function() {
     window.sysLog("Configurando Dashboard...", "info");
     const r=(currentUserData.rol||"").toLowerCase();

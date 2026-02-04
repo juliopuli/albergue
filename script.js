@@ -7,10 +7,9 @@ const firebaseConfig = { apiKey: "AIzaSyAzfEMwMd6M1VgvV0tJn7RS63RJghLE5UI", auth
 const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db = getFirestore(app);
 
 // ============================================
-// 0. DEFINICIONES GLOBALES CRÍTICAS (MOVED UP)
+// 0. GLOBAL VARIABLES & UTILS
 // ============================================
 
-// --- 1. DETECCIÓN PÚBLICA INMEDIATA (FIXED POSITION) ---
 let isPublicMode = false;
 let currentAlbergueId = null;
 const urlParams = new URLSearchParams(window.location.search);
@@ -19,7 +18,6 @@ if (urlParams.get('public_id')) {
     currentAlbergueId = urlParams.get('public_id');
 }
 
-// Global Variables
 let currentUserData = null;
 let currentAlbergueData = null;
 let totalCapacidad = 0;
@@ -91,7 +89,6 @@ window.onerror = function(message, source, lineno, colno, error) {
     if(bb && bb.classList.contains('hidden')) bb.classList.remove('hidden');
 };
 
-// Initial Log
 if(isPublicMode) window.sysLog(`Modo Público Activado. Albergue: ${currentAlbergueId}`, "info");
 else window.sysLog("Sistema Iniciado (Modo Privado).", "info");
 
@@ -157,7 +154,7 @@ window.showToast = function(msg) {
 }
 
 // ============================================
-// 0.5 FUNCIONES UI CRÍTICAS (MOVIDAS ARRIBA)
+// 0.5 FUNCIONES UI CRÍTICAS & LOGIN (PRIORIDAD ALTA)
 // ============================================
 
 window.iniciarSesion = async function() { 
@@ -170,9 +167,48 @@ window.iniciarSesion = async function() {
         alert(e.message); 
     } 
 }
+
 window.cerrarSesion = function() { 
     window.sysLog("Cerrando sesión...", "warn");
     signOut(auth); location.reload(); 
+}
+
+window.configurarDashboard = function() {
+    window.sysLog("Configurando Dashboard...", "info");
+    const r=(currentUserData.rol||"").toLowerCase();
+    if(window.el('user-name-display')) window.el('user-name-display').innerText=currentUserData.nombre;
+    if(window.el('user-role-badge')) window.el('user-role-badge').innerText=r.toUpperCase();
+
+    window.safeHide('header-btn-users'); 
+    window.safeAddActive('nav-mto'); 
+    window.safeHide('nav-obs'); 
+    window.safeHide('nav-albergues');
+
+    if(['super_admin', 'admin'].includes(r)) { window.safeShow('header-btn-users'); if(window.el('nav-mto')) window.el('nav-mto').classList.remove('disabled'); }
+    if(['super_admin','admin','observador'].includes(r)) window.safeShow('nav-obs');
+    if(r !== 'observador') window.safeShow('nav-albergues');
+    if(r==='super_admin') window.safeShow('container-ver-ocultos');
+}
+
+window.navegar = function(p) {
+    window.sysLog(`Navegando a: ${p}`, "nav");
+    if(unsubscribeUsers) unsubscribeUsers(); if(unsubscribeAlberguesActivos) unsubscribeAlberguesActivos();
+    ['screen-home','screen-usuarios','screen-gestion-albergues','screen-mantenimiento','screen-operativa','screen-observatorio'].forEach(id=>window.safeHide(id));
+    
+    if(!currentUserData) return;
+    
+    if(p==='home') window.safeShow('screen-home');
+    else if(p==='gestion-albergues') { window.cargarAlberguesActivos(); window.safeShow('screen-gestion-albergues'); }
+    else if(p==='mantenimiento') { window.cargarAlberguesMantenimiento(); window.safeShow('screen-mantenimiento'); }
+    else if(p==='operativa') { window.safeShow('screen-operativa'); const t = window.configurarTabsPorRol(); window.cambiarPestana(t); } 
+    else if(p==='observatorio') { window.cargarObservatorio(); window.safeShow('screen-observatorio'); }
+    else if(p==='usuarios') { window.cargarUsuarios(); window.safeShow('screen-usuarios'); }
+
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    if(p.includes('albergue')) window.safeAddActive('nav-albergues');
+    else if(p.includes('obs')) window.safeAddActive('nav-obs');
+    else if(p.includes('mantenimiento')) window.safeAddActive('nav-mto');
+    else window.safeAddActive('nav-home');
 }
 
 window.abrirModalQR = function() {
@@ -266,48 +302,6 @@ window.actualizarListaFamiliaresUI = function() {
     d.innerHTML = ""; 
     if (listaFamiliaresTemp.length === 0) { d.innerHTML = '<p style="color:#999;font-style:italic;">Ninguno añadido.</p>'; return; } 
     listaFamiliaresTemp.forEach((f, i) => { d.innerHTML += `<div class="fam-item"><div><strong>${f.nombre}</strong></div><button class="danger" style="margin:0;padding:2px 8px;width:auto;" onclick="window.borrarFamiliarTemp(${i})">X</button></div>`; }); 
-}
-
-// ============================================
-// 1. NAVEGACIÓN Y DASHBOARD
-// ============================================
-
-window.configurarDashboard = function() {
-    window.sysLog("Configurando Dashboard...", "info");
-    const r=(currentUserData.rol||"").toLowerCase();
-    if(window.el('user-name-display')) window.el('user-name-display').innerText=currentUserData.nombre;
-    if(window.el('user-role-badge')) window.el('user-role-badge').innerText=r.toUpperCase();
-
-    window.safeHide('header-btn-users'); 
-    window.safeAddActive('nav-mto'); 
-    window.safeHide('nav-obs'); 
-    window.safeHide('nav-albergues');
-
-    if(['super_admin', 'admin'].includes(r)) { window.safeShow('header-btn-users'); if(window.el('nav-mto')) window.el('nav-mto').classList.remove('disabled'); }
-    if(['super_admin','admin','observador'].includes(r)) window.safeShow('nav-obs');
-    if(r !== 'observador') window.safeShow('nav-albergues');
-    if(r==='super_admin') window.safeShow('container-ver-ocultos');
-}
-
-window.navegar = function(p) {
-    window.sysLog(`Navegando a: ${p}`, "nav");
-    if(unsubscribeUsers) unsubscribeUsers(); if(unsubscribeAlberguesActivos) unsubscribeAlberguesActivos();
-    ['screen-home','screen-usuarios','screen-gestion-albergues','screen-mantenimiento','screen-operativa','screen-observatorio'].forEach(id=>window.safeHide(id));
-    
-    if(!currentUserData) return;
-    
-    if(p==='home') window.safeShow('screen-home');
-    else if(p==='gestion-albergues') { window.cargarAlberguesActivos(); window.safeShow('screen-gestion-albergues'); }
-    else if(p==='mantenimiento') { window.cargarAlberguesMantenimiento(); window.safeShow('screen-mantenimiento'); }
-    else if(p==='operativa') { window.safeShow('screen-operativa'); const t = window.configurarTabsPorRol(); window.cambiarPestana(t); } 
-    else if(p==='observatorio') { window.cargarObservatorio(); window.safeShow('screen-observatorio'); }
-    else if(p==='usuarios') { window.cargarUsuarios(); window.safeShow('screen-usuarios'); }
-
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    if(p.includes('albergue')) window.safeAddActive('nav-albergues');
-    else if(p.includes('obs')) window.safeAddActive('nav-obs');
-    else if(p.includes('mantenimiento')) window.safeAddActive('nav-mto');
-    else window.safeAddActive('nav-home');
 }
 
 window.configurarTabsPorRol = function() {

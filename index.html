@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión Albergue - Ver.37.0.1</title>
+    <title>Gestión Albergue - Ver.37.1.0</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -11,7 +11,7 @@
 </head>
 <body>
 
-    <div class="version-tag">Ver.37.0.1</div>
+    <div class="version-tag">Ver.37.1.0</div>
     <div id="toast">Guardado automático</div>
     <div id="loading-overlay" class="hidden"><div class="spinner"></div><h2 style="color:var(--primary);">Cargando Datos...</h2></div>
 
@@ -104,7 +104,7 @@
                             </div>
                         </div>
                         <div class="tabs" style="margin-top:10px;">
-                            <button id="btn-tab-pref" class="tab-btn tab-btn-pref active" onclick="window.cambiarPestana('prefiliacion')">📁 Prefiliación</button>
+                            <button id="btn-tab-pref" class="tab-btn tab-btn-pref active" onclick="window.cambiarPestana('prefiliacion')">📁 Prefiliación (Global)</button>
                             <button id="btn-tab-fil" class="tab-btn tab-btn-fil" onclick="window.cambiarPestana('filiacion')">📁 Filiación</button>
                             <button id="btn-tab-san" class="tab-btn tab-btn-san" onclick="window.cambiarPestana('sanitaria')"><i class="fa-solid fa-notes-medical"></i> Sanitaria</button>
                             <button id="btn-tab-psi" class="tab-btn tab-btn-psi" onclick="window.cambiarPestana('psicosocial')"><i class="fa-solid fa-users-rays"></i> Psicosocial</button>
@@ -114,9 +114,9 @@
                     <div style="margin-top:25px;">
                         <div id="tab-prefiliacion" class="tab-content active">
                             <div class="module-box module-pref">
-                                <h3><i class="fa-regular fa-clipboard"></i> Ficha de Ingreso</h3>
+                                <h3><i class="fa-regular fa-clipboard"></i> Ficha de Ingreso (Global Pool)</h3>
                                 <div style="position:relative;">
-                                    <label>Buscar (Evitar duplicados):</label>
+                                    <label>Buscar en Base de Datos Global:</label>
                                     <input type="text" id="buscador-pref" placeholder="Nombre, DNI o Teléfono..." onkeyup="window.buscarEnPrefiliacion()" autocomplete="off">
                                     <div id="resultados-pref" class="search-results hidden"></div>
                                 </div>
@@ -132,7 +132,11 @@
                                     <div class="row"><div class="col"><label>Doc</label><select id="man-tipo-doc"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Número</label><input type="text" id="man-doc-num"></div></div>
                                     <div class="row"><div class="col"><label>F. Nac</label><input type="tel" id="man-fecha" maxlength="10" oninput="window.formatearFecha(this)"></div><div class="col"><label>Tel</label><input type="tel" id="man-tel"></div></div>
                                     <div class="fam-list"><h4><i class="fa-solid fa-people-roof"></i> Integrantes</h4><div id="existing-family-list-ui"></div><div id="admin-lista-familiares-ui"><p style="color:#999; margin-top:5px;">Añade nuevos miembros abajo.</p></div><button class="secondary" onclick="window.abrirModalFamiliarAdmin()">+ Añadir Familiar</button></div>
-                                    <button id="btn-save-pref" class="success" style="width:100%; margin-top:20px;" onclick="window.adminPrefiliarManual()">💾 Guardar Nuevo</button>
+                                    
+                                    <div class="btn-group-horizontal">
+                                         <button id="btn-save-pref" class="success" style="width:100%; margin-top:20px;" onclick="window.adminPrefiliarManual()">💾 Guardar en Pool Global</button>
+                                         <button id="btn-ingresar-pref" class="btn-exit hidden" style="width:100%; margin-top:20px; background-color: var(--primary);" onclick="window.rescatarDeGlobal()">⬇ INGRESAR EN ALBERGUE</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -155,8 +159,8 @@
                                     <button class="primary" onclick="window.abrirSeleccionCama()">Asignar Cama</button>
                                     <button class="secondary" onclick="window.guardarCambiosPersona()">Guardar Datos</button>
                                     <button class="warning" onclick="window.liberarCamaMantener()">Liberar Cama</button>
+                                    <button class="btn-exit" onclick="window.darSalidaPersona()">Dar Salida (Salida al Pool)</button>
                                     <button id="btn-historial-ficha" class="dark hidden" onclick="window.verHistorial()">📜 Historial</button>
-                                    <button id="btn-regresar-pref" class="danger hidden" onclick="window.regresarPrefiliacion()">Prefiliación</button>
                                 </div>
                                 <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
                                 <h4>Familia</h4>

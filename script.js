@@ -37,7 +37,7 @@ window.toggleCajaNegra = function() {
 };
 window.limpiarCajaNegra = function() { const c = document.getElementById('black-box-content'); if (c) c.innerHTML = ""; };
 
-window.sysLog("Sistema Iniciado. Versión 38.8.1 (Fix Historial Obs)", "info");
+window.sysLog("Sistema Iniciado. Versión 38.8.2 (Fix Sort Observatorio)", "info");
 
 // --- 2. GLOBALES ---
 let isPublicMode = false;
@@ -206,6 +206,7 @@ window.cargarObservatorio = async function() {
     } catch(e) { window.sysLog("Error obs: " + e.message, "error"); list.innerHTML = "<p>Error cargando datos.</p>"; }
 };
 
+// --- FIX: LISTA OBSERVATORIO (SORT IN MEMORY) ---
 window.verListaObservatorio = async function(albId, tipo) {
     const c = window.el('obs-modal-content'); const t = window.el('obs-modal-title');
     c.innerHTML = '<div style="text-align:center;"><div class="spinner"></div></div>';
@@ -217,7 +218,8 @@ window.verListaObservatorio = async function(albId, tipo) {
         let isGlobal = false;
         
         if (tipo === 'espera') {
-            q = query(collection(db, "pool_prefiliacion"), where("origenAlbergueId", "==", albId), where("estado", "==", "espera"), orderBy("fechaRegistro", "desc"));
+            // FIX: Remove orderBy to avoid composite index requirement
+            q = query(collection(db, "pool_prefiliacion"), where("origenAlbergueId", "==", albId), where("estado", "==", "espera"));
             isGlobal = true;
         } else {
             q = query(collection(db, "albergues", albId, "personas"), where("estado", "==", "ingresado"));
@@ -229,12 +231,19 @@ window.verListaObservatorio = async function(albId, tipo) {
         let data = [];
         snap.forEach(d => data.push({ id: d.id, ...d.data() }));
 
-        if (tipo === 'alojados') {
+        // SORTING IN MEMORY
+        if (tipo === 'espera') {
+            data.sort((a, b) => {
+                const da = a.fechaRegistro?.seconds || 0;
+                const db = b.fechaRegistro?.seconds || 0;
+                return db - da; // Descending (newest first)
+            });
+        } else {
             data.sort((a, b) => {
                 if (!a.cama && !b.cama) return 0;
                 if (!a.cama) return -1;
                 if (!b.cama) return 1;
-                return parseInt(a.cama) - parseInt(b.cama);
+                return parseInt(a.cama) - parseInt(b.cama); // Ascending bed number
             });
         }
 
@@ -243,7 +252,6 @@ window.verListaObservatorio = async function(albId, tipo) {
         h += `<th>Nombre</th><th>DNI</th><th>Tel</th></tr></thead><tbody>`;
 
         data.forEach(d => {
-            // FIX: Pass explicit boolean for isGlobal
             const histBtn = `<button class="btn-icon-small" onclick="window.verHistorialObservatorio('${d.id}', ${isGlobal}, '${albId}')"><i class="fa-solid fa-clock-rotate-left"></i></button>`;
             h += `<tr><td style="text-align:center;">${histBtn}</td>`;
             if(tipo === 'alojados') h += `<td><strong>${d.cama || '-'}</strong></td>`;
@@ -338,6 +346,7 @@ window.darSalidaPersona = async function() {
 
     try {
         const batch = writeBatch(db);
+        // YA NO RECORREMOS LA FAMILIA. SOLO LA PERSONA ACTUAL.
         const poolRef = doc(collection(db, "pool_prefiliacion"));
         const memberData = {...personaEnGestion};
         delete memberData.id;
@@ -345,13 +354,17 @@ window.darSalidaPersona = async function() {
         memberData.estado = 'espera';
         memberData.fechaSalidaAlbergue = new Date();
         memberData.ultimoAlbergueId = currentAlbergueId;
+
         batch.set(poolRef, memberData);
         batch.delete(doc(db, "albergues", currentAlbergueId, "personas", personaEnGestion.id));
+        
         const logRef = collection(db, "pool_prefiliacion", poolRef.id, "historial");
         batch.set(doc(logRef), {fecha: new Date(), usuario: currentUserData.nombre, accion: "Salida Albergue", detalle: `Salida Individual de ${currentAlbergueData.nombre}`});
+
         await batch.commit();
         window.sysLog(`Salida individual realizada.`, "nav");
         window.showToast("Salida completada.");
+        
         window.safeHide('panel-gestion-persona');
         window.safeHide('resultados-busqueda');
         window.el('buscador-persona').value = "";
@@ -405,12 +418,10 @@ window.registrarLog=async function(pid,act,det,isPool=false){try{const usuarioLo
 // --- UPDATED HISTORIAL FUNC ---
 window.verHistorial = async function(pId = null, forceIsGlobal = null, forceAlbId = null) {
     let targetId = pId;
-    // Default to current editing context unless forced
     let isPool = (forceIsGlobal !== null) ? forceIsGlobal : personaEnGestionEsGlobal;
     const activeAlbId = forceAlbId || currentAlbergueId;
 
     if(!targetId && personaEnGestion) targetId = personaEnGestion.id;
-    // Fallback: if id exists in local cache and no force flag, assume local
     if(pId && forceIsGlobal === null && listaPersonasCache.find(x=>x.id===pId)) isPool = false;
 
     if(!targetId) return;

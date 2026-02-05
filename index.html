@@ -203,6 +203,7 @@
         </div>
         <div id="public-success-msg" class="hidden" style="text-align:center; padding:20px; background:white; height:100%;"><div class="success-icon"><i class="fa-solid fa-circle-check"></i></div><h1 style="margin-bottom:10px;">¡Datos Enviados!</h1><p style="font-size:1.2rem; color:var(--text-light);">Gracias. Por favor, acércate a la mesa de entrada.</p></div>
     </div>
+    
 
     <div id="modal-qr" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content" style="text-align:center;"><span class="close-modal" onclick="document.getElementById('modal-qr').classList.add('hidden')">&times;</span><h3>Escanea para acceder</h3><div id="qrcode-display" style="display:inline-block; margin:20px;"></div><p style="color:#666;">Auto-registro móvil.</p></div></div>
     <div id="modal-cama" class="modal-overlay hidden" onclick="if(event.target===this)window.cerrarMapaCamas()"><div class="modal-content modal-lg"><span class="close-modal" onclick="window.cerrarMapaCamas()">&times;</span><h3>Seleccionar Cama</h3><p style="font-size:0.8rem;color:#666;">Verde Borde=Sugerencia | Naranja=Reserva Familia</p><div id="grid-camas" class="bed-grid"></div></div></div>

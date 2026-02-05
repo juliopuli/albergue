@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gestión Albergue - Ver.38.6.0</title>
+    <title>Gestión Albergue - Ver.38.6.1</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -11,7 +11,7 @@
 </head>
 <body>
 
-    <div class="version-tag">Ver.38.1.0</div>
+    <div class="version-tag">Ver.38.6.1</div>
     <div id="toast">Guardado automático</div>
     <div id="loading-overlay" class="hidden"><div class="spinner"></div><h2 style="color:var(--primary);">Cargando Datos...</h2></div>
 
@@ -83,10 +83,26 @@
 
             <div id="screen-observatorio" class="hidden">
                 <div class="obs-grid">
-                    <div class="obs-card"><div class="obs-label">Personas en Espera</div><div class="obs-val" id="kpi-espera" style="color:var(--warning);">0</div></div>
-                    <div class="obs-card"><div class="obs-label">Personas Alojadas</div><div class="obs-val" id="kpi-alojados" style="color:var(--success);">0</div></div>
-                    <div class="obs-card"><div class="obs-label">Camas Disponibles</div><div class="obs-val" id="kpi-libres" style="color:var(--primary);">0</div></div>
-                    <div class="obs-card"><div class="obs-label">Ocupación Global</div><div class="obs-val" id="kpi-percent">0%</div></div>
+                    <div class="obs-card">
+                        <div class="obs-icon"><i class="fa-solid fa-user-clock"></i></div>
+                        <div class="obs-label">Personas en Espera</div>
+                        <div class="obs-val" id="kpi-espera" style="color:var(--warning);">0</div>
+                    </div>
+                    <div class="obs-card">
+                        <div class="obs-icon"><i class="fa-solid fa-bed"></i></div>
+                        <div class="obs-label">Personas Alojadas</div>
+                        <div class="obs-val" id="kpi-alojados" style="color:var(--success);">0</div>
+                    </div>
+                    <div class="obs-card">
+                        <div class="obs-icon"><i class="fa-solid fa-door-open"></i></div>
+                        <div class="obs-label">Camas Disponibles</div>
+                        <div class="obs-val" id="kpi-libres" style="color:var(--primary);">0</div>
+                    </div>
+                    <div class="obs-card">
+                        <div class="obs-icon"><i class="fa-solid fa-chart-pie"></i></div>
+                        <div class="obs-label">Ocupación Global</div>
+                        <div class="obs-val" id="kpi-percent">0%</div>
+                    </div>
                 </div>
                 <div class="card"><h3>Detalle por Albergue</h3><div id="obs-list-container" style="margin-top:20px;"><p style="color:#666; text-align:center;">Cargando datos...</p></div></div>
             </div>
@@ -136,7 +152,7 @@
                                     <button class="primary" onclick="window.abrirSeleccionCama()">Asignar Cama</button>
                                     <button class="secondary" onclick="window.guardarCambiosPersona()">Guardar Datos</button>
                                     <button class="warning" onclick="window.liberarCamaMantener()">Liberar Cama</button>
-                                    <button class="btn-exit" onclick="window.darSalidaPersona()">Dar Salida (Al Pool)</button>
+                                    <button class="btn-exit" onclick="window.darSalidaPersona()">Dar Salida (Individual)</button>
                                     <button id="btn-historial-ficha" class="dark hidden" onclick="window.verHistorial()">📜 Historial</button>
                                 </div>
 
@@ -199,8 +215,8 @@
         </main>
     </div>
 
-    <div id="public-register-screen" class="hidden" style="background:white; min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px;">
-        <div id="public-welcome-screen" class="card" style="max-width:500px; width:100%;">
+    <div id="public-register-screen" class="hidden">
+        <div id="public-welcome-screen" class="card" style="max-width:500px; width:100%; margin:20px auto;">
             <div class="welcome-box">
                 <i class="fa-solid fa-door-open welcome-icon"></i>
                 <h2 style="color:var(--text-main); margin-bottom:10px;">Bienvenido/a</h2>
@@ -233,7 +249,7 @@
             </div>
         </div>
 
-        <div id="public-success-msg" class="hidden" style="text-align:center;">
+        <div id="public-success-msg" class="hidden" style="text-align:center; padding:20px; background:white; height:100%;">
             <div class="success-icon"><i class="fa-solid fa-circle-check"></i></div>
             <h1 style="margin-bottom:10px;">¡Datos Enviados!</h1>
             <p style="font-size:1.2rem; color:var(--text-light);">Gracias. Por favor, acércate a la mesa de entrada.</p>

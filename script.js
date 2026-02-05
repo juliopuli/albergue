@@ -7,7 +7,7 @@ from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 const firebaseConfig = { apiKey: "AIzaSyAzfEMwMd6M1VgvV0tJn7RS63RJghLE5UI", authDomain: "albergues-temporales.firebaseapp.com", projectId: "albergues-temporales", storageBucket: "albergues-temporales.firebasestorage.app", messagingSenderId: "489999184108", appId: "1:489999184108:web:32b9b580727f83158075c9" };
 const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db = getFirestore(app);
 
-// --- 1. SISTEMA DE LOGS (ASIGNACIÓN DIRECTA A WINDOW)  ---
+// --- 1. SISTEMA DE LOGS (ASIGNACIÓN DIRECTA) ---
 window.sysLog = function(msg, type = 'info') {
     const c = document.getElementById('black-box-content');
     if (!c) { console.log(msg); return; }
@@ -37,9 +37,9 @@ window.toggleCajaNegra = function() {
 };
 window.limpiarCajaNegra = function() { const c = document.getElementById('black-box-content'); if (c) c.innerHTML = ""; };
 
-window.sysLog("Sistema Iniciado. Versión 38.7.1 (Salida Individual)", "info");
+window.sysLog("Sistema Iniciado. Versión 38.7.2 (Fix Salida Individual Real)", "info");
 
-// --- 2. VARIABLES GLOBALES ---
+// --- 2. GLOBALES ---
 let isPublicMode = false;
 let currentAlbergueId = null;
 const urlParams = new URLSearchParams(window.location.search);
@@ -66,7 +66,7 @@ let userEditingId = null;
 let albergueEdicionId = null;
 let isGlobalEdit = false; 
 
-// --- 3. UTILIDADES DOM (ASIGNACIÓN DIRECTA) ---
+// --- 3. UTILIDADES DOM ---
 window.el = function(id) { return document.getElementById(id); };
 window.safeHide = function(id) { const e = window.el(id); if(e) e.classList.add('hidden'); };
 window.safeShow = function(id) { const e = window.el(id); if(e) e.classList.remove('hidden'); };
@@ -127,7 +127,7 @@ window.cargarDatosYEntrar = async function(id) {
 };
 window.conectarListenersBackground = function(id) { if(unsubscribeAlbergueDoc) unsubscribeAlbergueDoc(); unsubscribeAlbergueDoc = onSnapshot(doc(db,"albergues",id), d=>{ if(d.exists()){ currentAlbergueData=d.data(); totalCapacidad=parseInt(currentAlbergueData.capacidad||0); window.actualizarContadores(); } }); };
 
-// --- MODIFICADO: GESTIÓN CON CONTADORES ---
+// --- GESTIÓN CON CONTADORES ---
 window.cargarAlberguesActivos = function() {
     const c = window.el('lista-albergues-activos');
     if(unsubscribeAlberguesActivos) unsubscribeAlberguesActivos();
@@ -140,7 +140,6 @@ window.cargarAlberguesActivos = function() {
             div.innerHTML=`<h3>${alb.nombre}</h3><p id="counter-${d.id}" style="font-weight:bold;color:var(--primary);margin:10px 0;">Cargando...</p><div class="mto-info">Entrar</div>`;
             div.onclick=()=>window.cargarDatosYEntrar(d.id);
             c.appendChild(div);
-            // Async count
             const qCount = query(collection(db, "albergues", d.id, "personas"), where("estado", "==", "ingresado"));
             const snap = await getDocs(qCount);
             const count = snap.size;
@@ -151,7 +150,7 @@ window.cargarAlberguesActivos = function() {
     });
 };
 
-// --- MODIFICADO: DASHBOARD OBSERVATORIO ---
+// --- DASHBOARD OBSERVATORIO ---
 window.cargarObservatorio = async function() {
     const list = window.el('obs-list-container'); 
     if(!list) return;
@@ -162,7 +161,6 @@ window.cargarObservatorio = async function() {
     try {
         let totalEspera = 0, totalAlojados = 0, totalCapacidadGlobal = 0, htmlList = "";
         const alberguesSnap = await getDocs(query(collection(db, "albergues"), where("activo", "==", true)));
-        
         const promesas = alberguesSnap.docs.map(async (docAlb) => {
             const dataAlb = docAlb.data();
             const cap = parseInt(dataAlb.capacidad || 0);
@@ -171,21 +169,16 @@ window.cargarObservatorio = async function() {
             personasSnap.forEach(p => { const pd = p.data(); if(pd.estado === 'espera') w++; if(pd.estado === 'ingresado') h++; });
             return { nombre: dataAlb.nombre, capacidad: cap, espera: w, alojados: h };
         });
-
         const resultados = await Promise.all(promesas);
-
         resultados.forEach(res => {
             totalEspera += res.espera; totalAlojados += res.alojados; totalCapacidadGlobal += res.capacidad;
             const libres = Math.max(0, res.capacidad - res.alojados);
             const porcentaje = res.capacidad > 0 ? Math.round((res.alojados / res.capacidad) * 100) : 0;
             let barClass = "low"; if(porcentaje > 50) barClass = "med"; if(porcentaje > 85) barClass = "high";
-
             htmlList += `<div class="obs-row"><div class="obs-row-title">${res.nombre}</div><div class="obs-stats-group"><div class="obs-mini-stat"><span>Espera</span><strong>${res.espera}</strong></div><div class="obs-mini-stat"><span>Alojados</span><strong>${res.alojados}</strong></div><div class="obs-mini-stat"><span>Libres</span><strong>${libres}</strong></div></div><div class="prog-container"><div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:2px;"><span>Ocupación</span><strong>${porcentaje}%</strong></div><div class="prog-track"><div class="prog-fill ${barClass}" style="width: ${porcentaje}%"></div></div></div></div>`;
         });
-
         const globalLibres = Math.max(0, totalCapacidadGlobal - totalAlojados);
         const globalPercent = totalCapacidadGlobal > 0 ? Math.round((totalAlojados / totalCapacidadGlobal) * 100) : 0;
-
         window.el('kpi-espera').innerText = totalEspera; window.el('kpi-alojados').innerText = totalAlojados;
         window.el('kpi-libres').innerText = globalLibres; window.el('kpi-percent').innerText = `${globalPercent}%`;
         list.innerHTML = htmlList;
@@ -262,13 +255,15 @@ window.rescatarDeGlobalDirecto = async function() {
     } catch(e) { window.sysLog("Error ingreso: " + e.message, "error"); }
 };
 
-// --- MODIFICADO: SALIDA INDIVIDUAL ---
+// --- DAR SALIDA (INDIVIDUAL CORREGIDO) ---
 window.darSalidaPersona = async function() {
     if(!personaEnGestion || personaEnGestionEsGlobal) return;
-    if(!confirm(`¿Dar salida a ${personaEnGestion.nombre}? Se enviará al Pool Global.`)) return;
+    if(!confirm(`¿Dar salida a ${personaEnGestion.nombre}? Saldrá individualmente al Pool Global.`)) return;
+
     try {
         const batch = writeBatch(db);
-        // YA NO RECORREMOS LA FAMILIA. SOLO LA PERSONA ACTUAL.
+        
+        // 1. Crear copia en Pool (Solo la persona actual)
         const poolRef = doc(collection(db, "pool_prefiliacion"));
         const memberData = {...personaEnGestion};
         delete memberData.id;
@@ -276,18 +271,27 @@ window.darSalidaPersona = async function() {
         memberData.estado = 'espera';
         memberData.fechaSalidaAlbergue = new Date();
         memberData.ultimoAlbergueId = currentAlbergueId;
+        // Mantenemos familiaId para que siga vinculada si alguien la busca
 
         batch.set(poolRef, memberData);
+
+        // 2. Borrar del Albergue Local (Solo la persona actual)
         batch.delete(doc(db, "albergues", currentAlbergueId, "personas", personaEnGestion.id));
         
+        // 3. Log en el Pool
         const logRef = collection(db, "pool_prefiliacion", poolRef.id, "historial");
-        batch.set(doc(logRef), {fecha: new Date(), usuario: currentUserData.nombre, accion: "Salida Albergue", detalle: `Salida Individual`});
+        batch.set(doc(logRef), {fecha: new Date(), usuario: currentUserData.nombre, accion: "Salida Albergue", detalle: `Salida Individual de ${currentAlbergueData.nombre}`});
 
         await batch.commit();
-        window.sysLog(`Salida individual realizada.`, "success"); window.showToast("Salida completada.");
-        window.safeHide('panel-gestion-persona'); window.safeHide('resultados-busqueda'); window.el('buscador-persona').value = "";
+        window.sysLog(`Salida individual realizada.`, "nav");
+        window.showToast("Salida completada.");
+        
+        window.safeHide('panel-gestion-persona');
+        window.safeHide('resultados-busqueda');
+        window.el('buscador-persona').value = "";
     } catch(e) {
         window.sysLog("Error salida: " + e.message, "error");
+        alert("Error: " + e.message);
     }
 };
 
@@ -297,63 +301,43 @@ window.guardarCambiosPersona=async function(silent=false){if(!personaEnGestion)r
 window.abrirMapaGeneral=function(){modoMapaGeneral=true;window.mostrarGridCamas();};
 window.abrirSeleccionCama=function(){modoMapaGeneral=false;window.mostrarGridCamas();};
 window.cerrarMapaCamas=function(){highlightedFamilyId=null;window.safeHide('modal-cama');};
-window.guardarCama=async function(c){if(personaEnGestionEsGlobal){if(!confirm(`¿Ingresar y asignar cama ${c}?`))return;try{const familia=listaGlobalPrefiliacion.filter(x=>x.familiaId===personaEnGestion.familiaId);const batch=writeBatch(db);let newPersonLocalId=null;familia.forEach(member=>{const localRef=doc(collection(db,"albergues",currentAlbergueId,"personas"));const memberData={...member};delete memberData.id;memberData.fechaIngresoAlbergue=new Date();memberData.origenPoolId=member.id;if(member.id===personaEnGestion.id){memberData.estado='ingresado';memberData.cama=c.toString();memberData.fechaIngreso=new Date();newPersonLocalId=localRef.id;}else{memberData.estado='espera';}batch.set(localRef,memberData);batch.delete(doc(db,"pool_prefiliacion",member.id));const logRef=collection(db,"albergues",currentAlbergueId,"personas",localRef.id,"historial");batch.set(doc(logRef),{fecha:new Date(),usuario:currentUserData.nombre,accion:"Ingreso + Cama",detalle:`Cama ${c}`});});await batch.commit();window.sysLog(`Ingreso + Cama ${c} OK`,"success");window.cerrarMapaCamas();window.showToast("Ingresado. Cargando...");setTimeout(()=>{const newPerson=listaPersonasCache.find(p=>p.id===newPersonLocalId);if(newPerson)window.seleccionarPersona(newPerson,false);else{window.safeHide('panel-gestion-persona');window.el('buscador-persona').value="";}},1000);}catch(e){window.sysLog("Error: "+e.message,"error");}return;}if(personaEnGestion.cama){alert(`Error: Ya tiene cama.`);return;}await updateDoc(doc(db,"albergues",currentAlbergueId,"personas",personaEnGestion.id),{estado:'ingresado',cama:c.toString(),fechaIngreso:new Date()});window.registrarLog(personaEnGestion.id,"Asignación Cama",`Cama ${c}`);window.cerrarMapaCamas();window.sysLog(`Cama ${c} asignada`,"success");};
-window.mostrarGridCamas=function(){const g=window.el('grid-camas');g.innerHTML="";const cols=(currentAlbergueData&&currentAlbergueData.columnas)?currentAlbergueData.columnas:8;g.style.gridTemplateColumns=`repeat(${cols}, 1fr)`;let shadowMap={};let famGroups={};listaPersonasCache.forEach(p=>{if(p.familiaId){if(!famGroups[p.familiaId])famGroups[p.familiaId]={members:[],beds:[]};famGroups[p.familiaId].members.push(p);if(p.cama)famGroups[p.familiaId].beds.push(parseInt(p.cama));}});Object.values(famGroups).forEach(fam=>{let assigned=fam.beds.length;let total=fam.members.length;let needed=total-assigned;if(assigned>0&&needed>0){let startBed=Math.max(...fam.beds);let placed=0;let check=startBed+1;while(placed<needed&&check<=totalCapacidad){if(!camasOcupadas[check.toString()]){shadowMap[check.toString()]=fam.members[0].familiaId;placed++;}check++;}}});let myFamId,famMembers=[],assignedMembers=[],neededForMe=1;if(!window.modoMapaGeneral&&window.personaEnGestion){myFamId=window.personaEnGestion.familiaId;if(myFamId)famMembers=listaPersonasCache.filter(m=>m.familiaId===myFamId);else famMembers=[window.personaEnGestion];assignedMembers=famMembers.filter(m=>m.cama&&m.id!==window.personaEnGestion.id);neededForMe=famMembers.length-assignedMembers.length;}for(let i=1;i<=totalCapacidad;i++){const n=i.toString();const occName=camasOcupadas[n];const occ=listaPersonasCache.find(p=>p.cama===n);let cls="bed-box"; let lbl=n; if(occ&&highlightedFamilyId&&occ.familiaId===highlightedFamilyId){cls+=" bed-family-highlight";}if(!window.modoMapaGeneral&&window.personaEnGestion&&window.personaEnGestion.cama===n){cls+=" bed-current";lbl+=" (Tú)";}else if(occName){cls+=" bed-busy";if(occ){const f=`${occ.nombre} ${occ.ap1||''}`;lbl+=`<div style="font-size:0.6rem;font-weight:normal;margin-top:2px;">${f}<br><i class="fa-solid fa-phone"></i> ${occ.telefono||'-'}</div>`;}}else{cls+=" bed-free";if(shadowMap[n]){cls+=" bed-shadow";}}const d=document.createElement('div');d.className=cls;d.innerHTML=lbl;d.onclick=()=>{if(occ){if(highlightedFamilyId===occ.familiaId)highlightedFamilyId=null;else highlightedFamilyId=occ.familiaId;window.mostrarGridCamas();}else if(!window.modoMapaGeneral){window.guardarCama(n);}};d.ondblclick=()=>{if(occ)window.abrirModalInfoCama(occ);};g.appendChild(d);}window.safeShow('modal-cama');}
+window.guardarCama=async function(c){if(personaEnGestionEsGlobal){if(!confirm(`¿Ingresar y asignar cama ${c}?`))return;try{const familia=listaGlobalPrefiliacion.filter(x=>x.familiaId===personaEnGestion.familiaId);const batch=writeBatch(db);let newPersonLocalId=null;familia.forEach(member=>{const localRef=doc(collection(db,"albergues",currentAlbergueId,"personas"));const memberData={...member};delete memberData.id;memberData.fechaIngresoAlbergue=new Date();memberData.origenPoolId=member.id;if(member.id===personaEnGestion.id){memberData.estado='ingresado';memberData.cama=c.toString();memberData.fechaIngreso=new Date();newPersonLocalId=localRef.id;}else{memberData.estado='espera';}batch.set(localRef,memberData);batch.delete(doc(db,"pool_prefiliacion",member.id));const logRef=collection(db,"albergues",currentAlbergueId,"personas",localRef.id,"historial");batch.set(doc(logRef),{fecha:new Date(),usuario:currentUserData.nombre,accion:"Ingreso + Cama",detalle:`Cama ${c}`});});await batch.commit();window.sysLog(`Ingreso + Cama ${c} OK`, "success");window.cerrarMapaCamas();window.showToast("Ingresado. Cargando...");setTimeout(()=>{const newPerson=listaPersonasCache.find(p=>p.id===newPersonLocalId);if(newPerson)window.seleccionarPersona(newPerson,false);else{window.safeHide('panel-gestion-persona');window.el('buscador-persona').value="";}},1000);}catch(e){window.sysLog("Error: "+e.message,"error");}return;}if(personaEnGestion.cama){alert(`Error: Ya tiene cama.`);return;}await updateDoc(doc(db,"albergues",currentAlbergueId,"personas",personaEnGestion.id),{estado:'ingresado',cama:c.toString(),fechaIngreso:new Date()});window.registrarLog(personaEnGestion.id,"Asignación Cama",`Cama ${c}`);window.cerrarMapaCamas();window.sysLog(`Cama ${c} asignada`,"success");};
+window.mostrarGridCamas=function(){const g=window.el('grid-camas');g.innerHTML="";const cols=(currentAlbergueData&&currentAlbergueData.columnas)?currentAlbergueData.columnas:8;g.style.gridTemplateColumns=`repeat(${cols}, 1fr)`;let shadowMap={};let famGroups={};listaPersonasCache.forEach(p=>{if(p.familiaId){if(!famGroups[p.familiaId])famGroups[p.familiaId]={members:[],beds:[]};famGroups[p.familiaId].members.push(p);if(p.cama)famGroups[p.familiaId].beds.push(parseInt(p.cama));}});Object.values(famGroups).forEach(fam=>{let assigned=fam.beds.length;let total=fam.members.length;let needed=total-assigned;if(assigned>0&&needed>0){let startBed=Math.max(...fam.beds);let placed=0;let check=startBed+1;while(placed<needed&&check<=totalCapacidad){if(!camasOcupadas[check.toString()]){shadowMap[check.toString()]=fam.members[0].familiaId;placed++;}check++;}}});let myFamId,famMembers=[],assignedMembers=[],neededForMe=1;if(!window.modoMapaGeneral&&window.personaEnGestion){myFamId=window.personaEnGestion.familiaId;if(myFamId)famMembers=listaPersonasCache.filter(m=>m.familiaId===myFamId);else famMembers=[window.personaEnGestion];assignedMembers=famMembers.filter(m=>m.cama&&m.id!==window.personaEnGestion.id);neededForMe=famMembers.length-assignedMembers.length;}for(let i=1;i<=totalCapacidad;i++){const n=i.toString();const occName=camasOcupadas[n];const occ=listaPersonasCache.find(p=>p.cama===n);let cls="bed-box"; let lbl=n; if(occ&&highlightedFamilyId&&occ.familiaId===highlightedFamilyId){cls+=" bed-family-highlight";}if(!window.modoMapaGeneral&&window.personaEnGestion&&window.personaEnGestion.cama===n){cls+=" bed-current";lbl+=" (Tú)";}else if(occName){cls+=" bed-busy";if(occ){const f=`${occ.nombre} ${occ.ap1||''}`;lbl+=`<div style="font-size:0.6rem;font-weight:normal;margin-top:2px;">${f}<br><i class="fa-solid fa-phone"></i> ${occ.telefono||'-'}</div>`;}}else{cls+=" bed-free";if(shadowMap[n]){cls+=" bed-shadow";}}const d=document.createElement('div');d.className=cls;d.innerHTML=lbl;d.onclick=()=>{if(occ){if(highlightedFamilyId===occ.familiaId)highlightedFamilyId=null;else highlightedFamilyId=occ.familiaId;window.mostrarGridCamas();}else if(!window.modoMapaGeneral){window.guardarCama(n);}};d.ondblclick=()=>{if(occ)window.abrirModalInfoCama(occ);};g.appendChild(d);}window.safeShow('modal-cama');};
 window.abrirModalInfoCama=function(p){window.el('info-cama-num').innerText=p.cama;window.el('info-nombre-completo').innerText=p.nombre;window.el('info-telefono').innerText=p.telefono||"No consta";const bh=window.el('btn-historial-cama');if(['admin','super_admin'].includes(currentUserData.rol)){window.safeShow('btn-historial-cama');bh.onclick=()=>window.verHistorial(p.id);}else{window.safeHide('btn-historial-cama');}const c=window.el('info-familia-detalle');const fam=listaPersonasCache.filter(x=>x.familiaId===p.familiaId);let h=`<table class="fam-table"><thead><tr><th>Nombre</th><th>DNI/Tel</th><th>Cama</th></tr></thead><tbody>`;fam.forEach(f=>{const isCurrent=f.id===p.id?'fam-row-current':'';h+=`<tr class="${isCurrent}"><td>${f.nombre} ${f.ap1||''}</td><td><small>${f.docNum||'-'}<br>${f.telefono||'-'}</small></td><td><strong>${f.cama||'-'}</strong></td></tr>`;});h+=`</tbody></table>`;c.innerHTML=h;window.safeShow('modal-bed-info');};
 window.liberarCamaMantener=async function(){await updateDoc(doc(db,"albergues",currentAlbergueId,"personas",personaEnGestion.id),{cama:null});window.sysLog("Cama liberada (Mantener)","warn");};
-
-// --- OTROS MODALES ---
-window.abrirModalFamiliar = function() { window.limpiarFormulario('fam'); window.safeShow('modal-add-familiar'); if(window.el('fam-tipo-doc')) window.el('fam-tipo-doc').value="MENOR"; window.verificarMenor('fam'); }
-window.cerrarModalFamiliar = function() { window.safeHide('modal-add-familiar'); }
-window.guardarFamiliarEnLista = function() { const d=window.getDatosFormulario('fam'); if(!d.nombre) return alert("Nombre obligatorio"); listaFamiliaresTemp.push(d); window.actualizarListaFamiliaresUI(); window.cerrarModalFamiliar(); }
-window.actualizarListaFamiliaresUI = function() { const d = window.el('lista-familiares-ui'); if(!d) return; d.innerHTML = ""; if (listaFamiliaresTemp.length === 0) { d.innerHTML = '<p style="color:#999;font-style:italic;">Ninguno añadido.</p>'; return; } listaFamiliaresTemp.forEach((f, i) => { d.innerHTML += `<div class="fam-item"><div><strong>${f.nombre}</strong></div><button class="danger" style="margin:0;padding:2px 8px;width:auto;" onclick="window.borrarFamiliarTemp(${i})">X</button></div>`; }); }
-window.borrarFamiliarTemp = function(i) { listaFamiliaresTemp.splice(i, 1); window.actualizarListaFamiliaresUI(); }
-
-window.abrirModalFamiliarAdmin = function() { window.limpiarFormulario('adm-fam'); window.safeShow('modal-admin-add-familiar'); if(window.el('adm-fam-tipo-doc')) window.el('adm-fam-tipo-doc').value="MENOR"; window.verificarMenor('adm-fam'); }
-window.cerrarModalFamiliarAdmin = function() { window.safeHide('modal-admin-add-familiar'); }
-window.guardarFamiliarAdmin = function() { const d=window.getDatosFormulario('adm-fam'); if(!d.nombre) return alert("Nombre obligatorio"); adminFamiliaresTemp.push(d); window.actualizarListaFamiliaresAdminUI(); window.cerrarModalFamiliarAdmin(); }
-window.actualizarListaFamiliaresAdminUI = function() { const d = window.el('admin-lista-familiares-ui'); if(!d) return; d.innerHTML = ""; if (adminFamiliaresTemp.length === 0) { d.innerHTML = '<p style="color:#999;font-style:italic;">Ninguno.</p>'; return; } adminFamiliaresTemp.forEach((f, i) => { d.innerHTML += `<div class="fam-item"><div><strong>${f.nombre} ${f.ap1}</strong> <small>(${f.docNum})</small></div><button class="danger" style="margin:0;padding:2px 8px;width:auto;" onclick="window.borrarFamiliarAdminTemp(${i})">X</button></div>`; }); }
-window.borrarFamiliarAdminTemp = function(i) { adminFamiliaresTemp.splice(i, 1); window.actualizarListaFamiliaresAdminUI(); }
-
-window.abrirModalVincularFamilia = function() { if(!personaEnGestion) return; if(window.el('search-vincular')) window.el('search-vincular').value=""; if(window.el('resultados-vincular')) window.el('resultados-vincular').innerHTML=""; window.safeShow('modal-vincular-familia'); }
-window.buscarParaVincular = function() { const t=window.safeVal('search-vincular').toLowerCase().trim(); const r=window.el('resultados-vincular'); r.innerHTML=""; if(t.length<2){window.safeAddActive('hidden');return;} const hits=listaPersonasCache.filter(p=>{ if(p.id===personaEnGestion.id)return false; return (p.nombre+" "+(p.ap1||"")).toLowerCase().includes(t); }); if(hits.length===0){ r.innerHTML="<div class='search-item'>Sin resultados</div>"; } else { hits.forEach(p=>{ const d=document.createElement('div'); d.className='search-item'; d.innerHTML=`<strong>${p.nombre}</strong>`; d.onclick=()=>window.vincularAFamilia(p); r.appendChild(d); }); } r.classList.remove('hidden'); }
-window.vincularAFamilia = async function(target) { if(!confirm(`¿Unir a ${personaEnGestion.nombre}?`)) return; try { const path = personaEnGestionEsGlobal ? "pool_prefiliacion" : `albergues/${currentAlbergueId}/personas`; let tid = target.familiaId; const batch = writeBatch(db); if(!tid) { tid = new Date().getTime()+"-F"; batch.update(doc(db, path, target.id), {familiaId: tid, rolFamilia: 'TITULAR'}); } batch.update(doc(db, path, personaEnGestion.id), {familiaId: tid, rolFamilia: 'MIEMBRO'}); await batch.commit(); alert("Vinculado"); window.safeHide('modal-vincular-familia'); window.seleccionarPersona(personaEnGestion, personaEnGestionEsGlobal); } catch(e) { window.sysLog("Error vinculando: " + e.message, "error"); } }
-
+window.abrirModalFamiliar=function(){window.limpiarFormulario('fam');window.safeShow('modal-add-familiar');if(window.el('fam-tipo-doc'))window.el('fam-tipo-doc').value="MENOR";window.verificarMenor('fam');};
+window.cerrarModalFamiliar=function(){window.safeHide('modal-add-familiar');};
+window.guardarFamiliarEnLista=function(){const d=window.getDatosFormulario('fam');if(!d.nombre)return alert("Nombre obligatorio");listaFamiliaresTemp.push(d);window.actualizarListaFamiliaresUI();window.cerrarModalFamiliar();};
+window.actualizarListaFamiliaresUI=function(){const d=window.el('lista-familiares-ui');if(!d)return;d.innerHTML="";if(listaFamiliaresTemp.length===0){d.innerHTML='<p style="color:#999;font-style:italic;">Ninguno añadido.</p>';return;}listaFamiliaresTemp.forEach((f,i)=>{d.innerHTML+=`<div class="fam-item"><div><strong>${f.nombre}</strong></div><button class="danger" style="margin:0;padding:2px 8px;width:auto;" onclick="window.borrarFamiliarTemp(${i})">X</button></div>`;});};
+window.borrarFamiliarTemp=function(i){listaFamiliaresTemp.splice(i,1);window.actualizarListaFamiliaresUI();};
+window.abrirModalFamiliarAdmin=function(){window.limpiarFormulario('adm-fam');window.safeShow('modal-admin-add-familiar');if(window.el('adm-fam-tipo-doc'))window.el('adm-fam-tipo-doc').value="MENOR";window.verificarMenor('adm-fam');};
+window.cerrarModalFamiliarAdmin=function(){window.safeHide('modal-admin-add-familiar');};
+window.guardarFamiliarAdmin=function(){const d=window.getDatosFormulario('adm-fam');if(!d.nombre)return alert("Nombre obligatorio");adminFamiliaresTemp.push(d);window.actualizarListaFamiliaresAdminUI();window.cerrarModalFamiliarAdmin();};
+window.actualizarListaFamiliaresAdminUI=function(){const d=window.el('admin-lista-familiares-ui');if(!d)return;d.innerHTML="";if(adminFamiliaresTemp.length===0){d.innerHTML='<p style="color:#999;font-style:italic;">Ninguno.</p>';return;}adminFamiliaresTemp.forEach((f,i)=>{d.innerHTML+=`<div class="fam-item"><div><strong>${f.nombre} ${f.ap1}</strong> <small>(${f.docNum})</small></div><button class="danger" style="margin:0;padding:2px 8px;width:auto;" onclick="window.borrarFamiliarAdminTemp(${i})">X</button></div>`;});};
+window.borrarFamiliarAdminTemp=function(i){adminFamiliaresTemp.splice(i,1);window.actualizarListaFamiliaresAdminUI();};
+window.abrirModalVincularFamilia=function(){if(!personaEnGestion)return;if(window.el('search-vincular'))window.el('search-vincular').value="";if(window.el('resultados-vincular'))window.el('resultados-vincular').innerHTML="";window.safeShow('modal-vincular-familia');};
+window.buscarParaVincular=function(){const t=window.safeVal('search-vincular').toLowerCase().trim();const r=window.el('resultados-vincular');r.innerHTML="";if(t.length<2){window.safeAddActive('hidden');return;}const hits=listaPersonasCache.filter(p=>{if(p.id===personaEnGestion.id)return false;return(p.nombre+" "+(p.ap1||"")).toLowerCase().includes(t);});if(hits.length===0){r.innerHTML="<div class='search-item'>Sin resultados</div>";}else{hits.forEach(p=>{const d=document.createElement('div');d.className='search-item';d.innerHTML=`<strong>${p.nombre}</strong>`;d.onclick=()=>window.vincularAFamilia(p);r.appendChild(d);});}r.classList.remove('hidden');};
+window.vincularAFamilia=async function(target){if(!confirm(`¿Unir a ${personaEnGestion.nombre}?`))return;try{let tid=target.familiaId;if(!tid){tid=new Date().getTime().toString()+"-F";await updateDoc(doc(db,"albergues",currentAlbergueId,"personas",target.id),{familiaId:tid,rolFamilia:'TITULAR'});}await updateDoc(doc(db,"albergues",currentAlbergueId,"personas",personaEnGestion.id),{familiaId:tid,rolFamilia:'MIEMBRO'});window.sysLog(`Vinculación familiar exitosa`, "success");alert("Vinculado");window.safeHide('modal-vincular-familia');window.seleccionarPersona(personaEnGestion, false);}catch(e){window.sysLog("Error vinculando: "+e.message, "error");}};
 window.abrirModalAlbergue=async function(id=null){albergueEdicionId=id;window.safeShow('modal-albergue');const b=window.el('btn-delete-albergue');if(id){const s=await getDoc(doc(db,"albergues",id));const d=s.data();window.setVal('mto-nombre',d.nombre);window.setVal('mto-capacidad',d.capacidad);window.setVal('mto-columnas',d.columnas);const r=(currentUserData.rol||"").toLowerCase().trim();if(r==='super_admin')window.safeShow('btn-delete-albergue');else window.safeHide('btn-delete-albergue');}else{window.setVal('mto-nombre',"");window.setVal('mto-capacidad',"");window.safeHide('btn-delete-albergue');}};
-window.guardarAlbergue=async function(){const n=window.safeVal('mto-nombre'),c=window.safeVal('mto-capacidad'),col=window.safeVal('mto-columnas');if(!n||!c)return alert("Datos inc.");if(albergueEdicionId)await updateDoc(doc(db,"albergues",albergueEdicionId),{nombre:n,capacidad:parseInt(c),columnas:parseInt(col)});else await addDoc(collection(db,"albergues"),{nombre:n,capacidad:parseInt(c),columnas:parseInt(col),activo:true});window.safeHide('modal-albergue'); window.sysLog("Albergue guardado.", "success");};
-window.eliminarAlbergueActual=async function(){if(albergueEdicionId&&confirm("¿Borrar todo?")){const ps=await getDocs(collection(db,"albergues",albergueEdicionId,"personas"));const b=writeBatch(db);ps.forEach(d=>b.delete(d.ref));await b.commit();await deleteDoc(doc(db,"albergues",albergueEdicionId));alert("Borrado");window.safeHide('modal-albergue'); window.sysLog("Albergue eliminado.", "warn");}};
-window.cargarAlberguesActivos = function() { const c = window.el('lista-albergues-activos'); unsubscribeAlberguesActivos = onSnapshot(query(collection(db,"albergues"),where("activo","==",true)), s=>{ c.innerHTML=""; s.forEach(d=>{ const div=document.createElement('div'); div.className="mto-card"; div.innerHTML=`<h3>${d.data().nombre}</h3><div class="mto-info">Entrar</div>`; div.onclick=()=>window.cargarDatosYEntrar(d.id); c.appendChild(div); }); }); }
-window.cargarAlberguesMantenimiento = function() { const c = window.el('mto-container'); const r = (currentUserData.rol || "").toLowerCase().trim(); const isSuper = (r === 'super_admin'); unsubscribeAlberguesMto = onSnapshot(query(collection(db,"albergues")), s => { c.innerHTML = "<div class='mto-card add-new' onclick='window.abrirModalAlbergue()'><h3>+</h3></div>"; s.forEach(d => { const a = d.data(); let extraBtn = isSuper ? `<button class="warning" onclick="window.cambiarEstadoAlbergue('${d.id}', ${!a.activo})">${a.activo === false ? 'Activar' : 'Archivar'}</button>` : ""; c.innerHTML += `<div class="mto-card ${!a.activo ? 'archived' : ''}"><h3>${a.nombre}</h3><p>Cap: ${a.capacidad}</p><div class="btn-group-horizontal"><button class="secondary" onclick="window.abrirModalAlbergue('${d.id}')">Editar</button>${extraBtn}</div></div>`; }); }); };
-window.cambiarEstadoAlbergue=async function(id,st){await updateDoc(doc(db,"albergues",id),{activo:st}); window.sysLog(`Estado Albergue ${id}: ${st}`, "info");};
+window.guardarAlbergue=async function(){const n=window.safeVal('mto-nombre'),c=window.safeVal('mto-capacidad'),col=window.safeVal('mto-columnas');if(!n||!c)return alert("Datos inc.");if(albergueEdicionId)await updateDoc(doc(db,"albergues",albergueEdicionId),{nombre:n,capacidad:parseInt(c),columnas:parseInt(col)});else await addDoc(collection(db,"albergues"),{nombre:n,capacidad:parseInt(c),columnas:parseInt(col),activo:true});window.safeHide('modal-albergue');window.sysLog("Albergue guardado.", "success");};
+window.eliminarAlbergueActual=async function(){if(albergueEdicionId&&confirm("¿Borrar todo?")){const ps=await getDocs(collection(db,"albergues",albergueEdicionId,"personas"));const b=writeBatch(db);ps.forEach(d=>b.delete(d.ref));await b.commit();await deleteDoc(doc(db,"albergues",albergueEdicionId));alert("Borrado");window.safeHide('modal-albergue');window.sysLog("Albergue eliminado.", "warn");}};
+window.cargarAlberguesMantenimiento=function(){const c=window.el('mto-container');const r=(currentUserData.rol||"").toLowerCase().trim();const isSuper=(r==='super_admin');unsubscribeAlberguesMto=onSnapshot(query(collection(db,"albergues")),s=>{c.innerHTML="<div class='mto-card add-new' onclick='window.abrirModalAlbergue()'><h3>+</h3></div>";s.forEach(d=>{const a=d.data();let extraBtn=isSuper?`<button class="warning" onclick="window.cambiarEstadoAlbergue('${d.id}', ${!a.activo})">${a.activo===false?'Activar':'Archivar'}</button>`:"";c.innerHTML+=`<div class="mto-card ${!a.activo?'archived':''}"><h3>${a.nombre}</h3><p>Cap: ${a.capacidad}</p><div class="btn-group-horizontal"><button class="secondary" onclick="window.abrirModalAlbergue('${d.id}')">Editar</button>${extraBtn}</div></div>`;});});};
+window.cambiarEstadoAlbergue=async function(id,st){await updateDoc(doc(db,"albergues",id),{activo:st});window.sysLog(`Estado Albergue ${id}: ${st}`, "info");};
 window.abrirModalCambioPass=function(){window.setVal('chg-old-pass','');window.setVal('chg-new-pass','');window.setVal('chg-confirm-pass','');window.safeShow('modal-change-pass');};
-window.ejecutarCambioPass=async function(){const o=window.safeVal('chg-old-pass'),n=window.safeVal('chg-new-pass');try{await reauthenticateWithCredential(auth.currentUser,EmailAuthProvider.credential(auth.currentUser.email,o));await updatePassword(auth.currentUser,n);alert("OK");window.safeHide('modal-change-pass'); window.sysLog("Contraseña cambiada.", "success");}catch(e){alert("Error"); window.sysLog("Error cambio pass: " + e.message, "error");}};
+window.ejecutarCambioPass=async function(){const o=window.safeVal('chg-old-pass'),n=window.safeVal('chg-new-pass');try{await reauthenticateWithCredential(auth.currentUser,EmailAuthProvider.credential(auth.currentUser.email,o));await updatePassword(auth.currentUser,n);alert("OK");window.safeHide('modal-change-pass');window.sysLog("Contraseña cambiada.", "success");}catch(e){alert("Error");window.sysLog("Error cambio pass: "+e.message, "error");}};
 window.cargarUsuarios=function(){const c=window.el('lista-usuarios-container');const filterText=window.safeVal('search-user').toLowerCase().trim();unsubscribeUsers=onSnapshot(query(collection(db,"usuarios")),s=>{c.innerHTML="";if(s.empty){c.innerHTML="<p>No hay usuarios.</p>";return;}s.forEach(d=>{const u=d.data();if(filterText&&!u.nombre.toLowerCase().includes(filterText)&&!u.email.toLowerCase().includes(filterText))return;if(currentUserData.rol==='admin'&&u.rol==='super_admin')return;c.innerHTML+=`<div class="user-card-item" onclick="window.abrirModalUsuario('${d.id}')"><strong>${u.nombre}</strong><br><small>${u.rol}</small></div>`;});});};
 window.filtrarUsuarios=function(){window.cargarUsuarios();};
-window.abrirModalUsuario=async function(id=null){ userEditingId=id; window.safeShow('modal-crear-usuario'); const sel=window.el('new-user-role'); sel.innerHTML=""; ['super_admin','admin','intervencion','filiacion','observador'].forEach(r=>sel.add(new Option(r,r))); if(id){ const s=await getDoc(doc(db,"usuarios",String(id))); if(s.exists()){ const d=s.data(); window.setVal('new-user-name',d.nombre); window.setVal('new-user-email',d.email); sel.value=d.rol; if(currentUserData.rol === 'super_admin') window.safeShow('btn-delete-user'); else window.safeHide('btn-delete-user'); } } else { window.setVal('new-user-name',""); window.setVal('new-user-email',""); window.safeHide('btn-delete-user'); } };
-window.guardarUsuario=async function(){const e=window.safeVal('new-user-email'),p=window.safeVal('new-user-pass'),n=window.safeVal('new-user-name'),r=window.safeVal('new-user-role');if(userEditingId){await updateDoc(doc(db,"usuarios",userEditingId),{nombre:n,rol:r});}else{const tApp=initializeApp(firebaseConfig,"Temp");const tAuth=getAuth(tApp);const uc=await createUserWithEmailAndPassword(tAuth,e,p);await setDoc(doc(db,"usuarios",uc.user.uid),{email:e,nombre:n,rol:r});await signOut(tAuth);deleteApp(tApp);}window.safeHide('modal-crear-usuario'); window.sysLog("Usuario guardado/creado.", "success");};
-window.eliminarUsuario=async function(){if(userEditingId&&confirm("Borrar?")){await deleteDoc(doc(db,"usuarios",userEditingId));window.safeHide('modal-crear-usuario'); window.sysLog("Usuario eliminado.", "warn");}};
+window.abrirModalUsuario=async function(id=null){userEditingId=id;window.safeShow('modal-crear-usuario');const sel=window.el('new-user-role');sel.innerHTML="";['super_admin','admin','intervencion','filiacion','observador'].forEach(r=>sel.add(new Option(r,r)));if(id){const s=await getDoc(doc(db,"usuarios",String(id)));if(s.exists()){const d=s.data();window.setVal('new-user-name',d.nombre);window.setVal('new-user-email',d.email);sel.value=d.rol;if(currentUserData.rol==='super_admin')window.safeShow('btn-delete-user');else window.safeHide('btn-delete-user');}}else{window.setVal('new-user-name',"");window.setVal('new-user-email',"");window.safeHide('btn-delete-user');}};
+window.guardarUsuario=async function(){const e=window.safeVal('new-user-email'),p=window.safeVal('new-user-pass'),n=window.safeVal('new-user-name'),r=window.safeVal('new-user-role');if(userEditingId){await updateDoc(doc(db,"usuarios",userEditingId),{nombre:n,rol:r});}else{const tApp=initializeApp(firebaseConfig,"Temp");const tAuth=getAuth(tApp);const uc=await createUserWithEmailAndPassword(tAuth,e,p);await setDoc(doc(db,"usuarios",uc.user.uid),{email:e,nombre:n,rol:r});await signOut(tAuth);deleteApp(tApp);}window.safeHide('modal-crear-usuario');window.sysLog("Usuario guardado/creado.", "success");};
+window.eliminarUsuario=async function(){if(userEditingId&&confirm("Borrar?")){await deleteDoc(doc(db,"usuarios",userEditingId));window.safeHide('modal-crear-usuario');window.sysLog("Usuario eliminado.", "warn");}};
 window.abrirModalQR=function(){window.safeShow('modal-qr');const d=window.el("qrcode-display");d.innerHTML="";new QRCode(d,{text:window.location.href.split('?')[0]+`?public_id=${currentAlbergueId}`,width:250,height:250});};
 window.toggleStartButton=function(){window.el('btn-start-public').disabled=!window.el('check-consent').checked;};
 window.iniciarRegistro=function(){window.safeHide('public-welcome-screen');window.safeShow('public-form-container');};
-window.publicoGuardarTodo = async function(){
-    const d=window.getDatosFormulario('pub'); if(!d.nombre)return alert("Nombre obligatorio");
-    if(!auth.currentUser) { try { await signInAnonymously(auth); } catch(e) {} }
-    const b = writeBatch(db);
-    const fid=new Date().getTime().toString();
-    const tRef = doc(collection(db, "pool_prefiliacion"));
-    b.set(tRef, {...d, familiaId:fid, rolFamilia:'TITULAR', estado:'espera', origenAlbergueId:currentAlbergueId, fechaRegistro:new Date()});
-    b.set(doc(collection(db,"pool_prefiliacion",tRef.id,"historial")),{fecha:new Date(), usuario:"Auto-QR", accion:"Alta en Pool", detalle:`Desde QR Albergue ${currentAlbergueId}`});
-    listaFamiliaresTemp.forEach(f=>{
-        const fRef = doc(collection(db, "pool_prefiliacion"));
-        b.set(fRef, {...f, familiaId:fid, rolFamilia:'MIEMBRO', estado:'espera', origenAlbergueId:currentAlbergueId, fechaRegistro:new Date()});
-    });
-    await b.commit(); window.safeHide('public-form-container'); window.safeShow('public-success-msg');
-}
-window.cargarObservatorio=async function(){const list=window.el('obs-list-container');if(!list)return;list.innerHTML='<p>Cargando...</p>';let gW=0,gH=0,gC=0;try{const sSnap=await getDocs(query(collection(db,"albergues"),where("activo","==",true)));let h="";for(const ds of sSnap.docs){const d=ds.data();const c=parseInt(d.capacidad||0);gC+=c;const pSnap=await getDocs(collection(db,"albergues",ds.id,"personas"));let sW=0,sH=0;pSnap.forEach(p=>{const pd=p.data();if(pd.estado==='espera')sW++;if(pd.estado==='ingresado')sH++;});gW+=sW;gH+=sH;const sF=Math.max(0,c-sH);const sP=c>0?Math.round((sH/c)*100):0;h+=`<div class="obs-row"><div class="obs-row-title">${d.nombre}</div><div style="display:flex;width:100%;justify-content:space-between;"><div class="obs-data-point"><span>Espera</span><strong>${sW}</strong></div><div class="obs-data-point"><span>Alojados</span><strong>${sH}</strong></div><div class="obs-data-point"><span>Libres</span><strong>${sF}</strong></div><div class="obs-data-point"><span>${sP}%</span></div></div></div>`;}if(window.el('kpi-espera'))window.el('kpi-espera').innerText=gW;if(window.el('kpi-alojados'))window.el('kpi-alojados').innerText=gH;if(window.el('kpi-libres'))window.el('kpi-libres').innerText=`${Math.max(0,gC-gH)}`;if(window.el('kpi-percent'))window.el('kpi-percent').innerText=`${gC>0?Math.round((gH/gC)*100):0}%`;list.innerHTML=h;}catch(e){list.innerHTML="Error";}};
-window.verListaObservatorio = async function(albId, est) {const c = window.el('obs-modal-content');const t = window.el('obs-modal-title');c.innerHTML = '<p>Cargando...</p>';t.innerText = est === 'espera' ? 'En Espera' : 'Alojados';window.safeShow('modal-obs-detalle');try {const s = await getDocs(query(collection(db, "albergues", albId, "personas"), where("estado", "==", est)));if (s.empty) { c.innerHTML = '<p>Sin registros.</p>'; return; }let dataArray = [];s.forEach(doc => { dataArray.push({ id: doc.id, ...doc.data() }); });if (est === 'ingresado') {dataArray.sort((a, b) => (parseInt(a.cama)||0) - (parseInt(b.cama)||0));} else {dataArray.sort((a, b) => (b.fechaRegistro?.seconds||0) - (a.fechaRegistro?.seconds||0));}let h = `<table class="fam-table"><thead><tr><th style="width:40px;"></th>`;if(est==='ingresado') h+=`<th>Cama</th>`;h+=`<th>Nombre</th><th>DNI</th><th>Tel</th></tr></thead><tbody>`;dataArray.forEach(d => { h += `<tr><td style="text-align:center;"><button class="btn-icon-small" onclick="window.verHistorialObservatorio('${albId}', '${d.id}')"><i class="fa-solid fa-clock-rotate-left"></i></button></td>`;if(est==='ingresado') h+=`<td><strong>${d.cama||'-'}</strong></td>`;h+=`<td>${d.nombre} ${d.ap1||''}</td><td>${d.docNum||'-'}</td><td>${d.telefono||'-'}</td></tr>`; });h += '</tbody></table>'; c.innerHTML = h;} catch(e) { c.innerHTML = "Error."; }};
-window.verHistorialObservatorio = function(albId, pId) { window.verHistorial(pId, albId); };
+window.publicoGuardarTodo=async function(){const d=window.getDatosFormulario('pub');if(!d.nombre)return alert("Falta nombre");if(!auth.currentUser){try{await signInAnonymously(auth);}catch(e){}}const b=writeBatch(db);const fid=new Date().getTime().toString();const tRef=doc(collection(db,"pool_prefiliacion"));b.set(tRef,{...d,familiaId:fid,rolFamilia:'TITULAR',estado:'espera',origenAlbergueId:currentAlbergueId,fechaRegistro:new Date()});const lRef=collection(db,"pool_prefiliacion",tRef.id,"historial");b.set(doc(lRef),{fecha:new Date(),usuario:"Auto-QR",accion:"Alta en Pool",detalle:`Desde QR Albergue ${currentAlbergueId}`});listaFamiliaresTemp.forEach(async f=>{const fRef=doc(collection(db,"pool_prefiliacion"));b.set(fRef,{...f,familiaId:fid,rolFamilia:'MIEMBRO',estado:'espera',origenAlbergueId:currentAlbergueId,fechaRegistro:new Date()});});await b.commit();window.safeHide('public-form-container');window.safeShow('public-success-msg');}
+window.abrirModalCambioPass=function(){window.setVal('chg-old-pass','');window.setVal('chg-new-pass','');window.setVal('chg-confirm-pass','');window.safeShow('modal-change-pass');};
+window.ejecutarCambioPass=async function(){const o=window.safeVal('chg-old-pass'),n=window.safeVal('chg-new-pass');try{await reauthenticateWithCredential(auth.currentUser,EmailAuthProvider.credential(auth.currentUser.email,o));await updatePassword(auth.currentUser,n);alert("OK");window.safeHide('modal-change-pass');window.sysLog("Contraseña cambiada.", "success");}catch(e){alert("Error");window.sysLog("Error cambio pass: "+e.message, "error");}};
 
-// --- INIT (NO HOISTING NEEDED, RUNS LAST) ---
+// --- INIT ---
 window.onload = () => {
     if(isPublicMode){
         window.safeHide('login-screen');

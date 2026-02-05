@@ -37,7 +37,7 @@ window.toggleCajaNegra = function() {
 };
 window.limpiarCajaNegra = function() { const c = document.getElementById('black-box-content'); if (c) c.innerHTML = ""; };
 
-window.sysLog("Sistema Iniciado. Versión 38.14.0 (Auto-Repair Users)", "info");
+window.sysLog("Sistema Iniciado. Versión 38.15.0 (Permisos & Zombie Fix)", "info");
 
 // --- 2. GLOBALES ---
 let isPublicMode = false;
@@ -118,9 +118,69 @@ window.navegar = function(p) {
     if(p.includes('albergue')) window.safeAddActive('nav-albergues'); else if(p.includes('obs')) window.safeAddActive('nav-obs'); else if(p.includes('mantenimiento')) window.safeAddActive('nav-mto'); else window.safeAddActive('nav-home');
 };
 
-window.configurarTabsPorRol = function() { const r = (currentUserData.rol || "").toLowerCase().trim(); ['btn-tab-pref', 'btn-tab-fil', 'btn-tab-san', 'btn-tab-psi'].forEach(id => window.safeShow(id)); if (r === 'intervencion') { window.safeHide('btn-tab-pref'); window.safeHide('btn-tab-fil'); return 'sanitaria'; } return 'filiacion'; };
+// --- NUEVA LÓGICA DE PERMISOS (v38.15.0) ---
+window.configurarTabsPorRol = function() {
+    const r = (currentUserData.rol || "").toLowerCase().trim();
+    // 1. Ocultar todo por defecto
+    ['btn-tab-pref', 'btn-tab-fil', 'btn-tab-san', 'btn-tab-psi'].forEach(id => window.safeHide(id));
+
+    // 2. SuperAdmin y Admin ven TODO
+    if(['super_admin', 'admin'].includes(r)) {
+        ['btn-tab-pref', 'btn-tab-fil', 'btn-tab-san', 'btn-tab-psi'].forEach(id => window.safeShow(id));
+        return 'filiacion';
+    }
+
+    // 3. Albergue: Solo Prefiliación y Filiación
+    if(r === 'albergue') {
+        window.safeShow('btn-tab-pref');
+        window.safeShow('btn-tab-fil');
+        return 'filiacion';
+    }
+
+    // 4. Sanitario y Psicosocial: Solo Sanitario y Psicosocial
+    if(['sanitario', 'psicosocial'].includes(r)) {
+        window.safeShow('btn-tab-san');
+        window.safeShow('btn-tab-psi');
+        return 'sanitaria';
+    }
+
+    // Default
+    return 'filiacion';
+};
+
+window.configurarDashboard = function() { 
+    const r = (currentUserData.rol || "").toLowerCase(); 
+    if(window.el('user-name-display')) window.el('user-name-display').innerText = currentUserData.nombre; 
+    if(window.el('user-role-badge')) window.el('user-role-badge').innerText = r.toUpperCase(); 
+    
+    window.safeHide('header-btn-users');
+    window.safeHide('container-ver-ocultos');
+    
+    // Resetear estados (quitar disabled y active de todo)
+    const navItems = document.querySelectorAll('.nav-item');
+    navItems.forEach(n => n.classList.remove('active', 'disabled', 'hidden'));
+
+    // APLICAR RESTRICCIONES (GRIS / DISABLED)
+    
+    // Gestión Usuarios (Solo Header)
+    if(['super_admin', 'admin'].includes(r)) { window.safeShow('header-btn-users'); }
+
+    // Mantenimiento (Nav) - Solo SuperAdmin y Admin
+    if(!['super_admin', 'admin'].includes(r)) { window.el('nav-mto').classList.add('disabled'); }
+
+    // Observatorio (Nav) - SuperAdmin, Admin y Observador
+    if(!['super_admin', 'admin', 'observador'].includes(r)) { window.el('nav-obs').classList.add('disabled'); }
+
+    // Gestión Albergues (Nav) - Todos MENOS Observador
+    if(r === 'observador') { window.el('nav-albergues').classList.add('disabled'); }
+
+    // Botón ocultos (Solo SuperAdmin)
+    if(r === 'super_admin') { window.safeShow('container-ver-ocultos'); }
+
+    window.safeAddActive('nav-home');
+};
+
 window.cambiarPestana = function(t) { window.sysLog(`Pestaña: ${t}`, "nav"); ['tab-prefiliacion', 'tab-filiacion', 'tab-sanitaria', 'tab-psicosocial'].forEach(id => window.safeHide(id)); ['btn-tab-pref', 'btn-tab-fil', 'btn-tab-san', 'btn-tab-psi'].forEach(id => window.safeRemoveActive(id)); window.safeAddActive(`btn-tab-${t.substring(0,3)}`); window.safeShow(`tab-${t}`); if (t === 'prefiliacion') { window.limpiarFormulario('man'); adminFamiliaresTemp = []; if(window.actualizarListaFamiliaresAdminUI) window.actualizarListaFamiliaresAdminUI(); if(window.el('existing-family-list-ui')) window.el('existing-family-list-ui').innerHTML = ""; window.cancelarEdicionPref(); } else if (t === 'filiacion') { if(window.el('buscador-persona')) window.el('buscador-persona').value = ""; window.safeHide('resultados-busqueda'); window.safeHide('panel-gestion-persona'); window.personaEnGestion = null; } };
-window.configurarDashboard = function() { const r=(currentUserData.rol||"").toLowerCase(); if(window.el('user-name-display')) window.el('user-name-display').innerText=currentUserData.nombre; if(window.el('user-role-badge')) window.el('user-role-badge').innerText=r.toUpperCase(); window.safeHide('header-btn-users'); window.safeAddActive('nav-mto'); window.safeHide('nav-obs'); window.safeHide('nav-albergues'); if(['super_admin', 'admin'].includes(r)) { window.safeShow('header-btn-users'); if(window.el('nav-mto')) window.el('nav-mto').classList.remove('disabled'); } if(['super_admin','admin','observador'].includes(r)) window.safeShow('nav-obs'); if(r !== 'observador') window.safeShow('nav-albergues'); if(r==='super_admin') window.safeShow('container-ver-ocultos'); };
 
 // --- 5. LOGICA DE NEGOCIO ---
 window.cargarDatosYEntrar = async function(id) {
@@ -363,10 +423,13 @@ window.darSalidaPersona = async function() {
         memberData.estado = 'espera';
         memberData.fechaSalidaAlbergue = new Date();
         memberData.ultimoAlbergueId = currentAlbergueId;
+
         batch.set(poolRef, memberData);
         batch.delete(doc(db, "albergues", currentAlbergueId, "personas", personaEnGestion.id));
+        
         const logRef = collection(db, "pool_prefiliacion", poolRef.id, "historial");
         batch.set(doc(logRef), {fecha: new Date(), usuario: currentUserData.nombre, accion: "Salida Albergue", detalle: `Salida Individual de ${currentAlbergueData.nombre}`});
+
         await batch.commit();
         window.sysLog(`Salida individual realizada.`, "nav");
         window.showToast("Salida completada.");
@@ -464,6 +527,7 @@ window.abrirModalUsuario=async function(id=null){
     // NEW ROLES LIST (v38.13.0)
     let roles = ['albergue', 'sanitario', 'psicosocial', 'observador'];
     if(currentUserData.rol === 'super_admin') { roles = ['super_admin', 'admin', ...roles]; }
+    else if (currentUserData.rol === 'admin') { roles = ['albergue', 'sanitario', 'psicosocial', 'observador']; }
 
     roles.forEach(r=>sel.add(new Option(r,r)));
     
@@ -476,6 +540,7 @@ window.abrirModalUsuario=async function(id=null){
             const d=s.data();
             window.setVal('new-user-name',d.nombre);
             window.setVal('new-user-email',d.email);
+            
             if(!roles.includes(d.rol)) { const opt = new Option(d.rol, d.rol); opt.disabled = true; sel.add(opt); }
             sel.value=d.rol;
             window.el('new-user-active').checked=(d.activo!==false);
@@ -572,7 +637,6 @@ onAuthStateChanged(auth, async (u) => {
         const s = await getDoc(doc(db,"usuarios",u.uid));
         if(s.exists()){
             const d = s.data();
-            // CHECK ACTIVE STATUS
             if (d.activo === false) {
                 window.sysLog("Acceso denegado: Usuario inactivo", "warn");
                 alert("Este usuario ha sido desactivado por administración.");
@@ -586,16 +650,16 @@ onAuthStateChanged(auth, async (u) => {
             window.configurarDashboard();
             window.navegar('home');
         } else {
-            // SELF HEAL LOGIC
-            window.sysLog("Usuario fantasma detectado. Restaurando...", "warn");
+            // FIX: SELF HEAL AS INACTIVE
+            window.sysLog("Usuario fantasma detectado. Restaurando INACTIVO...", "warn");
             await setDoc(doc(db,"usuarios",u.uid), {
                 email: u.email,
                 nombre: u.email.split('@')[0],
                 rol: "observador",
-                activo: true
+                activo: false // RESTORE AS INACTIVE FOR SECURITY
             });
-            alert("Tu usuario ha sido restaurado automáticamente.");
-            location.reload();
+            alert("Tu usuario ha sido restaurado pero está INACTIVO por seguridad.\n\nContacta con un administrador para que te active.");
+            signOut(auth); // KICK OUT IMMEDIATELY
         }
     } else {
         window.sysLog("Esperando inicio de sesión...", "info");

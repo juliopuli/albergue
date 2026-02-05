@@ -20,11 +20,19 @@ body { background-color: var(--bg-body); color: var(--text-main); height: 100vh;
 .user-name { font-weight: 700; display: block; }
 .user-role { font-size: 0.75rem; color: var(--text-light); text-transform: uppercase; font-weight: 600; }
 .role-badge { padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: white; display: inline-block; margin-top: 2px; }
+
+/* ROLES */
 .role-super_admin { background-color: #7c3aed; }
 .role-admin { background-color: #ef4444; }
+.role-albergue { background-color: #3b82f6; } /* Azul */
+.role-sanitario { background-color: #e11d48; } /* Rosa oscuro */
+.role-psicosocial { background-color: #9333ea; } /* Violeta */
+.role-observador { background-color: #64748b; } /* Gris */
+/* Antiguos (por compatibilidad si quedan en DB) */
 .role-intervencion { background-color: #f59e0b; }
 .role-filiacion { background-color: #10b981; }
-.role-observador { background-color: #64748b; }
+
+
 .btn-icon { background: #e0e7ff; color: var(--primary); border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; transition: 0.2s; font-size: 1rem; }
 .btn-logout { background: #fee2e2; color: #ef4444; }
 .btn-key { background: #fef3c7; color: #d97706; }
@@ -35,7 +43,13 @@ body { background-color: var(--bg-body); color: var(--text-main); height: 100vh;
 .nav-item { display: flex; flex-direction: column; align-items: center; color: var(--text-light); cursor: pointer; padding: 10px 20px; border-radius: var(--radius); transition: all 0.2s; }
 .nav-item:hover, .nav-item.active { color: var(--primary); background: #e0e7ff; }
 .nav-item.active::after { content: ''; position: absolute; bottom: 0; width: 40%; height: 3px; background: var(--primary); }
-.nav-item.disabled { opacity: 0.3; pointer-events: none; }
+
+/* ESTADO DISABLED (GRIS) */
+.nav-item.disabled { 
+    opacity: 0.4; 
+    pointer-events: none; 
+    filter: grayscale(100%);
+}
 .nav-item.hidden { display: none !important; }
 
 /* CONTENT & MODULES */
@@ -85,7 +99,7 @@ button.dark { background: #334155; color: white; }
 .user-card-left { display: flex; align-items: center; gap: 15px; }
 .user-avatar-circle { width: 40px; height: 40px; background: #e0e7ff; color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
 
-/* --- USER CARD STATES (MODIFIED) --- */
+/* --- NEW: USER INACTIVE STYLE --- */
 .user-card-item.active { border-left: 5px solid var(--success); }
 .user-card-item.inactive { background: #f1f5f9; opacity: 0.8; border-left: 5px solid var(--danger); border-color: #ef4444; }
 

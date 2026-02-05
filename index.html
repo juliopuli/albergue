@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gestión Albergue - Ver.38.16.0</title>
+    <title>Gestión Albergue - Ver.38.14.0</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -11,7 +11,7 @@
 </head>
 <body>
 
-    <div class="version-tag">Ver.38.13.0</div>
+    <div class="version-tag">Ver.38.14.0</div>
     <div id="toast">Guardado automático</div>
     <div id="loading-overlay" class="hidden"><div class="spinner"></div><h2 style="color:var(--primary);">Cargando Datos...</h2></div>
 
@@ -44,7 +44,7 @@
                     <span class="user-name" id="user-name-display">...</span>
                     <span class="user-role" id="user-role-badge">...</span>
                 </div>
-                <button class="btn-icon btn-debug" onclick="window.toggleCajaNegra()" title="Abrir Log Sistema"><i class="fa-solid fa-terminal"></i></button>
+                <button id="header-btn-debug" class="btn-icon btn-debug hidden" onclick="window.toggleCajaNegra()" title="Abrir Log Sistema"><i class="fa-solid fa-terminal"></i></button>
                 <button id="header-btn-users" class="btn-icon hidden" onclick="window.navegar('usuarios')" title="Gestionar Usuarios"><i class="fa-solid fa-users-gear"></i></button>
                 <button class="btn-icon btn-key" onclick="window.abrirModalCambioPass()" title="Cambiar Contraseña"><i class="fa-solid fa-key"></i></button>
                 <button class="btn-logout" onclick="window.cerrarSesion()"><i class="fa-solid fa-power-off"></i></button>
@@ -203,7 +203,6 @@
         </div>
         <div id="public-success-msg" class="hidden" style="text-align:center; padding:20px; background:white; height:100%;"><div class="success-icon"><i class="fa-solid fa-circle-check"></i></div><h1 style="margin-bottom:10px;">¡Datos Enviados!</h1><p style="font-size:1.2rem; color:var(--text-light);">Gracias. Por favor, acércate a la mesa de entrada.</p></div>
     </div>
-    
 
     <div id="modal-qr" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content" style="text-align:center;"><span class="close-modal" onclick="document.getElementById('modal-qr').classList.add('hidden')">&times;</span><h3>Escanea para acceder</h3><div id="qrcode-display" style="display:inline-block; margin:20px;"></div><p style="color:#666;">Auto-registro móvil.</p></div></div>
     <div id="modal-cama" class="modal-overlay hidden" onclick="if(event.target===this)window.cerrarMapaCamas()"><div class="modal-content modal-lg"><span class="close-modal" onclick="window.cerrarMapaCamas()">&times;</span><h3>Seleccionar Cama</h3><p style="font-size:0.8rem;color:#666;">Verde Borde=Sugerencia | Naranja=Reserva Familia</p><div id="grid-camas" class="bed-grid"></div></div></div>

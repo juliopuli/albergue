@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gestión Albergue - Ver.1.0.0</title>
+    <title>Gestión Albergue - Ver.1.1.0</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -11,7 +11,7 @@
 </head>
 <body>
 
-    <div class="version-tag">Ver.1.0.0</div>
+    <div class="version-tag">Ver.1.1.0</div>
     <div id="toast">Guardado automático</div>
     <div id="loading-overlay" class="hidden"><div class="spinner"></div><h2 style="color:var(--primary);">Cargando Datos...</h2></div>
 
@@ -53,6 +53,7 @@
 
         <nav class="app-nav">
             <div class="nav-item" id="nav-home" onclick="window.navegar('home')"><i class="fa-solid fa-house"></i><span>Inicio</span></div>
+            <div class="nav-item" id="nav-intervencion" onclick="window.navegar('intervencion')"><i class="fa-solid fa-qrcode"></i><span>Intervención</span></div>
             <div class="nav-item" id="nav-albergues" onclick="window.navegar('gestion-albergues')"><i class="fa-solid fa-bed"></i><span>Gestión</span></div>
             <div class="nav-item" id="nav-mto" onclick="window.navegar('mantenimiento')"><i class="fa-solid fa-screwdriver-wrench"></i><span>Mantenimiento</span></div>
             <div class="nav-item" id="nav-obs" onclick="window.navegar('observatorio')"><i class="fa-solid fa-binoculars"></i><span>Observatorio</span></div>
@@ -62,6 +63,48 @@
         <main class="main-content">
             <div id="screen-home" class="hidden">
                 <div class="hero-container"><i class="fa-solid fa-campground hero-icon"></i><h1 class="hero-title">Te damos la bienvenida</h1><p class="hero-subtitle">Sistema integral de control</p></div>
+            </div>
+
+            <div id="screen-intervencion" class="hidden">
+                <div class="card" style="text-align:center; min-height: 60vh; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+                    
+                    <div id="view-scan-ready">
+                        <i class="fa-solid fa-qrcode" style="font-size: 5rem; color: var(--text-light); margin-bottom: 20px;"></i>
+                        <h2 style="margin-bottom: 10px;">Escáner de Intervención</h2>
+                        <p style="color: #666; margin-bottom: 30px;">Escanea el carnet de un usuario para registrar movimientos o derivaciones.</p>
+                        <button class="primary" style="padding: 15px 30px; font-size: 1.2rem;" onclick="window.simularLecturaQR()">📷 Activar Cámara (Simulado)</button>
+                    </div>
+
+                    <div id="view-scan-result" class="hidden" style="width:100%;">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px; text-align:left;">
+                            <div>
+                                <h2 id="interv-nombre" style="color:var(--primary); margin:0;">Nombre Apellido</h2>
+                                <p id="interv-doc" style="font-weight:bold; color:#666;">DNI: ...</p>
+                                <span class="badge badge-active" id="interv-estado">ESTADO</span>
+                            </div>
+                            <button class="secondary" onclick="window.resetIntervencion()">X</button>
+                        </div>
+
+                        <div class="action-grid">
+                            <button class="btn-action-big btn-entry" onclick="window.registrarMovimiento('entrada')">
+                                <i class="fa-solid fa-person-walking-arrow-right"></i> Entrada
+                            </button>
+                            <button class="btn-action-big btn-exit-action" onclick="window.registrarMovimiento('salida')">
+                                <i class="fa-solid fa-person-walking-arrow-right" style="transform: scaleX(-1);"></i> Salida
+                            </button>
+                            <button class="btn-action-big btn-derive-psi" onclick="window.abrirModalDerivacion('Psicosocial')">
+                                <i class="fa-solid fa-users-rays"></i> Psicosocial
+                            </button>
+                            <button class="btn-action-big btn-derive-san" onclick="window.abrirModalDerivacion('Sanitaria')">
+                                <i class="fa-solid fa-notes-medical"></i> Sanitaria
+                            </button>
+                            <button class="btn-action-big btn-derive-del" onclick="window.abrirModalDerivacion('Entregas')">
+                                <i class="fa-solid fa-box-open"></i> Entregas
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
             </div>
 
             <div id="screen-usuarios" class="hidden">
@@ -181,30 +224,6 @@
         </main>
     </div>
 
-    <div id="public-register-screen" class="hidden">
-        <div id="public-welcome-screen" class="card" style="max-width:500px; width:100%; margin:20px auto;">
-            <div class="welcome-box">
-                <i class="fa-solid fa-door-open welcome-icon"></i>
-                <h2 style="color:var(--text-main); margin-bottom:10px;">Bienvenido/a</h2>
-                <p style="font-size:1.1rem; line-height:1.5; margin-bottom:20px; color:var(--text-main);">Está a punto de rellenar la ficha de registro de sus datos y el de sus familiares para acceder al <strong id="public-albergue-name" style="color:var(--primary);">Albergue...</strong></p>
-                <div class="consent-box"><input type="checkbox" id="check-consent" onchange="window.toggleStartButton()"><label for="check-consent" style="cursor:pointer; margin:0; margin-left:5px;">He leído la información y acepto facilitar mis datos.</label></div>
-                <button id="btn-start-public" class="primary" style="width:100%; padding:15px; font-size:1.1rem;" disabled onclick="window.iniciarRegistro()">COMENZAR REGISTRO</button>
-            </div>
-        </div>
-        <div id="public-form-container" class="hidden">
-            <div class="public-form-header"><h2 style="text-align:center; color:var(--primary); margin:0;">Tus Datos</h2></div>
-            <div class="public-form-body">
-                <div class="row"><div class="col"><label>Nombre (*)</label><input type="text" id="pub-nombre"></div></div>
-                <div class="row"><div class="col"><label>Ap 1</label><input type="text" id="pub-ap1"></div><div class="col"><label>Ap 2</label><input type="text" id="pub-ap2"></div></div>
-                <div class="row"><div class="col"><label>Doc</label><select id="pub-tipo-doc" onchange="window.verificarMenor('pub')"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Num</label><input type="text" id="pub-doc-num"><div id="pub-doc-error" class="error-msg">Inválido</div></div></div>
-                <div class="row"><div class="col"><label>F. Nac</label><input type="tel" id="pub-fecha" placeholder="DD/MM/AAAA" maxlength="10" oninput="window.formatearFecha(this)"></div><div class="col"><label>Tel</label><input type="tel" id="pub-tel"></div></div>
-                <div class="fam-list"><h4>Acompañantes</h4><div id="lista-familiares-ui"><p style="color:#999;">Ninguno.</p></div><button class="secondary" onclick="window.abrirModalFamiliar()">+ Añadir Acompañante</button></div>
-            </div>
-            <div class="public-form-footer"><button class="success" style="width:100%; padding:15px; font-size:1.2rem; box-shadow: 0 -2px 10px rgba(0,0,0,0.1);" onclick="window.publicoGuardarTodo()">ENVIAR DATOS</button></div>
-        </div>
-        <div id="public-success-msg" class="hidden" style="text-align:center; padding:20px; background:white; height:100%;"><div class="success-icon"><i class="fa-solid fa-circle-check"></i></div><h1 style="margin-bottom:10px;">¡Datos Enviados!</h1><p style="font-size:1.2rem; color:var(--text-light);">Gracias. Por favor, acércate a la mesa de entrada.</p></div>
-    </div>
-
     <div id="modal-qr" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content" style="text-align:center;"><span class="close-modal" onclick="document.getElementById('modal-qr').classList.add('hidden')">&times;</span><h3>Escanea para acceder</h3><div id="qrcode-display" style="display:inline-block; margin:20px;"></div><p style="color:#666;">Auto-registro móvil.</p></div></div>
     
     <div id="modal-carnet-qr" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
@@ -217,10 +236,23 @@
         </div>
     </div>
 
+    <div id="modal-derivacion" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
+        <div class="modal-content">
+            <span class="close-modal" onclick="document.getElementById('modal-derivacion').classList.add('hidden')">&times;</span>
+            <h3 id="derivacion-titulo">Derivar a...</h3>
+            <p>Por favor, indica el motivo o comentario para el equipo:</p>
+            <textarea id="derivacion-motivo" rows="4" style="width:100%; border:1px solid #cbd5e1; border-radius:8px; padding:10px; font-family:inherit; resize:none;" placeholder="Escribe aquí..."></textarea>
+            <div class="btn-row" style="margin-top:15px;">
+                <button class="primary" onclick="window.confirmarDerivacion()">Enviar Derivación</button>
+            </div>
+        </div>
+    </div>
+
     <div id="modal-cama" class="modal-overlay hidden" onclick="if(event.target===this)window.cerrarMapaCamas()"><div class="modal-content modal-lg"><span class="close-modal" onclick="window.cerrarMapaCamas()">&times;</span><h3>Seleccionar Cama</h3><p style="font-size:0.8rem;color:#666;">Verde Borde=Sugerencia | Naranja=Reserva Familia</p><div id="grid-camas" class="bed-grid"></div></div></div>
     <div id="modal-bed-info" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content modal-lg" style="text-align:center; padding:40px;"><span class="close-modal" onclick="document.getElementById('modal-bed-info').classList.add('hidden')">&times;</span><div style="font-size:3rem; color:var(--primary); margin-bottom:10px;"><i class="fa-solid fa-user-check"></i></div><h3 style="color:var(--text-light);">Cama <span id="info-cama-num"></span></h3><h2 id="info-nombre-completo" style="color:var(--primary);"></h2><p><span id="info-telefono"></span></p><br><button id="btn-historial-cama" class="dark hidden" style="margin-bottom:15px;">📜 Ver Historial</button><div style="margin-top:20px; text-align:left;"><h4 style="border-bottom:1px solid #eee; padding-bottom:5px;">Unidad Familiar</h4><div id="info-familia-detalle"></div></div></div></div>
     <div id="modal-vincular-familia" class="modal-overlay hidden" style="z-index: 2000;" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><span class="close-modal" onclick="document.getElementById('modal-vincular-familia').classList.add('hidden')">&times;</span><h3>Unir a Familia</h3><input type="text" id="search-vincular" placeholder="Buscar..." onkeyup="window.buscarParaVincular()" autocomplete="off"><div id="resultados-vincular" class="search-results hidden"></div></div></div>
     <div id="modal-albergue" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><span class="close-modal" onclick="document.getElementById('modal-albergue').classList.add('hidden')">&times;</span><h3 id="mto-modal-title">Nuevo</h3><label>Nombre</label><input type="text" id="mto-nombre"><div class="row"><div class="col"><label>Cap</label><input type="number" id="mto-capacidad"></div><div class="col"><label>Cols</label><input type="number" id="mto-columnas" value="8"></div></div><div class="btn-row"><button class="primary" onclick="window.guardarAlbergue()">Guardar</button></div><br><button id="btn-delete-albergue" class="danger hidden" style="width:100%" onclick="window.eliminarAlbergueActual()">Eliminar Albergue</button></div></div>
+    
     <div id="modal-crear-usuario" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
         <div class="modal-content">
             <span class="close-modal" onclick="document.getElementById('modal-crear-usuario').classList.add('hidden')">&times;</span>

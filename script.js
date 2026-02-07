@@ -25,6 +25,7 @@ window.sysLog = function(msg, type = 'info') {
     if(type === 'error') console.error(msg); else console.log(`[SYS] ${msg}`);
 };
 
+// FIX: BLACK BOX SAFETY
 window.onerror = function(message, source, lineno, colno, error) {
     window.sysLog(`CRITICAL ERROR: ${message} at line ${lineno}`, "error");
     if(currentUserData && currentUserData.rol === 'super_admin') {
@@ -39,7 +40,7 @@ window.toggleCajaNegra = function() {
 };
 window.limpiarCajaNegra = function() { const c = document.getElementById('black-box-content'); if (c) c.innerHTML = ""; };
 
-window.sysLog("Sistema Iniciado. Versión 1.3.1 (Fix Funciones Perdidas)", "info");
+window.sysLog("Sistema Iniciado. Versión 1.3.2 (Restored Logic)", "info");
 
 // --- 2. GLOBALES ---
 let isPublicMode = false;
@@ -90,8 +91,7 @@ window.getDatosFormulario = function(p) { return { nombre: window.safeVal(`${p}-
 window.iniciarSesion = async function() { try { window.sysLog("Click Login", "info"); await signInWithEmailAndPassword(auth, window.el('login-email').value, window.el('login-pass').value); window.sysLog("Auth Firebase OK", "success"); } catch(err) { window.sysLog("Error Auth: " + err.message, "error"); alert(err.message); } };
 window.cerrarSesion = function() { window.sysLog("Cerrando sesión", "warn"); signOut(auth); location.reload(); };
 
-// --- FUNCIONES DE CARGA (LOADERS) - COLOCADAS AL PRINCIPIO PARA EVITAR ERRORES ---
-
+// --- FUNCIONES DE CARGA (LOADERS) ---
 window.cargarAlberguesActivos = function() {
     const c = window.el('lista-albergues-activos');
     if(unsubscribeAlberguesActivos) unsubscribeAlberguesActivos();
@@ -135,11 +135,9 @@ window.cargarObservatorio = async function() {
     list.innerHTML = '<div style="text-align:center; padding:20px;"><div class="spinner"></div></div>';
     window.el('kpi-espera').innerText = "-"; window.el('kpi-alojados').innerText = "-";
     window.el('kpi-libres').innerText = "-"; window.el('kpi-percent').innerText = "-%";
-
     try {
         let totalEspera = 0, totalAlojados = 0, totalCapacidadGlobal = 0, htmlList = "";
         const alberguesSnap = await getDocs(query(collection(db, "albergues"), where("activo", "==", true)));
-        
         const promesas = alberguesSnap.docs.map(async (docAlb) => {
             const dataAlb = docAlb.data();
             const cap = parseInt(dataAlb.capacidad || 0);
@@ -149,33 +147,16 @@ window.cargarObservatorio = async function() {
             const h = alojadosSnap.size;
             return { id: docAlb.id, nombre: dataAlb.nombre, capacidad: cap, espera: w, alojados: h };
         });
-
         const resultados = await Promise.all(promesas);
-
         resultados.forEach(res => {
             totalEspera += res.espera; totalAlojados += res.alojados; totalCapacidadGlobal += res.capacidad;
             const libres = Math.max(0, res.capacidad - res.alojados);
             const porcentaje = res.capacidad > 0 ? Math.round((res.alojados / res.capacidad) * 100) : 0;
             let barClass = "low"; if(porcentaje > 50) barClass = "med"; if(porcentaje > 85) barClass = "high";
-
-            htmlList += `
-            <div class="obs-row">
-                <div class="obs-row-title">${res.nombre}</div>
-                <div class="obs-stats-group">
-                    <div class="obs-mini-stat"><span>Espera</span><strong class="obs-clickable" onclick="window.verListaObservatorio('${res.id}', 'espera')">${res.espera}</strong></div>
-                    <div class="obs-mini-stat"><span>Alojados</span><strong class="obs-clickable" onclick="window.verListaObservatorio('${res.id}', 'alojados')">${res.alojados}</strong></div>
-                    <div class="obs-mini-stat"><span>Ocupación</span><strong>${res.alojados} / ${res.capacidad}</strong></div>
-                    <div class="obs-mini-stat"><span>Libres</span><strong>${libres}</strong></div>
-                </div>
-                <div class="prog-container">
-                    <div class="prog-track"><div class="prog-fill ${barClass}" style="width: ${porcentaje}%"></div></div>
-                </div>
-            </div>`;
+            htmlList += `<div class="obs-row"><div class="obs-row-title">${res.nombre}</div><div class="obs-stats-group"><div class="obs-mini-stat"><span>Espera</span><strong class="obs-clickable" onclick="window.verListaObservatorio('${res.id}', 'espera')">${res.espera}</strong></div><div class="obs-mini-stat"><span>Alojados</span><strong class="obs-clickable" onclick="window.verListaObservatorio('${res.id}', 'alojados')">${res.alojados}</strong></div><div class="obs-mini-stat"><span>Ocupación</span><strong>${res.alojados} / ${res.capacidad}</strong></div><div class="obs-mini-stat"><span>Libres</span><strong>${libres}</strong></div></div><div class="prog-container"><div class="prog-track"><div class="prog-fill ${barClass}" style="width: ${porcentaje}%"></div></div></div></div>`;
         });
-
         const globalLibres = Math.max(0, totalCapacidadGlobal - totalAlojados);
         const globalPercent = totalCapacidadGlobal > 0 ? Math.round((totalAlojados / totalCapacidadGlobal) * 100) : 0;
-
         window.el('kpi-espera').innerText = totalEspera; window.el('kpi-alojados').innerText = totalAlojados;
         window.el('kpi-libres').innerText = globalLibres; window.el('kpi-percent').innerText = `${globalPercent}%`;
         list.innerHTML = htmlList;
@@ -187,7 +168,6 @@ window.verListaObservatorio = async function(albId, tipo) {
     c.innerHTML = '<div style="text-align:center;"><div class="spinner"></div></div>';
     t.innerText = tipo === 'espera' ? 'Personas en Espera' : 'Personas Alojadas';
     window.safeShow('modal-obs-detalle');
-
     try {
         let q; let isGlobal = false;
         if (tipo === 'espera') { q = query(collection(db, "pool_prefiliacion"), where("origenAlbergueId", "==", albId), where("estado", "==", "espera")); isGlobal = true; } 
@@ -538,28 +518,110 @@ window.cargarDatosYEntrar = async function(id) {
 };
 window.conectarListenersBackground = function(id) { if(unsubscribeAlbergueDoc) unsubscribeAlbergueDoc(); unsubscribeAlbergueDoc = onSnapshot(doc(db,"albergues",id), d=>{ if(d.exists()){ currentAlbergueData=d.data(); totalCapacidad=parseInt(currentAlbergueData.capacidad||0); window.actualizarContadores(); } }); };
 
-// --- NUEVA FUNCIÓN: VER CARNET QR (v1.2.0 - Deep Linking) ---
-window.verCarnetQR = function() {
-    if(!personaEnGestion) return;
-    window.safeShow('modal-carnet-qr');
-    const container = window.el('carnet-qrcode-display');
-    container.innerHTML = "";
-    
-    // GENERATE DEEP LINK URL
-    // Format: https://domain.com/?action=scan&aid=ALBERGUE_ID&pid=PERSONA_ID
-    const currentUrl = window.location.href.split('?')[0];
-    const deepLink = `${currentUrl}?action=scan&aid=${currentAlbergueId}&pid=${personaEnGestion.id}`;
-    
-    new QRCode(container, { text: deepLink, width: 250, height: 250 });
-    
-    const nombreCompleto = `${personaEnGestion.nombre} ${personaEnGestion.ap1 || ""} ${personaEnGestion.ap2 || ""}`;
-    window.el('carnet-nombre').innerText = nombreCompleto;
-    window.el('carnet-id').innerText = personaEnGestion.docNum || "ID: " + personaEnGestion.id.substring(0,8).toUpperCase();
+// --- CORE BUSINESS FUNCTIONS (RESTORED) ---
+
+window.setupAutoSave = function() {
+    const inputsFil = ['edit-nombre','edit-ap1','edit-ap2','edit-doc-num','edit-tel','edit-fecha'];
+    inputsFil.forEach(id => { const el = window.el(id); if(el && !el.dataset.hasAutosave) { el.addEventListener('blur', () => window.guardarCambiosPersona(true)); el.dataset.hasAutosave = "true"; if(id === 'edit-fecha') el.oninput = function() { window.formatearFecha(this); }; } });
+    const inputsPref = ['man-nombre','man-ap1','man-ap2','man-doc-num','man-tel','man-fecha'];
+    inputsPref.forEach(id => { const el = window.el(id); if(el && !el.dataset.hasAutosave) { el.addEventListener('blur', () => { if(prefiliacionEdicionId) window.adminPrefiliarManual(true); }); el.dataset.hasAutosave = "true"; if(id === 'man-fecha') el.oninput = function() { window.formatearFecha(this); }; } });
 };
 
-// --- RESTO DE FUNCIONES (GESTIÓN, OBSERVATORIO, ETC) ---
+window.adminPrefiliarManual=async function(silent=false){
+    if(silent && !prefiliacionEdicionId) return; 
+    if(prefiliacionEdicionId && isGlobalEdit){
+        const p=window.getDatosFormulario('man'); await updateDoc(doc(db,"pool_prefiliacion",prefiliacionEdicionId),p);
+        window.registrarLog(prefiliacionEdicionId,"Edición Pool","Manual", true);
+        if(!silent) { window.showToast("Pool Actualizado"); window.cancelarEdicionPref(); } return;
+    }
+    const n=window.safeVal('man-nombre');if(!n)return alert("Falta nombre");
+    const fid=new Date().getTime().toString(); const t=window.getDatosFormulario('man');
+    t.estado='espera';t.familiaId=fid;t.rolFamilia='TITULAR';t.fechaRegistro=new Date(); t.origenAlbergueId = currentAlbergueId;
+    const ref=await addDoc(collection(db,"pool_prefiliacion"),t);
+    window.registrarLog(ref.id,"Alta Staff","Titular", true);
+    for(const f of adminFamiliaresTemp){
+        const refF=await addDoc(collection(db,"pool_prefiliacion"),{...f,estado:'espera',familiaId:fid,rolFamilia:'MIEMBRO',fechaRegistro:new Date(), origenAlbergueId: currentAlbergueId});
+        window.registrarLog(refF.id,"Alta Staff","Familiar", true);
+    }
+    if(!silent) { alert("Guardado en Pool Global"); window.limpiarFormulario('man'); adminFamiliaresTemp=[]; if(window.el('admin-lista-familiares-ui'))window.el('admin-lista-familiares-ui').innerHTML="Ninguno."; }
+};
 
-// --- MODIFIED: MOSTRAR GRID CAMAS CON PRESENCIA ---
+window.cancelarEdicionPref = function() {
+    prefiliacionEdicionId = null; window.limpiarFormulario('man');
+    if(window.el('existing-family-list-ui')) window.el('existing-family-list-ui').innerHTML="";
+    window.safeHide('btn-cancelar-edicion-pref'); window.safeHide('btn-ingresar-pref');
+};
+
+window.buscarEnPrefiliacion=function(){
+    const t=window.safeVal('buscador-pref').toLowerCase().trim(); const r=window.el('resultados-pref');
+    if(t.length<2){window.safeHide('resultados-pref');return;}
+    const hits=listaGlobalPrefiliacion.filter(p=>{ const full=`${p.nombre} ${p.ap1||''} ${p.ap2||''}`.toLowerCase(); return full.includes(t)||(p.docNum||"").toLowerCase().includes(t)||(p.telefono||"").includes(t); });
+    r.innerHTML=""; if(hits.length === 0) r.innerHTML = "<div class='search-item'>Sin resultados en Pool Global</div>";
+    hits.forEach(p=>{r.innerHTML += `<div class="search-item" onclick="window.cargarParaEdicionPref('${p.id}')"><strong>${p.nombre} ${p.ap1||''} ${p.ap2||''}</strong><br><small>🌐 POOL | ${p.docNum||'-'} | ${p.telefono||'-'}</small></div>`;});
+    window.safeShow('resultados-pref');
+};
+
+window.cargarParaEdicionPref=function(pid){
+    const p=listaGlobalPrefiliacion.find(x=>x.id===pid); if(!p)return;
+    prefiliacionEdicionId=p.id; isGlobalEdit = true;
+    window.safeHide('resultados-pref'); window.el('buscador-pref').value="";
+    window.setVal('man-nombre',p.nombre);window.setVal('man-ap1',p.ap1);window.setVal('man-ap2',p.ap2); window.setVal('man-tipo-doc',p.tipoDoc);window.setVal('man-doc-num',p.docNum); window.setVal('man-fecha',p.fechaNac);window.setVal('man-tel',p.telefono);
+    const l=window.el('existing-family-list-ui'); l.innerHTML="";
+    if(p.familiaId){ const fs=listaGlobalPrefiliacion.filter(x=>x.familiaId===p.familiaId&&x.id!==p.id); if(fs.length>0){ l.innerHTML="<h5>Familiares en Pool:</h5>"; fs.forEach(f=>{l.innerHTML+=`<div class="fam-item existing"><div><strong>${f.nombre} ${f.ap1||''}</strong><br><small style="color:#666;">${f.docNum||'-'}</small></div></div>`;}); } }
+    window.el('btn-save-pref').innerText="Actualizar en Pool Global"; window.safeShow('btn-cancelar-edicion-pref');
+};
+
+window.rescatarDeGlobalDirecto = async function() {
+    if(!personaEnGestion || !personaEnGestionEsGlobal) return;
+    if(!confirm(`¿Ingresar a ${personaEnGestion.nombre} (y familia) en este albergue?`)) return;
+    try {
+        const familia = listaGlobalPrefiliacion.filter(x => x.familiaId === personaEnGestion.familiaId);
+        const batch = writeBatch(db);
+        familia.forEach(member => {
+            const localRef = doc(collection(db, "albergues", currentAlbergueId, "personas"));
+            const memberData = {...member}; delete memberData.id; memberData.fechaIngresoAlbergue = new Date(); memberData.origenPoolId = member.id; memberData.estado = 'espera'; 
+            batch.set(localRef, memberData); batch.delete(doc(db, "pool_prefiliacion", member.id));
+            const logRef = collection(db, "albergues", currentAlbergueId, "personas", localRef.id, "historial");
+            batch.set(doc(logRef), {fecha: new Date(), usuario: currentUserData.nombre, accion: "Ingreso desde Nube", detalle: "Rescatado"});
+        });
+        await batch.commit(); window.sysLog(`Familia ingresada.`, "success"); window.showToast("Ingreso realizado. Asigne cama.");
+        window.personaEnGestion = null; window.safeHide('panel-gestion-persona'); window.el('buscador-persona').value = "";
+    } catch(e) { window.sysLog("Error ingreso: " + e.message, "error"); }
+};
+
+window.darSalidaPersona = async function() {
+    if(!personaEnGestion || personaEnGestionEsGlobal) return;
+    if(!confirm(`¿Dar salida a ${personaEnGestion.nombre}? Saldrá individualmente al Pool Global.`)) return;
+
+    try {
+        const batch = writeBatch(db);
+        const poolRef = doc(collection(db, "pool_prefiliacion"));
+        const memberData = {...personaEnGestion};
+        delete memberData.id;
+        memberData.cama = null; 
+        memberData.estado = 'espera';
+        memberData.fechaSalidaAlbergue = new Date();
+        memberData.ultimoAlbergueId = currentAlbergueId;
+        batch.set(poolRef, memberData);
+        batch.delete(doc(db, "albergues", currentAlbergueId, "personas", personaEnGestion.id));
+        const logRef = collection(db, "pool_prefiliacion", poolRef.id, "historial");
+        batch.set(doc(logRef), {fecha: new Date(), usuario: currentUserData.nombre, accion: "Salida Albergue", detalle: `Salida Individual de ${currentAlbergueData.nombre}`});
+        await batch.commit();
+        window.sysLog(`Salida individual realizada.`, "nav");
+        window.showToast("Salida completada.");
+        window.safeHide('panel-gestion-persona');
+        window.safeHide('resultados-busqueda');
+        window.el('buscador-persona').value = "";
+    } catch(e) {
+        window.sysLog("Error salida: " + e.message, "error");
+        alert("Error: " + e.message);
+    }
+};
+
+window.buscarPersonaEnAlbergue=function(){const txt=window.safeVal('buscador-persona').toLowerCase().trim();const res=window.el('resultados-busqueda');if(txt.length<2){window.safeHide('resultados-busqueda');return;}const localHits=listaPersonasCache.filter(p=>{const full=`${p.nombre} ${p.ap1||''} ${p.ap2||''}`.toLowerCase();return full.includes(txt) || (p.docNum||"").toLowerCase().includes(txt);});const globalHits=listaGlobalPrefiliacion.filter(p=>{const full=`${p.nombre} ${p.ap1||''} ${p.ap2||''}`.toLowerCase();return full.includes(txt) || (p.docNum||"").toLowerCase().includes(txt);});res.innerHTML="";if(localHits.length===0 && globalHits.length===0){res.innerHTML=`<div class="search-item" style="color:#666">No encontrado</div>`;}else{localHits.forEach(p=>{const dc=p.estado==='ingresado'?'dot-green':'dot-red';res.innerHTML+=`<div class="search-item" onclick="window.seleccionarPersona('${p.id}', false)"><div style="display:flex;justify-content:space-between;width:100%;align-items:center;"><div><strong>${p.nombre} ${p.ap1||''}</strong> (Local)<div style="font-size:0.8rem;color:#666;">📄 ${p.docNum||'-'}</div></div><div class="status-dot ${dc}" title="${p.estado.toUpperCase()}"></div></div></div>`;});globalHits.forEach(p=>{res.innerHTML+=`<div class="search-item" onclick="window.seleccionarPersona('${p.id}', true)"><div style="display:flex;justify-content:space-between;width:100%;align-items:center;"><div><strong>${p.nombre} ${p.ap1||''}</strong> (Nube)<div style="font-size:0.8rem;color:#666;">☁️ ${p.docNum||'-'}</div></div><div class="status-dot dot-cloud" title="EN NUBE"></div></div></div>`;});}window.safeShow('resultados-busqueda');};
+window.seleccionarPersona=function(pid, isGlobal){if(typeof pid !== 'string') pid = pid.id; let p; if (isGlobal) { p = listaGlobalPrefiliacion.find(x => x.id === pid); personaEnGestionEsGlobal = true; window.safeShow('banner-nube'); window.safeHide('btns-local-actions'); window.safeShow('btns-cloud-actions'); } else { p = listaPersonasCache.find(x => x.id === pid); personaEnGestionEsGlobal = false; window.safeHide('banner-nube'); window.safeShow('btns-local-actions'); window.safeHide('btns-cloud-actions'); } if(!p) return; personaEnGestion = p; prefiliacionEdicionId = p.id; isGlobalEdit = isGlobal; window.safeHide('resultados-busqueda'); window.safeShow('panel-gestion-persona'); if(window.el('gestion-nombre-titulo')) window.el('gestion-nombre-titulo').innerText = p.nombre; if(window.el('gestion-estado')) window.el('gestion-estado').innerText = isGlobal ? "EN NUBE" : p.estado.toUpperCase(); if(window.el('gestion-cama-info')) window.el('gestion-cama-info').innerText = (p.cama && !isGlobal) ? `Cama: ${p.cama}` : ""; window.setVal('edit-nombre', p.nombre); window.setVal('edit-ap1', p.ap1); window.setVal('edit-ap2', p.ap2); window.setVal('edit-tipo-doc', p.tipoDoc); window.setVal('edit-doc-num', p.docNum); window.setVal('edit-fecha', p.fechaNac); window.setVal('edit-tel', p.telefono); const flist = window.el('info-familia-lista'); flist.innerHTML = ""; let fam = []; if(isGlobal) { fam = listaGlobalPrefiliacion.filter(x => x.familiaId === p.familiaId); } else { fam = listaPersonasCache.filter(x => x.familiaId === p.familiaId); } if(window.el('info-familia-resumen')) window.el('info-familia-resumen').innerText = fam.length > 1 ? `Familia (${fam.length})` : "Individual"; fam.forEach(f => { if(f.id !== p.id) { const hasBed = f.estado === 'ingresado' && f.cama; const st = hasBed ? 'color:var(--success);' : 'color:var(--warning);'; const ic = hasBed ? 'fa-solid fa-bed' : 'fa-solid fa-clock'; flist.innerHTML += `<div style="padding:10px;border-bottom:1px solid #eee;cursor:pointer;display:flex;justify-content:space-between;align-items:center;" onclick="window.seleccionarPersona('${f.id}', ${isGlobal})"><div><div style="font-weight:bold;font-size:0.95rem;">${f.nombre} ${f.ap1||''}</div><div style="font-size:0.85rem;color:#666;"><i class="fa-regular fa-id-card"></i> ${f.docNum||'-'}</div></div><div style="font-size:1.2rem;${st}"><i class="${ic}"></i></div></div>`; } }); if(!isGlobal) window.setupAutoSave(); };
+window.guardarCambiosPersona=async function(silent=false){if(!personaEnGestion)return;const p=window.getDatosFormulario('edit');await updateDoc(doc(db,"albergues",currentAlbergueId,"personas",personaEnGestion.id),p);window.registrarLog(personaEnGestion.id,"Edición Datos","Manual");if(!silent)alert("Guardado");else window.showToast("Guardado automático"); window.sysLog(`Actualizada persona local: ${personaEnGestion.nombre}`, "info");};
+
 window.mostrarGridCamas=function(){
     const g=window.el('grid-camas');g.innerHTML="";
     const cols=(currentAlbergueData&&currentAlbergueData.columnas)?currentAlbergueData.columnas:8;
@@ -583,8 +645,6 @@ window.mostrarGridCamas=function(){
             if(occ){
                 const f=`${occ.nombre} ${occ.ap1||''}`;
                 lbl+=`<div style="font-size:0.6rem;font-weight:normal;margin-top:2px;">${f}<br><i class="fa-solid fa-phone"></i> ${occ.telefono||'-'}</div>`;
-                
-                // NEW: PRESENCE INDICATOR
                 const presencia = occ.presencia || 'dentro';
                 if(presencia === 'dentro') cls += " bed-status-in";
                 else cls += " bed-status-out";
@@ -622,8 +682,47 @@ window.eliminarAlbergueActual=async function(){if(albergueEdicionId&&confirm("¿
 window.cambiarEstadoAlbergue=async function(id,st){await updateDoc(doc(db,"albergues",id),{activo:st});window.sysLog(`Estado Albergue ${id}: ${st}`, "info");};
 window.abrirModalCambioPass=function(){window.setVal('chg-old-pass','');window.setVal('chg-new-pass','');window.setVal('chg-confirm-pass','');window.safeShow('modal-change-pass');};
 window.ejecutarCambioPass=async function(){const o=window.safeVal('chg-old-pass'),n=window.safeVal('chg-new-pass');try{await reauthenticateWithCredential(auth.currentUser,EmailAuthProvider.credential(auth.currentUser.email,o));await updatePassword(auth.currentUser,n);alert("OK");window.safeHide('modal-change-pass');window.sysLog("Contraseña cambiada.", "success");}catch(e){alert("Error");window.sysLog("Error cambio pass: "+e.message, "error");}};
-window.verHistorial=async function(pId=null,forceIsGlobal=null,forceAlbId=null){let targetId=pId;let isPool=(forceIsGlobal!==null)?forceIsGlobal:personaEnGestionEsGlobal;const activeAlbId=forceAlbId||currentAlbergueId;if(!targetId&&personaEnGestion)targetId=personaEnGestion.id;if(pId&&forceIsGlobal===null&&listaPersonasCache.find(x=>x.id===pId))isPool=false;if(!targetId)return;window.safeShow('modal-historial');const content=window.el('historial-content');content.innerHTML="Cargando...";try{let path=isPool?collection(db,"pool_prefiliacion",targetId,"historial"):collection(db,"albergues",activeAlbId,"personas",targetId,"historial");const q=query(path,orderBy("fecha","desc"));const snap=await getDocs(q);if(snap.empty){content.innerHTML="<p>No hay movimientos.</p>";return;}let html=`<h4>Historial (${isPool?'Global':'Local'})</h4>`;snap.forEach(doc=>{const d=doc.data();const f=d.fecha.toDate();const fmt=`${f.getDate().toString().padStart(2,'0')}/${(f.getMonth()+1).toString().padStart(2,'0')}/${f.getFullYear()} ${f.getHours().toString().padStart(2,'0')}:${f.getMinutes().toString().padStart(2,'0')}`;html+=`<div class="log-item"><strong>${d.accion}</strong><span>${fmt} - Por: ${d.usuario}</span>${d.detalle?`<br><i>${d.detalle}</i>`:''}</div>`;});content.innerHTML=html;}catch(e){content.innerHTML="Error cargando historial.";window.sysLog("Error historial: "+e.message,"error");}};
-window.desactivarUsuariosMasivo=async function(){if(currentUserData.rol!=='super_admin'&&currentUserData.rol!=='admin')return alert("No tienes permisos.");if(!confirm("⚠️ ATENCIÓN ⚠️\n\nEsta acción desactivará a TODOS los usuarios operativos.\n\nSolo quedarán activos los Administradores.\n\n¿Estás seguro?"))return;window.safeShow('loading-overlay');try{const q=query(collection(db,"usuarios"));const querySnapshot=await getDocs(q);const batch=writeBatch(db);let count=0;querySnapshot.forEach((doc)=>{const u=doc.data();if(u.rol!=='super_admin'&&u.rol!=='admin'){if(u.activo!==false){batch.update(doc.ref,{activo:false});count++;}}});if(count>0){await batch.commit();window.sysLog(`Desactivados: ${count}`,"warn");alert(`Se han desactivado ${count} usuarios.`);}else{alert("No había usuarios para desactivar.");}}catch(e){console.error(e);alert("Error: "+e.message);}finally{window.safeHide('loading-overlay');}};
+window.verHistorial=async function(pId=null, forceIsGlobal=null, forceAlbId=null){let targetId=pId;let isPool=(forceIsGlobal!==null)?forceIsGlobal:personaEnGestionEsGlobal;const activeAlbId=forceAlbId||currentAlbergueId;if(!targetId&&personaEnGestion)targetId=personaEnGestion.id;if(pId&&forceIsGlobal===null&&listaPersonasCache.find(x=>x.id===pId))isPool=false;if(!targetId)return;window.safeShow('modal-historial');const content=window.el('historial-content');content.innerHTML="Cargando...";try{let path=isPool?collection(db,"pool_prefiliacion",targetId,"historial"):collection(db,"albergues",activeAlbId,"personas",targetId,"historial");const q=query(path,orderBy("fecha","desc"));const snap=await getDocs(q);if(snap.empty){content.innerHTML="<p>No hay movimientos.</p>";return;}let html=`<h4>Historial (${isPool?'Global':'Local'})</h4>`;snap.forEach(doc=>{const d=doc.data();const f=d.fecha.toDate();const fmt=`${f.getDate().toString().padStart(2,'0')}/${(f.getMonth()+1).toString().padStart(2,'0')}/${f.getFullYear()} ${f.getHours().toString().padStart(2,'0')}:${f.getMinutes().toString().padStart(2,'0')}`;html+=`<div class="log-item"><strong>${d.accion}</strong><span>${fmt} - Por: ${d.usuario}</span>${d.detalle?`<br><i>${d.detalle}</i>`:''}</div>`;});content.innerHTML=html;}catch(e){content.innerHTML="Error cargando historial.";window.sysLog("Error historial: "+e.message,"error");}};
+window.desactivarUsuariosMasivo = async function() {
+    if (currentUserData.rol !== 'super_admin' && currentUserData.rol !== 'admin') return alert("No tienes permisos.");
+    if (!confirm("⚠️ ATENCIÓN ⚠️\n\nEsta acción desactivará a TODOS los usuarios operativos.\n\nSolo quedarán activos los Administradores.\n\n¿Estás seguro?")) return;
+    window.safeShow('loading-overlay');
+    try {
+        const q = query(collection(db, "usuarios"));
+        const querySnapshot = await getDocs(q);
+        const batch = writeBatch(db);
+        let count = 0;
+        querySnapshot.forEach((doc) => {
+            const u = doc.data();
+            if (u.rol !== 'super_admin' && u.rol !== 'admin') {
+                if (u.activo !== false) {
+                    batch.update(doc.ref, { activo: false });
+                    count++;
+                }
+            }
+        });
+        if (count > 0) { await batch.commit(); window.sysLog(`Desactivados: ${count}`, "warn"); alert(`Se han desactivado ${count} usuarios.`); } else { alert("No había usuarios para desactivar."); }
+    } catch (e) { console.error(e); alert("Error: " + e.message); } finally { window.safeHide('loading-overlay'); }
+};
+
+// --- NUEVA FUNCIÓN: VER CARNET QR (v1.2.0 - Deep Linking) ---
+window.verCarnetQR = function() {
+    if(!personaEnGestion) return;
+    window.safeShow('modal-carnet-qr');
+    const container = window.el('carnet-qrcode-display');
+    container.innerHTML = "";
+    
+    // GENERATE DEEP LINK URL
+    // Format: https://domain.com/?action=scan&aid=ALBERGUE_ID&pid=PERSONA_ID
+    const currentUrl = window.location.href.split('?')[0];
+    const deepLink = `${currentUrl}?action=scan&aid=${currentAlbergueId}&pid=${personaEnGestion.id}`;
+    
+    new QRCode(container, { text: deepLink, width: 250, height: 250 });
+    
+    const nombreCompleto = `${personaEnGestion.nombre} ${personaEnGestion.ap1 || ""} ${personaEnGestion.ap2 || ""}`;
+    window.el('carnet-nombre').innerText = nombreCompleto;
+    window.el('carnet-id').innerText = personaEnGestion.docNum || "ID: " + personaEnGestion.id.substring(0,8).toUpperCase();
+};
 
 // --- INIT (NO HOISTING NEEDED, RUNS LAST) ---
 window.onload = () => {

@@ -39,7 +39,7 @@ window.toggleCajaNegra = function() {
 };
 window.limpiarCajaNegra = function() { const c = document.getElementById('black-box-content'); if (c) c.innerHTML = ""; };
 
-window.sysLog("Sistema Iniciado. Versión 1.5.0 (Public Fix)", "info");
+window.sysLog("Sistema Iniciado. Versión 1.5.1 (Timeline History)", "info");
 
 // --- 2. GLOBALES ---
 let isPublicMode = false;
@@ -108,6 +108,37 @@ window.abrirModalUsuario = async function(id = null) { userEditingId = id; windo
 window.guardarUsuario = async function() { const e = window.safeVal('new-user-email'), p = window.safeVal('new-user-pass'), n = window.safeVal('new-user-name'), r = window.safeVal('new-user-role'); let isActive = window.el('new-user-active').checked; if (!e || !n) return alert("Faltan datos (Email/Nombre)"); if (r === 'super_admin' && !isActive) { alert("Seguridad: Super Admin siempre activo."); isActive = true; } try { if (userEditingId) { await updateDoc(doc(db, "usuarios", userEditingId), { nombre: n, rol: r, activo: isActive }); } else { if (!p) return alert("Contraseña obligatoria para nuevo usuario"); const tApp = initializeApp(firebaseConfig, "Temp"); const tAuth = getAuth(tApp); const uc = await createUserWithEmailAndPassword(tAuth, e, p); await setDoc(doc(db, "usuarios", uc.user.uid), { email: e, nombre: n, rol: r, activo: isActive }); await signOut(tAuth); deleteApp(tApp); } window.safeHide('modal-crear-usuario'); window.sysLog("Usuario guardado.", "success"); } catch (err) { console.error(err); if (err.code === 'auth/email-already-in-use') alert("ERROR: Correo ya registrado."); else alert("Error: " + err.message); } };
 window.eliminarUsuario = async function() { if (userEditingId && confirm("Borrar?")) { await deleteDoc(doc(db, "usuarios", userEditingId)); window.safeHide('modal-crear-usuario'); window.sysLog("Usuario eliminado.", "warn"); } };
 window.desactivarUsuariosMasivo = async function() { if (currentUserData.rol !== 'super_admin' && currentUserData.rol !== 'admin') return alert("No tienes permisos."); if (!confirm("⚠️ ATENCIÓN ⚠️\n\nEsta acción desactivará a TODOS los usuarios operativos.")) return; window.safeShow('loading-overlay'); try { const q = query(collection(db, "usuarios")); const querySnapshot = await getDocs(q); const batch = writeBatch(db); let count = 0; querySnapshot.forEach((doc) => { const u = doc.data(); if (u.rol !== 'super_admin' && u.rol !== 'admin') { if (u.activo !== false) { batch.update(doc.ref, { activo: false }); count++; } } }); if (count > 0) { await batch.commit(); window.sysLog(`Desactivados: ${count}`, "warn"); alert(`Se han desactivado ${count} usuarios.`); } else { alert("No había usuarios para desactivar."); } } catch (e) { console.error(e); alert("Error: " + e.message); } finally { window.safeHide('loading-overlay'); } };
+
+// --- PUBLIC QR & REGISTER ---
+window.abrirModalQR = function() {
+    setTimeout(() => {
+        window.safeShow('modal-qr');
+        const d = window.el("qrcode-display"); d.innerHTML = "";
+        new QRCode(d, { text: window.location.href.split('?')[0] + `?public_id=${currentAlbergueId}`, width: 250, height: 250 });
+    }, 100);
+};
+
+window.toggleStartButton = function() { window.el('btn-start-public').disabled = !window.el('check-consent').checked; };
+window.iniciarRegistro = function() { window.safeHide('public-welcome-screen'); window.safeShow('public-form-container'); };
+
+window.publicoGuardarTodo = async function() {
+    const d = window.getDatosFormulario('pub'); if (!d.nombre) return alert("Falta nombre");
+    if (!auth.currentUser) { try { await signInAnonymously(auth); } catch (e) {} }
+    const b = writeBatch(db);
+    const fid = new Date().getTime().toString();
+    const tRef = doc(collection(db, "pool_prefiliacion"));
+    b.set(tRef, { ...d, familiaId: fid, rolFamilia: 'TITULAR', estado: 'espera', origenAlbergueId: currentAlbergueId, fechaRegistro: new Date() });
+    const lRef = collection(db, "pool_prefiliacion", tRef.id, "historial");
+    b.set(doc(lRef), { fecha: new Date(), usuario: "Auto-QR", accion: "Alta en Pool", detalle: `Desde QR Albergue ${currentAlbergueId}` });
+    listaFamiliaresTemp.forEach(async f => {
+        const fRef = doc(collection(db, "pool_prefiliacion"));
+        b.set(fRef, { ...f, familiaId: fid, rolFamilia: 'MIEMBRO', estado: 'espera', origenAlbergueId: currentAlbergueId, fechaRegistro: new Date() });
+    });
+    await b.commit();
+    window.safeHide('public-form-container');
+    window.safeShow('public-success-msg');
+}
+
 
 // --- FUNCIONES DE CARGA ---
 window.cargarAlberguesActivos = function() {
@@ -614,8 +645,60 @@ window.eliminarAlbergueActual=async function(){if(albergueEdicionId&&confirm("¿
 window.cambiarEstadoAlbergue=async function(id,st){await updateDoc(doc(db,"albergues",id),{activo:st});window.sysLog(`Estado Albergue ${id}: ${st}`, "info");};
 window.abrirModalCambioPass=function(){window.setVal('chg-old-pass','');window.setVal('chg-new-pass','');window.setVal('chg-confirm-pass','');window.safeShow('modal-change-pass');};
 window.ejecutarCambioPass=async function(){const o=window.safeVal('chg-old-pass'),n=window.safeVal('chg-new-pass');try{await reauthenticateWithCredential(auth.currentUser,EmailAuthProvider.credential(auth.currentUser.email,o));await updatePassword(auth.currentUser,n);alert("OK");window.safeHide('modal-change-pass');window.sysLog("Contraseña cambiada.", "success");}catch(e){alert("Error");window.sysLog("Error cambio pass: "+e.message, "error");}};
-window.registrarLog=async function(pid,act,det,isPool=false){try{const usuarioLog=currentUserData?currentUserData.nombre:"Auto-QR";let path=isPool?collection(db,"pool_prefiliacion",pid,"historial"):collection(db,"albergues",currentAlbergueId,"personas",pid,"historial");await addDoc(path,{fecha:new Date(),usuario:usuarioLog,accion:act,detalle:det});window.sysLog(`Audit Log (${isPool?'Pool':'Local'}): ${act} - ${det}`,"info");}catch(e){console.error(e);}};
-window.verHistorial=async function(pId=null, forceIsGlobal=null, forceAlbId=null){let targetId=pId;let isPool=(forceIsGlobal!==null)?forceIsGlobal:personaEnGestionEsGlobal;const activeAlbId=forceAlbId||currentAlbergueId;if(!targetId&&personaEnGestion)targetId=personaEnGestion.id;if(pId&&forceIsGlobal===null&&listaPersonasCache.find(x=>x.id===pId))isPool=false;if(!targetId)return;window.safeShow('modal-historial');const content=window.el('historial-content');content.innerHTML="Cargando...";try{let path=isPool?collection(db,"pool_prefiliacion",targetId,"historial"):collection(db,"albergues",activeAlbId,"personas",targetId,"historial");const q=query(path,orderBy("fecha","desc"));const snap=await getDocs(q);if(snap.empty){content.innerHTML="<p>No hay movimientos.</p>";return;}let html=`<h4>Historial (${isPool?'Global':'Local'})</h4>`;snap.forEach(doc=>{const d=doc.data();const f=d.fecha.toDate();const fmt=`${f.getDate().toString().padStart(2,'0')}/${(f.getMonth()+1).toString().padStart(2,'0')}/${f.getFullYear()} ${f.getHours().toString().padStart(2,'0')}:${f.getMinutes().toString().padStart(2,'0')}`;html+=`<div class="log-item"><strong>${d.accion}</strong><span>${fmt} - Por: ${d.usuario}</span>${d.detalle?`<br><i>${d.detalle}</i>`:''}</div>`;});content.innerHTML=html;}catch(e){content.innerHTML="Error cargando historial.";window.sysLog("Error historial: "+e.message,"error");}};
+
+window.registrarLog = async function(pid, act, det, isPool = false) {
+    try {
+        const usuarioLog = currentUserData ? currentUserData.nombre : "Auto-QR";
+        let path = isPool ? collection(db, "pool_prefiliacion", pid, "historial") : collection(db, "albergues", currentAlbergueId, "personas", pid, "historial");
+        await addDoc(path, { fecha: new Date(), usuario: usuarioLog, accion: act, detalle: det });
+        window.sysLog(`Audit Log (${isPool ? 'Pool' : 'Local'}): ${act} - ${det}`, "info");
+    } catch (e) {
+        console.error(e);
+    }
+};
+
+window.verHistorial = async function(pId = null, forceIsGlobal = null, forceAlbId = null) {
+    let targetId = pId;
+    let isPool = (forceIsGlobal !== null) ? forceIsGlobal : personaEnGestionEsGlobal;
+    const activeAlbId = forceAlbId || currentAlbergueId;
+    if (!targetId && personaEnGestion) targetId = personaEnGestion.id;
+    if (pId && forceIsGlobal === null && listaPersonasCache.find(x => x.id === pId)) isPool = false;
+    if (!targetId) return;
+    window.safeShow('modal-historial');
+    const content = window.el('historial-content');
+    content.innerHTML = "Cargando...";
+    try {
+        let path = isPool ? collection(db, "pool_prefiliacion", targetId, "historial") : collection(db, "albergues", activeAlbId, "personas", targetId, "historial");
+        const q = query(path, orderBy("fecha", "desc"));
+        const snap = await getDocs(q);
+        if (snap.empty) {
+            content.innerHTML = "<p>No hay movimientos.</p>";
+            return;
+        }
+        let html = `<div class="hist-timeline">`;
+        snap.forEach(doc => {
+            const d = doc.data();
+            const f = d.fecha.toDate();
+            const fmt = `${f.getDate().toString().padStart(2, '0')}/${(f.getMonth() + 1).toString().padStart(2, '0')}/${f.getFullYear()} ${f.getHours().toString().padStart(2, '0')}:${f.getMinutes().toString().padStart(2, '0')}`;
+            
+            html += `
+            <div class="hist-item">
+                <div class="hist-header">
+                    <span class="hist-date"><i class="fa-regular fa-clock"></i> ${fmt}</span>
+                    <span class="hist-user"><i class="fa-solid fa-user-tag"></i> ${d.usuario}</span>
+                </div>
+                <span class="hist-action">${d.accion}</span>
+                ${d.detalle ? `<span class="hist-detail">${d.detalle}</span>` : ''}
+            </div>`;
+        });
+        html += `</div>`;
+        content.innerHTML = html;
+    } catch (e) {
+        content.innerHTML = "Error cargando historial.";
+        window.sysLog("Error historial: " + e.message, "error");
+    }
+};
+
 window.desactivarUsuariosMasivo = async function() {
     if (currentUserData.rol !== 'super_admin' && currentUserData.rol !== 'admin') return alert("No tienes permisos.");
     if (!confirm("⚠️ ATENCIÓN ⚠️\n\nEsta acción desactivará a TODOS los usuarios operativos.\n\nSolo quedarán activos los Administradores.\n\n¿Estás seguro?")) return;

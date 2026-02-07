@@ -39,7 +39,7 @@ window.toggleCajaNegra = function() {
 };
 window.limpiarCajaNegra = function() { const c = document.getElementById('black-box-content'); if (c) c.innerHTML = ""; };
 
-window.sysLog("Sistema Iniciado. Versión 1.5.1 (Timeline History)", "info");
+window.sysLog("Sistema Iniciado. Versión 1.5.1 (Obs Fix)", "info");
 
 // --- 2. GLOBALES ---
 let isPublicMode = false;
@@ -239,6 +239,11 @@ window.verListaObservatorio = async function(albId, tipo) {
         h += '</tbody></table>';
         c.innerHTML = h;
     } catch (e) { window.sysLog("Error list: " + e.message, "error"); c.innerHTML = "<p>Error al cargar lista.</p>"; }
+};
+
+// --- FIX: ADDED MISSING WRAPPER FUNCTION ---
+window.verHistorialObservatorio = function(pId, isGlobal, albId){
+    window.verHistorial(pId, isGlobal, albId);
 };
 
 window.cargarUsuarios = function() {
@@ -699,44 +704,9 @@ window.verHistorial = async function(pId = null, forceIsGlobal = null, forceAlbI
     }
 };
 
-window.desactivarUsuariosMasivo = async function() {
-    if (currentUserData.rol !== 'super_admin' && currentUserData.rol !== 'admin') return alert("No tienes permisos.");
-    if (!confirm("⚠️ ATENCIÓN ⚠️\n\nEsta acción desactivará a TODOS los usuarios operativos.\n\nSolo quedarán activos los Administradores.\n\n¿Estás seguro?")) return;
-    window.safeShow('loading-overlay');
-    try {
-        const q = query(collection(db, "usuarios"));
-        const querySnapshot = await getDocs(q);
-        const batch = writeBatch(db);
-        let count = 0;
-        querySnapshot.forEach((doc) => {
-            const u = doc.data();
-            if (u.rol !== 'super_admin' && u.rol !== 'admin') {
-                if (u.activo !== false) {
-                    batch.update(doc.ref, { activo: false });
-                    count++;
-                }
-            }
-        });
-        if (count > 0) { await batch.commit(); window.sysLog(`Desactivados: ${count}`, "warn"); alert(`Se han desactivado ${count} usuarios.`); } else { alert("No había usuarios para desactivar."); }
-    } catch (e) { console.error(e); alert("Error: " + e.message); } finally { window.safeHide('loading-overlay'); }
+window.verHistorialObservatorio = function(pId, isGlobal, albId){
+    window.verHistorial(pId, isGlobal, albId);
 };
-
-window.publicoGuardarTodo=async function(){const d=window.getDatosFormulario('pub');if(!d.nombre)return alert("Falta nombre");if(!auth.currentUser){try{await signInAnonymously(auth);}catch(e){}}const b=writeBatch(db);const fid=new Date().getTime().toString();const tRef=doc(collection(db,"pool_prefiliacion"));b.set(tRef,{...d,familiaId:fid,rolFamilia:'TITULAR',estado:'espera',origenAlbergueId:currentAlbergueId,fechaRegistro:new Date()});const lRef=collection(db,"pool_prefiliacion",tRef.id,"historial");b.set(doc(lRef),{fecha:new Date(),usuario:"Auto-QR",accion:"Alta en Pool",detalle:`Desde QR Albergue ${currentAlbergueId}`});listaFamiliaresTemp.forEach(async f=>{const fRef=doc(collection(db,"pool_prefiliacion"));b.set(fRef,{...f,familiaId:fid,rolFamilia:'MIEMBRO',estado:'espera',origenAlbergueId:currentAlbergueId,fechaRegistro:new Date()});});await b.commit();window.safeHide('public-form-container');window.safeShow('public-success-msg');}
-
-window.abrirModalQR=function(){
-    // Use timeout to avoid focus/blur clash with autosave
-    setTimeout(() => {
-        window.safeShow('modal-qr');
-        const d=window.el("qrcode-display"); d.innerHTML="";
-        new QRCode(d,{text:window.location.href.split('?')[0]+`?public_id=${currentAlbergueId}`,width:250,height:250});
-    }, 100);
-};
-
-window.toggleStartButton=function(){window.el('btn-start-public').disabled=!window.el('check-consent').checked;};
-window.iniciarRegistro=function(){window.safeHide('public-welcome-screen');window.safeShow('public-form-container');};
-
-// --- NEW DEEP LINK QR ---
-window.verCarnetQR = function() { if(!personaEnGestion) return; window.safeShow('modal-carnet-qr'); const container = window.el('carnet-qrcode-display'); container.innerHTML = ""; const currentUrl = window.location.href.split('?')[0]; const deepLink = `${currentUrl}?action=scan&aid=${currentAlbergueId}&pid=${personaEnGestion.id}`; new QRCode(container, { text: deepLink, width: 250, height: 250 }); const nombreCompleto = `${personaEnGestion.nombre} ${personaEnGestion.ap1 || ""} ${personaEnGestion.ap2 || ""}`; window.el('carnet-nombre').innerText = nombreCompleto; window.el('carnet-id').innerText = personaEnGestion.docNum || "ID: " + personaEnGestion.id.substring(0,8).toUpperCase(); };
 
 // --- INIT (NO HOISTING NEEDED, RUNS LAST) ---
 window.onload = () => {

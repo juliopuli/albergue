@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gestión Albergue - Ver.1.2.1</title>
+    <title>Gestión Albergue - Ver.1.2.2</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -12,7 +12,7 @@
 </head>
 <body>
 
-    <div class="version-tag">Ver.1.2.1</div>
+    <div class="version-tag">Ver.1.2.2</div>
     <div id="toast">Guardado automático</div>
     <div id="loading-overlay" class="hidden"><div class="spinner"></div><h2 style="color:var(--primary);">Cargando Datos...</h2></div>
 
@@ -71,7 +71,7 @@
                     
                     <div id="view-scan-ready" style="margin-top: 20px; width: 100%; display:flex; flex-direction:column; align-items:center;">
                         
-                        <div id="reader" style="width: 100%; max-width: 500px; border-radius: 12px; overflow: hidden; margin-bottom: 20px; display:none;"></div>
+                        <div id="reader" class="hidden"></div>
 
                         <div id="scan-placeholder">
                             <i class="fa-solid fa-qrcode" style="font-size: 5rem; color: var(--text-light); margin-bottom: 20px;"></i>

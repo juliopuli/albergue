@@ -7,7 +7,7 @@
     --fil-bg: #f0fdf4;  --fil-border: #86efac;  --fil-text: #15803d;
     --san-bg: #fff1f2;  --san-border: #fda4af;  --san-text: #be123c;
     --psi-bg: #f5f3ff;  --psi-border: #c4b5fd;  --psi-text: #6d28d9;
-    --ent-bg: #ecfccb;  --ent-border: #bef264;  --ent-text: #3f6212; /* Nuevo color entregas */
+    --ent-bg: #ecfccb;  --ent-border: #bef264;  --ent-text: #3f6212;
     --cloud-bg: #e0f2fe; --cloud-border: #7dd3fc; --cloud-text: #0284c7;
     --radius: 12px;
 }
@@ -294,13 +294,22 @@ body.focused-mode .app-nav { display: none !important; }
     background: #fff;
     margin-bottom: 10px;
     border-radius: 8px;
-    border-left: 4px solid var(--primary);
+    border-left: 4px solid var(--primary); /* Azul por defecto */
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
-.hist-item.type-intervencion {
-    border-left: 4px solid var(--warning); /* Diferente color para intervenciones */
-    background: #fffbeb;
+/* NUEVOS COLORES PARA INTERVENCIONES */
+.hist-type-san {
+    border-left: 4px solid var(--danger); /* Rojo */
+    background: #fff5f5; /* Tono rojizo muy suave */
+}
+.hist-type-psi {
+    border-left: 4px solid #9333ea; /* Morado */
+    background: #faf5ff; /* Tono morado muy suave */
+}
+.hist-type-ent {
+    border-left: 4px solid #84cc16; /* Verde Lima */
+    background: #f7fee7; /* Tono lima muy suave */
 }
 
 .hist-header {
@@ -324,7 +333,7 @@ body.focused-mode .app-nav { display: none !important; }
     font-size: 0.95rem;
     color: #334155;
     font-style: italic;
-    background: rgba(255,255,255,0.5); /* Semi trans for mixed backgrounds */
+    background: rgba(255,255,255,0.5); /* Semi transparente */
     padding: 8px;
     border-radius: 6px;
     margin-bottom: 8px;

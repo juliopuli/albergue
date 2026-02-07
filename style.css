@@ -73,11 +73,11 @@ body { background-color: var(--bg-body); color: var(--text-main); height: 100vh;
 .int-header { margin-bottom: 15px; font-size: 1.1rem; color: var(--primary); border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; }
 .btn-row { display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px; }
 
-/* NOTIFICATION BADGE (v2.1) */
+/* NOTIFICATION BADGE (v2.1.8 - NUEVO) */
 #notification-badge-container {
     position: fixed;
-    top: 65px; /* Just below header */
-    left: 20px;
+    top: 75px; 
+    left: 25px;
     z-index: 150;
     display: flex;
     flex-direction: column;
@@ -85,30 +85,53 @@ body { background-color: var(--bg-body); color: var(--text-main); height: 100vh;
     cursor: pointer;
     background: white;
     padding: 8px 12px;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    border: 2px solid white;
     transition: transform 0.2s;
+    animation: fadeIn 0.5s ease-out;
 }
-#notification-badge-container:hover { transform: translateY(-2px); }
-.notif-icon { font-size: 1.5rem; color: var(--text-light); position: relative; }
+#notification-badge-container:hover { transform: scale(1.05); }
+
+.notif-icon { font-size: 1.5rem; color: var(--primary); position: relative; }
 .notif-count {
     position: absolute;
-    top: -5px;
-    right: -5px;
+    top: -8px;
+    right: -8px;
     background: var(--danger);
     color: white;
-    font-size: 0.7rem;
-    font-weight: bold;
-    padding: 2px 6px;
-    border-radius: 10px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    min-width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 2px solid white;
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
-.notif-label { font-size: 0.65rem; color: var(--text-light); font-weight: 700; margin-top: 2px; text-transform: uppercase; }
+.notif-label { font-size: 0.6rem; color: var(--text-light); font-weight: 800; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
 
-/* NOTIFICATION ITEM */
+/* ANIMACION DE VIBRACIÓN PARA NOTIFICACIÓN */
+@keyframes shake {
+  0% { transform: translate(1px, 1px) rotate(0deg); }
+  10% { transform: translate(-1px, -2px) rotate(-1deg); }
+  20% { transform: translate(-3px, 0px) rotate(1deg); }
+  30% { transform: translate(3px, 2px) rotate(0deg); }
+  40% { transform: translate(1px, -1px) rotate(1deg); }
+  50% { transform: translate(-1px, 2px) rotate(-1deg); }
+  60% { transform: translate(-3px, 1px) rotate(0deg); }
+  70% { transform: translate(3px, 1px) rotate(-1deg); }
+  80% { transform: translate(-1px, -1px) rotate(1deg); }
+  90% { transform: translate(1px, 2px) rotate(0deg); }
+  100% { transform: translate(1px, -2px) rotate(-1deg); }
+}
+.shake-animation { animation: shake 0.5s; }
+
+/* NOTIFICATION ITEM LIST */
 .notif-item {
-    padding: 12px;
+    padding: 15px;
     border-bottom: 1px solid #f1f5f9;
     cursor: pointer;
     display: flex;
@@ -117,12 +140,14 @@ body { background-color: var(--bg-body); color: var(--text-main); height: 100vh;
     transition: background 0.2s;
 }
 .notif-item:hover { background: #f8fafc; }
-.notif-info strong { color: var(--primary); }
-.notif-info span { font-size: 0.85rem; color: #64748b; display: block; margin-top: 2px; }
-.notif-type { font-size: 0.7rem; font-weight: bold; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; color: white; background: #94a3b8; }
-.notif-Sanitaria { background: var(--san-text); }
-.notif-Psicosocial { background: var(--psi-text); }
-.notif-Entregas { background: var(--ent-text); }
+.notif-item:last-child { border-bottom: none; }
+
+.notif-info strong { color: var(--text-main); font-size: 1rem; }
+.notif-info span { font-size: 0.9rem; color: var(--text-light); display: block; margin-top: 3px; }
+.notif-type { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; padding: 4px 8px; border-radius: 6px; color: white; background: #94a3b8; letter-spacing: 0.5px; }
+.notif-Sanitaria { background: var(--san-text); background-color: #be123c; }
+.notif-Psicosocial { background: var(--psi-text); background-color: #7e22ce; }
+.notif-Entregas { background: var(--ent-text); background-color: #4d7c0f; }
 
 
 /* FORM UI */

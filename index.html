@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gestión Albergue - Ver.2.1.0</title>
+    <title>Gestión Albergue - Ver.2.1.8</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -12,7 +12,7 @@
 </head>
 <body>
 
-    <div class="version-tag">Ver.2.1.0</div>
+    <div class="version-tag">Ver.2.1.8</div>
     
     <div id="toast" style="visibility: hidden;">Guardado automático</div>
     <div id="loading-overlay" class="hidden"><div class="spinner"></div><h2 style="color:var(--primary);">Cargando Datos...</h2></div>
@@ -20,7 +20,10 @@
     <div id="black-box-overlay" class="hidden">
         <div class="bb-header">
             <span><i class="fa-solid fa-terminal"></i> SYSTEM LOG</span>
-            <div><button class="bb-btn" onclick="window.limpiarCajaNegra()">LIMPIAR</button><button class="bb-btn close" onclick="window.toggleCajaNegra()">X</button></div>
+            <div>
+                <button class="bb-btn" onclick="window.limpiarCajaNegra()">LIMPIAR</button>
+                <button class="bb-btn close" onclick="window.toggleCajaNegra()">X</button>
+            </div>
         </div>
         <div id="black-box-content"></div>
     </div>
@@ -49,7 +52,7 @@
                     <span class="user-name" id="user-name-display">...</span>
                     <span class="user-role" id="user-role-badge">...</span>
                 </div>
-                <button id="header-btn-debug" class="btn-icon btn-debug hidden" onclick="window.toggleCajaNegra()" title="Abrir Log"><i class="fa-solid fa-terminal"></i></button>
+                <button id="header-btn-debug" class="btn-icon btn-debug hidden" onclick="window.toggleCajaNegra()" title="Abrir Log Sistema"><i class="fa-solid fa-terminal"></i></button>
                 <button id="header-btn-users" class="btn-icon hidden" onclick="window.navegar('usuarios')" title="Gestionar Usuarios"><i class="fa-solid fa-users-gear"></i></button>
                 <button class="btn-icon btn-key" onclick="window.abrirModalCambioPass()" title="Cambiar Contraseña"><i class="fa-solid fa-key"></i></button>
                 <button class="btn-logout" onclick="window.cerrarSesion()"><i class="fa-solid fa-power-off"></i></button>
@@ -320,6 +323,16 @@
         </main>
     </div>
 
+    <div id="modal-notificaciones" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
+        <div class="modal-content">
+            <span class="close-modal" onclick="document.getElementById('modal-notificaciones').classList.add('hidden')">&times;</span>
+            <h3><i class="fa-solid fa-bell"></i> Derivaciones Pendientes</h3>
+            <div id="lista-notificaciones-content" style="margin-top:15px;">
+                <p style="color:#666; text-align:center;">No hay derivaciones pendientes.</p>
+            </div>
+        </div>
+    </div>
+
     <div id="modal-qr" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content" style="text-align:center;"><span class="close-modal" onclick="document.getElementById('modal-qr').classList.add('hidden')">&times;</span><h3>Escanea para acceder</h3><div id="qrcode-display" style="display:inline-block; margin:20px;"></div><p style="color:#666;">Auto-registro móvil.</p></div></div>
     
     <div id="modal-carnet-qr" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
@@ -340,16 +353,6 @@
             <textarea id="derivacion-motivo" rows="4" style="width:100%; border:1px solid #cbd5e1; border-radius:8px; padding:10px; font-family:inherit; resize:none;" placeholder="Escribe aquí..."></textarea>
             <div class="btn-row" style="margin-top:15px;">
                 <button class="primary" onclick="window.confirmarDerivacion()">Enviar Derivación</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-notificaciones" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
-        <div class="modal-content">
-            <span class="close-modal" onclick="document.getElementById('modal-notificaciones').classList.add('hidden')">&times;</span>
-            <h3><i class="fa-solid fa-bell"></i> Derivaciones Pendientes</h3>
-            <div id="lista-notificaciones-content" style="margin-top:15px;">
-                <p style="color:#666; text-align:center;">No hay derivaciones pendientes.</p>
             </div>
         </div>
     </div>

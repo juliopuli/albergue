@@ -265,14 +265,59 @@ body.focused-mode .app-nav { display: none !important; }
     margin-bottom: 20px;
 }
 
-/* --- AÑADE ESTO AL FINAL DEL CSS EXISTENTE --- */
-
-/* NEW BED STATUS BORDERS (v1.3.0) */
-/* Thick borders to indicate presence status */
+/* --- NEW BED STATUS BORDERS (v1.3.0) --- */
 .bed-status-in {
     border-right: 8px solid #10b981 !important; /* Green = Inside */
 }
-
 .bed-status-out {
     border-right: 8px solid #ef4444 !important; /* Red = Outside */
+}
+
+/* --- HISTORIAL TIMELINE (v1.5.1) --- */
+.hist-item {
+    display: flex;
+    flex-direction: column;
+    padding: 15px;
+    border-bottom: 1px solid #e2e8f0;
+    background: #fff;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    border-left: 4px solid var(--primary);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.hist-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 0.85rem;
+    color: #64748b;
+}
+
+.hist-action {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 5px;
+    display: block;
+}
+
+.hist-detail {
+    font-size: 0.95rem;
+    color: #334155;
+    font-style: italic;
+    background: #f8fafc;
+    padding: 8px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.hist-user {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--primary);
+    text-align: right;
+    display: block;
 }

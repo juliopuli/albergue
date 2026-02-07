@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gestión Albergue - Ver.1.4.9</title>
+    <title>Gestión Albergue - Ver.1.5.0</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -12,8 +12,10 @@
 </head>
 <body>
 
-    <div class="version-tag">Ver.1.4.5</div>
-    <div id="toast">Guardado automático</div>
+    <div class="version-tag">Ver.1.5.0</div>
+    
+    <div id="toast" style="visibility: hidden;">Guardado automático</div>
+    
     <div id="loading-overlay" class="hidden"><div class="spinner"></div><h2 style="color:var(--primary);">Cargando Datos...</h2></div>
 
     <div id="black-box-overlay" class="hidden">
@@ -298,6 +300,30 @@
     <div id="modal-add-familiar" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><span class="close-modal" onclick="window.cerrarModalFamiliar()">&times;</span><h3>Familiar (QR)</h3><div class="row"><div class="col"><label>Nombre</label><input type="text" id="fam-nombre"></div></div><div class="row"><div class="col"><label>Ap 1</label><input type="text" id="fam-ap1"></div><div class="col"><label>Ap 2</label><input type="text" id="fam-ap2"></div></div><div class="row"><div class="col"><label>Doc</label><select id="fam-tipo-doc" onchange="window.verificarMenor('fam')"><option value="MENOR">MENOR</option><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option></select></div><div class="col"><label>Num</label><input type="text" id="fam-doc-num" disabled></div></div><div class="row"><div class="col"><label>F. Nac</label><input type="tel" id="fam-fecha" oninput="window.formatearFecha(this)" maxlength="10"></div></div><div class="btn-row"><button class="primary" onclick="window.guardarFamiliarEnLista()">Añadir</button></div></div></div>
     <div id="modal-admin-add-familiar" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><span class="close-modal" onclick="window.cerrarModalFamiliarAdmin()">&times;</span><h3>Miembro (Admin)</h3><div class="row"><div class="col"><label>Nombre</label><input type="text" id="adm-fam-nombre"></div><div class="col"><label>Ap 1</label><input type="text" id="adm-fam-ap1"></div><div class="col"><label>Ap 2</label><input type="text" id="adm-fam-ap2"></div></div><div class="row"><div class="col"><label>Doc</label><select id="adm-fam-tipo-doc" onchange="window.verificarMenor('adm-fam')"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Num</label><input type="text" id="adm-fam-doc-num"></div></div><div class="row"><div class="col"><label>F. Nac</label><input type="tel" id="adm-fam-fecha" oninput="window.formatearFecha(this)" maxlength="10"></div><div class="col"><label>Tel</label><input type="tel" id="adm-fam-tel"></div></div><div class="btn-row"><button class="primary" onclick="window.guardarFamiliarAdmin()">Añadir</button></div></div></div>
     <div id="modal-obs-detalle" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content modal-lg"><span class="close-modal" onclick="document.getElementById('modal-obs-detalle').classList.add('hidden')">&times;</span><h3 id="obs-modal-title">Listado</h3><div id="obs-modal-content" style="margin-top:20px;"></div></div></div>
+    
+    <div id="public-register-screen" class="hidden">
+        <div id="public-welcome-screen" class="card" style="max-width:500px; width:100%; margin:20px auto;">
+            <div class="welcome-box">
+                <i class="fa-solid fa-door-open welcome-icon"></i>
+                <h2 style="color:var(--text-main); margin-bottom:10px;">Bienvenido/a</h2>
+                <p style="font-size:1.1rem; line-height:1.5; margin-bottom:20px; color:var(--text-main);">Está a punto de rellenar la ficha de registro de sus datos y el de sus familiares para acceder al <strong id="public-albergue-name" style="color:var(--primary);">Albergue...</strong></p>
+                <div class="consent-box"><input type="checkbox" id="check-consent" onchange="window.toggleStartButton()"><label for="check-consent" style="cursor:pointer; margin:0; margin-left:5px;">He leído la información y acepto facilitar sus datos.</label></div>
+                <button id="btn-start-public" class="primary" style="width:100%; padding:15px; font-size:1.1rem;" disabled onclick="window.iniciarRegistro()">COMENZAR REGISTRO</button>
+            </div>
+        </div>
+        <div id="public-form-container" class="hidden">
+            <div class="public-form-header"><h2 style="text-align:center; color:var(--primary); margin:0;">Tus Datos</h2></div>
+            <div class="public-form-body">
+                <div class="row"><div class="col"><label>Nombre (*)</label><input type="text" id="pub-nombre"></div></div>
+                <div class="row"><div class="col"><label>Ap 1</label><input type="text" id="pub-ap1"></div><div class="col"><label>Ap 2</label><input type="text" id="pub-ap2"></div></div>
+                <div class="row"><div class="col"><label>Doc</label><select id="pub-tipo-doc" onchange="window.verificarMenor('pub')"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Num</label><input type="text" id="pub-doc-num"></div></div>
+                <div class="row"><div class="col"><label>F. Nac</label><input type="tel" id="pub-fecha" placeholder="DD/MM/AAAA" maxlength="10" oninput="window.formatearFecha(this)"></div><div class="col"><label>Tel</label><input type="tel" id="pub-tel"></div></div>
+                <div class="fam-list"><h4>Acompañantes</h4><div id="lista-familiares-ui"><p style="color:#999;">Ninguno.</p></div><button class="secondary" onclick="window.abrirModalFamiliar()">+ Añadir Acompañante</button></div>
+            </div>
+            <div class="public-form-footer"><button class="success" style="width:100%; padding:15px; font-size:1.2rem; box-shadow: 0 -2px 10px rgba(0,0,0,0.1);" onclick="window.publicoGuardarTodo()">ENVIAR DATOS</button></div>
+        </div>
+        <div id="public-success-msg" class="hidden" style="text-align:center; padding:20px; background:white; height:100%;"><div class="success-icon"><i class="fa-solid fa-circle-check"></i></div><h1 style="margin-bottom:10px;">¡Datos Enviados!</h1><p style="font-size:1.2rem; color:var(--text-light);">Gracias. Por favor, acércate a la mesa de entrada.</p></div>
+    </div>
 
     <script type="module" src="script.js"></script>
 </body>

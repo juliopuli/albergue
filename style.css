@@ -195,30 +195,58 @@ button.dark { background: #334155; color: white; }
 .prog-fill.med { background: var(--warning); }
 .prog-fill.low { background: var(--success); }
 
-/* --- NEW: INTERVENTION SCREEN STYLES --- */
-.action-grid {
+/* --- NEW: INTERVENTION SCREEN STYLES (v1.1.1) --- */
+.movements-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr 1fr;
     gap: 15px;
     width: 100%;
-    margin-top: 20px;
+    margin-bottom: 20px;
 }
-.btn-action-big {
+
+.derivations-container {
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    padding: 15px;
+    width: 100%;
+    text-align: left;
+}
+
+.derivations-container h4 {
+    margin-bottom: 15px;
+    color: var(--text-light);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 10px;
+}
+
+.derivations-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.btn-action-panel {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 25px;
-    border-radius: 16px;
-    font-size: 1.1rem;
+    padding: 15px; /* Reduced padding */
+    border-radius: 12px;
+    font-size: 0.95rem; /* Slightly smaller font */
     font-weight: 700;
     transition: transform 0.2s;
-    height: 140px; 
+    min-height: 90px; /* Reduced height */
 }
-.btn-action-big:active { transform: scale(0.95); }
-.btn-action-big i { font-size: 2.5rem; margin-bottom: 10px; }
+
+.btn-action-panel:active { transform: scale(0.95); }
+.btn-action-panel i { font-size: 2rem; margin-bottom: 8px; } /* Smaller icons */
+
 .btn-entry { background-color: #dcfce7; color: #166534; border: 2px solid #86efac; }
 .btn-exit-action { background-color: #fee2e2; color: #991b1b; border: 2px solid #fca5a5; }
 .btn-derive-psi { background-color: #f3e8ff; color: #6b21a8; border: 2px solid #d8b4fe; }
 .btn-derive-san { background-color: #ffe4e6; color: #9f1239; border: 2px solid #fda4af; }
-.btn-derive-del { background-color: #fff7ed; color: #9a3412; border: 2px solid #fdba74; grid-column: span 2; }
+.btn-derive-del { background-color: #fff7ed; color: #9a3412; border: 2px solid #fdba74; }

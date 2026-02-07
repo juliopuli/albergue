@@ -253,3 +253,14 @@ button.dark { background: #334155; color: white; }
 
 /* --- FOCUSED MODE (HIDE NAV) --- */
 body.focused-mode .app-nav { display: none !important; }
+
+/* --- FIX: READER CONTAINER --- */
+#reader {
+    width: 100%;
+    max-width: 500px;
+    min-height: 300px;
+    background-color: black;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 20px;
+}

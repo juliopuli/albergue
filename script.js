@@ -40,7 +40,7 @@ window.toggleCajaNegra = function() {
 };
 window.limpiarCajaNegra = function() { const c = document.getElementById('black-box-content'); if (c) c.innerHTML = ""; };
 
-window.sysLog("Sistema Iniciado. Versión 1.2.0 (Deep Link)", "info");
+window.sysLog("Sistema Iniciado. Versión 1.2.0 (Flow Continuo)", "info");
 
 // --- 2. GLOBALES ---
 let isPublicMode = false;
@@ -113,11 +113,11 @@ window.navegar = function(p) {
     ['screen-home','screen-usuarios','screen-gestion-albergues','screen-mantenimiento','screen-operativa','screen-observatorio', 'screen-intervencion'].forEach(id=>window.safeHide(id));
     if(!currentUserData) return;
     
-    // Reset Intervention view if navigating away
+    // NEW: Reset Intervention view when navigating away or to it
     if(p !== 'intervencion') window.resetIntervencion();
 
     if(p==='home') window.safeShow('screen-home');
-    else if(p==='intervencion') { window.safeShow('screen-intervencion'); }
+    else if(p==='intervencion') { window.safeShow('screen-intervencion'); } // NEW SCREEN
     else if(p==='gestion-albergues') { window.cargarAlberguesActivos(); window.safeShow('screen-gestion-albergues'); }
     else if(p==='mantenimiento') { window.cargarAlberguesMantenimiento(); window.safeShow('screen-mantenimiento'); }
     else if(p==='operativa') { window.safeShow('screen-operativa'); const t = window.configurarTabsPorRol(); window.cambiarPestana(t); } 
@@ -165,7 +165,7 @@ window.configurarDashboard = function() {
     window.safeAddActive('nav-home');
 };
 
-// --- LOGICA DE INTERVENCIÓN (NUEVO v1.2.0) ---
+// --- LOGICA DE INTERVENCIÓN (NUEVO v1.2.0 - Flujo Continuo) ---
 
 // 1. Simulación de lectura (temporal)
 window.simularLecturaQR = function() {
@@ -173,9 +173,7 @@ window.simularLecturaQR = function() {
         alert("Por ahora, entra primero en un albergue desde 'Gestión' para simular el escaneo.");
         return;
     }
-    
     window.sysLog("Simulando escaneo QR...", "info");
-    
     // Simulamos que encontramos a alguien (usamos el primero de la lista local para la demo)
     if(listaPersonasCache.length > 0) {
         const p = listaPersonasCache[0];
@@ -187,12 +185,11 @@ window.simularLecturaQR = function() {
 
 window.cargarInterfazIntervencion = function(persona) {
     if(!persona) return;
-    personaEnGestion = persona; // Reusamos la variable global
+    personaEnGestion = persona; 
     
-    // Ocultar "Ready" mostrar "Result"
     window.safeHide('view-scan-ready');
     window.safeShow('view-scan-result');
-    window.safeShow('btn-exit-focused'); // Mostrar botón salir
+    window.safeShow('btn-exit-focused'); 
     
     window.el('interv-nombre').innerText = `${persona.nombre} ${persona.ap1 || ""}`;
     window.el('interv-doc').innerText = persona.docNum || "Sin Documento";
@@ -208,20 +205,14 @@ window.resetIntervencion = function() {
 window.salirModoFocalizado = function() {
     document.body.classList.remove('focused-mode');
     window.navegar('home');
-    // Eliminar parametros de la URL sin recargar
     window.history.pushState({}, document.title, window.location.pathname);
 };
 
 window.iniciarModoFocalizado = async function(aid, pid) {
     window.sysLog(`Iniciando MODO FOCALIZADO. Alb: ${aid}, Pers: ${pid}`, "warn");
-    
-    // 1. Ocultar navegación
     document.body.classList.add('focused-mode');
-    
-    // 2. Cargar datos del albergue (sin navegar a 'operativa' aun)
     currentAlbergueId = aid;
     window.safeShow('loading-overlay');
-    
     try {
         const dS = await getDoc(doc(db,"albergues",aid));
         if(dS.exists()) { 
@@ -231,29 +222,18 @@ window.iniciarModoFocalizado = async function(aid, pid) {
             window.salirModoFocalizado();
             return;
         }
-
-        // 3. Suscribirse a personas (necesario para la operativa)
         if(unsubscribePersonas) unsubscribePersonas();
         unsubscribePersonas = onSnapshot(collection(db,"albergues",aid,"personas"), s=>{
             listaPersonasCache=[]; camasOcupadas={};
-            s.forEach(d=>{ 
-                const p=d.data(); p.id=d.id; 
-                listaPersonasCache.push(p); 
-            });
+            s.forEach(d=>{ const p=d.data(); p.id=d.id; listaPersonasCache.push(p); });
             
-            // 4. Buscar la persona específica
             const targetPerson = listaPersonasCache.find(p => p.id === pid);
             if(targetPerson) {
-                // 5. Navegar a pantalla intervención y cargar datos
                 window.safeHide('loading-overlay');
                 window.navegar('intervencion');
                 window.cargarInterfazIntervencion(targetPerson);
-            } else {
-                // Puede que aún no haya cargado, esperamos o gestionamos error
-                // En snapshot se ejecuta varias veces, si no está al principio puede aparecer después
             }
         });
-
     } catch (e) {
         console.error(e);
         alert("Error cargando modo focalizado");
@@ -261,21 +241,20 @@ window.iniciarModoFocalizado = async function(aid, pid) {
     }
 };
 
-// 2. Acciones Rápidas
+// 2. Acciones Rápidas (CON AUTO RESET)
 window.registrarMovimiento = async function(tipo) {
     if(!personaEnGestion || !currentAlbergueId) return;
     
-    // Aquí implementaremos la lógica real más adelante (cambiar estado, log, etc)
+    // Aquí implementaremos la lógica real (escribir en historial)
+    await window.registrarLog(personaEnGestion.id, "Movimiento", tipo.toUpperCase());
     window.sysLog(`Movimiento: ${tipo} para ${personaEnGestion.nombre}`, "info");
     
-    // Visual feedback
-    alert(`Registrado: ${tipo.toUpperCase()}`);
-    
-    // Auto-reset para el siguiente
-    // window.resetIntervencion(); // Quizas mejor no resetear, dejar la ficha abierta
+    // Feedback visual y RESET
+    window.showToast(`✅ ${tipo.toUpperCase()} Registrada`);
+    window.resetIntervencion();
 };
 
-// 3. Derivaciones (Modal)
+// 3. Derivaciones (Modal CON AUTO RESET)
 window.abrirModalDerivacion = function(tipo) {
     tipoDerivacionActual = tipo;
     window.el('derivacion-titulo').innerText = `Derivar a ${tipo}`;
@@ -287,17 +266,14 @@ window.confirmarDerivacion = async function() {
     const motivo = window.el('derivacion-motivo').value;
     if(!motivo) return alert("Escribe un motivo.");
     
-    // Aquí guardaremos en base de datos más adelante
-    window.sysLog(`Derivación a ${tipoDerivacionActual}: ${motivo}`, "warn");
-    
-    // Crear log de historial simulado por ahora
     if(personaEnGestion) {
         await window.registrarLog(personaEnGestion.id, `Derivación ${tipoDerivacionActual}`, motivo);
     }
+    window.sysLog(`Derivación a ${tipoDerivacionActual}: ${motivo}`, "warn");
 
     window.safeHide('modal-derivacion');
-    alert("Derivación enviada correctamente.");
-    // window.resetIntervencion();
+    window.showToast("✅ Derivación enviada");
+    window.resetIntervencion();
 };
 
 

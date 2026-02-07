@@ -25,7 +25,6 @@ window.sysLog = function(msg, type = 'info') {
     if(type === 'error') console.error(msg); else console.log(`[SYS] ${msg}`);
 };
 
-// FIX: BLACK BOX SAFETY
 window.onerror = function(message, source, lineno, colno, error) {
     window.sysLog(`CRITICAL ERROR: ${message} at line ${lineno}`, "error");
     if(currentUserData && currentUserData.rol === 'super_admin') {
@@ -40,7 +39,7 @@ window.toggleCajaNegra = function() {
 };
 window.limpiarCajaNegra = function() { const c = document.getElementById('black-box-content'); if (c) c.innerHTML = ""; };
 
-window.sysLog("Sistema Iniciado. Versión 1.4.8 (Users & QR Fixed)", "info");
+window.sysLog("Sistema Iniciado. Versión 1.4.9 (Safe Public Init)", "info");
 
 // --- 2. GLOBALES ---
 let isPublicMode = false;
@@ -91,8 +90,7 @@ window.getDatosFormulario = function(p) { return { nombre: window.safeVal(`${p}-
 window.iniciarSesion = async function() { try { window.sysLog("Click Login", "info"); await signInWithEmailAndPassword(auth, window.el('login-email').value, window.el('login-pass').value); window.sysLog("Auth Firebase OK", "success"); } catch(err) { window.sysLog("Error Auth: " + err.message, "error"); alert(err.message); } };
 window.cerrarSesion = function() { window.sysLog("Cerrando sesión", "warn"); signOut(auth); location.reload(); };
 
-// --- GESTIÓN DE USUARIOS (MOVIDO AL PRINCIPIO PARA EVITAR PÉRDIDA) ---
-
+// --- GESTIÓN DE USUARIOS (ASEGURADA) ---
 window.cambiarEstadoUsuarioDirecto = async function(uid, nuevoEstado) {
     if (currentUserData.rol !== 'super_admin' && currentUserData.rol !== 'admin') { alert("Sin permisos"); window.cargarUsuarios(); return; }
     const targetDoc = await getDoc(doc(db, "usuarios", uid));
@@ -167,10 +165,8 @@ window.desactivarUsuariosMasivo = async function() {
     } catch (e) { console.error(e); alert("Error: " + e.message); } finally { window.safeHide('loading-overlay'); }
 };
 
-
-// --- PUBLIC QR & REGISTER ---
+// --- PUBLIC QR & REGISTER (ASEGURADA) ---
 window.abrirModalQR = function() {
-    // Pequeño timeout para evitar que el blur del campo anterior (si existe) cierre cosas inesperadas
     setTimeout(() => {
         window.safeShow('modal-qr');
         const d = window.el("qrcode-display"); d.innerHTML = "";

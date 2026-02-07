@@ -40,7 +40,7 @@ window.toggleCajaNegra = function() {
 };
 window.limpiarCajaNegra = function() { const c = document.getElementById('black-box-content'); if (c) c.innerHTML = ""; };
 
-window.sysLog("Sistema Iniciado. Versión 1.1.1 (Intervención UI Mejorada)", "info");
+window.sysLog("Sistema Iniciado. Versión 1.2.0 (Deep Link)", "info");
 
 // --- 2. GLOBALES ---
 let isPublicMode = false;
@@ -69,7 +69,6 @@ let userEditingId = null;
 let albergueEdicionId = null;
 let isGlobalEdit = false; 
 let savingLock = false;
-// NEW: For referral
 let tipoDerivacionActual = null; 
 
 // --- 3. UTILIDADES DOM ---
@@ -114,11 +113,11 @@ window.navegar = function(p) {
     ['screen-home','screen-usuarios','screen-gestion-albergues','screen-mantenimiento','screen-operativa','screen-observatorio', 'screen-intervencion'].forEach(id=>window.safeHide(id));
     if(!currentUserData) return;
     
-    // NEW: Reset Intervention view when navigating away or to it
+    // Reset Intervention view if navigating away
     if(p !== 'intervencion') window.resetIntervencion();
 
     if(p==='home') window.safeShow('screen-home');
-    else if(p==='intervencion') { window.safeShow('screen-intervencion'); } // NEW SCREEN
+    else if(p==='intervencion') { window.safeShow('screen-intervencion'); }
     else if(p==='gestion-albergues') { window.cargarAlberguesActivos(); window.safeShow('screen-gestion-albergues'); }
     else if(p==='mantenimiento') { window.cargarAlberguesMantenimiento(); window.safeShow('screen-mantenimiento'); }
     else if(p==='operativa') { window.safeShow('screen-operativa'); const t = window.configurarTabsPorRol(); window.cambiarPestana(t); } 
@@ -166,17 +165,10 @@ window.configurarDashboard = function() {
     window.safeAddActive('nav-home');
 };
 
-// --- LOGICA DE INTERVENCIÓN (NUEVO v1.1.0) ---
+// --- LOGICA DE INTERVENCIÓN (NUEVO v1.2.0) ---
 
 // 1. Simulación de lectura (temporal)
 window.simularLecturaQR = function() {
-    // Aquí en el futuro activaremos la cámara.
-    // Por ahora, simularemos que hemos leído un ID de alguien que está en la base de datos.
-    // Para probar, cogeremos al primer usuario de la caché si existe, si no, uno fake.
-    
-    // NOTA: Para que esto funcione bien, deberías estar "dentro" de un albergue (Gestión -> Entrar).
-    // Si entras desde fuera, no tenemos currentAlbergueId, así que habría que leerlo del QR también (futura mejora).
-    
     if(!currentAlbergueId) {
         alert("Por ahora, entra primero en un albergue desde 'Gestión' para simular el escaneo.");
         return;
@@ -200,6 +192,7 @@ window.cargarInterfazIntervencion = function(persona) {
     // Ocultar "Ready" mostrar "Result"
     window.safeHide('view-scan-ready');
     window.safeShow('view-scan-result');
+    window.safeShow('btn-exit-focused'); // Mostrar botón salir
     
     window.el('interv-nombre').innerText = `${persona.nombre} ${persona.ap1 || ""}`;
     window.el('interv-doc').innerText = persona.docNum || "Sin Documento";
@@ -210,6 +203,62 @@ window.resetIntervencion = function() {
     personaEnGestion = null;
     window.safeShow('view-scan-ready');
     window.safeHide('view-scan-result');
+};
+
+window.salirModoFocalizado = function() {
+    document.body.classList.remove('focused-mode');
+    window.navegar('home');
+    // Eliminar parametros de la URL sin recargar
+    window.history.pushState({}, document.title, window.location.pathname);
+};
+
+window.iniciarModoFocalizado = async function(aid, pid) {
+    window.sysLog(`Iniciando MODO FOCALIZADO. Alb: ${aid}, Pers: ${pid}`, "warn");
+    
+    // 1. Ocultar navegación
+    document.body.classList.add('focused-mode');
+    
+    // 2. Cargar datos del albergue (sin navegar a 'operativa' aun)
+    currentAlbergueId = aid;
+    window.safeShow('loading-overlay');
+    
+    try {
+        const dS = await getDoc(doc(db,"albergues",aid));
+        if(dS.exists()) { 
+            currentAlbergueData = dS.data(); 
+        } else {
+            alert("Albergue no encontrado");
+            window.salirModoFocalizado();
+            return;
+        }
+
+        // 3. Suscribirse a personas (necesario para la operativa)
+        if(unsubscribePersonas) unsubscribePersonas();
+        unsubscribePersonas = onSnapshot(collection(db,"albergues",aid,"personas"), s=>{
+            listaPersonasCache=[]; camasOcupadas={};
+            s.forEach(d=>{ 
+                const p=d.data(); p.id=d.id; 
+                listaPersonasCache.push(p); 
+            });
+            
+            // 4. Buscar la persona específica
+            const targetPerson = listaPersonasCache.find(p => p.id === pid);
+            if(targetPerson) {
+                // 5. Navegar a pantalla intervención y cargar datos
+                window.safeHide('loading-overlay');
+                window.navegar('intervencion');
+                window.cargarInterfazIntervencion(targetPerson);
+            } else {
+                // Puede que aún no haya cargado, esperamos o gestionamos error
+                // En snapshot se ejecuta varias veces, si no está al principio puede aparecer después
+            }
+        });
+
+    } catch (e) {
+        console.error(e);
+        alert("Error cargando modo focalizado");
+        window.salirModoFocalizado();
+    }
 };
 
 // 2. Acciones Rápidas
@@ -223,7 +272,7 @@ window.registrarMovimiento = async function(tipo) {
     alert(`Registrado: ${tipo.toUpperCase()}`);
     
     // Auto-reset para el siguiente
-    window.resetIntervencion();
+    // window.resetIntervencion(); // Quizas mejor no resetear, dejar la ficha abierta
 };
 
 // 3. Derivaciones (Modal)
@@ -248,7 +297,7 @@ window.confirmarDerivacion = async function() {
 
     window.safeHide('modal-derivacion');
     alert("Derivación enviada correctamente.");
-    window.resetIntervencion();
+    // window.resetIntervencion();
 };
 
 
@@ -278,13 +327,20 @@ window.cargarDatosYEntrar = async function(id) {
 };
 window.conectarListenersBackground = function(id) { if(unsubscribeAlbergueDoc) unsubscribeAlbergueDoc(); unsubscribeAlbergueDoc = onSnapshot(doc(db,"albergues",id), d=>{ if(d.exists()){ currentAlbergueData=d.data(); totalCapacidad=parseInt(currentAlbergueData.capacidad||0); window.actualizarContadores(); } }); };
 
-// --- NUEVA FUNCIÓN: VER CARNET QR (v1.0.0) ---
+// --- NUEVA FUNCIÓN: VER CARNET QR (v1.2.0 - Deep Linking) ---
 window.verCarnetQR = function() {
     if(!personaEnGestion) return;
     window.safeShow('modal-carnet-qr');
     const container = window.el('carnet-qrcode-display');
     container.innerHTML = "";
-    new QRCode(container, { text: personaEnGestion.id, width: 250, height: 250 });
+    
+    // GENERATE DEEP LINK URL
+    // Format: https://domain.com/?action=scan&aid=ALBERGUE_ID&pid=PERSONA_ID
+    const currentUrl = window.location.href.split('?')[0];
+    const deepLink = `${currentUrl}?action=scan&aid=${currentAlbergueId}&pid=${personaEnGestion.id}`;
+    
+    new QRCode(container, { text: deepLink, width: 250, height: 250 });
+    
     const nombreCompleto = `${personaEnGestion.nombre} ${personaEnGestion.ap1 || ""} ${personaEnGestion.ap2 || ""}`;
     window.el('carnet-nombre').innerText = nombreCompleto;
     window.el('carnet-id').innerText = personaEnGestion.docNum || "ID: " + personaEnGestion.id.substring(0,8).toUpperCase();
@@ -357,6 +413,13 @@ window.onload = () => {
         const passInput = document.getElementById('login-pass');
         if(passInput) passInput.addEventListener('keypress', e=>{ if(e.key==='Enter') window.iniciarSesion(); });
     }
+    
+    // Check for Deep Link on Load (even if not public)
+    const params = new URLSearchParams(window.location.search);
+    if(params.get('action') === 'scan') {
+        window.sysLog("Deep Link detectado. Esperando Auth...", "info");
+        // Logic handled in onAuthStateChanged
+    }
 };
 
 onAuthStateChanged(auth, async (u) => {
@@ -376,7 +439,14 @@ onAuthStateChanged(auth, async (u) => {
             window.safeHide('login-screen');
             window.safeShow('app-shell');
             window.configurarDashboard();
-            window.navegar('home');
+            
+            // CHECK DEEP LINK
+            const params = new URLSearchParams(window.location.search);
+            if(params.get('action') === 'scan' && params.get('aid') && params.get('pid')) {
+                 window.iniciarModoFocalizado(params.get('aid'), params.get('pid'));
+            } else {
+                 window.navegar('home');
+            }
         } else {
             // SELF HEAL
             window.sysLog("Usuario fantasma detectado. Restaurando INACTIVO...", "warn");

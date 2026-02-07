@@ -2,10 +2,12 @@
 :root {
     --primary: #4f46e5; --primary-dark: #4338ca; --bg-body: #f8fafc; --surface: #ffffff;
     --text-main: #1e293b; --text-light: #64748b; --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
+    /* MODULE COLORS */
     --pref-bg: #fff7ed; --pref-border: #fdba74; --pref-text: #c2410c;
     --fil-bg: #f0fdf4;  --fil-border: #86efac;  --fil-text: #15803d;
     --san-bg: #fff1f2;  --san-border: #fda4af;  --san-text: #be123c;
     --psi-bg: #f5f3ff;  --psi-border: #c4b5fd;  --psi-text: #6d28d9;
+    --ent-bg: #ecfccb;  --ent-border: #bef264;  --ent-text: #3f6212; /* Nuevo color entregas */
     --cloud-bg: #e0f2fe; --cloud-border: #7dd3fc; --cloud-text: #0284c7;
     --radius: 12px;
 }
@@ -62,9 +64,18 @@ body { background-color: var(--bg-body); color: var(--text-main); height: 100vh;
 .module-psi { background: var(--psi-bg); border-color: var(--psi-border); }
 .module-psi h3 { color: var(--psi-text); }
 .module-psi input { border: 2px solid var(--psi-border); }
+.module-ent { background: var(--ent-bg); border-color: var(--ent-border); }
+.module-ent h3 { color: var(--ent-text); }
+.module-ent input { border: 2px solid var(--ent-border); }
+
+/* INTERVENTION FORMS (v2.0) */
+.inter-form { background: white; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; margin-top: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+.int-header { margin-bottom: 15px; font-size: 1.1rem; color: var(--primary); border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; }
+.btn-row { display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px; }
 
 /* FORM UI */
-input, select { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff; font-size: 0.95rem; }
+input, select, textarea { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff; font-size: 0.95rem; }
+textarea { resize: vertical; }
 label { font-weight: 600; font-size: 0.9rem; margin-bottom: 5px; display: block; }
 .row { display: flex; gap: 15px; flex-wrap: wrap; } .col { flex: 1; min-width: 200px; }
 button { padding: 12px 20px; border-radius: 8px; font-weight: 600; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
@@ -116,6 +127,7 @@ button.dark { background: #334155; color: white; }
 .tab-btn-fil.active { background: var(--fil-bg) !important; color: var(--fil-text) !important; border: 1px solid var(--fil-border); }
 .tab-btn-san.active { background: var(--san-bg) !important; color: var(--san-text) !important; border: 1px solid var(--san-border); }
 .tab-btn-psi.active { background: var(--psi-bg) !important; color: var(--psi-text) !important; border: 1px solid var(--psi-border); }
+.tab-btn-ent.active { background: var(--ent-bg) !important; color: var(--ent-text) !important; border: 1px solid var(--ent-border); }
 
 .search-results { background: white; border: 1px solid #e2e8f0; border-radius: 0 0 12px 12px; max-height: 250px; overflow-y: auto; margin-top: -15px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); display: block; position: absolute; width: 100%; z-index: 50; }
 .search-item { padding: 12px; border-bottom: 1px solid #f1f5f9; cursor: pointer; font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center; }
@@ -286,6 +298,11 @@ body.focused-mode .app-nav { display: none !important; }
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
+.hist-item.type-intervencion {
+    border-left: 4px solid var(--warning); /* Diferente color para intervenciones */
+    background: #fffbeb;
+}
+
 .hist-header {
     display: flex;
     justify-content: space-between;
@@ -307,11 +324,12 @@ body.focused-mode .app-nav { display: none !important; }
     font-size: 0.95rem;
     color: #334155;
     font-style: italic;
-    background: #f8fafc;
+    background: rgba(255,255,255,0.5); /* Semi trans for mixed backgrounds */
     padding: 8px;
     border-radius: 6px;
     margin-bottom: 8px;
     display: block;
+    border: 1px solid rgba(0,0,0,0.05);
 }
 
 .hist-user {

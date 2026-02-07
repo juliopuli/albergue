@@ -73,6 +73,58 @@ body { background-color: var(--bg-body); color: var(--text-main); height: 100vh;
 .int-header { margin-bottom: 15px; font-size: 1.1rem; color: var(--primary); border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; }
 .btn-row { display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px; }
 
+/* NOTIFICATION BADGE (v2.1) */
+#notification-badge-container {
+    position: fixed;
+    top: 65px; /* Just below header */
+    left: 20px;
+    z-index: 150;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    background: white;
+    padding: 8px 12px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    border: 1px solid #e2e8f0;
+    transition: transform 0.2s;
+}
+#notification-badge-container:hover { transform: translateY(-2px); }
+.notif-icon { font-size: 1.5rem; color: var(--text-light); position: relative; }
+.notif-count {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: var(--danger);
+    color: white;
+    font-size: 0.7rem;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+.notif-label { font-size: 0.65rem; color: var(--text-light); font-weight: 700; margin-top: 2px; text-transform: uppercase; }
+
+/* NOTIFICATION ITEM */
+.notif-item {
+    padding: 12px;
+    border-bottom: 1px solid #f1f5f9;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.2s;
+}
+.notif-item:hover { background: #f8fafc; }
+.notif-info strong { color: var(--primary); }
+.notif-info span { font-size: 0.85rem; color: #64748b; display: block; margin-top: 2px; }
+.notif-type { font-size: 0.7rem; font-weight: bold; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; color: white; background: #94a3b8; }
+.notif-Sanitaria { background: var(--san-text); }
+.notif-Psicosocial { background: var(--psi-text); }
+.notif-Entregas { background: var(--ent-text); }
+
+
 /* FORM UI */
 input, select, textarea { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff; font-size: 0.95rem; }
 textarea { resize: vertical; }

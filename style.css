@@ -250,5 +250,6 @@ button.dark { background: #334155; color: white; }
 .btn-derive-psi { background-color: #f3e8ff; color: #6b21a8; border: 2px solid #d8b4fe; }
 .btn-derive-san { background-color: #ffe4e6; color: #9f1239; border: 2px solid #fda4af; }
 .btn-derive-del { background-color: #fff7ed; color: #9a3412; border: 2px solid #fdba74; }
+
 /* --- FOCUSED MODE (HIDE NAV) --- */
 body.focused-mode .app-nav { display: none !important; }

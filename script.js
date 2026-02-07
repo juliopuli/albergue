@@ -40,7 +40,7 @@ window.toggleCajaNegra = function() {
 };
 window.limpiarCajaNegra = function() { const c = document.getElementById('black-box-content'); if (c) c.innerHTML = ""; };
 
-window.sysLog("Sistema Iniciado. Versión 1.4.4 (Full Checked)", "info");
+window.sysLog("Sistema Iniciado. Versión 1.4.5 (Full Verified)", "info");
 
 // --- 2. GLOBALES ---
 let isPublicMode = false;
@@ -221,118 +221,6 @@ window.cargarUsuarios = function() {
     });
 };
 
-// --- GESTIÓN DE USUARIOS (EL BLOQUE PERDIDO REINSERTADO) ---
-
-window.cambiarEstadoUsuarioDirecto = async function(uid, nuevoEstado) {
-    if (currentUserData.rol !== 'super_admin' && currentUserData.rol !== 'admin') {
-        alert("Sin permisos");
-        window.cargarUsuarios();
-        return;
-    }
-    const targetDoc = await getDoc(doc(db, "usuarios", uid));
-    if (targetDoc.exists()) {
-        const u = targetDoc.data();
-        if (u.rol === 'super_admin') {
-            alert("Seguridad: No se puede desactivar a un Super Admin.");
-            window.cargarUsuarios();
-            return;
-        }
-        if (currentUserData.rol === 'admin' && u.rol === 'admin') {
-            alert("Seguridad: No puedes desactivar a otro Administrador.");
-            window.cargarUsuarios();
-            return;
-        }
-    }
-    await updateDoc(doc(db, "usuarios", uid), { activo: nuevoEstado });
-    window.sysLog(`Usuario ${uid} estado: ${nuevoEstado}`, "info");
-};
-
-window.filtrarUsuarios = function() {
-    window.cargarUsuarios();
-};
-
-window.abrirModalUsuario = async function(id = null) {
-    userEditingId = id;
-    window.safeShow('modal-crear-usuario');
-    const sel = window.el('new-user-role');
-    sel.innerHTML = "";
-    let roles = ['albergue', 'sanitario', 'psicosocial', 'observador'];
-    if (currentUserData.rol === 'super_admin') {
-        roles = ['super_admin', 'admin', ...roles];
-    } else if (currentUserData.rol === 'admin') {
-        roles = ['albergue', 'sanitario', 'psicosocial', 'observador'];
-    }
-    roles.forEach(r => sel.add(new Option(r, r)));
-    window.el('new-user-active').checked = true;
-    window.el('new-user-active').disabled = false;
-    if (id) {
-        const s = await getDoc(doc(db, "usuarios", String(id)));
-        if (s.exists()) {
-            const d = s.data();
-            window.setVal('new-user-name', d.nombre);
-            window.setVal('new-user-email', d.email);
-            if (!roles.includes(d.rol)) {
-                const opt = new Option(d.rol, d.rol);
-                opt.disabled = true;
-                sel.add(opt);
-            }
-            sel.value = d.rol;
-            window.el('new-user-active').checked = (d.activo !== false);
-            if (d.rol === 'super_admin') window.el('new-user-active').disabled = true;
-            if (currentUserData.rol === 'super_admin') window.safeShow('btn-delete-user');
-            else window.safeHide('btn-delete-user');
-        }
-    } else {
-        window.setVal('new-user-name', "");
-        window.setVal('new-user-email', "");
-        window.safeHide('btn-delete-user');
-    }
-};
-
-window.guardarUsuario = async function() {
-    const e = window.safeVal('new-user-email'),
-          p = window.safeVal('new-user-pass'),
-          n = window.safeVal('new-user-name'),
-          r = window.safeVal('new-user-role');
-    let isActive = window.el('new-user-active').checked;
-    if (!e || !n) return alert("Faltan datos (Email/Nombre)");
-    if (r === 'super_admin' && !isActive) {
-        alert("Seguridad: Super Admin siempre activo.");
-        isActive = true;
-    }
-    try {
-        if (userEditingId) {
-            await updateDoc(doc(db, "usuarios", userEditingId), { nombre: n, rol: r, activo: isActive });
-        } else {
-            if (!p) return alert("Contraseña obligatoria para nuevo usuario");
-            const tApp = initializeApp(firebaseConfig, "Temp");
-            const tAuth = getAuth(tApp);
-            const uc = await createUserWithEmailAndPassword(tAuth, e, p);
-            await setDoc(doc(db, "usuarios", uc.user.uid), { email: e, nombre: n, rol: r, activo: isActive });
-            await signOut(tAuth);
-            deleteApp(tApp);
-        }
-        window.safeHide('modal-crear-usuario');
-        window.sysLog("Usuario guardado.", "success");
-    } catch (err) {
-        console.error(err);
-        if (err.code === 'auth/email-already-in-use') {
-            alert("ERROR: Correo ya registrado en sistema.\n\nSi borraste este usuario, dile que intente iniciar sesión con su contraseña antigua. El sistema restaurará su ficha automáticamente.");
-        } else {
-            alert("Error: " + err.message);
-        }
-        window.sysLog("Error guardar usuario: " + err.message, "error");
-    }
-};
-
-window.eliminarUsuario = async function() {
-    if (userEditingId && confirm("Borrar?")) {
-        await deleteDoc(doc(db, "usuarios", userEditingId));
-        window.safeHide('modal-crear-usuario');
-        window.sysLog("Usuario eliminado.", "warn");
-    }
-};
-
 // --- NAVEGACIÓN ---
 
 window.navegar = function(p) {
@@ -342,7 +230,6 @@ window.navegar = function(p) {
     ['screen-home','screen-usuarios','screen-gestion-albergues','screen-mantenimiento','screen-operativa','screen-observatorio', 'screen-intervencion'].forEach(id=>window.safeHide(id));
     if(!currentUserData) return;
     
-    // Reset Intervention view if navigating away
     if(p !== 'intervencion') {
         window.resetIntervencion();
         window.detenerEscaner(); 
@@ -628,7 +515,21 @@ window.cargarDatosYEntrar = async function(id) {
 };
 window.conectarListenersBackground = function(id) { if(unsubscribeAlbergueDoc) unsubscribeAlbergueDoc(); unsubscribeAlbergueDoc = onSnapshot(doc(db,"albergues",id), d=>{ if(d.exists()){ currentAlbergueData=d.data(); totalCapacidad=parseInt(currentAlbergueData.capacidad||0); window.actualizarContadores(); } }); };
 
-// --- BLOQUE RESTAURADO DE GESTION DE PERSONAS ---
+// --- NUEVA FUNCIÓN: VER CARNET QR (v1.2.0 - Deep Linking) ---
+window.verCarnetQR = function() {
+    if(!personaEnGestion) return;
+    window.safeShow('modal-carnet-qr');
+    const container = window.el('carnet-qrcode-display');
+    container.innerHTML = "";
+    const currentUrl = window.location.href.split('?')[0];
+    const deepLink = `${currentUrl}?action=scan&aid=${currentAlbergueId}&pid=${personaEnGestion.id}`;
+    new QRCode(container, { text: deepLink, width: 250, height: 250 });
+    const nombreCompleto = `${personaEnGestion.nombre} ${personaEnGestion.ap1 || ""} ${personaEnGestion.ap2 || ""}`;
+    window.el('carnet-nombre').innerText = nombreCompleto;
+    window.el('carnet-id').innerText = personaEnGestion.docNum || "ID: " + personaEnGestion.id.substring(0,8).toUpperCase();
+};
+
+// --- CORE BUSINESS LOGIC (RESTAURADA) ---
 window.setupAutoSave = function() {
     const inputsFil = ['edit-nombre','edit-ap1','edit-ap2','edit-doc-num','edit-tel','edit-fecha'];
     inputsFil.forEach(id => { const el = window.el(id); if(el && !el.dataset.hasAutosave) { el.addEventListener('blur', () => window.guardarCambiosPersona(true)); el.dataset.hasAutosave = "true"; if(id === 'edit-fecha') el.oninput = function() { window.formatearFecha(this); }; } });
@@ -733,11 +634,122 @@ window.desactivarUsuariosMasivo = async function() {
     } catch (e) { console.error(e); alert("Error: " + e.message); } finally { window.safeHide('loading-overlay'); }
 };
 
-window.publicoGuardarTodo=async function(){const d=window.getDatosFormulario('pub');if(!d.nombre)return alert("Falta nombre");if(!auth.currentUser){try{await signInAnonymously(auth);}catch(e){}}const b=writeBatch(db);const fid=new Date().getTime().toString();const tRef=doc(collection(db,"pool_prefiliacion"));b.set(tRef,{...d,familiaId:fid,rolFamilia:'TITULAR',estado:'espera',origenAlbergueId:currentAlbergueId,fechaRegistro:new Date()});const lRef=collection(db,"pool_prefiliacion",tRef.id,"historial");b.set(doc(lRef),{fecha:new Date(),usuario:"Auto-QR",accion:"Alta en Pool",detalle:`Desde QR Albergue ${currentAlbergueId}`});listaFamiliaresTemp.forEach(async f=>{const fRef=doc(collection(db,"pool_prefiliacion"));b.set(fRef,{...f,familiaId:fid,rolFamilia:'MIEMBRO',estado:'espera',origenAlbergueId:currentAlbergueId,fechaRegistro:new Date()});});await b.commit();window.safeHide('public-form-container');window.safeShow('public-success-msg');}
+// --- GESTIÓN DE USUARIOS (EL BLOQUE PERDIDO REINSERTADO) ---
+
+window.cambiarEstadoUsuarioDirecto = async function(uid, nuevoEstado) {
+    if (currentUserData.rol !== 'super_admin' && currentUserData.rol !== 'admin') {
+        alert("Sin permisos");
+        window.cargarUsuarios();
+        return;
+    }
+    const targetDoc = await getDoc(doc(db, "usuarios", uid));
+    if (targetDoc.exists()) {
+        const u = targetDoc.data();
+        if (u.rol === 'super_admin') {
+            alert("Seguridad: No se puede desactivar a un Super Admin.");
+            window.cargarUsuarios();
+            return;
+        }
+        if (currentUserData.rol === 'admin' && u.rol === 'admin') {
+            alert("Seguridad: No puedes desactivar a otro Administrador.");
+            window.cargarUsuarios();
+            return;
+        }
+    }
+    await updateDoc(doc(db, "usuarios", uid), { activo: nuevoEstado });
+    window.sysLog(`Usuario ${uid} estado: ${nuevoEstado}`, "info");
+};
+
+window.filtrarUsuarios = function() {
+    window.cargarUsuarios();
+};
+
+window.abrirModalUsuario = async function(id = null) {
+    userEditingId = id;
+    window.safeShow('modal-crear-usuario');
+    const sel = window.el('new-user-role');
+    sel.innerHTML = "";
+    let roles = ['albergue', 'sanitario', 'psicosocial', 'observador'];
+    if (currentUserData.rol === 'super_admin') {
+        roles = ['super_admin', 'admin', ...roles];
+    } else if (currentUserData.rol === 'admin') {
+        roles = ['albergue', 'sanitario', 'psicosocial', 'observador'];
+    }
+    roles.forEach(r => sel.add(new Option(r, r)));
+    window.el('new-user-active').checked = true;
+    window.el('new-user-active').disabled = false;
+    if (id) {
+        const s = await getDoc(doc(db, "usuarios", String(id)));
+        if (s.exists()) {
+            const d = s.data();
+            window.setVal('new-user-name', d.nombre);
+            window.setVal('new-user-email', d.email);
+            if (!roles.includes(d.rol)) {
+                const opt = new Option(d.rol, d.rol);
+                opt.disabled = true;
+                sel.add(opt);
+            }
+            sel.value = d.rol;
+            window.el('new-user-active').checked = (d.activo !== false);
+            if (d.rol === 'super_admin') window.el('new-user-active').disabled = true;
+            if (currentUserData.rol === 'super_admin') window.safeShow('btn-delete-user');
+            else window.safeHide('btn-delete-user');
+        }
+    } else {
+        window.setVal('new-user-name', "");
+        window.setVal('new-user-email', "");
+        window.safeHide('btn-delete-user');
+    }
+};
+
+window.guardarUsuario = async function() {
+    const e = window.safeVal('new-user-email'),
+          p = window.safeVal('new-user-pass'),
+          n = window.safeVal('new-user-name'),
+          r = window.safeVal('new-user-role');
+    let isActive = window.el('new-user-active').checked;
+    if (!e || !n) return alert("Faltan datos (Email/Nombre)");
+    if (r === 'super_admin' && !isActive) {
+        alert("Seguridad: Super Admin siempre activo.");
+        isActive = true;
+    }
+    try {
+        if (userEditingId) {
+            await updateDoc(doc(db, "usuarios", userEditingId), { nombre: n, rol: r, activo: isActive });
+        } else {
+            if (!p) return alert("Contraseña obligatoria para nuevo usuario");
+            const tApp = initializeApp(firebaseConfig, "Temp");
+            const tAuth = getAuth(tApp);
+            const uc = await createUserWithEmailAndPassword(tAuth, e, p);
+            await setDoc(doc(db, "usuarios", uc.user.uid), { email: e, nombre: n, rol: r, activo: isActive });
+            await signOut(tAuth);
+            deleteApp(tApp);
+        }
+        window.safeHide('modal-crear-usuario');
+        window.sysLog("Usuario guardado.", "success");
+    } catch (err) {
+        console.error(err);
+        if (err.code === 'auth/email-already-in-use') {
+            alert("ERROR: Correo ya registrado en sistema.\n\nSi borraste este usuario, dile que intente iniciar sesión con su contraseña antigua. El sistema restaurará su ficha automáticamente.");
+        } else {
+            alert("Error: " + err.message);
+        }
+        window.sysLog("Error guardar usuario: " + err.message, "error");
+    }
+};
+
+window.eliminarUsuario = async function() {
+    if (userEditingId && confirm("Borrar?")) {
+        await deleteDoc(doc(db, "usuarios", userEditingId));
+        window.safeHide('modal-crear-usuario');
+        window.sysLog("Usuario eliminado.", "warn");
+    }
+};
 
 window.abrirModalQR=function(){window.safeShow('modal-qr');const d=window.el("qrcode-display");d.innerHTML="";new QRCode(d,{text:window.location.href.split('?')[0]+`?public_id=${currentAlbergueId}`,width:250,height:250});};
 window.toggleStartButton=function(){window.el('btn-start-public').disabled=!window.el('check-consent').checked;};
 window.iniciarRegistro=function(){window.safeHide('public-welcome-screen');window.safeShow('public-form-container');};
+window.publicoGuardarTodo=async function(){const d=window.getDatosFormulario('pub');if(!d.nombre)return alert("Falta nombre");if(!auth.currentUser){try{await signInAnonymously(auth);}catch(e){}}const b=writeBatch(db);const fid=new Date().getTime().toString();const tRef=doc(collection(db,"pool_prefiliacion"));b.set(tRef,{...d,familiaId:fid,rolFamilia:'TITULAR',estado:'espera',origenAlbergueId:currentAlbergueId,fechaRegistro:new Date()});const lRef=collection(db,"pool_prefiliacion",tRef.id,"historial");b.set(doc(lRef),{fecha:new Date(),usuario:"Auto-QR",accion:"Alta en Pool",detalle:`Desde QR Albergue ${currentAlbergueId}`});listaFamiliaresTemp.forEach(async f=>{const fRef=doc(collection(db,"pool_prefiliacion"));b.set(fRef,{...f,familiaId:fid,rolFamilia:'MIEMBRO',estado:'espera',origenAlbergueId:currentAlbergueId,fechaRegistro:new Date()});});await b.commit();window.safeHide('public-form-container');window.safeShow('public-success-msg');}
 
 // --- INIT (NO HOISTING NEEDED, RUNS LAST) ---
 window.onload = () => {

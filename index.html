@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gestión Albergue - Ver.1.2.2</title>
+    <title>Gestión Albergue - Ver.1.3.0</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -12,7 +12,7 @@
 </head>
 <body>
 
-    <div class="version-tag">Ver.1.2.2</div>
+    <div class="version-tag">Ver.1.3.0</div>
     <div id="toast">Guardado automático</div>
     <div id="loading-overlay" class="hidden"><div class="spinner"></div><h2 style="color:var(--primary);">Cargando Datos...</h2></div>
 
@@ -70,31 +70,29 @@
                 <div class="card" style="text-align:center; min-height: 60vh; display:flex; flex-direction:column; justify-content:flex-start; align-items:center;">
                     
                     <div id="view-scan-ready" style="margin-top: 20px; width: 100%; display:flex; flex-direction:column; align-items:center;">
-                        
                         <div id="reader" class="hidden"></div>
-
                         <div id="scan-placeholder">
                             <i class="fa-solid fa-qrcode" style="font-size: 5rem; color: var(--text-light); margin-bottom: 20px;"></i>
                             <h2 style="margin-bottom: 10px;">Escáner de Intervención</h2>
                             <p style="color: #666; margin-bottom: 30px;">Escanea el carnet para registrar acciones.</p>
                         </div>
-                        
                         <button id="btn-start-camera" class="primary" style="padding: 15px 30px; font-size: 1.2rem;" onclick="window.iniciarEscanerReal()">
                             <i class="fa-solid fa-camera"></i> Activar Cámara
                         </button>
-
                         <button id="btn-stop-camera" class="danger hidden" style="padding: 10px 20px; margin-top:10px;" onclick="window.detenerEscaner()">
                             Detener Cámara
                         </button>
                     </div>
 
                     <div id="view-scan-result" class="hidden" style="width:100%;">
-                        
                         <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px; text-align:left; border-bottom:1px solid #eee; padding-bottom:15px;">
                             <div>
                                 <h2 id="interv-nombre" style="color:var(--primary); margin:0;">Nombre Apellido</h2>
                                 <p id="interv-doc" style="font-weight:bold; color:#666; margin:5px 0;">DNI: ...</p>
-                                <span class="badge badge-active" id="interv-estado">ESTADO</span>
+                                <div style="display:flex; gap:5px;">
+                                    <span class="badge badge-active" id="interv-estado">ESTADO</span>
+                                    <span class="badge" id="interv-presencia" style="background:#e2e8f0; color:#334155;">...</span>
+                                </div>
                             </div>
                             <button class="secondary" style="padding:8px 15px;" onclick="window.resetIntervencion()">X</button>
                         </div>
@@ -129,7 +127,6 @@
                             </button>
                         </div>
                     </div>
-
                 </div>
             </div>
 

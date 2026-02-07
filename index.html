@@ -3,15 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gestión Albergue - Ver.1.2.0</title>
+    <title>Gestión Albergue - Ver.1.2.1</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 </head>
 <body>
 
-    <div class="version-tag">Ver.1.2.0</div>
+    <div class="version-tag">Ver.1.2.1</div>
     <div id="toast">Guardado automático</div>
     <div id="loading-overlay" class="hidden"><div class="spinner"></div><h2 style="color:var(--primary);">Cargando Datos...</h2></div>
 
@@ -68,11 +69,23 @@
             <div id="screen-intervencion" class="hidden">
                 <div class="card" style="text-align:center; min-height: 60vh; display:flex; flex-direction:column; justify-content:flex-start; align-items:center;">
                     
-                    <div id="view-scan-ready" style="margin-top: 50px;">
-                        <i class="fa-solid fa-qrcode" style="font-size: 5rem; color: var(--text-light); margin-bottom: 20px;"></i>
-                        <h2 style="margin-bottom: 10px;">Escáner de Intervención</h2>
-                        <p style="color: #666; margin-bottom: 30px;">Escanea el carnet de un usuario para registrar movimientos o derivaciones.</p>
-                        <button class="primary" style="padding: 15px 30px; font-size: 1.2rem;" onclick="window.simularLecturaQR()">📷 Activar Cámara (Simulado)</button>
+                    <div id="view-scan-ready" style="margin-top: 20px; width: 100%; display:flex; flex-direction:column; align-items:center;">
+                        
+                        <div id="reader" style="width: 100%; max-width: 500px; border-radius: 12px; overflow: hidden; margin-bottom: 20px; display:none;"></div>
+
+                        <div id="scan-placeholder">
+                            <i class="fa-solid fa-qrcode" style="font-size: 5rem; color: var(--text-light); margin-bottom: 20px;"></i>
+                            <h2 style="margin-bottom: 10px;">Escáner de Intervención</h2>
+                            <p style="color: #666; margin-bottom: 30px;">Escanea el carnet para registrar acciones.</p>
+                        </div>
+                        
+                        <button id="btn-start-camera" class="primary" style="padding: 15px 30px; font-size: 1.2rem;" onclick="window.iniciarEscanerReal()">
+                            <i class="fa-solid fa-camera"></i> Activar Cámara
+                        </button>
+
+                        <button id="btn-stop-camera" class="danger hidden" style="padding: 10px 20px; margin-top:10px;" onclick="window.detenerEscaner()">
+                            Detener Cámara
+                        </button>
                     </div>
 
                     <div id="view-scan-result" class="hidden" style="width:100%;">
@@ -115,8 +128,8 @@
                                 <i class="fa-solid fa-right-from-bracket"></i> Salir al Menú Principal
                             </button>
                         </div>
-
                     </div>
+
                 </div>
             </div>
 

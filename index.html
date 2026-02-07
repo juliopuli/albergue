@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gestión Albergue - Ver.1.5.7</title>
+    <title>Gestión Albergue - Ver.2.0.0</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -12,7 +12,7 @@
 </head>
 <body>
 
-    <div class="version-tag">Ver.1.5.7</div>
+    <div class="version-tag">Ver.2.0.0</div>
     
     <div id="toast" style="visibility: hidden;">Guardado automático</div>
     <div id="loading-overlay" class="hidden"><div class="spinner"></div><h2 style="color:var(--primary);">Cargando Datos...</h2></div>
@@ -182,6 +182,7 @@
                             <button id="btn-tab-fil" class="tab-btn tab-btn-fil active" onclick="window.cambiarPestana('filiacion')">📁 Filiación / Ingreso</button>
                             <button id="btn-tab-san" class="tab-btn tab-btn-san" onclick="window.cambiarPestana('sanitaria')"><i class="fa-solid fa-notes-medical"></i> Sanitaria</button>
                             <button id="btn-tab-psi" class="tab-btn tab-btn-psi" onclick="window.cambiarPestana('psicosocial')"><i class="fa-solid fa-users-rays"></i> Psicosocial</button>
+                            <button id="btn-tab-ent" class="tab-btn tab-btn-ent" onclick="window.cambiarPestana('entregas')"><i class="fa-solid fa-box-open"></i> Entregas</button>
                         </div>
                     </div>
                     <div style="margin-top:25px;">
@@ -220,6 +221,7 @@
                                 <button class="secondary" style="margin-top:10px;" onclick="window.abrirModalVincularFamilia()">Vincular a otra familia</button>
                             </div>
                         </div>
+
                         <div id="tab-prefiliacion" class="tab-content hidden">
                             <div class="module-box module-pref">
                                 <h3><i class="fa-solid fa-cloud"></i> Monitor Nube Global</h3>
@@ -242,8 +244,76 @@
                                 </div>
                             </div>
                         </div>
-                        <div id="tab-sanitaria" class="tab-content hidden"><div class="module-box module-san"><h3><i class="fa-solid fa-notes-medical"></i> Atención Sanitaria</h3><div class="row"><input type="text" placeholder="🔍 Buscar paciente..." style="background:white;"></div><p style="color:#881337; margin-top:10px;">Módulo de gestión médica en construcción.</p></div></div>
-                        <div id="tab-psicosocial" class="tab-content hidden"><div class="module-box module-psi"><h3><i class="fa-solid fa-users-rays"></i> Atención Psicosocial</h3><div class="row"><input type="text" placeholder="🔍 Buscar usuario..." style="background:white;"></div><p style="color:#5b21b6; margin-top:10px;">Módulo de intervención social en construcción.</p></div></div>
+
+                        <div id="tab-sanitaria" class="tab-content hidden">
+                            <div class="module-box module-san">
+                                <h3><i class="fa-solid fa-notes-medical"></i> Atención Sanitaria</h3>
+                                <div style="position:relative;">
+                                    <input type="text" id="search-san" placeholder="🔍 Buscar paciente..." onkeyup="window.buscarParaIntervencion('san')">
+                                    <div id="res-san" class="search-results hidden"></div>
+                                </div>
+                                
+                                <div id="form-int-san" class="hidden inter-form">
+                                    <h4 class="int-header"><span id="name-int-san">Paciente</span></h4>
+                                    <label>Tipo de Intervención</label>
+                                    <select id="sel-int-san"></select>
+                                    <label>Detalles / Comentarios</label>
+                                    <textarea id="det-int-san" rows="3" placeholder="Descripción..."></textarea>
+                                    <div class="btn-row">
+                                        <button class="secondary" onclick="window.cerrarFormularioIntervencion('san')">Cancelar</button>
+                                        <button class="success" onclick="window.registrarIntervencion('san')">Registrar</button>
+                                        <button class="dark" onclick="window.verHistorialIntervencion('san')">📜 Ver Historial</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="tab-psicosocial" class="tab-content hidden">
+                            <div class="module-box module-psi">
+                                <h3><i class="fa-solid fa-users-rays"></i> Atención Psicosocial</h3>
+                                <div style="position:relative;">
+                                    <input type="text" id="search-psi" placeholder="🔍 Buscar usuario..." onkeyup="window.buscarParaIntervencion('psi')">
+                                    <div id="res-psi" class="search-results hidden"></div>
+                                </div>
+
+                                <div id="form-int-psi" class="hidden inter-form">
+                                    <h4 class="int-header"><span id="name-int-psi">Usuario</span></h4>
+                                    <label>Tipo de Intervención</label>
+                                    <select id="sel-int-psi"></select>
+                                    <label>Detalles / Observaciones</label>
+                                    <textarea id="det-int-psi" rows="3" placeholder="Descripción..."></textarea>
+                                    <div class="btn-row">
+                                        <button class="secondary" onclick="window.cerrarFormularioIntervencion('psi')">Cancelar</button>
+                                        <button class="success" onclick="window.registrarIntervencion('psi')">Registrar</button>
+                                        <button class="dark" onclick="window.verHistorialIntervencion('psi')">📜 Ver Historial</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="tab-entregas" class="tab-content hidden">
+                            <div class="module-box module-ent">
+                                <h3><i class="fa-solid fa-box-open"></i> Entregas / Logística</h3>
+                                <div style="position:relative;">
+                                    <input type="text" id="search-ent" placeholder="🔍 Buscar persona..." onkeyup="window.buscarParaIntervencion('ent')">
+                                    <div id="res-ent" class="search-results hidden"></div>
+                                </div>
+
+                                <div id="form-int-ent" class="hidden inter-form">
+                                    <h4 class="int-header"><span id="name-int-ent">Persona</span></h4>
+                                    <label>Material Entregado</label>
+                                    <select id="sel-int-ent"></select>
+                                    <label>Comentarios</label>
+                                    <textarea id="det-int-ent" rows="3" placeholder="Cantidad, talla, notas..."></textarea>
+                                    <div class="btn-row">
+                                        <button class="secondary" onclick="window.cerrarFormularioIntervencion('ent')">Cancelar</button>
+                                        <button class="success" onclick="window.registrarIntervencion('ent')">Registrar</button>
+                                        <button class="dark" onclick="window.verHistorialIntervencion('ent')">📜 Ver Historial</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -295,12 +365,15 @@
         </div>
     </div>
     <div id="modal-change-pass" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><span class="close-modal" onclick="document.getElementById('modal-change-pass').classList.add('hidden')">&times;</span><h3>Cambiar Contraseña</h3><label>Contraseña Actual</label><input type="password" id="chg-old-pass"><label>Nueva Contraseña</label><input type="password" id="chg-new-pass"><label>Confirmar Nueva</label><input type="password" id="chg-confirm-pass"><div class="btn-row"><button class="primary" onclick="window.ejecutarCambioPass()">Actualizar</button></div></div></div>
+    
     <div id="modal-historial" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
         <div class="modal-content">
             <span class="close-modal" onclick="document.getElementById('modal-historial').classList.add('hidden')">&times;</span>
-            <h3 id="hist-modal-header">Historial de Movimientos</h3> <div id="historial-content" style="max-height:60vh; overflow-y:auto; margin-top:15px;"></div>
+            <h3 id="hist-modal-header">Historial de Movimientos</h3> 
+            <div id="historial-content" style="max-height:60vh; overflow-y:auto; margin-top:15px;"></div>
         </div>
     </div>
+    
     <div id="modal-add-familiar" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><span class="close-modal" onclick="window.cerrarModalFamiliar()">&times;</span><h3>Familiar (QR)</h3><div class="row"><div class="col"><label>Nombre</label><input type="text" id="fam-nombre"></div></div><div class="row"><div class="col"><label>Ap 1</label><input type="text" id="fam-ap1"></div><div class="col"><label>Ap 2</label><input type="text" id="fam-ap2"></div></div><div class="row"><div class="col"><label>Doc</label><select id="fam-tipo-doc" onchange="window.verificarMenor('fam')"><option value="MENOR">MENOR</option><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option></select></div><div class="col"><label>Num</label><input type="text" id="fam-doc-num" disabled></div></div><div class="row"><div class="col"><label>F. Nac</label><input type="tel" id="fam-fecha" oninput="window.formatearFecha(this)" maxlength="10"></div></div><div class="btn-row"><button class="primary" onclick="window.guardarFamiliarEnLista()">Añadir</button></div></div></div>
     <div id="modal-admin-add-familiar" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><span class="close-modal" onclick="window.cerrarModalFamiliarAdmin()">&times;</span><h3>Miembro (Admin)</h3><div class="row"><div class="col"><label>Nombre</label><input type="text" id="adm-fam-nombre"></div><div class="col"><label>Ap 1</label><input type="text" id="adm-fam-ap1"></div><div class="col"><label>Ap 2</label><input type="text" id="adm-fam-ap2"></div></div><div class="row"><div class="col"><label>Doc</label><select id="adm-fam-tipo-doc" onchange="window.verificarMenor('adm-fam')"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Num</label><input type="text" id="adm-fam-doc-num"></div></div><div class="row"><div class="col"><label>F. Nac</label><input type="tel" id="adm-fam-fecha" oninput="window.formatearFecha(this)" maxlength="10"></div><div class="col"><label>Tel</label><input type="tel" id="adm-fam-tel"></div></div><div class="btn-row"><button class="primary" onclick="window.guardarFamiliarAdmin()">Añadir</button></div></div></div>
     <div id="modal-obs-detalle" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content modal-lg"><span class="close-modal" onclick="document.getElementById('modal-obs-detalle').classList.add('hidden')">&times;</span><h3 id="obs-modal-title">Listado</h3><div id="obs-modal-content" style="margin-top:20px;"></div></div></div>

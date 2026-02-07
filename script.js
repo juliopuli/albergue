@@ -40,7 +40,7 @@ window.toggleCajaNegra = function() {
 };
 window.limpiarCajaNegra = function() { const c = document.getElementById('black-box-content'); if (c) c.innerHTML = ""; };
 
-window.sysLog("Sistema Iniciado. Versión 1.2.1 (Real Camera)", "info");
+window.sysLog("Sistema Iniciado. Versión 1.2.2 (Camera Fix)", "info");
 
 // --- 2. GLOBALES ---
 let isPublicMode = false;
@@ -117,7 +117,7 @@ window.navegar = function(p) {
     // Reset Intervention view when navigating away
     if(p !== 'intervencion') {
         window.resetIntervencion();
-        window.detenerEscaner(); // Ensure camera is off
+        window.detenerEscaner(); 
     }
 
     if(p==='home') window.safeShow('screen-home');
@@ -169,79 +169,88 @@ window.configurarDashboard = function() {
     window.safeAddActive('nav-home');
 };
 
-// --- LOGICA DE INTERVENCIÓN (SCANNER REAL v1.2.1) ---
+// --- LOGICA DE INTERVENCIÓN (SCANNER REAL v1.2.2) ---
 
 window.iniciarEscanerReal = function() {
-    // 1. Ocultar placeholder y botón
+    // 1. Limpieza de seguridad
+    window.detenerEscaner();
+
+    // 2. Ocultar placeholder
     window.safeHide('scan-placeholder');
     window.safeHide('btn-start-camera');
     
-    // 2. Mostrar contenedor de video
+    // 3. Mostrar contenedor de video
     window.safeShow('reader');
     window.safeShow('btn-stop-camera');
 
-    // 3. Iniciar librería
-    if (!html5QrCode) {
-        html5QrCode = new Html5Qrcode("reader");
-    }
+    // 4. Iniciar con delay para asegurar DOM
+    setTimeout(() => {
+        if (!html5QrCode) {
+            html5QrCode = new Html5Qrcode("reader");
+        }
 
-    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-    
-    html5QrCode.start(
-        { facingMode: "environment" }, // Back camera
-        config,
-        window.onScanSuccess,
-        (errorMessage) => { /* ignore per-frame errors */ }
-    ).catch(err => {
-        window.sysLog(`Error cámara: ${err}`, "error");
-        alert("Error al iniciar cámara. Asegúrate de dar permisos.");
-        window.detenerEscaner();
-    });
+        const config = { 
+            fps: 10, 
+            qrbox: { width: 250, height: 250 },
+            aspectRatio: 1.0 
+        };
+        
+        html5QrCode.start(
+            { facingMode: "environment" },
+            config,
+            window.onScanSuccess,
+            (errorMessage) => { /* ignore per-frame errors */ }
+        ).catch(err => {
+            console.warn(err);
+            window.sysLog(`Error cámara: ${err}`, "error");
+            alert("Error al iniciar cámara. Comprueba permisos y HTTPS.");
+            window.detenerEscaner();
+        });
+    }, 300);
 };
 
 window.detenerEscaner = function() {
     if (html5QrCode && html5QrCode.isScanning) {
         html5QrCode.stop().then(() => {
             window.sysLog("Cámara detenida.", "info");
-            window.safeHide('reader');
-            window.safeHide('btn-stop-camera');
-            window.safeShow('scan-placeholder');
-            window.safeShow('btn-start-camera');
-        }).catch(err => console.error(err));
+            html5QrCode.clear();
+        }).catch(err => console.error(err))
+          .finally(() => {
+             resetScannerUI();
+          });
     } else {
-        // Just UI reset if not scanning
-        window.safeHide('reader');
-        window.safeHide('btn-stop-camera');
-        window.safeShow('scan-placeholder');
-        window.safeShow('btn-start-camera');
+        resetScannerUI();
     }
 };
 
+function resetScannerUI() {
+    window.safeHide('reader');
+    window.safeHide('btn-stop-camera');
+    window.safeShow('scan-placeholder');
+    window.safeShow('btn-start-camera');
+}
+
 // CALLBACK: Cuando lee un QR válido
 window.onScanSuccess = function(decodedText, decodedResult) {
-    // Stop scanning immediately
     if(html5QrCode) html5QrCode.stop().then(() => {
         window.sysLog(`QR Leído: ${decodedText}`, "success");
-        // Parse URL parameters
+        html5QrCode.clear(); 
+        resetScannerUI();
+
         try {
             const url = new URL(decodedText);
             const aid = url.searchParams.get("aid");
             const pid = url.searchParams.get("pid");
             
-            if(!aid || !pid) throw new Error("QR inválido (faltan datos)");
+            if(!aid || !pid) throw new Error("QR inválido");
 
-            // If we are logged in normally (not deep link mode yet), verify albergue
             if(currentAlbergueId && aid !== currentAlbergueId) {
-                alert(`⚠️ Este QR pertenece a otro albergue (ID: ${aid}). Estás trabajando en: ${currentAlbergueId}`);
-                window.detenerEscaner(); // Reset UI
+                alert(`⚠️ Este QR es de otro albergue (ID: ${aid}).`);
                 return;
             }
             
-            // If not in an albergue (e.g. Home), set context (or warn)
             if(!currentAlbergueId) {
-                 // For now, let's auto-switch context if user has access (future improvement)
-                 alert("Primero debes entrar en la gestión de un albergue.");
-                 window.detenerEscaner();
+                 alert("Primero entra en la gestión de un albergue.");
                  return;
             }
 
@@ -249,19 +258,16 @@ window.onScanSuccess = function(decodedText, decodedResult) {
 
         } catch (e) {
             alert("QR no válido o formato incorrecto.");
-            window.detenerEscaner();
         }
     });
 };
 
 window.procesarLecturaPersona = function(pid) {
-    // Search in local cache (Snapshot must be active)
     const targetPerson = listaPersonasCache.find(p => p.id === pid);
     if(targetPerson) {
         window.cargarInterfazIntervencion(targetPerson);
     } else {
         alert("Persona no encontrada en este albergue.");
-        window.detenerEscaner();
     }
 };
 
@@ -269,7 +275,7 @@ window.cargarInterfazIntervencion = function(persona) {
     if(!persona) return;
     personaEnGestion = persona; 
     
-    // Ocultar "Ready" (Scanner UI)
+    // Ocultar "Ready"
     window.safeHide('view-scan-ready');
     window.safeHide('reader');
     window.safeHide('btn-stop-camera');
@@ -289,12 +295,7 @@ window.resetIntervencion = function() {
     
     // Back to Scanner Ready state
     window.safeShow('view-scan-ready');
-    window.safeShow('scan-placeholder');
-    window.safeShow('btn-start-camera');
-    
-    // Auto-restart camera? Optional. Let's let user click for now to save battery.
-    // Or call window.iniciarEscanerReal() if you want continuous flow.
-    // As per request "botón funcional de activar la camara", we reset to button state.
+    resetScannerUI();
 };
 
 window.salirModoFocalizado = function() {
@@ -340,11 +341,9 @@ window.iniciarModoFocalizado = async function(aid, pid) {
 window.registrarMovimiento = async function(tipo) {
     if(!personaEnGestion || !currentAlbergueId) return;
     
-    // Aquí implementaremos la lógica real (escribir en historial)
     await window.registrarLog(personaEnGestion.id, "Movimiento", tipo.toUpperCase());
     window.sysLog(`Movimiento: ${tipo} para ${personaEnGestion.nombre}`, "info");
     
-    // Feedback visual y RESET
     window.showToast(`✅ ${tipo.toUpperCase()} Registrada`);
     window.resetIntervencion();
 };

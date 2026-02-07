@@ -14,7 +14,7 @@ const firebaseConfig = {
 };
 const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db = getFirestore(app);
 
-// --- TIPOS DE INTERVENCIÓN (CONFIGURABLE) ---
+// --- TIPOS DE INTERVENCIÓN ---
 const TIPOS_INTERVENCION = {
     san: {
         titulo: "Sanitaria",
@@ -85,7 +85,7 @@ window.toggleCajaNegra = function() {
 };
 window.limpiarCajaNegra = function() { const c = document.getElementById('black-box-content'); if (c) c.innerHTML = ""; };
 
-window.sysLog("Sistema Iniciado. Versión 2.0.0 (Interventions)", "info");
+window.sysLog("Sistema Iniciado. Versión 2.0.1 (Fix Intervenciones)", "info");
 
 // --- GLOBALES ---
 let isPublicMode = false;
@@ -116,7 +116,7 @@ let isGlobalEdit = false;
 let savingLock = false;
 let tipoDerivacionActual = null; 
 let html5QrCode = null;
-let personaIntervencionActiva = null; // Para saber a quién estamos interviniendo
+let personaIntervencionActiva = null; 
 
 // --- DOM HELPERS ---
 window.el = function(id) { return document.getElementById(id); };
@@ -201,7 +201,7 @@ window.cargarAlberguesActivos = function() {
 };
 window.cargarAlberguesMantenimiento = function() { const c = window.el('mto-container'); const r = (currentUserData.rol || "").toLowerCase().trim(); const isSuper = (r === 'super_admin' || r === 'admin'); if(unsubscribeAlberguesMto) unsubscribeAlberguesMto(); unsubscribeAlberguesMto = onSnapshot(query(collection(db,"albergues")), s => { c.innerHTML = "<div class='mto-card add-new' onclick='window.abrirModalAlbergue()'><h3>+</h3></div>"; s.forEach(d => { const a = d.data(); let extraBtn = isSuper ? `<button class="warning" onclick="window.cambiarEstadoAlbergue('${d.id}', ${!a.activo})">${a.activo === false ? 'Activar' : 'Archivar'}</button>` : ""; c.innerHTML += `<div class="mto-card ${!a.activo ? 'archived' : ''}"><h3>${a.nombre}</h3><p>Cap: ${a.capacidad}</p><div class="btn-group-horizontal"><button class="secondary" onclick="window.abrirModalAlbergue('${d.id}')">Editar</button>${extraBtn}</div></div>`; }); }); };
 window.cargarObservatorio = async function() { const list = window.el('obs-list-container'); if(!list) return; list.innerHTML = '<div style="text-align:center; padding:20px;"><div class="spinner"></div></div>'; window.el('kpi-espera').innerText = "-"; window.el('kpi-alojados').innerText = "-"; window.el('kpi-libres').innerText = "-"; window.el('kpi-percent').innerText = "-%"; try { let totalEspera = 0, totalAlojados = 0, totalCapacidadGlobal = 0, htmlList = ""; const alberguesSnap = await getDocs(query(collection(db, "albergues"), where("activo", "==", true))); const promesas = alberguesSnap.docs.map(async (docAlb) => { const dataAlb = docAlb.data(); const cap = parseInt(dataAlb.capacidad || 0); const esperaSnap = await getDocs(query(collection(db, "pool_prefiliacion"), where("origenAlbergueId", "==", docAlb.id), where("estado", "==", "espera"))); const w = esperaSnap.size; const alojadosSnap = await getDocs(query(collection(db, "albergues", docAlb.id, "personas"), where("estado", "==", "ingresado"))); const h = alojadosSnap.size; return { id: docAlb.id, nombre: dataAlb.nombre, capacidad: cap, espera: w, alojados: h }; }); const resultados = await Promise.all(promesas); resultados.forEach(res => { totalEspera += res.espera; totalAlojados += res.alojados; totalCapacidadGlobal += res.capacidad; const libres = Math.max(0, res.capacidad - res.alojados); const porcentaje = res.capacidad > 0 ? Math.round((res.alojados / res.capacidad) * 100) : 0; let barClass = "low"; if(porcentaje > 50) barClass = "med"; if(porcentaje > 85) barClass = "high"; htmlList += `<div class="obs-row"><div class="obs-row-title">${res.nombre}</div><div class="obs-stats-group"><div class="obs-mini-stat"><span>Espera</span><strong class="obs-clickable" onclick="window.verListaObservatorio('${res.id}', 'espera')">${res.espera}</strong></div><div class="obs-mini-stat"><span>Alojados</span><strong class="obs-clickable" onclick="window.verListaObservatorio('${res.id}', 'alojados')">${res.alojados}</strong></div><div class="obs-mini-stat"><span>Ocupación</span><strong>${res.alojados} / ${res.capacidad}</strong></div><div class="obs-mini-stat"><span>Libres</span><strong>${libres}</strong></div></div><div class="prog-container"><div class="prog-track"><div class="prog-fill ${barClass}" style="width: ${porcentaje}%"></div></div></div></div>`; }); const globalLibres = Math.max(0, totalCapacidadGlobal - totalAlojados); const globalPercent = totalCapacidadGlobal > 0 ? Math.round((totalAlojados / totalCapacidadGlobal) * 100) : 0; window.el('kpi-espera').innerText = totalEspera; window.el('kpi-alojados').innerText = totalAlojados; window.el('kpi-libres').innerText = globalLibres; window.el('kpi-percent').innerText = `${globalPercent}%`; list.innerHTML = htmlList; } catch(e) { window.sysLog("Error obs: " + e.message, "error"); list.innerHTML = "<p>Error cargando datos.</p>"; } };
-window.verListaObservatorio = async function(albId, tipo) { const c = window.el('obs-modal-content'); const t = window.el('obs-modal-title'); c.innerHTML = '<div style="text-align:center;"><div class="spinner"></div></div>'; t.innerText = tipo === 'espera' ? 'Personas en Espera' : 'Personas Alojadas'; window.safeShow('modal-obs-detalle'); try { let q; let isGlobal = false; if (tipo === 'espera') { q = query(collection(db, "pool_prefiliacion"), where("origenAlbergueId", "==", albId), where("estado", "==", "espera")); isGlobal = true; } else { q = query(collection(db, "albergues", albId, "personas"), where("estado", "==", "ingresado")); } const snap = await getDocs(q); if (snap.empty) { c.innerHTML = '<p>Sin registros.</p>'; return; } let data = []; snap.forEach(d => data.push({ id: d.id, ...d.data() })); if (tipo === 'espera') { data.sort((a, b) => (b.fechaRegistro?.seconds || 0) - (a.fechaRegistro?.seconds || 0)); } else { data.sort((a, b) => { if (!a.cama && !b.cama) return 0; if (!a.cama) return -1; if (!b.cama) return 1; return parseInt(a.cama) - parseInt(b.cama); }); } let h = `<table class="fam-table"><thead><tr><th style="width:40px;"></th>`; if(tipo === 'alojados') h += `<th>Cama</th>`; h += `<th>Nombre</th><th>DNI</th><th>Tel</th></tr></thead><tbody>`; data.forEach(d => { const histBtn = `<button class="btn-icon-small" onclick="window.verHistorial('${d.id}', ${isGlobal}, '${albId}')"><i class="fa-solid fa-clock-rotate-left"></i></button>`; h += `<tr><td style="text-align:center;">${histBtn}</td>`; if(tipo === 'alojados') h += `<td><strong>${d.cama || '-'}</strong></td>`; h += `<td>${d.nombre} ${d.ap1||''}</td><td>${d.docNum||'-'}</td><td>${d.telefono||'-'}</td></tr>`; }); h += '</tbody></table>'; c.innerHTML = h; } catch (e) { window.sysLog("Error list: " + e.message, "error"); c.innerHTML = "<p>Error al cargar lista.</p>"; } };
+window.verListaObservatorio = async function(albId, tipo) { const c = window.el('obs-modal-content'); const t = window.el('obs-modal-title'); c.innerHTML = '<div style="text-align:center;"><div class="spinner"></div></div>'; t.innerText = tipo === 'espera' ? 'Personas en Espera' : 'Personas Alojadas'; window.safeShow('modal-obs-detalle'); try { let q; let isGlobal = false; if (tipo === 'espera') { q = query(collection(db, "pool_prefiliacion"), where("origenAlbergueId", "==", albId), where("estado", "==", "espera")); isGlobal = true; } else { q = query(collection(db, "albergues", albId, "personas"), where("estado", "==", "ingresado")); } const snap = await getDocs(q); if (snap.empty) { c.innerHTML = '<p>Sin registros.</p>'; return; } let data = []; snap.forEach(d => data.push({ id: d.id, ...d.data() })); if (tipo === 'espera') { data.sort((a, b) => (b.fechaRegistro?.seconds || 0) - (a.fechaRegistro?.seconds || 0)); } else { data.sort((a, b) => { if (!a.cama && !b.cama) return 0; if (!a.cama) return -1; if (!b.cama) return 1; return parseInt(a.cama) - parseInt(b.cama); }); } let h = `<table class="fam-table"><thead><tr><th style="width:40px;"></th>`; if(tipo === 'alojados') h += `<th>Cama</th>`; h += `<th>Nombre</th><th>DNI</th><th>Tel</th></tr></thead><tbody>`; data.forEach(d => { const histBtn = `<button class="btn-icon-small" onclick="window.verHistorialObservatorio('${d.id}', ${isGlobal}, '${albId}')"><i class="fa-solid fa-clock-rotate-left"></i></button>`; h += `<tr><td style="text-align:center;">${histBtn}</td>`; if(tipo === 'alojados') h += `<td><strong>${d.cama || '-'}</strong></td>`; h += `<td>${d.nombre} ${d.ap1||''}</td><td>${d.docNum||'-'}</td><td>${d.telefono||'-'}</td></tr>`; }); h += '</tbody></table>'; c.innerHTML = h; } catch (e) { window.sysLog("Error list: " + e.message, "error"); c.innerHTML = "<p>Error al cargar lista.</p>"; } };
 window.verHistorialObservatorio = function(pId, isGlobal, albId){ window.verHistorial(pId, isGlobal, albId); };
 window.cargarUsuarios = function() { const c = window.el('lista-usuarios-container'); const filterText = window.safeVal('search-user').toLowerCase().trim(); unsubscribeUsers = onSnapshot(query(collection(db,"usuarios")), s => { c.innerHTML = ""; if(s.empty) { c.innerHTML="<p>No hay usuarios.</p>"; return; } s.forEach(d => { const u = d.data(); if(filterText && !u.nombre.toLowerCase().includes(filterText) && !u.email.toLowerCase().includes(filterText)) return; if(currentUserData.rol === 'admin' && u.rol === 'super_admin') return; const isSuper = (u.rol === 'super_admin'); const inactiveClass = (u.activo === false) ? 'inactive' : 'active'; const disabledAttr = isSuper ? 'disabled title="Super Admin no se puede desactivar"' : ''; c.innerHTML += ` <div class="user-card-item ${inactiveClass}" onclick="window.abrirModalUsuario('${d.id}')"> <div style="display:flex; justify-content:space-between; align-items:center; width:100%;"> <div><strong>${u.nombre}</strong><br><small class="role-badge role-${u.rol}">${u.rol}</small></div> <div onclick="event.stopPropagation()"> <label class="toggle-switch small"> <input type="checkbox" class="toggle-input" onchange="window.cambiarEstadoUsuarioDirecto('${d.id}', this.checked)" ${u.activo!==false?'checked':''} ${disabledAttr}> <span class="toggle-slider"></span> </label> </div> </div> </div>`; }); }); };
 
@@ -307,7 +307,81 @@ window.cambiarEstadoAlbergue=async function(id,st){await updateDoc(doc(db,"alber
 window.abrirModalCambioPass=function(){window.setVal('chg-old-pass','');window.setVal('chg-new-pass','');window.setVal('chg-confirm-pass','');window.safeShow('modal-change-pass');};
 window.ejecutarCambioPass=async function(){const o=window.safeVal('chg-old-pass'),n=window.safeVal('chg-new-pass');try{await reauthenticateWithCredential(auth.currentUser,EmailAuthProvider.credential(auth.currentUser.email,o));await updatePassword(auth.currentUser,n);alert("OK");window.safeHide('modal-change-pass');window.sysLog("Contraseña cambiada.", "success");}catch(e){alert("Error");window.sysLog("Error cambio pass: "+e.message, "error");}};
 window.registrarLog=async function(pid,act,det,isPool=false){try{const usuarioLog=currentUserData?currentUserData.nombre:"Auto-QR";let path=isPool?collection(db,"pool_prefiliacion",pid,"historial"):collection(db,"albergues",currentAlbergueId,"personas",pid,"historial");await addDoc(path,{fecha:new Date(),usuario:usuarioLog,accion:act,detalle:det});window.sysLog(`Audit Log (${isPool?'Pool':'Local'}): ${act} - ${det}`,"info");}catch(e){console.error(e);}};
+window.verHistorial=async function(pId=null, forceIsGlobal=null, forceAlbId=null){let targetId=pId;let isPool=(forceIsGlobal!==null)?forceIsGlobal:personaEnGestionEsGlobal;const activeAlbId=forceAlbId||currentAlbergueId;if(!targetId&&personaEnGestion)targetId=personaEnGestion.id;if(pId&&forceIsGlobal===null&&listaPersonasCache.find(x=>x.id===pId))isPool=false;if(!targetId)return;let nombrePersona="Usuario";if(personaEnGestion&&personaEnGestion.id===targetId)nombrePersona=`${personaEnGestion.nombre} ${personaEnGestion.ap1||''}`;else if(listaPersonasCache.length>0){const found=listaPersonasCache.find(x=>x.id===targetId);if(found)nombrePersona=`${found.nombre} ${found.ap1||''}`;}else if(listaGlobalPrefiliacion.length>0){const found=listaGlobalPrefiliacion.find(x=>x.id===targetId);if(found)nombrePersona=`${found.nombre} ${found.ap1||''}`;}const headerEl=window.el('hist-modal-header');if(headerEl)headerEl.innerText=`Historial de: ${nombrePersona}`;window.safeShow('modal-historial');const content=window.el('historial-content');content.innerHTML='<div style="text-align:center"><div class="spinner"></div></div>';try{let items=[];let pathHist=isPool?collection(db,"pool_prefiliacion",targetId,"historial"):collection(db,"albergues",activeAlbId,"personas",targetId,"historial");const snapHist=await getDocs(pathHist);snapHist.forEach(d=>{const data=d.data();items.push({...data,type:'movimiento',id:d.id,sortDate:data.fecha.toDate()});});if(!isPool){let pathInt=collection(db,"albergues",activeAlbId,"personas",targetId,"intervenciones");const snapInt=await getDocs(pathInt);snapInt.forEach(d=>{const data=d.data();items.push({usuario:data.usuario,accion:data.tipo+": "+data.subtipo,detalle:data.detalle,fecha:data.fecha,type:'intervencion',id:d.id,sortDate:data.fecha.toDate()});});}items.sort((a,b)=>b.sortDate-a.sortDate);if(items.length===0){content.innerHTML="<p>No hay registros.</p>";return;}let html=`<div class="hist-timeline">`;items.forEach(d=>{const f=d.sortDate;const fmt=`${f.getDate().toString().padStart(2,'0')}/${(f.getMonth()+1).toString().padStart(2,'0')}/${f.getFullYear()} ${f.getHours().toString().padStart(2,'0')}:${f.getMinutes().toString().padStart(2,'0')}`;const extraClass=d.type==='intervencion'?'type-intervencion':'';const icon=d.type==='intervencion'?'<i class="fa-solid fa-hand-holding-medical"></i>':'<i class="fa-solid fa-shoe-prints"></i>';html+=`<div class="hist-item ${extraClass}"><div class="hist-header"><span class="hist-date"><i class="fa-regular fa-clock"></i> ${fmt}</span><span class="hist-user"><i class="fa-solid fa-user-tag"></i> ${d.usuario}</span></div><span class="hist-action">${icon} ${d.accion}</span>${d.detalle?`<span class="hist-detail">${d.detalle}</span>`:''}</div>`;});html+=`</div>`;content.innerHTML=html;}catch(e){content.innerHTML="Error cargando datos.";window.sysLog("Error historial mixto: "+e.message,"error");}};
 window.verHistorialObservatorio = function(pId, isGlobal, albId){window.verHistorial(pId, isGlobal, albId);};
+
+// ==========================================
+// NUEVA LÓGICA DE INTERVENCIONES (v2.0.1)
+// ==========================================
+
+window.buscarParaIntervencion = function(tipo) {
+    const txt = window.safeVal(`search-${tipo}`).toLowerCase().trim();
+    const res = window.el(`res-${tipo}`);
+    if (txt.length < 2) { res.classList.add('hidden'); return; }
+    const hits = listaPersonasCache.filter(p => {
+        const full = `${p.nombre} ${p.ap1 || ''} ${p.ap2 || ''}`.toLowerCase();
+        return full.includes(txt) || (p.docNum || "").toLowerCase().includes(txt);
+    });
+    res.innerHTML = "";
+    if (hits.length === 0) { res.innerHTML = "<div class='search-item'>Sin resultados locales.</div>"; } 
+    else { hits.forEach(p => { const hasBed = p.cama ? `Cama ${p.cama}` : "Sin Cama"; res.innerHTML += ` <div class="search-item" onclick="window.abrirFormularioIntervencion('${p.id}', '${tipo}')"> <div> <strong>${p.nombre} ${p.ap1 || ''}</strong> <div style="font-size:0.8rem;color:#666;">${p.docNum || '-'} | ${hasBed}</div> </div> <button class="btn-icon-small" style="background:var(--primary);color:white;">Selecionar</button> </div>`; }); }
+    res.classList.remove('hidden');
+};
+
+window.abrirFormularioIntervencion = function(pid, tipo) {
+    const p = listaPersonasCache.find(x => x.id === pid);
+    if(!p) return;
+    personaIntervencionActiva = p;
+    window.safeHide(`res-${tipo}`);
+    window.safeShow(`form-int-${tipo}`);
+    window.el(`search-${tipo}`).value = ""; 
+    window.el(`name-int-${tipo}`).innerText = `${p.nombre} ${p.ap1 || ''}`;
+    const sel = window.el(`sel-int-${tipo}`);
+    sel.innerHTML = "";
+    TIPOS_INTERVENCION[tipo].opciones.forEach(op => { sel.add(new Option(op, op)); });
+    window.el(`det-int-${tipo}`).value = "";
+};
+
+window.cerrarFormularioIntervencion = function(tipo) {
+    window.safeHide(`form-int-${tipo}`);
+    personaIntervencionActiva = null;
+};
+
+window.registrarIntervencion = async function(tipo) {
+    if(!personaIntervencionActiva) return;
+    const subtipo = window.safeVal(`sel-int-${tipo}`);
+    const detalle = window.safeVal(`det-int-${tipo}`);
+    // CORRECCIÓN V2.0.1: Guardar nombre antes de limpiar la variable global
+    const nombrePersona = personaIntervencionActiva.nombre; 
+    
+    if(!subtipo) return alert("Selecciona un tipo.");
+    
+    try {
+        const data = {
+            fecha: new Date(),
+            usuario: currentUserData.nombre,
+            tipo: TIPOS_INTERVENCION[tipo].titulo,
+            subtipo: subtipo,
+            detalle: detalle
+        };
+        await addDoc(collection(db, "albergues", currentAlbergueId, "personas", personaIntervencionActiva.id, "intervenciones"), data);
+        
+        window.showToast("Intervención Registrada");
+        // CORRECCIÓN V2.0.1: Usar la variable local capturada
+        window.sysLog(`Intervención ${tipo} registrada para ${nombrePersona}`, "success");
+        window.cerrarFormularioIntervencion(tipo); // Ahora sí podemos limpiar
+        
+    } catch(e) {
+        console.error(e);
+        alert("Error al guardar: " + e.message);
+    }
+};
+
+window.verHistorialIntervencion = function(tipo) {
+    if(personaIntervencionActiva) {
+        window.verHistorial(personaIntervencionActiva.id);
+    }
+};
 
 window.rescatarDeGlobalDirecto = async function() {
     if (!personaEnGestion || !personaEnGestionEsGlobal) return;
@@ -391,194 +465,7 @@ window.guardarCama = async function(c) {
     savingLock = false;
 };
 
-// ==========================================
-// NUEVA LÓGICA DE INTERVENCIONES (v2.0)
-// ==========================================
-
-window.buscarParaIntervencion = function(tipo) {
-    const txt = window.safeVal(`search-${tipo}`).toLowerCase().trim();
-    const res = window.el(`res-${tipo}`);
-    if (txt.length < 2) { res.classList.add('hidden'); return; }
-    
-    // Buscar SOLO en personas ingresadas en este albergue (Intervenciones in-situ)
-    const hits = listaPersonasCache.filter(p => {
-        const full = `${p.nombre} ${p.ap1 || ''} ${p.ap2 || ''}`.toLowerCase();
-        return full.includes(txt) || (p.docNum || "").toLowerCase().includes(txt);
-    });
-
-    res.innerHTML = "";
-    if (hits.length === 0) {
-        res.innerHTML = "<div class='search-item'>Sin resultados locales.</div>";
-    } else {
-        hits.forEach(p => {
-            const hasBed = p.cama ? `Cama ${p.cama}` : "Sin Cama";
-            res.innerHTML += `
-            <div class="search-item" onclick="window.abrirFormularioIntervencion('${p.id}', '${tipo}')">
-                <div>
-                    <strong>${p.nombre} ${p.ap1 || ''}</strong>
-                    <div style="font-size:0.8rem;color:#666;">${p.docNum || '-'} | ${hasBed}</div>
-                </div>
-                <button class="btn-icon-small" style="background:var(--primary);color:white;">Selecionar</button>
-            </div>`;
-        });
-    }
-    res.classList.remove('hidden');
-};
-
-window.abrirFormularioIntervencion = function(pid, tipo) {
-    const p = listaPersonasCache.find(x => x.id === pid);
-    if(!p) return;
-    personaIntervencionActiva = p;
-    
-    // Ocultar resultados y mostrar form
-    window.safeHide(`res-${tipo}`);
-    window.safeShow(`form-int-${tipo}`);
-    window.el(`search-${tipo}`).value = ""; // Limpiar buscador
-
-    // Rellenar cabecera
-    window.el(`name-int-${tipo}`).innerText = `${p.nombre} ${p.ap1 || ''}`;
-    
-    // Rellenar Select
-    const sel = window.el(`sel-int-${tipo}`);
-    sel.innerHTML = "";
-    TIPOS_INTERVENCION[tipo].opciones.forEach(op => {
-        sel.add(new Option(op, op));
-    });
-    
-    // Limpiar Textarea
-    window.el(`det-int-${tipo}`).value = "";
-};
-
-window.cerrarFormularioIntervencion = function(tipo) {
-    window.safeHide(`form-int-${tipo}`);
-    personaIntervencionActiva = null;
-};
-
-window.registrarIntervencion = async function(tipo) {
-    if(!personaIntervencionActiva) return;
-    const subtipo = window.safeVal(`sel-int-${tipo}`);
-    const detalle = window.safeVal(`det-int-${tipo}`);
-    
-    if(!subtipo) return alert("Selecciona un tipo.");
-    
-    try {
-        const data = {
-            fecha: new Date(),
-            usuario: currentUserData.nombre,
-            tipo: TIPOS_INTERVENCION[tipo].titulo, // "Sanitaria", "Entregas"...
-            subtipo: subtipo,
-            detalle: detalle
-        };
-        
-        // Guardar en subcolección 'intervenciones'
-        await addDoc(collection(db, "albergues", currentAlbergueId, "personas", personaIntervencionActiva.id, "intervenciones"), data);
-        
-        window.showToast("Intervención Registrada");
-        window.cerrarFormularioIntervencion(tipo);
-        window.sysLog(`Intervención ${tipo} registrada para ${personaIntervencionActiva.nombre}`, "success");
-        
-    } catch(e) {
-        console.error(e);
-        alert("Error al guardar: " + e.message);
-    }
-};
-
-window.verHistorialIntervencion = function(tipo) {
-    if(personaIntervencionActiva) {
-        window.verHistorial(personaIntervencionActiva.id);
-    }
-};
-
-// --- REESCRITURA DE verHistorial PARA FUSIÓN DE DATOS ---
-window.verHistorial = async function(pId = null, forceIsGlobal = null, forceAlbId = null) {
-    let targetId = pId;
-    let isPool = (forceIsGlobal !== null) ? forceIsGlobal : personaEnGestionEsGlobal;
-    const activeAlbId = forceAlbId || currentAlbergueId;
-    
-    if (!targetId && personaEnGestion) targetId = personaEnGestion.id;
-    if (pId && forceIsGlobal === null && listaPersonasCache.find(x => x.id === pId)) isPool = false;
-    if (!targetId) return;
-
-    // Obtener Nombre
-    let nombrePersona = "Usuario";
-    if(personaEnGestion && personaEnGestion.id === targetId) nombrePersona = `${personaEnGestion.nombre} ${personaEnGestion.ap1||''}`;
-    else if(listaPersonasCache.length > 0) { const f = listaPersonasCache.find(x => x.id === targetId); if(f) nombrePersona = `${f.nombre} ${f.ap1||''}`; }
-    else if(listaGlobalPrefiliacion.length > 0) { const f = listaGlobalPrefiliacion.find(x => x.id === targetId); if(f) nombrePersona = `${f.nombre} ${f.ap1||''}`; }
-
-    const headerEl = window.el('hist-modal-header');
-    if(headerEl) headerEl.innerText = `Historial de: ${nombrePersona}`;
-
-    window.safeShow('modal-historial');
-    const content = window.el('historial-content');
-    content.innerHTML = '<div style="text-align:center"><div class="spinner"></div></div>';
-
-    try {
-        let items = [];
-
-        // 1. Obtener Historial de Movimientos
-        let pathHist = isPool ? collection(db, "pool_prefiliacion", targetId, "historial") : collection(db, "albergues", activeAlbId, "personas", targetId, "historial");
-        const snapHist = await getDocs(pathHist);
-        snapHist.forEach(d => {
-            const data = d.data();
-            items.push({ ...data, type: 'movimiento', id: d.id, sortDate: data.fecha.toDate() });
-        });
-
-        // 2. Obtener Intervenciones (Solo si no es Pool, ya que en pool no hay intervenciones operativas)
-        if(!isPool) {
-            let pathInt = collection(db, "albergues", activeAlbId, "personas", targetId, "intervenciones");
-            const snapInt = await getDocs(pathInt);
-            snapInt.forEach(d => {
-                const data = d.data();
-                // Normalizar estructura para el HTML
-                items.push({
-                    usuario: data.usuario,
-                    accion: data.tipo + ": " + data.subtipo, // Ej: Sanitaria: Cura
-                    detalle: data.detalle,
-                    fecha: data.fecha,
-                    type: 'intervencion',
-                    id: d.id,
-                    sortDate: data.fecha.toDate()
-                });
-            });
-        }
-
-        // 3. Ordenar cronológicamente (Más reciente primero)
-        items.sort((a, b) => b.sortDate - a.sortDate);
-
-        if (items.length === 0) {
-            content.innerHTML = "<p>No hay registros.</p>";
-            return;
-        }
-
-        let html = `<div class="hist-timeline">`;
-        items.forEach(d => {
-            const f = d.sortDate;
-            const fmt = `${f.getDate().toString().padStart(2, '0')}/${(f.getMonth() + 1).toString().padStart(2, '0')}/${f.getFullYear()} ${f.getHours().toString().padStart(2, '0')}:${f.getMinutes().toString().padStart(2, '0')}`;
-            
-            // Estilo diferente si es intervención
-            const extraClass = d.type === 'intervencion' ? 'type-intervencion' : '';
-            const icon = d.type === 'intervencion' ? '<i class="fa-solid fa-hand-holding-medical"></i>' : '<i class="fa-solid fa-shoe-prints"></i>';
-
-            html += `
-            <div class="hist-item ${extraClass}">
-                <div class="hist-header">
-                    <span class="hist-date"><i class="fa-regular fa-clock"></i> ${fmt}</span>
-                    <span class="hist-user"><i class="fa-solid fa-user-tag"></i> ${d.usuario}</span>
-                </div>
-                <span class="hist-action">${icon} ${d.accion}</span>
-                ${d.detalle ? `<span class="hist-detail">${d.detalle}</span>` : ''}
-            </div>`;
-        });
-        html += `</div>`;
-        content.innerHTML = html;
-
-    } catch (e) {
-        content.innerHTML = "Error cargando datos.";
-        window.sysLog("Error historial mixto: " + e.message, "error");
-    }
-};
-
-// --- INIT ---
+// --- INIT (NO HOISTING NEEDED, RUNS LAST) ---
 window.onload = async () => {
     if(isPublicMode){
         window.safeHide('login-screen');

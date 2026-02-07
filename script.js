@@ -25,6 +25,7 @@ window.sysLog = function(msg, type = 'info') {
     if(type === 'error') console.error(msg); else console.log(`[SYS] ${msg}`);
 };
 
+// FIX: BLACK BOX SAFETY
 window.onerror = function(message, source, lineno, colno, error) {
     window.sysLog(`CRITICAL ERROR: ${message} at line ${lineno}`, "error");
     if(currentUserData && currentUserData.rol === 'super_admin') {
@@ -39,7 +40,7 @@ window.toggleCajaNegra = function() {
 };
 window.limpiarCajaNegra = function() { const c = document.getElementById('black-box-content'); if (c) c.innerHTML = ""; };
 
-window.sysLog("Sistema Iniciado. Versión 1.4.3 (Complete Fixes)", "info");
+window.sysLog("Sistema Iniciado. Versión 1.4.4 (Full Checked)", "info");
 
 // --- 2. GLOBALES ---
 let isPublicMode = false;
@@ -220,6 +221,118 @@ window.cargarUsuarios = function() {
     });
 };
 
+// --- GESTIÓN DE USUARIOS (EL BLOQUE PERDIDO REINSERTADO) ---
+
+window.cambiarEstadoUsuarioDirecto = async function(uid, nuevoEstado) {
+    if (currentUserData.rol !== 'super_admin' && currentUserData.rol !== 'admin') {
+        alert("Sin permisos");
+        window.cargarUsuarios();
+        return;
+    }
+    const targetDoc = await getDoc(doc(db, "usuarios", uid));
+    if (targetDoc.exists()) {
+        const u = targetDoc.data();
+        if (u.rol === 'super_admin') {
+            alert("Seguridad: No se puede desactivar a un Super Admin.");
+            window.cargarUsuarios();
+            return;
+        }
+        if (currentUserData.rol === 'admin' && u.rol === 'admin') {
+            alert("Seguridad: No puedes desactivar a otro Administrador.");
+            window.cargarUsuarios();
+            return;
+        }
+    }
+    await updateDoc(doc(db, "usuarios", uid), { activo: nuevoEstado });
+    window.sysLog(`Usuario ${uid} estado: ${nuevoEstado}`, "info");
+};
+
+window.filtrarUsuarios = function() {
+    window.cargarUsuarios();
+};
+
+window.abrirModalUsuario = async function(id = null) {
+    userEditingId = id;
+    window.safeShow('modal-crear-usuario');
+    const sel = window.el('new-user-role');
+    sel.innerHTML = "";
+    let roles = ['albergue', 'sanitario', 'psicosocial', 'observador'];
+    if (currentUserData.rol === 'super_admin') {
+        roles = ['super_admin', 'admin', ...roles];
+    } else if (currentUserData.rol === 'admin') {
+        roles = ['albergue', 'sanitario', 'psicosocial', 'observador'];
+    }
+    roles.forEach(r => sel.add(new Option(r, r)));
+    window.el('new-user-active').checked = true;
+    window.el('new-user-active').disabled = false;
+    if (id) {
+        const s = await getDoc(doc(db, "usuarios", String(id)));
+        if (s.exists()) {
+            const d = s.data();
+            window.setVal('new-user-name', d.nombre);
+            window.setVal('new-user-email', d.email);
+            if (!roles.includes(d.rol)) {
+                const opt = new Option(d.rol, d.rol);
+                opt.disabled = true;
+                sel.add(opt);
+            }
+            sel.value = d.rol;
+            window.el('new-user-active').checked = (d.activo !== false);
+            if (d.rol === 'super_admin') window.el('new-user-active').disabled = true;
+            if (currentUserData.rol === 'super_admin') window.safeShow('btn-delete-user');
+            else window.safeHide('btn-delete-user');
+        }
+    } else {
+        window.setVal('new-user-name', "");
+        window.setVal('new-user-email', "");
+        window.safeHide('btn-delete-user');
+    }
+};
+
+window.guardarUsuario = async function() {
+    const e = window.safeVal('new-user-email'),
+          p = window.safeVal('new-user-pass'),
+          n = window.safeVal('new-user-name'),
+          r = window.safeVal('new-user-role');
+    let isActive = window.el('new-user-active').checked;
+    if (!e || !n) return alert("Faltan datos (Email/Nombre)");
+    if (r === 'super_admin' && !isActive) {
+        alert("Seguridad: Super Admin siempre activo.");
+        isActive = true;
+    }
+    try {
+        if (userEditingId) {
+            await updateDoc(doc(db, "usuarios", userEditingId), { nombre: n, rol: r, activo: isActive });
+        } else {
+            if (!p) return alert("Contraseña obligatoria para nuevo usuario");
+            const tApp = initializeApp(firebaseConfig, "Temp");
+            const tAuth = getAuth(tApp);
+            const uc = await createUserWithEmailAndPassword(tAuth, e, p);
+            await setDoc(doc(db, "usuarios", uc.user.uid), { email: e, nombre: n, rol: r, activo: isActive });
+            await signOut(tAuth);
+            deleteApp(tApp);
+        }
+        window.safeHide('modal-crear-usuario');
+        window.sysLog("Usuario guardado.", "success");
+    } catch (err) {
+        console.error(err);
+        if (err.code === 'auth/email-already-in-use') {
+            alert("ERROR: Correo ya registrado en sistema.\n\nSi borraste este usuario, dile que intente iniciar sesión con su contraseña antigua. El sistema restaurará su ficha automáticamente.");
+        } else {
+            alert("Error: " + err.message);
+        }
+        window.sysLog("Error guardar usuario: " + err.message, "error");
+    }
+};
+
+window.eliminarUsuario = async function() {
+    if (userEditingId && confirm("Borrar?")) {
+        await deleteDoc(doc(db, "usuarios", userEditingId));
+        window.safeHide('modal-crear-usuario');
+        window.sysLog("Usuario eliminado.", "warn");
+    }
+};
+
 // --- NAVEGACIÓN ---
 
 window.navegar = function(p) {
@@ -229,6 +342,7 @@ window.navegar = function(p) {
     ['screen-home','screen-usuarios','screen-gestion-albergues','screen-mantenimiento','screen-operativa','screen-observatorio', 'screen-intervencion'].forEach(id=>window.safeHide(id));
     if(!currentUserData) return;
     
+    // Reset Intervention view if navigating away
     if(p !== 'intervencion') {
         window.resetIntervencion();
         window.detenerEscaner(); 

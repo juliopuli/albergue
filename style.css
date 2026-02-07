@@ -264,3 +264,15 @@ body.focused-mode .app-nav { display: none !important; }
     overflow: hidden;
     margin-bottom: 20px;
 }
+
+/* --- AÑADE ESTO AL FINAL DEL CSS EXISTENTE --- */
+
+/* NEW BED STATUS BORDERS (v1.3.0) */
+/* Thick borders to indicate presence status */
+.bed-status-in {
+    border-right: 8px solid #10b981 !important; /* Green = Inside */
+}
+
+.bed-status-out {
+    border-right: 8px solid #ef4444 !important; /* Red = Outside */
+}

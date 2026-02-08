@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gestión Albergue - Ver.2.7.1</title>
+    <title>Gestión Albergue - Ver.2.7.2</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -12,7 +12,7 @@
 </head>
 <body>
 
-    <div class="version-tag">Ver.2.7.1</div>
+    <div class="version-tag">Ver.2.7.2</div>
     
     <div id="toast" style="visibility: hidden;">Guardado automático</div>
     <div id="loading-overlay" class="hidden"><div class="spinner"></div><h2 style="color:var(--primary);">Cargando Datos...</h2></div>
@@ -20,10 +20,7 @@
     <div id="black-box-overlay" class="hidden">
         <div class="bb-header">
             <span><i class="fa-solid fa-terminal"></i> SYSTEM LOG</span>
-            <div>
-                <button class="bb-btn" onclick="window.limpiarCajaNegra()">LIMPIAR</button>
-                <button class="bb-btn close" onclick="window.toggleCajaNegra()">X</button>
-            </div>
+            <div><button class="bb-btn" onclick="window.limpiarCajaNegra()">LIMPIAR</button><button class="bb-btn close" onclick="window.toggleCajaNegra()">X</button></div>
         </div>
         <div id="black-box-content"></div>
     </div>
@@ -41,25 +38,25 @@
     <div id="app-shell" class="hidden">
         <header class="app-header">
             <div class="brand"><i class="fa-solid fa-campground"></i> ALBERGUE PRO</div>
-            
             <div class="user-profile">
-                <div id="notification-badge-container" class="hidden" onclick="window.gestionarClicGlobo()" style="position: relative; margin-right: 15px; cursor: pointer;">
-                    <div class="notif-icon" style="color: var(--primary); font-size: 1.2rem;"><i class="fa-solid fa-bell"></i></div>
-                    <div id="notif-count" style="position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; font-size: 0.7rem; font-weight: bold; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 2px solid white;">0</div>
-                </div>
-
                 <div class="user-info">
                     <span class="user-name" id="user-name-display">...</span>
                     <span class="user-role" id="user-role-badge">...</span>
                 </div>
-                <button id="header-btn-debug" class="btn-icon btn-debug hidden" onclick="window.toggleCajaNegra()" title="Abrir Log Sistema"><i class="fa-solid fa-terminal"></i></button>
-                <button id="header-btn-users" class="btn-icon hidden" onclick="window.navegar('usuarios')" title="Gestionar Usuarios"><i class="fa-solid fa-users-gear"></i></button>
-                <button class="btn-icon btn-key" onclick="window.abrirModalCambioPass()" title="Cambiar Contraseña"><i class="fa-solid fa-key"></i></button>
+                <button id="header-btn-debug" class="btn-icon btn-debug hidden" onclick="window.toggleCajaNegra()"><i class="fa-solid fa-terminal"></i></button>
+                <button id="header-btn-users" class="btn-icon hidden" onclick="window.navegar('usuarios')"><i class="fa-solid fa-users-gear"></i></button>
+                <button class="btn-icon btn-key" onclick="window.abrirModalCambioPass()"><i class="fa-solid fa-key"></i></button>
                 <button class="btn-logout" onclick="window.cerrarSesion()"><i class="fa-solid fa-power-off"></i></button>
             </div>
         </header>
 
-        <nav class="app-nav">
+        <nav class="app-nav" style="position: relative;">
+            
+            <div id="notification-badge-container" class="hidden" onclick="window.gestionarClicGlobo()" style="position: absolute; left: 20px; top: 50%; transform: translateY(-50%); cursor: pointer; z-index: 100;">
+                <div class="notif-icon" style="color: var(--primary); font-size: 1.5rem;"><i class="fa-solid fa-bell"></i></div>
+                <div id="notif-count" style="position: absolute; top: -8px; right: -8px; background: #ef4444; color: white; font-size: 0.75rem; font-weight: bold; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">0</div>
+            </div>
+
             <div class="nav-item" id="nav-home" onclick="window.navegar('home')"><i class="fa-solid fa-house"></i><span>Inicio</span></div>
             <div class="nav-item" id="nav-intervencion" onclick="window.navegar('intervencion')"><i class="fa-solid fa-qrcode"></i><span>Intervención</span></div>
             <div class="nav-item" id="nav-albergues" onclick="window.navegar('gestion-albergues')"><i class="fa-solid fa-bed"></i><span>Gestión</span></div>
@@ -71,348 +68,71 @@
             <div id="screen-home" class="hidden">
                 <div class="hero-container"><i class="fa-solid fa-campground hero-icon"></i><h1 class="hero-title">Te damos la bienvenida</h1><p class="hero-subtitle">Sistema integral de control</p></div>
             </div>
-
             <div id="screen-intervencion" class="hidden">
-                <div class="card" style="text-align:center; min-height: 60vh; display:flex; flex-direction:column; justify-content:flex-start; align-items:center;">
-                    
-                    <div id="view-scan-ready" style="margin-top: 20px; width: 100%; display:flex; flex-direction:column; align-items:center;">
+                <div class="card" style="text-align:center; min-height: 60vh;">
+                    <div id="view-scan-ready" style="margin-top: 20px;">
                         <div id="reader" class="hidden"></div>
-                        <div id="scan-placeholder">
-                            <i class="fa-solid fa-qrcode" style="font-size: 5rem; color: var(--text-light); margin-bottom: 20px;"></i>
-                            <h2 style="margin-bottom: 10px;">Escáner de Intervención</h2>
-                            <p style="color: #666; margin-bottom: 30px;">Escanea el carnet para registrar acciones.</p>
-                        </div>
-                        <button id="btn-start-camera" class="primary" style="padding: 15px 30px; font-size: 1.2rem;" onclick="window.iniciarEscanerReal()">
-                            <i class="fa-solid fa-camera"></i> Activar Cámara
-                        </button>
-                        <button id="btn-stop-camera" class="danger hidden" style="padding: 10px 20px; margin-top:10px;" onclick="window.detenerEscaner()">
-                            Detener Cámara
-                        </button>
+                        <div id="scan-placeholder"><i class="fa-solid fa-qrcode" style="font-size: 5rem; color: var(--text-light); margin-bottom: 20px;"></i><h2>Escáner</h2><p style="color:#666;">Registrar acciones.</p></div>
+                        <button id="btn-start-camera" class="primary" style="padding:15px;" onclick="window.iniciarEscanerReal()">Activar Cámara</button>
+                        <button id="btn-stop-camera" class="danger hidden" onclick="window.detenerEscaner()">Detener</button>
                     </div>
-
                     <div id="view-scan-result" class="hidden" style="width:100%;">
-                        <h3 id="interv-albergue-name" style="color:var(--text-light); margin-bottom:10px; text-transform: uppercase; font-size: 0.9rem; letter-spacing: 1px;">ALBERGUE</h3>
-                        
-                        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px; text-align:left; border-bottom:1px solid #eee; padding-bottom:15px;">
-                            <div>
-                                <h2 id="interv-nombre" style="color:var(--primary); margin:0;">Nombre Apellido</h2>
-                                <p id="interv-doc" style="font-weight:bold; color:#666; margin:5px 0;">DNI: ...</p>
-                                <div style="display:flex; gap:5px;">
-                                    <span class="badge badge-active" id="interv-estado">ESTADO</span>
-                                    <span class="badge" id="interv-presencia" style="background:#e2e8f0; color:#334155;">...</span>
-                                </div>
-                            </div>
-                            <button class="secondary" style="padding:8px 15px;" onclick="window.resetIntervencion()">X</button>
+                        <h3 id="interv-albergue-name" style="color:var(--text-light);">ALBERGUE</h3>
+                        <div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding-bottom:15px;">
+                            <div style="text-align:left;"><h2 id="interv-nombre" style="color:var(--primary);">...</h2><p id="interv-doc">...</p><div style="display:flex; gap:5px;"><span id="interv-estado" class="badge"></span><span id="interv-presencia" class="badge"></span></div></div>
+                            <button class="secondary" onclick="window.resetIntervencion()">X</button>
                         </div>
-
-                        <div class="movements-grid">
-                            <button class="btn-action-panel btn-entry" onclick="window.registrarMovimiento('entrada')">
-                                <i class="fa-solid fa-person-walking-arrow-right"></i> Entrada
-                            </button>
-                            <button class="btn-action-panel btn-exit-action" onclick="window.registrarMovimiento('salida')">
-                                <i class="fa-solid fa-person-walking-arrow-right" style="transform: scaleX(-1);"></i> Salida
-                            </button>
-                        </div>
-
-                        <div class="derivations-container">
-                            <h4><i class="fa-solid fa-share-from-square"></i> Derivaciones</h4>
-                            <div class="derivations-grid">
-                                <button class="btn-action-panel btn-derive-psi" onclick="window.abrirModalDerivacion('Psicosocial')">
-                                    <i class="fa-solid fa-users-rays"></i> <small>Psico</small>
-                                </button>
-                                <button class="btn-action-panel btn-derive-san" onclick="window.abrirModalDerivacion('Sanitaria')">
-                                    <i class="fa-solid fa-notes-medical"></i> <small>Sanitario</small>
-                                </button>
-                                <button class="btn-action-panel btn-derive-del" onclick="window.abrirModalDerivacion('Entregas')">
-                                    <i class="fa-solid fa-box-open"></i> <small>Entregas</small>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div id="btn-exit-focused" class="hidden" style="margin-top: 30px;">
-                            <button class="secondary" style="width: 100%;" onclick="window.salirModoFocalizado()">
-                                <i class="fa-solid fa-right-from-bracket"></i> Salir al Menú Principal
-                            </button>
-                        </div>
+                        <div class="movements-grid"><button class="btn-action-panel btn-entry" onclick="window.registrarMovimiento('entrada')">Entrada</button><button class="btn-action-panel btn-exit-action" onclick="window.registrarMovimiento('salida')">Salida</button></div>
+                        <div class="derivations-container"><h4>Derivaciones</h4><div class="derivations-grid"><button class="btn-action-panel btn-derive-psi" onclick="window.abrirModalDerivacion('Psicosocial')">Psico</button><button class="btn-action-panel btn-derive-san" onclick="window.abrirModalDerivacion('Sanitaria')">Sanitario</button><button class="btn-action-panel btn-derive-del" onclick="window.abrirModalDerivacion('Entregas')">Entregas</button></div></div>
+                        <div id="btn-exit-focused" class="hidden" style="margin-top:30px;"><button class="secondary" style="width:100%;" onclick="window.salirModoFocalizado()">Salir al Menú</button></div>
                     </div>
                 </div>
             </div>
-
-            <div id="screen-usuarios" class="hidden">
-                <div class="card">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:10px;">
-                        <h2 style="margin:0;">Gestión de Personal</h2>
-                        <div class="btn-group-horizontal" style="margin:0;">
-                            <button class="danger" onclick="window.desactivarUsuariosMasivo()"><i class="fa-solid fa-user-slash"></i> Desactivar Staff</button>
-                            <button class="success" onclick="window.abrirModalUsuario()">+ Nuevo</button>
-                        </div>
-                    </div>
-                    <div class="row"><input type="text" id="search-user" placeholder="🔍 Buscar..." onkeyup="window.filtrarUsuarios()"></div>
-                    <div id="lista-usuarios-container" class="user-list-grid"></div>
-                </div>
-            </div>
-
-            <div id="screen-gestion-albergues" class="hidden">
-                <div class="card"><h2>Selección de Albergue</h2><div id="lista-albergues-activos" class="mto-grid"></div></div>
-            </div>
-
-            <div id="screen-mantenimiento" class="hidden">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;"><h2><i class="fa-solid fa-tools"></i> Mantenimiento</h2><div id="container-ver-ocultos" class="hidden"><label class="toggle-switch"><input type="checkbox" class="toggle-input" id="check-ver-ocultos" onchange="window.cargarAlberguesMantenimiento()"><span class="toggle-slider"></span><span style="font-size:0.9rem; font-weight:600; margin-left:10px;">Mostrar Ocultos</span></label></div></div>
-                <div id="mto-container" class="mto-grid"></div>
-            </div>
-
-            <div id="screen-observatorio" class="hidden">
-                <div class="obs-grid">
-                    <div class="obs-card"><div class="obs-icon"><i class="fa-solid fa-user-clock"></i></div><div class="obs-label">Personas en Espera</div><div class="obs-val" id="kpi-espera" style="color:var(--warning);">0</div></div>
-                    <div class="obs-card"><div class="obs-icon"><i class="fa-solid fa-bed"></i></div><div class="obs-label">Personas Alojadas</div><div class="obs-val" id="kpi-alojados" style="color:var(--success);">0</div></div>
-                    <div class="obs-card"><div class="obs-icon"><i class="fa-solid fa-door-open"></i></div><div class="obs-label">Camas Disponibles</div><div class="obs-val" id="kpi-libres" style="color:var(--primary);">0</div></div>
-                    <div class="obs-card"><div class="obs-icon"><i class="fa-solid fa-chart-pie"></i></div><div class="obs-label">Ocupación Global</div><div class="obs-val" id="kpi-percent">0%</div></div>
-                </div>
-                <div class="card"><h3>Detalle por Albergue</h3><div id="obs-list-container" style="margin-top:20px;"><p style="color:#666; text-align:center;">Cargando datos...</p></div></div>
-            </div>
-
+            <div id="screen-usuarios" class="hidden"><div class="card"><h2>Gestión Personal</h2><div class="btn-group-horizontal"><button class="danger" onclick="window.desactivarUsuariosMasivo()">Desactivar Staff</button><button class="success" onclick="window.abrirModalUsuario()">+ Nuevo</button></div><input type="text" id="search-user" placeholder="Buscar..." onkeyup="window.filtrarUsuarios()" style="margin-top:10px;"><div id="lista-usuarios-container" class="user-list-grid"></div></div></div>
+            <div id="screen-gestion-albergues" class="hidden"><div class="card"><h2>Selección de Albergue</h2><div id="lista-albergues-activos" class="mto-grid"></div></div></div>
+            <div id="screen-mantenimiento" class="hidden"><div style="display:flex; justify-content:space-between;"><h2>Mantenimiento</h2><label class="toggle-switch"><input type="checkbox" class="toggle-input" id="check-ver-ocultos" onchange="window.cargarAlberguesMantenimiento()"><span class="toggle-slider"></span><span>Ocultos</span></label></div><div id="mto-container" class="mto-grid"></div></div>
+            <div id="screen-observatorio" class="hidden"><div class="obs-grid"><div class="obs-card"><div class="obs-label">Espera</div><div class="obs-val" id="kpi-espera">0</div></div><div class="obs-card"><div class="obs-label">Alojados</div><div class="obs-val" id="kpi-alojados">0</div></div><div class="obs-card"><div class="obs-label">Libres</div><div class="obs-val" id="kpi-libres">0</div></div><div class="obs-card"><div class="obs-label">% Ocup</div><div class="obs-val" id="kpi-percent">0%</div></div></div><div class="card"><h3>Detalle</h3><div id="obs-list-container"></div></div></div>
+            
             <div id="screen-operativa" class="hidden">
                 <div class="card">
                     <div class="sticky-header">
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <div><h2 id="app-title" style="margin:0;">Albergue</h2><span class="badge badge-active">Ocupación: <span id="ocupacion-count">...</span> / <span id="capacidad-total">...</span></span></div>
-                            <div class="btn-group-horizontal" style="margin-top:0;">
-                                <button class="dark" onclick="window.abrirModalQR()"><i class="fa-solid fa-qrcode"></i> QR</button>
-                                <button class="primary" onclick="window.abrirMapaGeneral()"><i class="fa-solid fa-bed"></i> Camas</button>
-                                <button class="secondary" onclick="window.navegar('gestion-albergues')">Salir</button>
-                            </div>
-                        </div>
+                        <div style="display:flex; justify-content:space-between;"><div><h2 id="app-title">...</h2><span id="ocupacion-count">...</span> / <span id="capacidad-total">...</span></div><div class="btn-group-horizontal"><button class="dark" onclick="window.abrirModalQR()">QR</button><button class="primary" onclick="window.abrirMapaGeneral()">Camas</button><button class="secondary" onclick="window.navegar('gestion-albergues')">Salir</button></div></div>
                         <div class="tabs" style="margin-top:10px;">
-                            <button id="btn-tab-pref" class="tab-btn tab-btn-pref" onclick="window.cambiarPestana('prefiliacion')">☁️ Monitor Nube</button>
-                            <button id="btn-tab-fil" class="tab-btn tab-btn-fil active" onclick="window.cambiarPestana('filiacion')">📁 Filiación / Ingreso</button>
-                            <button id="btn-tab-ent" class="tab-btn tab-btn-ent" onclick="window.cambiarPestana('entregas')"><i class="fa-solid fa-box-open"></i> Entregas</button>
-                            <button id="btn-tab-san" class="tab-btn tab-btn-san" onclick="window.cambiarPestana('sanitaria')"><i class="fa-solid fa-notes-medical"></i> Sanitaria</button>
-                            <button id="btn-tab-psi" class="tab-btn tab-btn-psi" onclick="window.cambiarPestana('psicosocial')"><i class="fa-solid fa-users-rays"></i> Psicosocial</button>
+                            <button id="btn-tab-pref" class="tab-btn tab-btn-pref" onclick="window.cambiarPestana('prefiliacion')">Nube</button>
+                            <button id="btn-tab-fil" class="tab-btn tab-btn-fil active" onclick="window.cambiarPestana('filiacion')">Filiación</button>
+                            <button id="btn-tab-ent" class="tab-btn tab-btn-ent" onclick="window.cambiarPestana('entregas')">Entregas</button>
+                            <button id="btn-tab-san" class="tab-btn tab-btn-san" onclick="window.cambiarPestana('sanitaria')">Sanitaria</button>
+                            <button id="btn-tab-psi" class="tab-btn tab-btn-psi" onclick="window.cambiarPestana('psicosocial')">Psico</button>
                         </div>
                     </div>
                     <div style="margin-top:25px;">
-                        <div id="tab-filiacion" class="tab-content active">
-                            <div class="module-box module-fil">
-                                <h3><i class="fa-solid fa-person-shelter"></i> Gestión de Alojados</h3>
-                                <p style="font-size:0.9rem; color:#666; margin-bottom:10px;">Busca aquí para encontrar personas en el albergue o rescatarlas de la nube (QR).</p>
-                                <div style="position:relative;">
-                                    <input type="text" id="buscador-persona" placeholder="🔍 Buscar por Nombre, Apellidos, DNI..." onkeyup="window.buscarPersonaEnAlbergue()" autocomplete="off">
-                                    <div id="resultados-busqueda" class="search-results hidden"></div>
-                                </div>
-                            </div>
-                            <div id="panel-gestion-persona" class="hidden" style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:var(--radius); padding:25px; margin-top:10px;">
-                                <div class="banner-nube hidden" id="banner-nube"><i class="fa-solid fa-cloud"></i> PERSONA EN LA NUBE (NO INGRESADA)</div>
-                                <h3 id="gestion-nombre-titulo" style="color:var(--primary);">Nombre</h3>
-                                <p style="margin-bottom:15px;">Estado: <span id="gestion-estado" class="badge">...</span> <strong id="gestion-cama-info"></strong></p>
-                                <div class="row"><div class="col"><label>Nombre</label><input type="text" id="edit-nombre"></div><div class="col"><label>Ap 1</label><input type="text" id="edit-ap1"></div><div class="col"><label>Ap 2</label><input type="text" id="edit-ap2"></div></div>
-                                <div class="row"><div class="col"><label>Doc</label><select id="edit-tipo-doc"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Num</label><input type="text" id="edit-doc-num"></div></div>
-                                <div class="row"><div class="col"><label>F. Nac</label><input type="tel" id="edit-fecha" oninput="window.formatearFecha(this)" maxlength="10"></div><div class="col"><label>Tel</label><input type="tel" id="edit-tel"></div></div>
-                                <div class="btn-group-horizontal" id="btns-local-actions">
-                                    <button class="dark" onclick="window.verCarnetQR()"><i class="fa-solid fa-id-card"></i> Carnet QR</button>
-                                    <button class="primary" onclick="window.abrirSeleccionCama()">Asignar Cama</button>
-                                    <button class="secondary" onclick="window.guardarCambiosPersona()">Guardar Datos</button>
-                                    <button class="warning" onclick="window.liberarCamaMantener()">Liberar Cama</button>
-                                    <button class="btn-exit" onclick="window.darSalidaPersona()">Dar Salida (Individual)</button>
-                                    <button id="btn-historial-ficha" class="dark hidden" onclick="window.verHistorial()">📜 Historial</button>
-                                </div>
-                                <div class="btn-group-horizontal hidden" id="btns-cloud-actions">
-                                    <button class="success" style="width:100%; justify-content:center;" onclick="window.rescatarDeGlobalDirecto()">⬇ FORMALIZAR INGRESO EN ALBERGUE</button>
-                                    <button class="primary" onclick="window.abrirSeleccionCama()">🛏 ASIGNAR CAMA (INGRESO AUTOMÁTICO)</button>
-                                </div>
-                                <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
-                                <h4>Familia</h4>
-                                <div id="info-familia-resumen" style="font-weight:bold; margin-bottom:5px;"></div>
-                                <div id="info-familia-lista"></div>
-                                <button class="secondary" style="margin-top:10px;" onclick="window.abrirModalVincularFamilia()">Vincular a otra familia</button>
-                            </div>
-                        </div>
-
-                        <div id="tab-prefiliacion" class="tab-content hidden">
-                            <div class="module-box module-pref">
-                                <h3><i class="fa-solid fa-cloud"></i> Monitor Nube Global</h3>
-                                <p style="font-size:0.8rem; color:#666;">Utilice esta pantalla solo para verificar altas masivas o crear registros manuales en la nube. Para ingresar personas, use la pestaña "Filiación".</p>
-                                <div style="position:relative;">
-                                    <label>Buscar en Pool Global:</label>
-                                    <input type="text" id="buscador-pref" placeholder="Nombre, DNI o Teléfono..." onkeyup="window.buscarEnPrefiliacion()" autocomplete="off">
-                                    <div id="resultados-pref" class="search-results hidden"></div>
-                                </div>
-                                <div id="form-manual-container" style="margin-top:15px;">
-                                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                                        <h4>Crear Nuevo Registro en Nube</h4>
-                                        <div><button id="btn-cancelar-edicion-pref" class="secondary hidden" style="font-size:0.7em; padding:4px 8px;" onclick="window.cancelarEdicionPref()">Cancelar Edición</button></div>
-                                    </div>
-                                    <div class="row"><div class="col"><label>Nombre (*)</label><input type="text" id="man-nombre"></div><div class="col"><label>Ap 1</label><input type="text" id="man-ap1"></div><div class="col"><label>Ap 2</label><input type="text" id="man-ap2"></div></div>
-                                    <div class="row"><div class="col"><label>Doc</label><select id="man-tipo-doc"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Número</label><input type="text" id="man-doc-num"></div></div>
-                                    <div class="row"><div class="col"><label>F. Nac</label><input type="tel" id="man-fecha" maxlength="10" oninput="window.formatearFecha(this)"></div><div class="col"><label>Tel</label><input type="tel" id="man-tel"></div></div>
-                                    <div class="fam-list"><h4><i class="fa-solid fa-people-roof"></i> Integrantes</h4><div id="existing-family-list-ui"></div><div id="admin-lista-familiares-ui"><p style="color:#999; margin-top:5px;">Añade nuevos miembros abajo.</p></div><button class="secondary" onclick="window.abrirModalFamiliarAdmin()">+ Añadir Familiar</button></div>
-                                    <button id="btn-save-pref" class="success" style="width:100%; margin-top:20px;" onclick="window.adminPrefiliarManual()">💾 Guardar en Pool Global</button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div id="tab-entregas" class="tab-content hidden">
-                            <div class="module-box module-ent">
-                                <h3><i class="fa-solid fa-box-open"></i> Entregas / Logística</h3>
-                                <div style="position:relative;">
-                                    <input type="text" id="search-ent" placeholder="🔍 Buscar persona..." onkeyup="window.buscarParaIntervencion('ent')">
-                                    <div id="res-ent" class="search-results hidden"></div>
-                                </div>
-                                <div id="form-int-ent" class="hidden inter-form">
-                                    <h4 class="int-header"><span id="name-int-ent">Persona</span></h4>
-                                    <label>Material Entregado</label>
-                                    <select id="sel-int-ent"></select>
-                                    <label>Comentarios</label>
-                                    <textarea id="det-int-ent" rows="3" placeholder="Cantidad, talla, notas..."></textarea>
-                                    <div class="btn-row">
-                                        <button class="secondary" onclick="window.cerrarFormularioIntervencion('ent')">Cancelar</button>
-                                        <button class="success" onclick="window.registrarIntervencion('ent')">Registrar</button>
-                                        <button class="dark" onclick="window.verHistorialIntervencion('ent')">📜 Ver Historial</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div id="tab-sanitaria" class="tab-content hidden">
-                            <div class="module-box module-san">
-                                <h3><i class="fa-solid fa-notes-medical"></i> Atención Sanitaria</h3>
-                                <div style="position:relative;">
-                                    <input type="text" id="search-san" placeholder="🔍 Buscar paciente..." onkeyup="window.buscarParaIntervencion('san')">
-                                    <div id="res-san" class="search-results hidden"></div>
-                                </div>
-                                <div id="form-int-san" class="hidden inter-form">
-                                    <h4 class="int-header"><span id="name-int-san">Paciente</span></h4>
-                                    <label>Tipo de Intervención</label>
-                                    <select id="sel-int-san"></select>
-                                    <label>Detalles / Comentarios</label>
-                                    <textarea id="det-int-san" rows="3" placeholder="Descripción..."></textarea>
-                                    <div class="btn-row">
-                                        <button class="secondary" onclick="window.cerrarFormularioIntervencion('san')">Cancelar</button>
-                                        <button class="success" onclick="window.registrarIntervencion('san')">Registrar</button>
-                                        <button class="dark" onclick="window.verHistorialIntervencion('san')">📜 Ver Historial</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div id="tab-psicosocial" class="tab-content hidden">
-                            <div class="module-box module-psi">
-                                <h3><i class="fa-solid fa-users-rays"></i> Atención Psicosocial</h3>
-                                <div style="position:relative;">
-                                    <input type="text" id="search-psi" placeholder="🔍 Buscar usuario..." onkeyup="window.buscarParaIntervencion('psi')">
-                                    <div id="res-psi" class="search-results hidden"></div>
-                                </div>
-                                <div id="form-int-psi" class="hidden inter-form">
-                                    <h4 class="int-header"><span id="name-int-psi">Usuario</span></h4>
-                                    <label>Tipo de Intervención</label>
-                                    <select id="sel-int-psi"></select>
-                                    <label>Detalles / Observaciones</label>
-                                    <textarea id="det-int-psi" rows="3" placeholder="Descripción..."></textarea>
-                                    <div class="btn-row">
-                                        <button class="secondary" onclick="window.cerrarFormularioIntervencion('psi')">Cancelar</button>
-                                        <button class="success" onclick="window.registrarIntervencion('psi')">Registrar</button>
-                                        <button class="dark" onclick="window.verHistorialIntervencion('psi')">📜 Ver Historial</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
+                        <div id="tab-filiacion" class="tab-content active"><div class="module-box module-fil"><h3>Gestión Alojados</h3><input type="text" id="buscador-persona" placeholder="Buscar..." onkeyup="window.buscarPersonaEnAlbergue()"><div id="resultados-busqueda" class="search-results hidden"></div></div><div id="panel-gestion-persona" class="hidden" style="background:#f8fafc; padding:20px; border-radius:12px;"><div class="banner-nube hidden" id="banner-nube">EN NUBE</div><h3 id="gestion-nombre-titulo">...</h3><div style="display:flex; gap:5px; margin-bottom:10px;"><span id="gestion-estado" class="badge"></span><strong id="gestion-cama-info"></strong></div><div class="row"><input id="edit-nombre"><input id="edit-ap1"><input id="edit-ap2"></div><div class="row"><select id="edit-tipo-doc"><option>DNI</option><option>NIE</option><option>PASAPORTE</option><option>MENOR</option></select><input id="edit-doc-num"></div><div class="row"><input id="edit-fecha"><input id="edit-tel"></div><div class="btn-group-horizontal" id="btns-local-actions"><button class="dark" onclick="window.verCarnetQR()">Carnet</button><button class="primary" onclick="window.abrirSeleccionCama()">Cama</button><button class="secondary" onclick="window.guardarCambiosPersona()">Guardar</button><button class="warning" onclick="window.liberarCamaMantener()">Liberar</button><button class="btn-exit" onclick="window.darSalidaPersona()">Salida</button><button class="dark" onclick="window.verHistorial()">Historial</button></div><div class="btn-group-horizontal hidden" id="btns-cloud-actions"><button class="success" onclick="window.rescatarDeGlobalDirecto()">INGRESAR</button><button class="primary" onclick="window.abrirSeleccionCama()">INGRESAR + CAMA</button></div><hr><div id="info-familia-lista"></div><button class="secondary" onclick="window.abrirModalVincularFamilia()">Vincular</button></div></div>
+                        <div id="tab-prefiliacion" class="tab-content hidden"><div class="module-box module-pref"><h3>Monitor Nube</h3><input type="text" id="buscador-pref" onkeyup="window.buscarEnPrefiliacion()"><div id="resultados-pref" class="search-results hidden"></div><div id="form-manual-container"><input id="man-nombre"><input id="man-ap1"><input id="man-ap2"><div class="row"><select id="man-tipo-doc"><option>DNI</option></select><input id="man-doc-num"></div><input id="man-fecha"><input id="man-tel"><div id="existing-family-list-ui"></div><div id="admin-lista-familiares-ui"></div><button class="secondary" onclick="window.abrirModalFamiliarAdmin()">+ Miembro</button><button class="success" onclick="window.adminPrefiliarManual()" style="width:100%; margin-top:10px;">Guardar Nube</button><button id="btn-cancelar-edicion-pref" class="secondary hidden" onclick="window.cancelarEdicionPref()">Cancelar</button></div></div></div>
+                        <div id="tab-entregas" class="tab-content hidden"><div class="module-box module-ent"><h3>Entregas</h3><input id="search-ent" onkeyup="window.buscarParaIntervencion('ent')"><div id="res-ent" class="search-results hidden"></div><div id="form-int-ent" class="hidden inter-form"><h4 id="name-int-ent">...</h4><select id="sel-int-ent"></select><textarea id="det-int-ent"></textarea><div class="btn-row"><button class="secondary" onclick="window.cerrarFormularioIntervencion('ent')">Cancelar</button><button class="success" onclick="window.registrarIntervencion('ent')">Registrar</button><button class="dark" onclick="window.verHistorialIntervencion('ent')">Historial</button></div></div></div></div>
+                        <div id="tab-sanitaria" class="tab-content hidden"><div class="module-box module-san"><h3>Sanitaria</h3><input id="search-san" onkeyup="window.buscarParaIntervencion('san')"><div id="res-san" class="search-results hidden"></div><div id="form-int-san" class="hidden inter-form"><h4 id="name-int-san">...</h4><select id="sel-int-san"></select><textarea id="det-int-san"></textarea><div class="btn-row"><button class="secondary" onclick="window.cerrarFormularioIntervencion('san')">Cancelar</button><button class="success" onclick="window.registrarIntervencion('san')">Registrar</button><button class="dark" onclick="window.verHistorialIntervencion('san')">Historial</button></div></div></div></div>
+                        <div id="tab-psicosocial" class="tab-content hidden"><div class="module-box module-psi"><h3>Psicosocial</h3><input id="search-psi" onkeyup="window.buscarParaIntervencion('psi')"><div id="res-psi" class="search-results hidden"></div><div id="form-int-psi" class="hidden inter-form"><h4 id="name-int-psi">...</h4><select id="sel-int-psi"></select><textarea id="det-int-psi"></textarea><div class="btn-row"><button class="secondary" onclick="window.cerrarFormularioIntervencion('psi')">Cancelar</button><button class="success" onclick="window.registrarIntervencion('psi')">Registrar</button><button class="dark" onclick="window.verHistorialIntervencion('psi')">Historial</button></div></div></div></div>
                     </div>
                 </div>
             </div>
         </main>
     </div>
 
-    <div id="modal-notificaciones" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
-        <div class="modal-content">
-            <span class="close-modal" onclick="document.getElementById('modal-notificaciones').classList.add('hidden')">&times;</span>
-            <h3><i class="fa-solid fa-bell"></i> Derivaciones Pendientes</h3>
-            <div id="lista-notificaciones-content" style="margin-top:15px;">
-                <p style="color:#666; text-align:center;">No hay derivaciones pendientes.</p>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-qr" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content" style="text-align:center;"><span class="close-modal" onclick="document.getElementById('modal-qr').classList.add('hidden')">&times;</span><h3>Escanea para acceder</h3><div id="qrcode-display" style="display:inline-block; margin:20px;"></div><p style="color:#666;">Auto-registro móvil.</p></div></div>
+    <div id="modal-notificaciones" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><span class="close-modal" onclick="document.getElementById('modal-notificaciones').classList.add('hidden')">&times;</span><h3>Derivaciones</h3><div id="lista-notificaciones-content"></div></div></div>
+    <div id="modal-derivacion" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><h3>Derivar</h3><textarea id="derivacion-motivo" placeholder="Motivo..."></textarea><button class="primary" onclick="window.confirmarDerivacion()">Enviar</button></div></div>
+    <div id="modal-cama" class="modal-overlay hidden" onclick="if(event.target===this)window.cerrarMapaCamas()"><div class="modal-content modal-lg"><div id="grid-camas" class="bed-grid"></div></div></div>
+    <div id="modal-bed-info" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content modal-lg"><h3 id="info-cama-num"></h3><h2 id="info-nombre-completo"></h2><p id="info-telefono"></p><div id="info-familia-detalle"></div><button id="btn-historial-cama" onclick="window.verHistorial()">Historial</button></div></div>
+    <div id="modal-vincular-familia" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><input id="search-vincular" onkeyup="window.buscarParaVincular()"><div id="resultados-vincular"></div></div></div>
+    <div id="modal-albergue" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><input id="mto-nombre"><input id="mto-capacidad"><input id="mto-columnas"><button onclick="window.guardarAlbergue()">Guardar</button><button id="btn-delete-albergue" onclick="window.eliminarAlbergueActual()">Eliminar</button></div></div>
+    <div id="modal-crear-usuario" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><input id="new-user-name"><select id="new-user-role"></select><input id="new-user-email"><input id="new-user-pass" type="password"><input type="checkbox" id="new-user-active"><button onclick="window.guardarUsuario()">Guardar</button><button id="btn-delete-user" onclick="window.eliminarUsuario()">Borrar</button></div></div>
+    <div id="modal-change-pass" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><input id="chg-old-pass"><input id="chg-new-pass"><input id="chg-confirm-pass"><button onclick="window.ejecutarCambioPass()">Cambiar</button></div></div>
+    <div id="modal-historial" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><h3 id="hist-modal-header"></h3><div id="historial-content"></div></div></div>
+    <div id="modal-add-familiar" class="modal-overlay hidden"><div class="modal-content"><input id="fam-nombre"><input id="fam-ap1"><input id="fam-ap2"><select id="fam-tipo-doc" onchange="window.verificarMenor('fam')"><option>MENOR</option><option>DNI</option></select><input id="fam-doc-num"><input id="fam-fecha"><button onclick="window.guardarFamiliarEnLista()">Añadir</button><button onclick="window.cerrarModalFamiliar()">Cerrar</button></div></div>
+    <div id="modal-admin-add-familiar" class="modal-overlay hidden"><div class="modal-content"><input id="adm-fam-nombre"><input id="adm-fam-ap1"><input id="adm-fam-ap2"><select id="adm-fam-tipo-doc" onchange="window.verificarMenor('adm-fam')"><option>MENOR</option><option>DNI</option></select><input id="adm-fam-doc-num"><input id="adm-fam-fecha"><input id="adm-fam-tel"><button onclick="window.guardarFamiliarAdmin()">Añadir</button><button onclick="window.cerrarModalFamiliarAdmin()">Cerrar</button></div></div>
+    <div id="modal-obs-detalle" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content modal-lg"><h3 id="obs-modal-title"></h3><div id="obs-modal-content"></div></div></div>
+    <div id="modal-qr" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><div id="qrcode-display"></div></div></div>
+    <div id="modal-carnet-qr" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><div id="carnet-qrcode-display"></div><h2 id="carnet-nombre"></h2><p id="carnet-id"></p></div></div>
     
-    <div id="modal-carnet-qr" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
-        <div class="modal-content" style="text-align:center; max-width:400px;">
-            <span class="close-modal" onclick="document.getElementById('modal-carnet-qr').classList.add('hidden')">&times;</span>
-            <h3 style="color:var(--primary); margin-bottom:5px;">Carnet Digital</h3>
-            <div id="carnet-qrcode-display" style="display:inline-block; margin:20px; border:4px solid var(--text-main); padding:10px; border-radius:10px;"></div>
-            <h2 id="carnet-nombre" style="font-size:1.4rem; margin-bottom:5px;"></h2>
-            <p id="carnet-id" style="font-size:1rem; color:#666; font-family:monospace; font-weight:bold;"></p>
-        </div>
-    </div>
-    
-    <div id="modal-derivacion" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
-        <div class="modal-content">
-            <span class="close-modal" onclick="document.getElementById('modal-derivacion').classList.add('hidden')">&times;</span>
-            <h3 id="derivacion-titulo">Derivar a...</h3>
-            <p>Por favor, indica el motivo o comentario para el equipo:</p>
-            <textarea id="derivacion-motivo" rows="4" style="width:100%; border:1px solid #cbd5e1; border-radius:8px; padding:10px; font-family:inherit; resize:none;" placeholder="Escribe aquí..."></textarea>
-            <div class="btn-row" style="margin-top:15px;">
-                <button class="primary" onclick="window.confirmarDerivacion()">Enviar Derivación</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-cama" class="modal-overlay hidden" onclick="if(event.target===this)window.cerrarMapaCamas()"><div class="modal-content modal-lg"><span class="close-modal" onclick="window.cerrarMapaCamas()">&times;</span><h3>Seleccionar Cama</h3><p style="font-size:0.8rem;color:#666;">Verde Borde=Sugerencia | Naranja=Reserva Familia</p><div id="grid-camas" class="bed-grid"></div></div></div>
-    <div id="modal-bed-info" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content modal-lg" style="text-align:center; padding:40px;"><span class="close-modal" onclick="document.getElementById('modal-bed-info').classList.add('hidden')">&times;</span><div style="font-size:3rem; color:var(--primary); margin-bottom:10px;"><i class="fa-solid fa-user-check"></i></div><h3 style="color:var(--text-light);">Cama <span id="info-cama-num"></span></h3><h2 id="info-nombre-completo" style="color:var(--primary);"></h2><p><span id="info-telefono"></span></p><br><button id="btn-historial-cama" class="dark hidden" style="margin-bottom:15px;">📜 Ver Historial</button><div style="margin-top:20px; text-align:left;"><h4 style="border-bottom:1px solid #eee; padding-bottom:5px;">Unidad Familiar</h4><div id="info-familia-detalle"></div></div></div></div>
-    <div id="modal-vincular-familia" class="modal-overlay hidden" style="z-index: 2000;" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><span class="close-modal" onclick="document.getElementById('modal-vincular-familia').classList.add('hidden')">&times;</span><h3>Unir a Familia</h3><input type="text" id="search-vincular" placeholder="Buscar..." onkeyup="window.buscarParaVincular()" autocomplete="off"><div id="resultados-vincular" class="search-results hidden"></div></div></div>
-    <div id="modal-albergue" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><span class="close-modal" onclick="document.getElementById('modal-albergue').classList.add('hidden')">&times;</span><h3 id="mto-modal-title">Nuevo</h3><label>Nombre</label><input type="text" id="mto-nombre"><div class="row"><div class="col"><label>Cap</label><input type="number" id="mto-capacidad"></div><div class="col"><label>Cols</label><input type="number" id="mto-columnas" value="8"></div></div><div class="btn-row"><button class="primary" onclick="window.guardarAlbergue()">Guardar</button></div><br><button id="btn-delete-albergue" class="danger hidden" style="width:100%" onclick="window.eliminarAlbergueActual()">Eliminar Albergue</button></div></div>
-    
-    <div id="modal-crear-usuario" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
-        <div class="modal-content">
-            <span class="close-modal" onclick="document.getElementById('modal-crear-usuario').classList.add('hidden')">&times;</span>
-            <h3 id="user-modal-title">Usuario</h3>
-            <label>Nombre</label><input type="text" id="new-user-name">
-            <label>Rol</label><select id="new-user-role"></select>
-            <label>Email</label><input type="email" id="new-user-email">
-            <label>Contraseña</label><input type="password" id="new-user-pass">
-            <p id="edit-pass-warning" style="display:none;color:orange;font-size:0.8em;">Use reset email.</p>
-            <div style="margin: 15px 0; padding: 10px; background: #f8fafc; border-radius: 8px;">
-                <label class="toggle-switch"><input type="checkbox" class="toggle-input" id="new-user-active" checked><span class="toggle-slider"></span><span style="font-size:0.9rem; font-weight:600; margin-left:10px;">Usuario Activo</span></label>
-            </div>
-            <div class="btn-row"><button id="btn-save-user" class="primary" onclick="window.guardarUsuario()">Guardar</button></div><br><button id="btn-delete-user" class="danger hidden" style="width:100%" onclick="window.eliminarUsuario()">Eliminar Usuario</button>
-        </div>
-    </div>
-    <div id="modal-change-pass" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><span class="close-modal" onclick="document.getElementById('modal-change-pass').classList.add('hidden')">&times;</span><h3>Cambiar Contraseña</h3><label>Contraseña Actual</label><input type="password" id="chg-old-pass"><label>Nueva Contraseña</label><input type="password" id="chg-new-pass"><label>Confirmar Nueva</label><input type="password" id="chg-confirm-pass"><div class="btn-row"><button class="primary" onclick="window.ejecutarCambioPass()">Actualizar</button></div></div></div>
-    
-    <div id="modal-historial" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
-        <div class="modal-content">
-            <span class="close-modal" onclick="document.getElementById('modal-historial').classList.add('hidden')">&times;</span>
-            <h3 id="hist-modal-header">Historial de Movimientos</h3> 
-            <div id="historial-content" style="max-height:60vh; overflow-y:auto; margin-top:15px;"></div>
-        </div>
-    </div>
-    
-    <div id="modal-add-familiar" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><span class="close-modal" onclick="window.cerrarModalFamiliar()">&times;</span><h3>Familiar (QR)</h3><div class="row"><div class="col"><label>Nombre</label><input type="text" id="fam-nombre"></div></div><div class="row"><div class="col"><label>Ap 1</label><input type="text" id="fam-ap1"></div><div class="col"><label>Ap 2</label><input type="text" id="fam-ap2"></div></div><div class="row"><div class="col"><label>Doc</label><select id="fam-tipo-doc" onchange="window.verificarMenor('fam')"><option value="MENOR">MENOR</option><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option></select></div><div class="col"><label>Num</label><input type="text" id="fam-doc-num" disabled></div></div><div class="row"><div class="col"><label>F. Nac</label><input type="tel" id="fam-fecha" oninput="window.formatearFecha(this)" maxlength="10"></div></div><div class="btn-row"><button class="primary" onclick="window.guardarFamiliarEnLista()">Añadir</button></div></div></div>
-    <div id="modal-admin-add-familiar" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><span class="close-modal" onclick="window.cerrarModalFamiliarAdmin()">&times;</span><h3>Miembro (Admin)</h3><div class="row"><div class="col"><label>Nombre</label><input type="text" id="adm-fam-nombre"></div><div class="col"><label>Ap 1</label><input type="text" id="adm-fam-ap1"></div><div class="col"><label>Ap 2</label><input type="text" id="adm-fam-ap2"></div></div><div class="row"><div class="col"><label>Doc</label><select id="adm-fam-tipo-doc" onchange="window.verificarMenor('adm-fam')"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Num</label><input type="text" id="adm-fam-doc-num"></div></div><div class="row"><div class="col"><label>F. Nac</label><input type="tel" id="adm-fam-fecha" oninput="window.formatearFecha(this)" maxlength="10"></div><div class="col"><label>Tel</label><input type="tel" id="adm-fam-tel"></div></div><div class="btn-row"><button class="primary" onclick="window.guardarFamiliarAdmin()">Añadir</button></div></div></div>
-    <div id="modal-obs-detalle" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content modal-lg"><span class="close-modal" onclick="document.getElementById('modal-obs-detalle').classList.add('hidden')">&times;</span><h3 id="obs-modal-title">Listado</h3><div id="obs-modal-content" style="margin-top:20px;"></div></div></div>
-    
-    <div id="public-register-screen" class="hidden">
-        <div id="public-welcome-screen" class="card" style="max-width:500px; width:100%; margin:20px auto;">
-            <div class="welcome-box">
-                <i class="fa-solid fa-door-open welcome-icon"></i>
-                <h2 style="color:var(--text-main); margin-bottom:10px;">Bienvenido/a</h2>
-                <p style="font-size:1.1rem; line-height:1.5; margin-bottom:20px; color:var(--text-main);">Está a punto de rellenar la ficha de registro de sus datos y el de sus familiares para acceder al <strong id="public-albergue-name" style="color:var(--primary);">Albergue...</strong></p>
-                <div class="consent-box"><input type="checkbox" id="check-consent" onchange="window.toggleStartButton()"><label for="check-consent" style="cursor:pointer; margin:0; margin-left:5px;">He leído la información y acepto facilitar sus datos.</label></div>
-                <button id="btn-start-public" class="primary" style="width:100%; padding:15px; font-size:1.1rem;" disabled onclick="window.iniciarRegistro()">COMENZAR REGISTRO</button>
-            </div>
-        </div>
-        <div id="public-form-container" class="hidden">
-            <div class="public-form-header"><h2 style="text-align:center; color:var(--primary); margin:0;">Tus Datos</h2></div>
-            <div class="public-form-body">
-                <div class="row"><div class="col"><label>Nombre (*)</label><input type="text" id="pub-nombre"></div></div>
-                <div class="row"><div class="col"><label>Ap 1</label><input type="text" id="pub-ap1"></div><div class="col"><label>Ap 2</label><input type="text" id="pub-ap2"></div></div>
-                <div class="row"><div class="col"><label>Doc</label><select id="pub-tipo-doc" onchange="window.verificarMenor('pub')"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Num</label><input type="text" id="pub-doc-num"></div></div>
-                <div class="row"><div class="col"><label>F. Nac</label><input type="tel" id="pub-fecha" placeholder="DD/MM/AAAA" maxlength="10" oninput="window.formatearFecha(this)"></div><div class="col"><label>Tel</label><input type="tel" id="pub-tel"></div></div>
-                <div class="fam-list"><h4>Acompañantes</h4><div id="lista-familiares-ui"><p style="color:#999;">Ninguno.</p></div><button class="secondary" onclick="window.abrirModalFamiliar()">+ Añadir Acompañante</button></div>
-            </div>
-            <div class="public-form-footer"><button class="success" style="width:100%; padding:15px; font-size:1.2rem; box-shadow: 0 -2px 10px rgba(0,0,0,0.1);" onclick="window.publicoGuardarTodo()">ENVIAR DATOS</button></div>
-        </div>
-        <div id="public-success-msg" class="hidden" style="text-align:center; padding:20px; background:white; height:100%;"><div class="success-icon"><i class="fa-solid fa-circle-check"></i></div><h1 style="margin-bottom:10px;">¡Datos Enviados!</h1><p style="font-size:1.2rem; color:var(--text-light);">Gracias. Por favor, acércate a la mesa de entrada.</p></div>
-    </div>
+    <div id="public-register-screen" class="hidden"><div id="public-welcome-screen" class="card"><h2 id="public-albergue-name"></h2><input type="checkbox" id="check-consent" onchange="window.toggleStartButton()"><button id="btn-start-public" disabled onclick="window.iniciarRegistro()">Empezar</button></div><div id="public-form-container" class="hidden"><input id="pub-nombre"><input id="pub-ap1"><input id="pub-ap2"><select id="pub-tipo-doc" onchange="window.verificarMenor('pub')"><option>DNI</option></select><input id="pub-doc-num"><input id="pub-fecha"><input id="pub-tel"><div id="lista-familiares-ui"></div><button onclick="window.abrirModalFamiliar()">+ Fam</button><button onclick="window.publicoGuardarTodo()">Enviar</button></div><div id="public-success-msg" class="hidden"><h1>OK</h1></div></div>
 
     <script type="module" src="script.js"></script>
 </body>

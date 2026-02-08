@@ -810,4 +810,7 @@ window.copiarURLPublica = function() {
         document.body.removeChild(textArea);
     }
 };
+window.buscarParaIntervencion = function(prefix) {
+    window.buscarPersonaIntervencion(prefix);
+};
 });

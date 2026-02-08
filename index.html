@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gestión Albergue - Ver.2.1.8</title>
+    <title>Gestión Albergue - Ver.2.7.1</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -12,7 +12,7 @@
 </head>
 <body>
 
-    <div class="version-tag">Ver.2.1.8</div>
+    <div class="version-tag">Ver.2.7.1</div>
     
     <div id="toast" style="visibility: hidden;">Guardado automático</div>
     <div id="loading-overlay" class="hidden"><div class="spinner"></div><h2 style="color:var(--primary);">Cargando Datos...</h2></div>
@@ -28,12 +28,6 @@
         <div id="black-box-content"></div>
     </div>
 
-    <div id="notification-badge-container" class="hidden" onclick="window.mostrarListaNotificaciones()">
-        <div class="notif-icon"><i class="fa-solid fa-bell"></i></div>
-        <div id="notif-count" class="notif-count">0</div>
-        <div class="notif-label">Derivaciones</div>
-    </div>
-
     <div id="login-screen" class="">
         <div class="card">
             <h1 style="color:var(--primary); margin-bottom:20px;"><i class="fa-solid fa-hotel"></i> Acceso</h1>
@@ -47,7 +41,13 @@
     <div id="app-shell" class="hidden">
         <header class="app-header">
             <div class="brand"><i class="fa-solid fa-campground"></i> ALBERGUE PRO</div>
+            
             <div class="user-profile">
+                <div id="notification-badge-container" class="hidden" onclick="window.gestionarClicGlobo()" style="position: relative; margin-right: 15px; cursor: pointer;">
+                    <div class="notif-icon" style="color: var(--primary); font-size: 1.2rem;"><i class="fa-solid fa-bell"></i></div>
+                    <div id="notif-count" style="position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; font-size: 0.7rem; font-weight: bold; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 2px solid white;">0</div>
+                </div>
+
                 <div class="user-info">
                     <span class="user-name" id="user-name-display">...</span>
                     <span class="user-role" id="user-role-badge">...</span>
@@ -65,7 +65,6 @@
             <div class="nav-item" id="nav-albergues" onclick="window.navegar('gestion-albergues')"><i class="fa-solid fa-bed"></i><span>Gestión</span></div>
             <div class="nav-item" id="nav-mto" onclick="window.navegar('mantenimiento')"><i class="fa-solid fa-screwdriver-wrench"></i><span>Mantenimiento</span></div>
             <div class="nav-item" id="nav-obs" onclick="window.navegar('observatorio')"><i class="fa-solid fa-binoculars"></i><span>Observatorio</span></div>
-            <div class="nav-item disabled"><i class="fa-solid fa-chart-pie"></i><span>Informes</span></div>
         </nav>
 
         <main class="main-content">

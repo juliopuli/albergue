@@ -399,4 +399,287 @@ onAuthStateChanged(auth, async (u) => {
         window.safeHide('app-shell');
         window.safeShow('login-screen');
     }
+// === FUNCIONES DE INTERVENCIÓN Y QR (AÑADIR AQUÍ) ===
+
+window.verCarnetQR = function() {
+    if (!personaEnGestion) {
+        alert("No hay persona seleccionada");
+        return;
+    }
+    
+    const qrDisplay = document.getElementById('carnet-qrcode-display');
+    qrDisplay.innerHTML = "";
+    
+    // Deep Link mejorado
+    const carnetURL = `${window.location.origin}${window.location.pathname}?action=scan&aid=${currentAlbergueId}&pid=${personaEnGestion.id}`;
+    
+    new QRCode(qrDisplay, {
+        text: carnetURL,
+        width: 200,
+        height: 200,
+        colorDark: "#1e293b",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+    });
+    
+    const nombreCompleto = `${personaEnGestion.nombre} ${personaEnGestion.ap1 || ''} ${personaEnGestion.ap2 || ''}`.trim();
+    document.getElementById('carnet-nombre').innerText = nombreCompleto;
+    document.getElementById('carnet-id').innerText = personaEnGestion.docNum || 'SIN DNI';
+    
+    window.safeShow('modal-carnet-qr');
+    window.sysLog(`Carnet QR generado: ${nombreCompleto} (Deep Link)`, "info");
+};
+
+window.iniciarCamara = function() {
+    window.safeHide('scan-placeholder');
+    window.safeHide('btn-start-camera');
+    window.safeShow('reader');
+    window.safeShow('btn-stop-camera');
+    
+    if (!html5QrCode) {
+        html5QrCode = new Html5Qrcode("reader");
+    }
+    
+    html5QrCode.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: 250 },
+        qrCodeMessage => {
+            window.sysLog("QR Detectado: " + qrCodeMessage, "info");
+            html5QrCode.stop();
+            window.procesarQREscaneado(qrCodeMessage);
+        },
+        errorMessage => {}
+    ).catch(err => {
+        window.sysLog("Error cámara: " + err, "error");
+        alert("No se pudo iniciar la cámara.");
+        resetScannerUI();
+    });
+};
+
+window.procesarQREscaneado = async function(rawData) {
+    try {
+        const data = JSON.parse(rawData);
+        
+        if (data.personaId && data.albergueId) {
+            window.sysLog(`Carnet JSON detectado - Persona: ${data.personaId}`, "info");
+            
+            if (currentAlbergueId !== data.albergueId) {
+                window.sysLog("Cargando albergue desde QR...", "info");
+                await window.cargarDatosYEntrar(data.albergueId);
+            }
+            
+            const personaRef = doc(db, "albergues", data.albergueId, "personas", data.personaId);
+            const personaSnap = await getDoc(personaRef);
+            
+            if (personaSnap.exists()) {
+                const personaData = { id: personaSnap.id, ...personaSnap.data() };
+                window.navegar('intervencion');
+                setTimeout(() => {
+                    window.cargarInterfazIntervencion(personaData);
+                    window.sysLog("Interfaz cargada desde QR", "success");
+                }, 200);
+            } else {
+                alert("Persona no encontrada.");
+                window.sysLog(`Persona ${data.personaId} no existe`, "warn");
+            }
+        } else {
+            alert("QR no válido.");
+        }
+    } catch (e) {
+        if (rawData.includes('public_id=')) {
+            alert("QR de registro público.");
+        } else if (rawData.includes('action=scan')) {
+            alert("✅ Carnet detectado.\nAbre el enlace en el navegador.");
+        } else {
+            alert("QR no reconocido.");
+        }
+    }
+};
+
+window.iniciarModoFocalizado = async function(aid, pid) {
+    window.sysLog(`Modo Focalizado activado: Albergue=${aid}, Persona=${pid}`, "nav");
+    document.body.classList.add('focused-mode');
+    await window.cargarDatosYEntrar(aid);
+    window.navegar('intervencion');
+    const personaRef = doc(db, "albergues", aid, "personas", pid);
+    const personaSnap = await getDoc(personaRef);
+    if (personaSnap.exists()) {
+        const personaData = { id: personaSnap.id, ...personaSnap.data() };
+        window.cargarInterfazIntervencion(personaData);
+        window.safeShow('btn-exit-focused');
+    } else {
+        alert("Persona no encontrada.");
+        window.salirModoFocalizado();
+    }
+};
+
+window.salirModoFocalizado = function() {
+    document.body.classList.remove('focused-mode');
+    window.safeHide('btn-exit-focused');
+    window.navegar('home');
+};
+
+window.cargarInterfazIntervencion = function(p) {
+    personaEnGestion = p;
+    personaEnGestionEsGlobal = false;
+    window.safeHide('view-scan-ready');
+    window.safeShow('view-scan-result');
+    
+    const n = `${p.nombre} ${p.ap1 || ''} ${p.ap2 || ''}`.trim();
+    window.el('scan-nombre').innerText = n;
+    window.el('scan-doc').innerText = p.docNum || 'SIN DNI';
+    window.el('scan-tel').innerText = p.telefono || 'SIN TEL';
+    window.el('scan-cama').innerText = p.cama ? `Cama ${p.cama}` : 'Sin cama asignada';
+    
+    const derivSan = window.el('btn-derivar-san');
+    const derivPsi = window.el('btn-derivar-psi');
+    
+    if (['admin', 'super_admin', 'albergue'].includes(currentUserData.rol)) {
+        window.safeShow('btn-derivar-san');
+        window.safeShow('btn-derivar-psi');
+    } else {
+        window.safeHide('btn-derivar-san');
+        window.safeHide('btn-derivar-psi');
+    }
+};
+
+window.abrirDerivacion = function(tipo) {
+    tipoDerivacionActual = tipo;
+    window.el('derivacion-tipo-titulo').innerText = `Derivar a ${tipo}`;
+    window.el('derivacion-motivo').value = '';
+    window.safeShow('modal-derivacion');
+};
+
+// === MÁS FUNCIONES DE INTERVENCIÓN ===
+window.abrirFormularioIntervencion = function(personaId, prefix) {
+    const persona = listaPersonasCache.find(p => p.id === personaId);
+    if (!persona) return;
+    
+    personaIntervencionActiva = persona;
+    
+    const tipoConfig = TIPOS_INTERVENCION[prefix];
+    if (!tipoConfig) return;
+    
+    const modalId = `modal-${prefix}`;
+    const selectId = `${prefix}-tipo`;
+    const textareaId = `${prefix}-detalle`;
+    const titleId = `${prefix}-modal-title`;
+    
+    const titleEl = window.el(titleId);
+    if (titleEl) titleEl.innerText = `${tipoConfig.titulo}: ${persona.nombre}`;
+    
+    const selectEl = window.el(selectId);
+    if (selectEl) {
+        selectEl.innerHTML = "";
+        tipoConfig.opciones.forEach(opt => {
+            const option = document.createElement('option');
+            option.value = opt;
+            option.text = opt;
+            selectEl.add(option);
+        });
+    }
+    
+    const textareaEl = window.el(textareaId);
+    if (textareaEl) textareaEl.value = "";
+    
+    window.safeShow(modalId);
+};
+
+window.cerrarFormularioIntervencion = function(prefix) {
+    personaIntervencionActiva = null;
+    window.safeHide(`modal-${prefix}`);
+};
+
+window.guardarIntervencion = async function(prefix) {
+    if (!personaIntervencionActiva) return;
+    
+    const tipoConfig = TIPOS_INTERVENCION[prefix];
+    const subtipo = window.safeVal(`${prefix}-tipo`);
+    const detalle = window.safeVal(`${prefix}-detalle`);
+    
+    if (!subtipo) return alert("Selecciona un tipo");
+    
+    const intervencionData = {
+        tipo: tipoConfig.titulo,
+        subtipo: subtipo,
+        detalle: detalle || "",
+        fecha: new Date(),
+        usuario: currentUserData.nombre,
+        personaId: personaIntervencionActiva.id
+    };
+    
+    try {
+        const ref = collection(db, "albergues", currentAlbergueId, "personas", personaIntervencionActiva.id, "intervenciones");
+        await addDoc(ref, intervencionData);
+        
+        await window.registrarLog(personaIntervencionActiva.id, `Intervención ${tipoConfig.titulo}`, `${subtipo}: ${detalle}`);
+        
+        window.showToast("✅ Intervención guardada");
+        window.cerrarFormularioIntervencion(prefix);
+        
+        window.sysLog(`Intervención ${tipoConfig.titulo} registrada para ${personaIntervencionActiva.nombre}`, "success");
+    } catch (e) {
+        window.sysLog(`Error guardando intervención: ${e.message}`, "error");
+        alert("Error al guardar");
+    }
+};
+
+window.buscarPersonaIntervencion = function(prefix) {
+    const txt = window.safeVal(`search-${prefix}`).toLowerCase().trim();
+    const res = window.el(`res-${prefix}`);
+    
+    if (txt.length < 2) {
+        window.safeHide(`res-${prefix}`);
+        return;
+    }
+    
+    const hits = listaPersonasCache.filter(p => {
+        if (p.estado !== 'ingresado') return false;
+        const full = `${p.nombre} ${p.ap1 || ''} ${p.ap2 || ''}`.toLowerCase();
+        return full.includes(txt) || (p.docNum || "").toLowerCase().includes(txt);
+    });
+    
+    res.innerHTML = "";
+    
+    if (hits.length === 0) {
+        res.innerHTML = `<div class="search-item">No encontrado</div>`;
+    } else {
+        hits.forEach(p => {
+            res.innerHTML += `<div class="search-item" onclick="window.abrirFormularioIntervencion('${p.id}', '${prefix}')">
+                <strong>${p.nombre} ${p.ap1 || ''}</strong>
+                <small>Cama: ${p.cama || '-'} | DNI: ${p.docNum || '-'}</small>
+            </div>`;
+        });
+    }
+    
+    window.safeShow(`res-${prefix}`);
+};
+
+window.guardarCama = async function(numeroCama) {
+    if (!personaEnGestion) return;
+    if (personaEnGestion.cama) {
+        if (!confirm(`¿Cambiar de cama ${personaEnGestion.cama} a ${numeroCama}?`)) return;
+    }
+    
+    try {
+        await updateDoc(doc(db, "albergues", currentAlbergueId, "personas", personaEnGestion.id), { cama: numeroCama });
+        window.registrarLog(personaEnGestion.id, "Asignación Cama", `Cama ${numeroCama}`);
+        window.showToast(`✅ Cama ${numeroCama} asignada`);
+        window.cerrarMapaCamas();
+    } catch (e) {
+        window.sysLog("Error guardando cama: " + e.message, "error");
+    }
+};
+
+window.cambiarPresenciaPersona = async function(estado) {
+    if (!personaEnGestion) return;
+    
+    try {
+        await updateDoc(doc(db, "albergues", currentAlbergueId, "personas", personaEnGestion.id), { presencia: estado });
+        window.registrarLog(personaEnGestion.id, "Presencia", estado === 'dentro' ? 'Dentro del albergue' : 'Fuera del albergue');
+        window.showToast(`✅ Presencia: ${estado}`);
+    } catch (e) {
+        window.sysLog("Error actualizando presencia: " + e.message, "error");
+    }
+};
 });

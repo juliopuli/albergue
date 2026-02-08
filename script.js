@@ -14,7 +14,7 @@ const firebaseConfig = {
 };
 const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db = getFirestore(app);
 
-// --- LOGS ---
+// --- UTILIDADES DE LOG (MEJORADAS) ---
 window.sysLog = function(msg, type = 'info') {
     const c = document.getElementById('black-box-content');
     if (!c) { console.log(msg); return; }
@@ -23,25 +23,22 @@ window.sysLog = function(msg, type = 'info') {
     let typeClass = 'log-type-info'; 
     if (type === 'error') typeClass = 'log-type-error'; if (type === 'warn') typeClass = 'log-type-warn'; if (type === 'nav') typeClass = 'log-type-nav';
     const div = document.createElement('div'); div.className = 'log-entry';
-    // DETECTOR DE ÍNDICE
     if (msg && (msg.includes("requires an index") || msg.includes("failed: preconf"))) {
         const urlMatch = msg.match(/https:\/\/[^\s]+/);
         const url = urlMatch ? urlMatch[0] : "https://console.firebase.google.com";
         div.innerHTML = `<span class="log-time">[${time}]</span> <strong style="color:red; background:white; padding:2px;">[FALTA ÍNDICE]</strong> <a href="${url}" target="_blank" style="color:yellow; font-weight:bold; text-decoration:underline;">HAGA CLIC AQUÍ PARA CREARLO</a>`;
-        const bb = document.getElementById('black-box-overlay');
-        if(bb) bb.classList.remove('hidden');
+        const bb = document.getElementById('black-box-overlay'); if(bb) bb.classList.remove('hidden');
     } else {
         div.innerHTML = `<span class="log-time">[${time}]</span> <span class="${typeClass}">[${type.toUpperCase()}]</span> ${msg}`;
     }
     c.appendChild(div); c.scrollTop = c.scrollHeight;
     if(type === 'error') console.error(msg); else console.log(`[SYS] ${msg}`);
 };
-
-window.onerror = function(message, source, lineno, colno, error) { window.sysLog(`CRITICAL ERROR: ${message} at line ${lineno}`, "error"); };
+window.onerror = function(message, source, lineno, colno, error) { window.sysLog(`CRITICAL ERROR: ${message} at line ${lineno}`, "error"); if(currentUserData && currentUserData.rol === 'super_admin') { document.getElementById('black-box-overlay').classList.remove('hidden'); } };
 window.toggleCajaNegra = function() { const bb = document.getElementById('black-box-overlay'); if (bb) { if (bb.classList.contains('hidden')) { bb.classList.remove('hidden'); window.sysLog("Debug activado", "info"); } else { bb.classList.add('hidden'); } } };
 window.limpiarCajaNegra = function() { const c = document.getElementById('black-box-content'); if (c) c.innerHTML = ""; };
 
-window.sysLog("Sistema Iniciado. Versión 2.3.0 (Full Debug)", "info");
+window.sysLog("Sistema Iniciado. Versión 2.3.1 (Structure Fixed)", "info");
 
 // --- GLOBALES ---
 let isPublicMode = false;
@@ -95,47 +92,81 @@ window.verificarMenor = function(p) { const t = window.el(`${p}-tipo-doc`).value
 window.limpiarFormulario = function(p) { ['nombre', 'ap1', 'ap2', 'doc-num', 'fecha', 'tel'].forEach(f => { const e = window.el(`${p}-${f}`); if (e) e.value = ""; }); const i = window.el(`${p}-doc-num`); if (i) i.disabled = false; };
 window.getDatosFormulario = function(p) { return { nombre: window.safeVal(`${p}-nombre`), ap1: window.safeVal(`${p}-ap1`), ap2: window.safeVal(`${p}-ap2`), tipoDoc: window.safeVal(`${p}-tipo-doc`), docNum: window.safeVal(`${p}-doc-num`), fechaNac: window.safeVal(`${p}-fecha`), telefono: window.safeVal(`${p}-tel`) }; };
 
-// --- RESETEO ---
+// --- FUNCIONES CRÍTICAS DE INTERFAZ (MOVIDAS AL PRINCIPIO) ---
 window.resetIntervencion = function() { personaEnGestion = null; window.safeHide('view-scan-result'); window.safeShow('view-scan-ready'); resetScannerUI(); };
 window.detenerEscaner = function() { if (html5QrCode && html5QrCode.isScanning) { html5QrCode.stop().then(() => { window.sysLog("Cámara detenida.", "info"); html5QrCode.clear(); }).catch(err => console.error(err)).finally(() => { resetScannerUI(); }); } else { resetScannerUI(); } };
 function resetScannerUI() { window.safeHide('reader'); window.safeHide('btn-stop-camera'); window.safeShow('scan-placeholder'); window.safeShow('btn-start-camera'); }
 
-// --- NAVEGACIÓN ---
-window.navegar = function(p) {
-    window.sysLog(`Navegando: ${p}`, "nav");
-    if(unsubscribeUsers) unsubscribeUsers(); 
-    if(unsubscribeAlberguesActivos) unsubscribeAlberguesActivos();
-    if(unsubscribeNotifs) unsubscribeNotifs(); 
-    
-    ['screen-home','screen-usuarios','screen-gestion-albergues','screen-mantenimiento','screen-operativa','screen-observatorio', 'screen-intervencion'].forEach(id=>window.safeHide(id));
-    if(!currentUserData) return;
-    
-    if(p !== 'intervencion') { window.resetIntervencion(); window.detenerEscaner(); }
-
-    if(p==='home') window.safeShow('screen-home');
-    else if(p==='intervencion') { window.safeShow('screen-intervencion'); }
-    else if(p==='gestion-albergues') { window.cargarAlberguesActivos(); window.safeShow('screen-gestion-albergues'); }
-    else if(p==='mantenimiento') { window.cargarAlberguesMantenimiento(); window.safeShow('screen-mantenimiento'); }
-    else if(p==='operativa') { window.safeShow('screen-operativa'); const t = window.configurarTabsPorRol(); window.cambiarPestana(t); } 
-    else if(p==='observatorio') { window.cargarObservatorio(); window.safeShow('screen-observatorio'); }
-    else if(p==='usuarios') { window.cargarUsuarios(); window.safeShow('screen-usuarios'); }
-    
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    
-    if(p.includes('albergue')) window.safeAddActive('nav-albergues'); 
-    else if(p.includes('obs')) window.safeAddActive('nav-obs'); 
-    else if(p.includes('mantenimiento')) window.safeAddActive('nav-mto'); 
-    else if(p === 'intervencion') window.safeAddActive('nav-intervencion');
-    else window.safeAddActive('nav-home');
+window.buscarParaIntervencion = function(tipo) {
+    const txt = window.safeVal(`search-${tipo}`).toLowerCase().trim();
+    const res = window.el(`res-${tipo}`);
+    if (txt.length < 2) { res.classList.add('hidden'); return; }
+    const hits = listaPersonasCache.filter(p => {
+        const full = `${p.nombre} ${p.ap1 || ''} ${p.ap2 || ''}`.toLowerCase();
+        return full.includes(txt) || (p.docNum || "").toLowerCase().includes(txt);
+    });
+    res.innerHTML = "";
+    if (hits.length === 0) { res.innerHTML = "<div class='search-item'>Sin resultados locales.</div>"; } 
+    else { hits.forEach(p => { const hasBed = p.cama ? `Cama ${p.cama}` : "Sin Cama"; res.innerHTML += ` <div class="search-item" onclick="window.abrirFormularioIntervencion('${p.id}', '${tipo}')"> <div> <strong>${p.nombre} ${p.ap1 || ''}</strong> <div style="font-size:0.8rem;color:#666;">${p.docNum || '-'} | ${hasBed}</div> </div> <button class="btn-icon-small" style="background:var(--primary);color:white;">Selecionar</button> </div>`; }); }
+    res.classList.remove('hidden');
 };
 
-window.configurarTabsPorRol = function() { const r = (currentUserData.rol || "").toLowerCase().trim(); ['btn-tab-pref', 'btn-tab-fil', 'btn-tab-san', 'btn-tab-psi', 'btn-tab-ent'].forEach(id => window.safeHide(id)); if(['super_admin', 'admin'].includes(r)) { ['btn-tab-pref', 'btn-tab-fil', 'btn-tab-san', 'btn-tab-psi', 'btn-tab-ent'].forEach(id => window.safeShow(id)); return 'filiacion'; } if(r === 'albergue') { window.safeShow('btn-tab-pref'); window.safeShow('btn-tab-fil'); window.safeShow('btn-tab-ent'); return 'filiacion'; } if(['sanitario', 'psicosocial'].includes(r)) { window.safeShow('btn-tab-san'); window.safeShow('btn-tab-psi'); return 'sanitaria'; } return 'filiacion'; };
-window.cambiarPestana = function(t) { window.sysLog(`Pestaña: ${t}`, "nav"); ['tab-prefiliacion', 'tab-filiacion', 'tab-sanitaria', 'tab-psicosocial', 'tab-entregas'].forEach(id => window.safeHide(id)); ['btn-tab-pref', 'btn-tab-fil', 'btn-tab-san', 'btn-tab-psi', 'btn-tab-ent'].forEach(id => window.safeRemoveActive(id)); window.safeAddActive(`btn-tab-${t.substring(0,3)}`); window.safeShow(`tab-${t}`); if (t === 'prefiliacion') { window.limpiarFormulario('man'); adminFamiliaresTemp = []; if(window.actualizarListaFamiliaresAdminUI) window.actualizarListaFamiliaresAdminUI(); if(window.el('existing-family-list-ui')) window.el('existing-family-list-ui').innerHTML = ""; window.cancelarEdicionPref(); } else if (t === 'filiacion') { if(window.el('buscador-persona')) window.el('buscador-persona').value = ""; window.safeHide('resultados-busqueda'); window.safeHide('panel-gestion-persona'); window.personaEnGestion = null; } else if (['sanitaria','psicosocial','entregas'].includes(t)) { const prefix = t === 'sanitaria' ? 'san' : (t === 'psicosocial' ? 'psi' : 'ent'); if(window.el(`search-${prefix}`)) window.el(`search-${prefix}`).value = ""; window.safeHide(`res-${prefix}`); window.cerrarFormularioIntervencion(prefix); } };
-window.configurarDashboard = function() { const r=(currentUserData.rol||"").toLowerCase(); if(window.el('user-name-display')) window.el('user-name-display').innerText=currentUserData.nombre; if(window.el('user-role-badge')) window.el('user-role-badge').innerText=r.toUpperCase(); window.safeHide('header-btn-users'); window.safeHide('container-ver-ocultos'); if(r === 'super_admin') window.safeShow('header-btn-debug'); else window.safeHide('header-btn-debug'); const navItems = document.querySelectorAll('.nav-item'); navItems.forEach(n => n.classList.remove('active', 'disabled', 'hidden')); if(['super_admin', 'admin'].includes(r)) { window.safeShow('header-btn-users'); } if(!['super_admin', 'admin'].includes(r)) { window.el('nav-mto').classList.add('disabled'); } if(['albergue', 'sanitario', 'psicosocial'].includes(r)) { window.el('nav-obs').classList.add('disabled'); } if(r === 'observador') { window.el('nav-albergues').classList.add('disabled'); } if(r === 'super_admin') { window.safeShow('container-ver-ocultos'); } window.safeAddActive('nav-home'); };
+window.abrirFormularioIntervencion = function(pid, tipo) {
+    const p = listaPersonasCache.find(x => x.id === pid);
+    if(!p) return;
+    personaIntervencionActiva = p;
+    window.safeHide(`res-${tipo}`);
+    window.safeShow(`form-int-${tipo}`);
+    window.el(`search-${tipo}`).value = ""; 
+    window.el(`name-int-${tipo}`).innerText = `${p.nombre} ${p.ap1 || ''}`;
+    const sel = window.el(`sel-int-${tipo}`);
+    sel.innerHTML = "";
+    TIPOS_INTERVENCION[tipo].opciones.forEach(op => { sel.add(new Option(op, op)); });
+    window.el(`det-int-${tipo}`).value = "";
+};
 
-// --- AUTH & USUARIOS ---
+window.cerrarFormularioIntervencion = function(tipo) {
+    window.safeHide(`form-int-${tipo}`);
+    personaIntervencionActiva = null;
+};
+
+window.registrarIntervencion = async function(tipo) {
+    if(!personaIntervencionActiva) return;
+    const subtipo = window.safeVal(`sel-int-${tipo}`);
+    const detalle = window.safeVal(`det-int-${tipo}`);
+    const nombrePersona = personaIntervencionActiva.nombre; 
+    
+    if(!subtipo) return alert("Selecciona un tipo.");
+    
+    try {
+        const data = {
+            fecha: new Date(),
+            usuario: currentUserData.nombre,
+            tipo: TIPOS_INTERVENCION[tipo].titulo,
+            subtipo: subtipo,
+            detalle: detalle
+        };
+        await addDoc(collection(db, "albergues", currentAlbergueId, "personas", personaIntervencionActiva.id, "intervenciones"), data);
+        window.showToast("Intervención Registrada");
+        window.sysLog(`Intervención ${tipo} registrada para ${nombrePersona}`, "success");
+        window.cerrarFormularioIntervencion(tipo); 
+    } catch(e) {
+        console.error(e);
+        alert("Error al guardar: " + e.message);
+    }
+};
+
+window.verHistorialIntervencion = function(tipo) {
+    if(personaIntervencionActiva) {
+        window.verHistorial(personaIntervencionActiva.id);
+    }
+};
+
+// --- AUTH ---
 window.iniciarSesion = async function() { try { window.sysLog("Click Login", "info"); await signInWithEmailAndPassword(auth, window.el('login-email').value, window.el('login-pass').value); window.sysLog("Auth Firebase OK", "success"); } catch(err) { window.sysLog("Error Auth: " + err.message, "error"); alert(err.message); } };
 window.cerrarSesion = function() { window.sysLog("Cerrando sesión", "warn"); signOut(auth); location.reload(); };
+
+// --- USUARIOS ---
 window.cambiarEstadoUsuarioDirecto = async function(uid, nuevoEstado) { if (currentUserData.rol !== 'super_admin' && currentUserData.rol !== 'admin') { alert("Sin permisos"); window.cargarUsuarios(); return; } const targetDoc = await getDoc(doc(db, "usuarios", uid)); if (targetDoc.exists()) { const u = targetDoc.data(); if (u.rol === 'super_admin') { alert("Seguridad: No se puede desactivar a un Super Admin."); window.cargarUsuarios(); return; } if (currentUserData.rol === 'admin' && u.rol === 'admin') { alert("Seguridad: No puedes desactivar a otro Administrador."); window.cargarUsuarios(); return; } } await updateDoc(doc(db, "usuarios", uid), { activo: nuevoEstado }); window.sysLog(`Usuario ${uid} estado: ${nuevoEstado}`, "info"); };
 window.filtrarUsuarios = function() { window.cargarUsuarios(); };
 window.abrirModalUsuario = async function(id = null) { userEditingId = id; window.safeShow('modal-crear-usuario'); const sel = window.el('new-user-role'); sel.innerHTML = ""; let roles = ['albergue', 'sanitario', 'psicosocial', 'observador']; if (currentUserData.rol === 'super_admin') { roles = ['super_admin', 'admin', ...roles]; } else if (currentUserData.rol === 'admin') { roles = ['albergue', 'sanitario', 'psicosocial', 'observador']; } roles.forEach(r => sel.add(new Option(r, r))); window.el('new-user-active').checked = true; window.el('new-user-active').disabled = false; if (id) { const s = await getDoc(doc(db, "usuarios", String(id))); if (s.exists()) { const d = s.data(); window.setVal('new-user-name', d.nombre); window.setVal('new-user-email', d.email); if (!roles.includes(d.rol)) { const opt = new Option(d.rol, d.rol); opt.disabled = true; sel.add(opt); } sel.value = d.rol; window.el('new-user-active').checked = (d.activo !== false); if (d.rol === 'super_admin') window.el('new-user-active').disabled = true; if (currentUserData.rol === 'super_admin') window.safeShow('btn-delete-user'); else window.safeHide('btn-delete-user'); } } else { window.setVal('new-user-name', ""); window.setVal('new-user-email', ""); window.safeHide('btn-delete-user'); } };
@@ -149,35 +180,56 @@ window.ejecutarCambioPass=async function(){const o=window.safeVal('chg-old-pass'
 // --- SIGUE EN PARTE 2 ---
 // --- PARTE 2 ---
 
-// --- ESCÁNER Y UI ---
-window.iniciarEscanerReal = function() { window.detenerEscaner(); window.safeHide('scan-placeholder'); window.safeHide('btn-start-camera'); window.safeShow('reader'); window.safeShow('btn-stop-camera'); setTimeout(() => { if (!html5QrCode) { html5QrCode = new Html5Qrcode("reader"); } const config = { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 }; html5QrCode.start({ facingMode: "environment" }, config, window.onScanSuccess, (errorMessage) => { }).catch(err => { console.warn(err); window.sysLog(`Error cámara: ${err}`, "error"); alert("Error al iniciar cámara. Comprueba permisos y HTTPS."); window.detenerEscaner(); }); }, 300); };
-window.onScanSuccess = function(decodedText, decodedResult) { if(html5QrCode) html5QrCode.stop().then(() => { window.sysLog(`QR Leído: ${decodedText}`, "success"); html5QrCode.clear(); resetScannerUI(); try { const url = new URL(decodedText); const aid = url.searchParams.get("aid"); const pid = url.searchParams.get("pid"); if(!aid || !pid) throw new Error("QR inválido"); if(currentAlbergueId && aid !== currentAlbergueId) { if(confirm(`Este QR es de otro albergue. ¿Quieres cambiar a ese albergue?`)) { window.cambiarAlberguePorQR(aid, pid); return; } else { return; } } if(!currentAlbergueId) { window.cambiarAlberguePorQR(aid, pid); return; } window.procesarLecturaPersona(pid); } catch (e) { alert("QR no válido o formato incorrecto."); } }); };
-window.cambiarAlberguePorQR = async function(aid, pid) { 
-    window.sysLog(`Cambiando albergue por QR a: ${aid}`, "warn"); currentAlbergueId = aid; window.safeShow('loading-overlay'); 
-    try { 
-        const dS = await getDoc(doc(db,"albergues",aid)); 
-        if(dS.exists()) { currentAlbergueData = dS.data(); totalCapacidad = parseInt(currentAlbergueData.capacidad||0); } 
-        else { alert("Albergue no existe"); window.safeHide('loading-overlay'); return; } 
-        if(unsubscribePersonas) unsubscribePersonas(); 
-        unsubscribePersonas = onSnapshot(collection(db,"albergues",aid,"personas"), s=>{ listaPersonasCache=[]; camasOcupadas={}; s.forEach(d=>{ const p=d.data(); p.id=d.id; listaPersonasCache.push(p); if(p.estado==='ingresado'){ if(p.cama) camasOcupadas[p.cama]=p.nombre; } }); const target = listaPersonasCache.find(p => p.id === pid); if(target) { window.safeHide('loading-overlay'); window.navegar('intervencion'); window.cargarInterfazIntervencion(target); } }); 
-        window.conectarListenersBackground(aid); 
-        window.suscribirNotificaciones(aid);
-    } catch(e) { console.error(e); window.safeHide('loading-overlay'); } 
+// --- NAVEGACIÓN ---
+window.navegar = function(p) {
+    window.sysLog(`Navegando: ${p}`, "nav");
+    if(unsubscribeUsers) unsubscribeUsers(); 
+    if(unsubscribeAlberguesActivos) unsubscribeAlberguesActivos();
+    if(unsubscribeNotifs) unsubscribeNotifs(); 
+    ['screen-home','screen-usuarios','screen-gestion-albergues','screen-mantenimiento','screen-operativa','screen-observatorio', 'screen-intervencion'].forEach(id=>window.safeHide(id));
+    if(!currentUserData) return;
+    if(p !== 'intervencion') { window.resetIntervencion(); window.detenerEscaner(); }
+    if(p==='home') window.safeShow('screen-home');
+    else if(p==='intervencion') { window.safeShow('screen-intervencion'); }
+    else if(p==='gestion-albergues') { window.cargarAlberguesActivos(); window.safeShow('screen-gestion-albergues'); }
+    else if(p==='mantenimiento') { window.cargarAlberguesMantenimiento(); window.safeShow('screen-mantenimiento'); }
+    else if(p==='operativa') { window.safeShow('screen-operativa'); const t = window.configurarTabsPorRol(); window.cambiarPestana(t); } 
+    else if(p==='observatorio') { window.cargarObservatorio(); window.safeShow('screen-observatorio'); }
+    else if(p==='usuarios') { window.cargarUsuarios(); window.safeShow('screen-usuarios'); }
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    if(p.includes('albergue')) window.safeAddActive('nav-albergues'); 
+    else if(p.includes('obs')) window.safeAddActive('nav-obs'); 
+    else if(p.includes('mantenimiento')) window.safeAddActive('nav-mto'); 
+    else if(p === 'intervencion') window.safeAddActive('nav-intervencion');
+    else window.safeAddActive('nav-home');
 };
-window.procesarLecturaPersona = function(pid) { const targetPerson = listaPersonasCache.find(p => p.id === pid); if(targetPerson) { window.cargarInterfazIntervencion(targetPerson); } else { getDoc(doc(db, "albergues", currentAlbergueId, "personas", pid)).then(docSnap => { if(docSnap.exists()) { const pData = { id: docSnap.id, ...docSnap.data() }; window.cargarInterfazIntervencion(pData); } else { alert("Persona no encontrada en este albergue."); } }); } };
-window.cargarInterfazIntervencion = function(persona) { if(!persona) return; personaEnGestion = persona; window.safeHide('view-scan-ready'); window.safeHide('reader'); window.safeHide('btn-stop-camera'); window.safeShow('view-scan-result'); window.safeShow('btn-exit-focused'); window.el('interv-nombre').innerText = `${persona.nombre} ${persona.ap1 || ""}`; window.el('interv-doc').innerText = persona.docNum || "Sin Documento"; window.el('interv-estado').innerText = (persona.estado || "Desconocido").toUpperCase(); const presencia = persona.presencia || 'dentro'; const badgePresencia = window.el('interv-presencia'); badgePresencia.innerText = presencia.toUpperCase(); if(presencia === 'dentro') { badgePresencia.style.backgroundColor = '#dcfce7'; badgePresencia.style.color = '#166534'; } else { badgePresencia.style.backgroundColor = '#fee2e2'; badgePresencia.style.color = '#991b1b'; } if(currentAlbergueData) { const hName = window.el('interv-albergue-name'); if(hName) hName.innerText = currentAlbergueData.nombre || "ALBERGUE"; } };
-window.salirModoFocalizado = function() { document.body.classList.remove('focused-mode'); window.navegar('home'); window.history.pushState({}, document.title, window.location.pathname); };
-window.iniciarModoFocalizado = async function(aid, pid) { window.sysLog(`Iniciando MODO FOCALIZADO. Alb: ${aid}, Pers: ${pid}`, "warn"); document.body.classList.add('focused-mode'); window.cambiarAlberguePorQR(aid, pid); };
-window.registrarMovimiento = async function(tipo) { if(!personaEnGestion || !currentAlbergueId) return; try { const estadoPresencia = (tipo === 'entrada') ? 'dentro' : 'fuera'; const pRef = doc(db, "albergues", currentAlbergueId, "personas", personaEnGestion.id); await updateDoc(pRef, { presencia: estadoPresencia }); await window.registrarLog(personaEnGestion.id, "Movimiento", tipo.toUpperCase()); window.sysLog(`Movimiento: ${tipo} para ${personaEnGestion.nombre}`, "info"); window.showToast(`✅ ${tipo.toUpperCase()} Registrada`); window.resetIntervencion(); } catch(e) { console.error(e); alert("Error al registrar movimiento: " + e.message); } };
-window.abrirModalDerivacion = function(tipo) { tipoDerivacionActual = tipo; window.el('derivacion-titulo').innerText = `Derivar a ${tipo}`; window.el('derivacion-motivo').value = ""; window.safeShow('modal-derivacion'); };
-window.verCarnetQR = function() { if(!personaEnGestion) return; window.safeShow('modal-carnet-qr'); const container = window.el('carnet-qrcode-display'); container.innerHTML = ""; const currentUrl = window.location.href.split('?')[0]; const deepLink = `${currentUrl}?action=scan&aid=${currentAlbergueId}&pid=${personaEnGestion.id}`; new QRCode(container, { text: deepLink, width: 250, height: 250 }); const nombreCompleto = `${personaEnGestion.nombre} ${personaEnGestion.ap1 || ""} ${personaEnGestion.ap2 || ""}`; window.el('carnet-nombre').innerText = nombreCompleto; window.el('carnet-id').innerText = personaEnGestion.docNum || "ID: " + personaEnGestion.id.substring(0,8).toUpperCase(); };
-window.abrirModalQR = function() { setTimeout(() => { window.safeShow('modal-qr'); const d = window.el("qrcode-display"); d.innerHTML = ""; new QRCode(d, { text: window.location.href.split('?')[0] + `?public_id=${currentAlbergueId}`, width: 250, height: 250 }); }, 100); };
-window.toggleStartButton = function() { window.el('btn-start-public').disabled = !window.el('check-consent').checked; };
-window.iniciarRegistro = function() { window.safeHide('public-welcome-screen'); window.safeShow('public-form-container'); };
-window.publicoGuardarTodo = async function() { const d = window.getDatosFormulario('pub'); if (!d.nombre) return alert("Falta nombre"); if (!auth.currentUser) { try { await signInAnonymously(auth); } catch (e) {} } let nombreAlb = "Albergue (QR)"; const hAlb = window.el('public-albergue-name'); if(hAlb) nombreAlb = hAlb.innerText; const b = writeBatch(db); const fid = new Date().getTime().toString(); const tRef = doc(collection(db, "pool_prefiliacion")); b.set(tRef, { ...d, familiaId: fid, rolFamilia: 'TITULAR', estado: 'espera', origenAlbergueId: currentAlbergueId, fechaRegistro: new Date() }); const lRef = collection(db, "pool_prefiliacion", tRef.id, "historial"); b.set(doc(lRef), { fecha: new Date(), usuario: "Auto-QR", accion: "Alta en Pool", detalle: `Desde QR ${nombreAlb}` }); listaFamiliaresTemp.forEach(async f => { const fRef = doc(collection(db, "pool_prefiliacion")); b.set(fRef, { ...f, familiaId: fid, rolFamilia: 'MIEMBRO', estado: 'espera', origenAlbergueId: currentAlbergueId, fechaRegistro: new Date() }); }); await b.commit(); window.safeHide('public-form-container'); window.safeShow('public-success-msg'); }
+
+window.configurarTabsPorRol = function() { const r = (currentUserData.rol || "").toLowerCase().trim(); ['btn-tab-pref', 'btn-tab-fil', 'btn-tab-san', 'btn-tab-psi', 'btn-tab-ent'].forEach(id => window.safeHide(id)); if(['super_admin', 'admin'].includes(r)) { ['btn-tab-pref', 'btn-tab-fil', 'btn-tab-san', 'btn-tab-psi', 'btn-tab-ent'].forEach(id => window.safeShow(id)); return 'filiacion'; } if(r === 'albergue') { window.safeShow('btn-tab-pref'); window.safeShow('btn-tab-fil'); window.safeShow('btn-tab-ent'); return 'filiacion'; } if(['sanitario', 'psicosocial'].includes(r)) { window.safeShow('btn-tab-san'); window.safeShow('btn-tab-psi'); return 'sanitaria'; } return 'filiacion'; };
+window.cambiarPestana = function(t) { window.sysLog(`Pestaña: ${t}`, "nav"); ['tab-prefiliacion', 'tab-filiacion', 'tab-sanitaria', 'tab-psicosocial', 'tab-entregas'].forEach(id => window.safeHide(id)); ['btn-tab-pref', 'btn-tab-fil', 'btn-tab-san', 'btn-tab-psi', 'btn-tab-ent'].forEach(id => window.safeRemoveActive(id)); window.safeAddActive(`btn-tab-${t.substring(0,3)}`); window.safeShow(`tab-${t}`); if (t === 'prefiliacion') { window.limpiarFormulario('man'); adminFamiliaresTemp = []; if(window.actualizarListaFamiliaresAdminUI) window.actualizarListaFamiliaresAdminUI(); if(window.el('existing-family-list-ui')) window.el('existing-family-list-ui').innerHTML = ""; window.cancelarEdicionPref(); } else if (t === 'filiacion') { if(window.el('buscador-persona')) window.el('buscador-persona').value = ""; window.safeHide('resultados-busqueda'); window.safeHide('panel-gestion-persona'); window.personaEnGestion = null; } else if (['sanitaria','psicosocial','entregas'].includes(t)) { const prefix = t === 'sanitaria' ? 'san' : (t === 'psicosocial' ? 'psi' : 'ent'); if(window.el(`search-${prefix}`)) window.el(`search-${prefix}`).value = ""; window.safeHide(`res-${prefix}`); window.cerrarFormularioIntervencion(prefix); } };
+window.configurarDashboard = function() { const r=(currentUserData.rol||"").toLowerCase(); if(window.el('user-name-display')) window.el('user-name-display').innerText=currentUserData.nombre; if(window.el('user-role-badge')) window.el('user-role-badge').innerText=r.toUpperCase(); window.safeHide('header-btn-users'); window.safeHide('container-ver-ocultos'); if(r === 'super_admin') window.safeShow('header-btn-debug'); else window.safeHide('header-btn-debug'); const navItems = document.querySelectorAll('.nav-item'); navItems.forEach(n => n.classList.remove('active', 'disabled', 'hidden')); if(['super_admin', 'admin'].includes(r)) { window.safeShow('header-btn-users'); } if(!['super_admin', 'admin'].includes(r)) { window.el('nav-mto').classList.add('disabled'); } if(['albergue', 'sanitario', 'psicosocial'].includes(r)) { window.el('nav-obs').classList.add('disabled'); } if(r === 'observador') { window.el('nav-albergues').classList.add('disabled'); } if(r === 'super_admin') { window.safeShow('container-ver-ocultos'); } window.safeAddActive('nav-home'); };
 
 // --- CARGA DE DATOS ---
-window.cargarAlberguesActivos = function() { const c = window.el('lista-albergues-activos'); if(unsubscribeAlberguesActivos) unsubscribeAlberguesActivos(); unsubscribeAlberguesActivos = onSnapshot(query(collection(db,"albergues"),where("activo","==",true)), s=>{ c.innerHTML=""; s.forEach(async d=>{ const alb = d.data(); const div = document.createElement('div'); div.className="mto-card"; div.innerHTML=`<h3>${alb.nombre}</h3><p id="counter-${d.id}" style="font-weight:bold;color:var(--primary);margin:10px 0;">Cargando...</p><div class="mto-info">Entrar</div>`; div.onclick=()=>window.cargarDatosYEntrar(d.id); c.appendChild(div); const qCount = query(collection(db, "albergues", d.id, "personas"), where("estado", "==", "ingresado")); const snap = await getDocs(qCount); const count = snap.size; const cap = alb.capacidad || 0; const elCounter = document.getElementById(`counter-${d.id}`); if(elCounter) elCounter.innerText = `Ocupación: ${count} / ${cap}`; }); }); };
+window.cargarAlberguesActivos = function() {
+    const c = window.el('lista-albergues-activos');
+    if(unsubscribeAlberguesActivos) unsubscribeAlberguesActivos();
+    unsubscribeAlberguesActivos = onSnapshot(query(collection(db,"albergues"),where("activo","==",true)), s=>{
+        c.innerHTML="";
+        s.forEach(async d=>{
+            const alb = d.data();
+            const div = document.createElement('div');
+            div.className="mto-card";
+            div.innerHTML=`<h3>${alb.nombre}</h3><p id="counter-${d.id}" style="font-weight:bold;color:var(--primary);margin:10px 0;">Cargando...</p><div class="mto-info">Entrar</div>`;
+            div.onclick=()=>window.cargarDatosYEntrar(d.id);
+            c.appendChild(div);
+            const qCount = query(collection(db, "albergues", d.id, "personas"), where("estado", "==", "ingresado"));
+            const snap = await getDocs(qCount);
+            const count = snap.size;
+            const cap = alb.capacidad || 0;
+            const elCounter = document.getElementById(`counter-${d.id}`);
+            if(elCounter) elCounter.innerText = `Ocupación: ${count} / ${cap}`;
+        });
+    });
+};
 window.cargarAlberguesMantenimiento = function() { const c = window.el('mto-container'); const r = (currentUserData.rol || "").toLowerCase().trim(); const isSuper = (r === 'super_admin' || r === 'admin'); if(unsubscribeAlberguesMto) unsubscribeAlberguesMto(); unsubscribeAlberguesMto = onSnapshot(query(collection(db,"albergues")), s => { c.innerHTML = "<div class='mto-card add-new' onclick='window.abrirModalAlbergue()'><h3>+</h3></div>"; s.forEach(d => { const a = d.data(); let extraBtn = isSuper ? `<button class="warning" onclick="window.cambiarEstadoAlbergue('${d.id}', ${!a.activo})">${a.activo === false ? 'Activar' : 'Archivar'}</button>` : ""; c.innerHTML += `<div class="mto-card ${!a.activo ? 'archived' : ''}"><h3>${a.nombre}</h3><p>Cap: ${a.capacidad}</p><div class="btn-group-horizontal"><button class="secondary" onclick="window.abrirModalAlbergue('${d.id}')">Editar</button>${extraBtn}</div></div>`; }); }); };
 window.cargarObservatorio = async function() { const list = window.el('obs-list-container'); if(!list) return; list.innerHTML = '<div style="text-align:center; padding:20px;"><div class="spinner"></div></div>'; window.el('kpi-espera').innerText = "-"; window.el('kpi-alojados').innerText = "-"; window.el('kpi-libres').innerText = "-"; window.el('kpi-percent').innerText = "-%"; try { let totalEspera = 0, totalAlojados = 0, totalCapacidadGlobal = 0, htmlList = ""; const alberguesSnap = await getDocs(query(collection(db, "albergues"), where("activo", "==", true))); const promesas = alberguesSnap.docs.map(async (docAlb) => { const dataAlb = docAlb.data(); const cap = parseInt(dataAlb.capacidad || 0); const esperaSnap = await getDocs(query(collection(db, "pool_prefiliacion"), where("origenAlbergueId", "==", docAlb.id), where("estado", "==", "espera"))); const w = esperaSnap.size; const alojadosSnap = await getDocs(query(collection(db, "albergues", docAlb.id, "personas"), where("estado", "==", "ingresado"))); const h = alojadosSnap.size; return { id: docAlb.id, nombre: dataAlb.nombre, capacidad: cap, espera: w, alojados: h }; }); const resultados = await Promise.all(promesas); resultados.forEach(res => { totalEspera += res.espera; totalAlojados += res.alojados; totalCapacidadGlobal += res.capacidad; const libres = Math.max(0, res.capacidad - res.alojados); const porcentaje = res.capacidad > 0 ? Math.round((res.alojados / res.capacidad) * 100) : 0; let barClass = "low"; if(porcentaje > 50) barClass = "med"; if(porcentaje > 85) barClass = "high"; htmlList += `<div class="obs-row"><div class="obs-row-title">${res.nombre}</div><div class="obs-stats-group"><div class="obs-mini-stat"><span>Espera</span><strong class="obs-clickable" onclick="window.verListaObservatorio('${res.id}', 'espera')">${res.espera}</strong></div><div class="obs-mini-stat"><span>Alojados</span><strong class="obs-clickable" onclick="window.verListaObservatorio('${res.id}', 'alojados')">${res.alojados}</strong></div><div class="obs-mini-stat"><span>Ocupación</span><strong>${res.alojados} / ${res.capacidad}</strong></div><div class="obs-mini-stat"><span>Libres</span><strong>${libres}</strong></div></div><div class="prog-container"><div class="prog-track"><div class="prog-fill ${barClass}" style="width: ${porcentaje}%"></div></div></div></div>`; }); const globalLibres = Math.max(0, totalCapacidadGlobal - totalAlojados); const globalPercent = totalCapacidadGlobal > 0 ? Math.round((totalAlojados / totalCapacidadGlobal) * 100) : 0; window.el('kpi-espera').innerText = totalEspera; window.el('kpi-alojados').innerText = totalAlojados; window.el('kpi-libres').innerText = globalLibres; window.el('kpi-percent').innerText = `${globalPercent}%`; list.innerHTML = htmlList; } catch(e) { window.sysLog("Error obs: " + e.message, "error"); list.innerHTML = "<p>Error cargando datos.</p>"; } };
 window.verListaObservatorio = async function(albId, tipo) { const c = window.el('obs-modal-content'); const t = window.el('obs-modal-title'); c.innerHTML = '<div style="text-align:center;"><div class="spinner"></div></div>'; t.innerText = tipo === 'espera' ? 'Personas en Espera' : 'Personas Alojadas'; window.safeShow('modal-obs-detalle'); try { let q; let isGlobal = false; if (tipo === 'espera') { q = query(collection(db, "pool_prefiliacion"), where("origenAlbergueId", "==", albId), where("estado", "==", "espera")); isGlobal = true; } else { q = query(collection(db, "albergues", albId, "personas"), where("estado", "==", "ingresado")); } const snap = await getDocs(q); if (snap.empty) { c.innerHTML = '<p>Sin registros.</p>'; return; } let data = []; snap.forEach(d => data.push({ id: d.id, ...d.data() })); if (tipo === 'espera') { data.sort((a, b) => (b.fechaRegistro?.seconds || 0) - (a.fechaRegistro?.seconds || 0)); } else { data.sort((a, b) => { if (!a.cama && !b.cama) return 0; if (!a.cama) return -1; if (!b.cama) return 1; return parseInt(a.cama) - parseInt(b.cama); }); } let h = `<table class="fam-table"><thead><tr><th style="width:40px;"></th>`; if(tipo === 'alojados') h += `<th>Cama</th>`; h += `<th>Nombre</th><th>DNI</th><th>Tel</th></tr></thead><tbody>`; data.forEach(d => { const histBtn = `<button class="btn-icon-small" onclick="window.verHistorialObservatorio('${d.id}', ${isGlobal}, '${albId}')"><i class="fa-solid fa-clock-rotate-left"></i></button>`; h += `<tr><td style="text-align:center;">${histBtn}</td>`; if(tipo === 'alojados') h += `<td><strong>${d.cama || '-'}</strong></td>`; h += `<td>${d.nombre} ${d.ap1||''}</td><td>${d.docNum||'-'}</td><td>${d.telefono||'-'}</td></tr>`; }); h += '</tbody></table>'; c.innerHTML = h; } catch (e) { window.sysLog("Error list: " + e.message, "error"); c.innerHTML = "<p>Error al cargar lista.</p>"; } };
@@ -197,7 +249,7 @@ window.cargarDatosYEntrar = async function(id) {
         });
         if(unsubscribePool) unsubscribePool(); unsubscribePool = onSnapshot(collection(db, "pool_prefiliacion"), s => { listaGlobalPrefiliacion = []; s.forEach(d => { const p = d.data(); p.id = d.id; listaGlobalPrefiliacion.push(p); }); });
         
-        // --- SUSCRIPCIÓN A NOTIFICACIONES ---
+        // --- NOTIFICACIONES (V2.3.0) ---
         window.suscribirNotificaciones(id);
         
         window.navegar('operativa');
@@ -210,13 +262,17 @@ window.cargarDatosYEntrar = async function(id) {
 window.suscribirNotificaciones = function(albId) {
     if(unsubscribeNotifs) unsubscribeNotifs();
     let q = query(collection(db, "derivaciones_pendientes"), where("albergueId", "==", albId), where("estado", "==", "pendiente"));
-    // CHIVATO DE ESCUCHA
+    // LOG DE INICIO DE ESCUCHA
     window.sysLog(`Iniciando escucha de notificaciones para albergue: ${albId}`, "info");
-    
+
     unsubscribeNotifs = onSnapshot(q, (snapshot) => {
         const rol = currentUserData.rol || "";
         let count = 0;
         listaNotificacionesCache = [];
+        
+        // LOG DE QUE HAN LLEGADO DATOS
+        window.sysLog(`Snapshot recibido. Documentos: ${snapshot.size}`, "info");
+
         snapshot.forEach(doc => {
             const data = doc.data();
             let show = false;
@@ -228,16 +284,7 @@ window.suscribirNotificaciones = function(albId) {
         });
         const badge = window.el('notification-badge-container');
         const countEl = window.el('notif-count');
-        
-        // LOG PARA DEBUG
-        window.sysLog(`Notificaciones encontradas: ${count}`, "info");
-
-        if (count > 0) { 
-            window.safeShow('notification-badge-container'); 
-            countEl.innerText = count > 9 ? '9+' : count; 
-        } else { 
-            window.safeHide('notification-badge-container'); 
-        }
+        if (count > 0) { window.safeShow('notification-badge-container'); countEl.innerText = count > 9 ? '9+' : count; } else { window.safeHide('notification-badge-container'); }
     }, (error) => {
         // CHIVATO DE ÍNDICE
         window.sysLog(`Error Notificaciones: ${error.message}`, "error");

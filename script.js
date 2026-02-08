@@ -344,7 +344,470 @@ window.verHistorial=async function(pId=null, forceIsGlobal=null, forceAlbId=null
 window.verHistorialObservatorio = function(pId, isGlobal, albId){window.verHistorial(pId, isGlobal, albId);};
 window.cancelarEdicionPref=function(){prefiliacionEdicionId=null;window.limpiarFormulario('man');if(window.el('existing-family-list-ui'))window.el('existing-family-list-ui').innerHTML="";window.safeHide('btn-cancelar-edicion-pref');window.safeHide('btn-ingresar-pref');};
 window.adminPrefiliarManual=async function(silent=false){if(silent&&!prefiliacionEdicionId)return;if(prefiliacionEdicionId&&isGlobalEdit){const p=window.getDatosFormulario('man');await updateDoc(doc(db,"pool_prefiliacion",prefiliacionEdicionId),p);window.registrarLog(prefiliacionEdicionId,"Edición Pool","Manual",true);if(!silent){window.showToast("Pool Actualizado");window.cancelarEdicionPref();}return;}const n=window.safeVal('man-nombre');if(!n)return alert("Falta nombre");const fid=new Date().getTime().toString();const t=window.getDatosFormulario('man');t.estado='espera';t.familiaId=fid;t.rolFamilia='TITULAR';t.fechaRegistro=new Date();t.origenAlbergueId=currentAlbergueId;const ref=await addDoc(collection(db,"pool_prefiliacion"),t);window.registrarLog(ref.id,"Alta Staff","Titular",true);for(const f of adminFamiliaresTemp){const refF=await addDoc(collection(db,"pool_prefiliacion"),{...f,estado:'espera',familiaId:fid,rolFamilia:'MIEMBRO',fechaRegistro:new Date(),origenAlbergueId:currentAlbergueId});window.registrarLog(refF.id,"Alta Staff","Familiar",true);}if(!silent){alert("Guardado en Pool Global");window.limpiarFormulario('man');adminFamiliaresTemp=[];if(window.el('admin-lista-familiares-ui'))window.el('admin-lista-familiares-ui').innerHTML="Ninguno.";}};
+// --- FUNCIONES QR & CARNETS ---
 
+window.abrirModalQR = function() {
+    const qrDisplay = document.getElementById('qrcode-display');
+    qrDisplay.innerHTML = ""; // Limpiar QR anterior
+    
+    if (!currentAlbergueId) {
+        alert("No hay albergue seleccionado");
+        return;
+    }
+    
+    // Generar URL pública del albergue
+    const publicURL = `${window.location.origin}${window.location.pathname}?public_id=${currentAlbergueId}`;
+    
+    // Generar QR con QRCode.js
+    new QRCode(qrDisplay, {
+        text: publicURL,
+        width: 256,
+        height: 256,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+    });
+    
+    window.safeShow('modal-qr');
+    window.sysLog(`QR Albergue generado: ${currentAlbergueData.nombre}`, "info");
+};
+
+window.verCarnetQR = function() {
+    if (!personaEnGestion) {
+        alert("No hay persona seleccionada");
+        return;
+    }
+    
+    const qrDisplay = document.getElementById('carnet-qrcode-display');
+    qrDisplay.innerHTML = ""; // Limpiar QR anterior
+    
+    // Crear payload para el carnet (ID única de persona + albergue)
+    const carnetData = {
+        personaId: personaEnGestion.id,
+        albergueId: currentAlbergueId,
+        nombre: personaEnGestion.nombre,
+        ap1: personaEnGestion.ap1 || '',
+        docNum: personaEnGestion.docNum || '',
+        timestamp: Date.now()
+    };
+    
+    // Generar QR del carnet
+    new QRCode(qrDisplay, {
+        text: JSON.stringify(carnetData),
+        width: 200,
+        height: 200,
+        colorDark: "#1e293b",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+    });
+    
+    // Actualizar información del carnet
+    const nombreCompleto = `${personaEnGestion.nombre} ${personaEnGestion.ap1 || ''} ${personaEnGestion.ap2 || ''}`.trim();
+    document.getElementById('carnet-nombre').innerText = nombreCompleto;
+    document.getElementById('carnet-id').innerText = personaEnGestion.docNum || 'SIN DNI';
+    
+    window.safeShow('modal-carnet-qr');
+    window.sysLog(`Carnet QR generado para: ${nombreCompleto}`, "info");
+};
+
+// --- ESCANEO DE CARNETS (Intervención) ---
+
+window.iniciarEscanerReal = function() {
+    const readerDiv = document.getElementById('reader');
+    
+    if (!html5QrCode) {
+        html5QrCode = new Html5Qrcode("reader");
+    }
+    
+    window.safeShow('reader');
+    window.safeHide('scan-placeholder');
+    window.safeHide('btn-start-camera');
+    window.safeShow('btn-stop-camera');
+    
+    const config = { 
+        fps: 10, 
+        qrbox: { width: 250, height: 250 },
+        aspectRatio: 1.0
+    };
+    
+    html5QrCode.start(
+        { facingMode: "environment" },
+        config,
+        (decodedText) => {
+            window.sysLog(`QR Escaneado: ${decodedText.substring(0, 50)}...`, "info");
+            window.procesarQREscaneado(decodedText);
+            window.detenerEscaner();
+        },
+        (errorMessage) => {
+            // Errores de escaneo continuo - ignorar
+        }
+    ).catch(err => {
+        window.sysLog(`Error cámara: ${err}`, "error");
+        alert("No se pudo acceder a la cámara. Verifica los permisos.");
+        resetScannerUI();
+    });
+};
+
+window.procesarQREscaneado = async function(rawData) {
+    try {
+        // Intentar parsear como JSON (carnet personal)
+        const data = JSON.parse(rawData);
+        
+        if (data.personaId && data.albergueId) {
+            window.sysLog(`Carnet detectado - Persona: ${data.personaId}`, "info");
+            
+            // Buscar persona en base de datos
+            const personaRef = doc(db, "albergues", data.albergueId, "personas", data.personaId);
+            const personaSnap = await getDoc(personaRef);
+            
+            if (personaSnap.exists()) {
+                const personaData = { id: personaSnap.id, ...personaSnap.data() };
+                window.cargarInterfazIntervencion(personaData);
+            } else {
+                alert("Persona no encontrada en el sistema.");
+                window.sysLog(`Persona ${data.personaId} no existe en DB`, "warn");
+            }
+        } else {
+            alert("QR no válido. Escanea un carnet de usuario.");
+        }
+        
+    } catch (e) {
+        // No es JSON - podría ser URL de registro público
+        if (rawData.includes('public_id=')) {
+            alert("Este es un QR de registro público, no un carnet personal.");
+        } else {
+            alert("Formato de QR no reconocido.");
+        }
+        window.sysLog(`QR no procesable: ${e.message}`, "warn");
+    }
+};
+
+window.cargarInterfazIntervencion = function(persona) {
+    personaEnGestion = persona;
+    
+    // Ocultar escáner, mostrar panel de acciones
+    window.safeHide('view-scan-ready');
+    window.safeShow('view-scan-result');
+    
+    // Cargar datos en interfaz
+    const nombreCompleto = `${persona.nombre} ${persona.ap1 || ''} ${persona.ap2 || ''}`.trim();
+    
+    if (window.el('interv-nombre')) window.el('interv-nombre').innerText = nombreCompleto;
+    if (window.el('interv-doc')) window.el('interv-doc').innerText = `${persona.tipoDoc}: ${persona.docNum || 'N/A'}`;
+    if (window.el('interv-estado')) window.el('interv-estado').innerText = persona.estado ? persona.estado.toUpperCase() : 'DESCONOCIDO';
+    
+    // Mostrar presencia (dentro/fuera)
+    const presencia = persona.presencia || 'dentro';
+    const presenciaEl = window.el('interv-presencia');
+    if (presenciaEl) {
+        presenciaEl.innerText = presencia === 'dentro' ? '🟢 DENTRO' : '🔴 FUERA';
+        presenciaEl.style.background = presencia === 'dentro' ? '#dcfce7' : '#fee2e2';
+        presenciaEl.style.color = presencia === 'dentro' ? '#166534' : '#991b1b';
+    }
+    
+    // Cargar nombre del albergue (si está disponible)
+    if (currentAlbergueData && window.el('interv-albergue-name')) {
+        window.el('interv-albergue-name').innerText = currentAlbergueData.nombre;
+    }
+    
+    window.sysLog(`Interfaz intervención cargada: ${nombreCompleto}`, "success");
+};
+
+window.registrarMovimiento = async function(tipo) {
+    if (!personaEnGestion) return;
+    
+    const nuevoEstado = tipo === 'entrada' ? 'dentro' : 'fuera';
+    const accion = tipo === 'entrada' ? 'Entrada Registrada' : 'Salida Registrada';
+    
+    try {
+        // Actualizar presencia en Firebase
+        await updateDoc(doc(db, "albergues", currentAlbergueId, "personas", personaEnGestion.id), {
+            presencia: nuevoEstado,
+            ultimoMovimiento: new Date()
+        });
+        
+        // Registrar en historial
+        await window.registrarLog(personaEnGestion.id, accion, `Registrado vía intervención QR`);
+        
+        window.showToast(`✅ ${accion}`);
+        window.sysLog(`Movimiento registrado: ${tipo} - ${personaEnGestion.nombre}`, "success");
+        
+        // Actualizar interfaz
+        personaEnGestion.presencia = nuevoEstado;
+        window.cargarInterfazIntervencion(personaEnGestion);
+        
+    } catch (e) {
+        window.sysLog(`Error registrando movimiento: ${e.message}`, "error");
+        alert("Error al registrar movimiento");
+    }
+};
+
+window.abrirModalDerivacion = function(tipoDerivacion) {
+    if (!personaEnGestion) return;
+    
+    tipoDerivacionActual = tipoDerivacion;
+    
+    const titulo = window.el('derivacion-titulo');
+    if (titulo) {
+        titulo.innerText = `Derivar a ${tipoDerivacion}`;
+    }
+    
+    // Limpiar campo de motivo
+    if (window.el('derivacion-motivo')) {
+        window.el('derivacion-motivo').value = '';
+    }
+    
+    window.safeShow('modal-derivacion');
+};
+
+// Ya existe window.confirmarDerivacion en tu código, así que no la duplico
+
+window.salirModoFocalizado = function() {
+    document.body.classList.remove('focused-mode');
+    window.safeHide('btn-exit-focused');
+    window.navegar('home');
+};
+
+window.iniciarModoFocalizado = async function(aid, pid) {
+    window.sysLog(`Modo Focalizado activado: Albergue=${aid}, Persona=${pid}`, "nav");
+    
+    // Ocultar navegación
+    document.body.classList.add('focused-mode');
+    
+    // Cargar albergue
+    await window.cargarDatosYEntrar(aid);
+    
+    // Navegar a intervención
+    window.navegar('intervencion');
+    
+    // Cargar persona directamente
+    const personaRef = doc(db, "albergues", aid, "personas", pid);
+    const personaSnap = await getDoc(personaRef);
+    
+    if (personaSnap.exists()) {
+        const personaData = { id: personaSnap.id, ...personaSnap.data() };
+        window.cargarInterfazIntervencion(personaData);
+        window.safeShow('btn-exit-focused');
+    } else {
+        alert("Persona no encontrada.");
+        window.salirModoFocalizado();
+    }
+};
+
+// --- FUNCIONES INTERVENCIONES (Sanitaria, Psicosocial, Entregas) ---
+
+window.buscarParaIntervencion = function(tipo) {
+    const txt = window.safeVal(`search-${tipo}`).toLowerCase().trim();
+    const res = window.el(`res-${tipo}`);
+    
+    if (txt.length < 2) {
+        window.safeHide(`res-${tipo}`);
+        return;
+    }
+    
+    const hits = listaPersonasCache.filter(p => {
+        if (p.estado !== 'ingresado') return false;
+        const full = `${p.nombre} ${p.ap1 || ''} ${p.ap2 || ''}`.toLowerCase();
+        return full.includes(txt) || (p.docNum || "").toLowerCase().includes(txt);
+    });
+    
+    res.innerHTML = "";
+    
+    if (hits.length === 0) {
+        res.innerHTML = `<div class="search-item" style="color:#666">No encontrado</div>`;
+    } else {
+        hits.forEach(p => {
+            res.innerHTML += `<div class="search-item" onclick="window.abrirFormularioIntervencion('${p.id}', '${tipo}')">
+                <strong>${p.nombre} ${p.ap1 || ''}</strong>
+                <div style="font-size:0.8rem;color:#666;">
+                    ${p.cama ? `🛏 Cama ${p.cama}` : ''} | ${p.docNum || '-'}
+                </div>
+            </div>`;
+        });
+    }
+    
+    window.safeShow(`res-${tipo}`);
+};
+
+window.abrirFormularioIntervencion = function(personaId, tipo) {
+    const persona = listaPersonasCache.find(p => p.id === personaId);
+    if (!persona) return;
+    
+    personaIntervencionActiva = persona;
+    
+    // Ocultar resultados
+    window.safeHide(`res-${tipo}`);
+    
+    // Mostrar formulario
+    window.safeShow(`form-int-${tipo}`);
+    
+    // Cargar nombre
+    const nombreCompleto = `${persona.nombre} ${persona.ap1 || ''}`;
+    if (window.el(`name-int-${tipo}`)) {
+        window.el(`name-int-${tipo}`).innerText = nombreCompleto;
+    }
+    
+    // Cargar opciones del select
+    const select = window.el(`sel-int-${tipo}`);
+    if (select && TIPOS_INTERVENCION[tipo]) {
+        select.innerHTML = '<option value="">-- Selecciona --</option>';
+        TIPOS_INTERVENCION[tipo].opciones.forEach(opt => {
+            select.innerHTML += `<option value="${opt}">${opt}</option>`;
+        });
+    }
+    
+    // Limpiar textarea
+    if (window.el(`det-int-${tipo}`)) {
+        window.el(`det-int-${tipo}`).value = '';
+    }
+};
+
+window.cerrarFormularioIntervencion = function(tipo) {
+    window.safeHide(`form-int-${tipo}`);
+    personaIntervencionActiva = null;
+    
+    // Limpiar campos
+    if (window.el(`search-${tipo}`)) window.el(`search-${tipo}`).value = '';
+    if (window.el(`sel-int-${tipo}`)) window.el(`sel-int-${tipo}`).value = '';
+    if (window.el(`det-int-${tipo}`)) window.el(`det-int-${tipo}`).value = '';
+};
+
+window.registrarIntervencion = async function(tipo) {
+    if (!personaIntervencionActiva) return;
+    
+    const subtipo = window.safeVal(`sel-int-${tipo}`);
+    const detalle = window.safeVal(`det-int-${tipo}`);
+    
+    if (!subtipo) {
+        alert("Selecciona un tipo de intervención");
+        return;
+    }
+    
+    try {
+        const tipoNombre = TIPOS_INTERVENCION[tipo].titulo;
+        
+        // Guardar en subcolección "intervenciones"
+        await addDoc(collection(db, "albergues", currentAlbergueId, "personas", personaIntervencionActiva.id, "intervenciones"), {
+            tipo: tipoNombre,
+            subtipo: subtipo,
+            detalle: detalle || '',
+            fecha: new Date(),
+            usuario: currentUserData.nombre
+        });
+        
+        window.showToast(`✅ Intervención registrada`);
+        window.sysLog(`Intervención ${tipoNombre}: ${subtipo}`, "success");
+        
+        window.cerrarFormularioIntervencion(tipo);
+        
+    } catch (e) {
+        window.sysLog(`Error intervención: ${e.message}`, "error");
+        alert("Error al guardar");
+    }
+};
+
+window.verHistorialIntervencion = async function(tipo) {
+    if (!personaIntervencionActiva) return;
+    
+    // Reutilizar modal de historial general
+    window.verHistorial(personaIntervencionActiva.id);
+};
+
+window.rescatarDeGlobalDirecto = async function() {
+    if (!personaEnGestion || !personaEnGestionEsGlobal) return;
+    
+    if (!confirm(`¿Formalizar ingreso de ${personaEnGestion.nombre} sin asignar cama?`)) return;
+    
+    try {
+        const batch = writeBatch(db);
+        
+        // Copiar a colección local del albergue
+        const localRef = doc(collection(db, "albergues", currentAlbergueId, "personas"));
+        const localData = { ...personaEnGestion };
+        delete localData.id;
+        localData.cama = null;
+        localData.estado = 'ingresado';
+        localData.fechaIngreso = new Date();
+        
+        batch.set(localRef, localData);
+        
+        // Eliminar del pool global
+        batch.delete(doc(db, "pool_prefiliacion", personaEnGestion.id));
+        
+        // Log
+        const logRef = collection(db, "albergues", currentAlbergueId, "personas", localRef.id, "historial");
+        batch.set(doc(logRef), {
+            fecha: new Date(),
+            usuario: currentUserData.nombre,
+            accion: "Ingreso desde Nube",
+            detalle: `Formalizado sin cama en ${currentAlbergueData.nombre}`
+        });
+        
+        await batch.commit();
+        
+        window.showToast("✅ Ingreso formalizado");
+        window.sysLog(`Rescate directo completado: ${personaEnGestion.nombre}`, "success");
+        
+        // Limpiar panel
+        window.safeHide('panel-gestion-persona');
+        window.el('buscador-persona').value = '';
+        
+    } catch (e) {
+        window.sysLog(`Error rescate: ${e.message}`, "error");
+        alert("Error: " + e.message);
+    }
+};
+
+window.guardarCama = async function(numCama) {
+    if (!personaEnGestion) return;
+    
+    let isGlobal = personaEnGestionEsGlobal;
+    
+    try {
+        if (isGlobal) {
+            // CASO A: Persona viene de la nube → Ingreso automático
+            const batch = writeBatch(db);
+            
+            const localRef = doc(collection(db, "albergues", currentAlbergueId, "personas"));
+            const localData = { ...personaEnGestion };
+            delete localData.id;
+            localData.cama = numCama;
+            localData.estado = 'ingresado';
+            localData.fechaIngreso = new Date();
+            
+            batch.set(localRef, localData);
+            batch.delete(doc(db, "pool_prefiliacion", personaEnGestion.id));
+            
+            const logRef = collection(db, "albergues", currentAlbergueId, "personas", localRef.id, "historial");
+            batch.set(doc(logRef), {
+                fecha: new Date(),
+                usuario: currentUserData.nombre,
+                accion: "Ingreso con Cama",
+                detalle: `Cama ${numCama} - Desde Nube`
+            });
+            
+            await batch.commit();
+            window.showToast(`✅ Ingresado en cama ${numCama}`);
+            
+        } else {
+            // CASO B: Persona ya local → Solo cambio de cama
+            await updateDoc(doc(db, "albergues", currentAlbergueId, "personas", personaEnGestion.id), {
+                cama: numCama,
+                estado: 'ingresado'
+            });
+            
+            await window.registrarLog(personaEnGestion.id, "Asignación Cama", `Cama ${numCama}`);
+            window.showToast(`✅ Cama ${numCama} asignada`);
+        }
+        
+        window.cerrarMapaCamas();
+        window.sysLog(`Cama guardada: ${numCama}`, "success");
+        
+    } catch (e) {
+        window.sysLog(`Error guardar cama: ${e.message}`, "error");
+        alert("Error: " + e.message);
+    }
+};
 // --- INIT (NO HOISTING NEEDED, RUNS LAST) ---
 window.onload = async () => {
     if(isPublicMode){

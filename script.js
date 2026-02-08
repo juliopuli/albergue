@@ -1,5 +1,3 @@
-
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signInAnonymously, signOut, onAuthStateChanged, createUserWithEmailAndPassword, reauthenticateWithCredential, EmailAuthProvider, updatePassword } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
 import { getFirestore, collection, addDoc, setDoc, query, where, getDocs, doc, updateDoc, onSnapshot, orderBy, deleteDoc, getDoc, writeBatch } 
@@ -544,6 +542,8 @@ window.cargarInterfazIntervencion = function(p) {
 };
 
 window.abrirDerivacion = function(tipo) {
+    window.abrirModalDerivacion(tipo);
+};
     tipoDerivacionActual = tipo;
     window.el('derivacion-tipo-titulo').innerText = `Derivar a ${tipo}`;
     window.el('derivacion-motivo').value = '';
@@ -680,6 +680,140 @@ window.cambiarPresenciaPersona = async function(estado) {
         window.showToast(`✅ Presencia: ${estado}`);
     } catch (e) {
         window.sysLog("Error actualizando presencia: " + e.message, "error");
+    }
+};
+// === FUNCIONES QUE FALTABAN ===
+
+window.registrarMovimiento = async function(tipo) {
+    if (!personaEnGestion) return;
+    
+    const accion = tipo === 'entrada' ? 'Entrada Albergue' : 'Salida Albergue';
+    const detalle = tipo === 'entrada' ? 
+        `Entrada registrada en ${currentAlbergueData.nombre}` : 
+        `Salida registrada de ${currentAlbergueData.nombre}`;
+    
+    try {
+        await window.registrarLog(personaEnGestion.id, accion, detalle);
+        
+        if (tipo === 'salida') {
+            // Dar salida completa
+            await window.darSalidaPersona();
+        } else {
+            // Solo registrar el movimiento de entrada
+            window.showToast(`✅ ${accion} registrada`);
+        }
+    } catch (e) {
+        window.sysLog(`Error registrando movimiento: ${e.message}`, "error");
+        alert("Error al registrar movimiento");
+    }
+};
+
+window.abrirModalDerivacion = function(tipoDerivacion) {
+    if (!personaEnGestion) {
+        alert("No hay persona seleccionada");
+        return;
+    }
+    
+    tipoDerivacionActual = tipoDerivacion;
+    
+    const titulo = window.el('derivacion-tipo-titulo');
+    if (titulo) {
+        titulo.innerText = `Derivar a ${tipoDerivacion}`;
+    }
+    
+    const motivo = window.el('derivacion-motivo');
+    if (motivo) {
+        motivo.value = '';
+    }
+    
+    window.safeShow('modal-derivacion');
+    window.sysLog(`Modal derivación abierto: ${tipoDerivacion}`, "info");
+};
+
+window.abrirModalQR = function() {
+    if (!currentAlbergueId) {
+        alert("No hay albergue seleccionado");
+        return;
+    }
+    
+    const qrDisplay = document.getElementById('qr-public-display');
+    if (!qrDisplay) {
+        alert("Error: Elemento QR no encontrado");
+        return;
+    }
+    
+    qrDisplay.innerHTML = "";
+    
+    // Generar URL pública para autofiliación
+    const publicURL = `${window.location.origin}${window.location.pathname}?public_id=${currentAlbergueId}`;
+    
+    try {
+        new QRCode(qrDisplay, {
+            text: publicURL,
+            width: 300,
+            height: 300,
+            colorDark: "#1e293b",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+        
+        const nombreAlbergue = currentAlbergueData ? currentAlbergueData.nombre : "Albergue";
+        const tituloEl = window.el('qr-modal-title');
+        if (tituloEl) {
+            tituloEl.innerText = `QR de Registro: ${nombreAlbergue}`;
+        }
+        
+        const urlEl = window.el('qr-url-display');
+        if (urlEl) {
+            urlEl.innerText = publicURL;
+        }
+        
+        window.safeShow('modal-qr-publico');
+        window.sysLog(`QR público generado para: ${nombreAlbergue}`, "info");
+        
+    } catch (error) {
+        window.sysLog(`Error generando QR público: ${error.message}`, "error");
+        alert("Error al generar código QR");
+    }
+};
+
+window.copiarURLPublica = function() {
+    const urlEl = window.el('qr-url-display');
+    if (!urlEl) return;
+    
+    const url = urlEl.innerText;
+    
+    // Copiar al portapapeles
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(() => {
+            window.showToast('✅ URL copiada al portapapeles');
+        }).catch(err => {
+            console.error('Error al copiar:', err);
+            // Fallback manual
+            fallbackCopyTextToClipboard(url);
+        });
+    } else {
+        // Fallback para navegadores antiguos
+        fallbackCopyTextToClipboard(url);
+    }
+    
+    function fallbackCopyTextToClipboard(text) {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.position = "fixed";
+        textArea.style.top = "-9999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+            document.execCommand('copy');
+            window.showToast('✅ URL copiada');
+        } catch (err) {
+            alert('No se pudo copiar. URL: ' + text);
+        }
+        
+        document.body.removeChild(textArea);
     }
 };
 });

@@ -23,10 +23,11 @@ window.sysLog = function(msg, type = 'info') {
     let typeClass = 'log-type-info'; 
     if (type === 'error') typeClass = 'log-type-error'; if (type === 'warn') typeClass = 'log-type-warn'; if (type === 'nav') typeClass = 'log-type-nav';
     const div = document.createElement('div'); div.className = 'log-entry';
+    // DETECTOR DE ÍNDICE
     if (msg && (msg.includes("requires an index") || msg.includes("failed: preconf"))) {
         const urlMatch = msg.match(/https:\/\/[^\s]+/);
         const url = urlMatch ? urlMatch[0] : "https://console.firebase.google.com";
-        div.innerHTML = `<span class="log-time">[${time}]</span> <strong style="color:red; background:white; padding:2px;">[FALTA ÍNDICE]</strong> <a href="${url}" target="_blank" style="color:yellow; font-weight:bold; text-decoration:underline;">HAGA CLIC AQUÍ</a>`;
+        div.innerHTML = `<span class="log-time">[${time}]</span> <strong style="color:red; background:white; padding:2px;">[FALTA ÍNDICE]</strong> <a href="${url}" target="_blank" style="color:yellow; font-weight:bold; text-decoration:underline;">HAGA CLIC AQUÍ PARA CREARLO</a>`;
         const bb = document.getElementById('black-box-overlay');
         if(bb) bb.classList.remove('hidden');
     } else {
@@ -35,11 +36,12 @@ window.sysLog = function(msg, type = 'info') {
     c.appendChild(div); c.scrollTop = c.scrollHeight;
     if(type === 'error') console.error(msg); else console.log(`[SYS] ${msg}`);
 };
+
 window.onerror = function(message, source, lineno, colno, error) { window.sysLog(`CRITICAL ERROR: ${message} at line ${lineno}`, "error"); };
 window.toggleCajaNegra = function() { const bb = document.getElementById('black-box-overlay'); if (bb) { if (bb.classList.contains('hidden')) { bb.classList.remove('hidden'); window.sysLog("Debug activado", "info"); } else { bb.classList.add('hidden'); } } };
 window.limpiarCajaNegra = function() { const c = document.getElementById('black-box-content'); if (c) c.innerHTML = ""; };
 
-window.sysLog("Sistema Iniciado. Versión 2.2.5 (Nav Fix)", "info");
+window.sysLog("Sistema Iniciado. Versión 2.3.0 (Full Debug)", "info");
 
 // --- GLOBALES ---
 let isPublicMode = false;
@@ -93,7 +95,7 @@ window.verificarMenor = function(p) { const t = window.el(`${p}-tipo-doc`).value
 window.limpiarFormulario = function(p) { ['nombre', 'ap1', 'ap2', 'doc-num', 'fecha', 'tel'].forEach(f => { const e = window.el(`${p}-${f}`); if (e) e.value = ""; }); const i = window.el(`${p}-doc-num`); if (i) i.disabled = false; };
 window.getDatosFormulario = function(p) { return { nombre: window.safeVal(`${p}-nombre`), ap1: window.safeVal(`${p}-ap1`), ap2: window.safeVal(`${p}-ap2`), tipoDoc: window.safeVal(`${p}-tipo-doc`), docNum: window.safeVal(`${p}-doc-num`), fechaNac: window.safeVal(`${p}-fecha`), telefono: window.safeVal(`${p}-tel`) }; };
 
-// --- FUNCIONES DE LIMPIEZA (CRÍTICAS PARA QUE NAVEGAR NO FALLE) ---
+// --- RESETEO ---
 window.resetIntervencion = function() { personaEnGestion = null; window.safeHide('view-scan-result'); window.safeShow('view-scan-ready'); resetScannerUI(); };
 window.detenerEscaner = function() { if (html5QrCode && html5QrCode.isScanning) { html5QrCode.stop().then(() => { window.sysLog("Cámara detenida.", "info"); html5QrCode.clear(); }).catch(err => console.error(err)).finally(() => { resetScannerUI(); }); } else { resetScannerUI(); } };
 function resetScannerUI() { window.safeHide('reader'); window.safeHide('btn-stop-camera'); window.safeShow('scan-placeholder'); window.safeShow('btn-start-camera'); }
@@ -108,7 +110,6 @@ window.navegar = function(p) {
     ['screen-home','screen-usuarios','screen-gestion-albergues','screen-mantenimiento','screen-operativa','screen-observatorio', 'screen-intervencion'].forEach(id=>window.safeHide(id));
     if(!currentUserData) return;
     
-    // Ahora resetIntervencion y detenerEscaner SÍ existen porque están arriba
     if(p !== 'intervencion') { window.resetIntervencion(); window.detenerEscaner(); }
 
     if(p==='home') window.safeShow('screen-home');
@@ -146,8 +147,9 @@ window.abrirModalCambioPass=function(){window.setVal('chg-old-pass','');window.s
 window.ejecutarCambioPass=async function(){const o=window.safeVal('chg-old-pass'),n=window.safeVal('chg-new-pass');try{await reauthenticateWithCredential(auth.currentUser,EmailAuthProvider.credential(auth.currentUser.email,o));await updatePassword(auth.currentUser,n);alert("OK");window.safeHide('modal-change-pass');window.sysLog("Contraseña cambiada.", "success");}catch(e){alert("Error");window.sysLog("Error cambio pass: "+e.message, "error");}};
 
 // --- SIGUE EN PARTE 2 ---
-// --- PARTE 2 (RESTO DEL CÓDIGO) ---
+// --- PARTE 2 ---
 
+// --- ESCÁNER Y UI ---
 window.iniciarEscanerReal = function() { window.detenerEscaner(); window.safeHide('scan-placeholder'); window.safeHide('btn-start-camera'); window.safeShow('reader'); window.safeShow('btn-stop-camera'); setTimeout(() => { if (!html5QrCode) { html5QrCode = new Html5Qrcode("reader"); } const config = { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 }; html5QrCode.start({ facingMode: "environment" }, config, window.onScanSuccess, (errorMessage) => { }).catch(err => { console.warn(err); window.sysLog(`Error cámara: ${err}`, "error"); alert("Error al iniciar cámara. Comprueba permisos y HTTPS."); window.detenerEscaner(); }); }, 300); };
 window.onScanSuccess = function(decodedText, decodedResult) { if(html5QrCode) html5QrCode.stop().then(() => { window.sysLog(`QR Leído: ${decodedText}`, "success"); html5QrCode.clear(); resetScannerUI(); try { const url = new URL(decodedText); const aid = url.searchParams.get("aid"); const pid = url.searchParams.get("pid"); if(!aid || !pid) throw new Error("QR inválido"); if(currentAlbergueId && aid !== currentAlbergueId) { if(confirm(`Este QR es de otro albergue. ¿Quieres cambiar a ese albergue?`)) { window.cambiarAlberguePorQR(aid, pid); return; } else { return; } } if(!currentAlbergueId) { window.cambiarAlberguePorQR(aid, pid); return; } window.procesarLecturaPersona(pid); } catch (e) { alert("QR no válido o formato incorrecto."); } }); };
 window.cambiarAlberguePorQR = async function(aid, pid) { 
@@ -174,7 +176,7 @@ window.toggleStartButton = function() { window.el('btn-start-public').disabled =
 window.iniciarRegistro = function() { window.safeHide('public-welcome-screen'); window.safeShow('public-form-container'); };
 window.publicoGuardarTodo = async function() { const d = window.getDatosFormulario('pub'); if (!d.nombre) return alert("Falta nombre"); if (!auth.currentUser) { try { await signInAnonymously(auth); } catch (e) {} } let nombreAlb = "Albergue (QR)"; const hAlb = window.el('public-albergue-name'); if(hAlb) nombreAlb = hAlb.innerText; const b = writeBatch(db); const fid = new Date().getTime().toString(); const tRef = doc(collection(db, "pool_prefiliacion")); b.set(tRef, { ...d, familiaId: fid, rolFamilia: 'TITULAR', estado: 'espera', origenAlbergueId: currentAlbergueId, fechaRegistro: new Date() }); const lRef = collection(db, "pool_prefiliacion", tRef.id, "historial"); b.set(doc(lRef), { fecha: new Date(), usuario: "Auto-QR", accion: "Alta en Pool", detalle: `Desde QR ${nombreAlb}` }); listaFamiliaresTemp.forEach(async f => { const fRef = doc(collection(db, "pool_prefiliacion")); b.set(fRef, { ...f, familiaId: fid, rolFamilia: 'MIEMBRO', estado: 'espera', origenAlbergueId: currentAlbergueId, fechaRegistro: new Date() }); }); await b.commit(); window.safeHide('public-form-container'); window.safeShow('public-success-msg'); }
 
-// --- CARGA Y NOTIFICACIONES ---
+// --- CARGA DE DATOS ---
 window.cargarAlberguesActivos = function() { const c = window.el('lista-albergues-activos'); if(unsubscribeAlberguesActivos) unsubscribeAlberguesActivos(); unsubscribeAlberguesActivos = onSnapshot(query(collection(db,"albergues"),where("activo","==",true)), s=>{ c.innerHTML=""; s.forEach(async d=>{ const alb = d.data(); const div = document.createElement('div'); div.className="mto-card"; div.innerHTML=`<h3>${alb.nombre}</h3><p id="counter-${d.id}" style="font-weight:bold;color:var(--primary);margin:10px 0;">Cargando...</p><div class="mto-info">Entrar</div>`; div.onclick=()=>window.cargarDatosYEntrar(d.id); c.appendChild(div); const qCount = query(collection(db, "albergues", d.id, "personas"), where("estado", "==", "ingresado")); const snap = await getDocs(qCount); const count = snap.size; const cap = alb.capacidad || 0; const elCounter = document.getElementById(`counter-${d.id}`); if(elCounter) elCounter.innerText = `Ocupación: ${count} / ${cap}`; }); }); };
 window.cargarAlberguesMantenimiento = function() { const c = window.el('mto-container'); const r = (currentUserData.rol || "").toLowerCase().trim(); const isSuper = (r === 'super_admin' || r === 'admin'); if(unsubscribeAlberguesMto) unsubscribeAlberguesMto(); unsubscribeAlberguesMto = onSnapshot(query(collection(db,"albergues")), s => { c.innerHTML = "<div class='mto-card add-new' onclick='window.abrirModalAlbergue()'><h3>+</h3></div>"; s.forEach(d => { const a = d.data(); let extraBtn = isSuper ? `<button class="warning" onclick="window.cambiarEstadoAlbergue('${d.id}', ${!a.activo})">${a.activo === false ? 'Activar' : 'Archivar'}</button>` : ""; c.innerHTML += `<div class="mto-card ${!a.activo ? 'archived' : ''}"><h3>${a.nombre}</h3><p>Cap: ${a.capacidad}</p><div class="btn-group-horizontal"><button class="secondary" onclick="window.abrirModalAlbergue('${d.id}')">Editar</button>${extraBtn}</div></div>`; }); }); };
 window.cargarObservatorio = async function() { const list = window.el('obs-list-container'); if(!list) return; list.innerHTML = '<div style="text-align:center; padding:20px;"><div class="spinner"></div></div>'; window.el('kpi-espera').innerText = "-"; window.el('kpi-alojados').innerText = "-"; window.el('kpi-libres').innerText = "-"; window.el('kpi-percent').innerText = "-%"; try { let totalEspera = 0, totalAlojados = 0, totalCapacidadGlobal = 0, htmlList = ""; const alberguesSnap = await getDocs(query(collection(db, "albergues"), where("activo", "==", true))); const promesas = alberguesSnap.docs.map(async (docAlb) => { const dataAlb = docAlb.data(); const cap = parseInt(dataAlb.capacidad || 0); const esperaSnap = await getDocs(query(collection(db, "pool_prefiliacion"), where("origenAlbergueId", "==", docAlb.id), where("estado", "==", "espera"))); const w = esperaSnap.size; const alojadosSnap = await getDocs(query(collection(db, "albergues", docAlb.id, "personas"), where("estado", "==", "ingresado"))); const h = alojadosSnap.size; return { id: docAlb.id, nombre: dataAlb.nombre, capacidad: cap, espera: w, alojados: h }; }); const resultados = await Promise.all(promesas); resultados.forEach(res => { totalEspera += res.espera; totalAlojados += res.alojados; totalCapacidadGlobal += res.capacidad; const libres = Math.max(0, res.capacidad - res.alojados); const porcentaje = res.capacidad > 0 ? Math.round((res.alojados / res.capacidad) * 100) : 0; let barClass = "low"; if(porcentaje > 50) barClass = "med"; if(porcentaje > 85) barClass = "high"; htmlList += `<div class="obs-row"><div class="obs-row-title">${res.nombre}</div><div class="obs-stats-group"><div class="obs-mini-stat"><span>Espera</span><strong class="obs-clickable" onclick="window.verListaObservatorio('${res.id}', 'espera')">${res.espera}</strong></div><div class="obs-mini-stat"><span>Alojados</span><strong class="obs-clickable" onclick="window.verListaObservatorio('${res.id}', 'alojados')">${res.alojados}</strong></div><div class="obs-mini-stat"><span>Ocupación</span><strong>${res.alojados} / ${res.capacidad}</strong></div><div class="obs-mini-stat"><span>Libres</span><strong>${libres}</strong></div></div><div class="prog-container"><div class="prog-track"><div class="prog-fill ${barClass}" style="width: ${porcentaje}%"></div></div></div></div>`; }); const globalLibres = Math.max(0, totalCapacidadGlobal - totalAlojados); const globalPercent = totalCapacidadGlobal > 0 ? Math.round((totalAlojados / totalCapacidadGlobal) * 100) : 0; window.el('kpi-espera').innerText = totalEspera; window.el('kpi-alojados').innerText = totalAlojados; window.el('kpi-libres').innerText = globalLibres; window.el('kpi-percent').innerText = `${globalPercent}%`; list.innerHTML = htmlList; } catch(e) { window.sysLog("Error obs: " + e.message, "error"); list.innerHTML = "<p>Error cargando datos.</p>"; } };
@@ -194,26 +196,95 @@ window.cargarDatosYEntrar = async function(id) {
             if(personaEnGestion && !personaEnGestionEsGlobal) { const u=listaPersonasCache.find(x=>x.id===personaEnGestion.id); if(u) { if(!document.getElementById('view-scan-result').classList.contains('hidden')) window.cargarInterfazIntervencion(u); if(!document.getElementById('panel-gestion-persona').classList.contains('hidden')) personaEnGestion=u; } }
         });
         if(unsubscribePool) unsubscribePool(); unsubscribePool = onSnapshot(collection(db, "pool_prefiliacion"), s => { listaGlobalPrefiliacion = []; s.forEach(d => { const p = d.data(); p.id = d.id; listaGlobalPrefiliacion.push(p); }); });
+        
+        // --- SUSCRIPCIÓN A NOTIFICACIONES ---
         window.suscribirNotificaciones(id);
+        
         window.navegar('operativa');
         if(window.el('app-title')) window.el('app-title').innerText = currentAlbergueData.nombre;
         window.configurarDashboard(); window.actualizarContadores(); window.safeHide('loading-overlay'); window.conectarListenersBackground(id); window.setupAutoSave();
     } catch(e) { window.sysLog(`Error Cargando: ${e.message}`, "error"); alert(e.message); window.safeHide('loading-overlay'); }
 };
 
+// --- SISTEMA DE NOTIFICACIONES ---
 window.suscribirNotificaciones = function(albId) {
     if(unsubscribeNotifs) unsubscribeNotifs();
     let q = query(collection(db, "derivaciones_pendientes"), where("albergueId", "==", albId), where("estado", "==", "pendiente"));
+    // CHIVATO DE ESCUCHA
+    window.sysLog(`Iniciando escucha de notificaciones para albergue: ${albId}`, "info");
+    
     unsubscribeNotifs = onSnapshot(q, (snapshot) => {
-        const rol = currentUserData.rol || ""; let count = 0; listaNotificacionesCache = [];
-        snapshot.forEach(doc => { const data = doc.data(); let show = false; if (['admin', 'super_admin'].includes(rol)) show = true; else if (rol === 'sanitario' && data.tipo === 'Sanitaria') show = true; else if (rol === 'psicosocial' && data.tipo === 'Psicosocial') show = true; else if (rol === 'albergue' && data.tipo === 'Entregas') show = true; if (show) { count++; listaNotificacionesCache.push({ id: doc.id, ...data }); } });
-        const badge = window.el('notification-badge-container'); const countEl = window.el('notif-count');
-        if (count > 0) { window.safeShow('notification-badge-container'); countEl.innerText = count > 9 ? '9+' : count; badge.classList.add('shake-animation'); } else { window.safeHide('notification-badge-container'); }
-    }, (error) => { window.sysLog(`Error Notificaciones (Posible falta de índice): ${error.message}`, "error"); });
+        const rol = currentUserData.rol || "";
+        let count = 0;
+        listaNotificacionesCache = [];
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            let show = false;
+            if (['admin', 'super_admin'].includes(rol)) show = true;
+            else if (rol === 'sanitario' && data.tipo === 'Sanitaria') show = true;
+            else if (rol === 'psicosocial' && data.tipo === 'Psicosocial') show = true;
+            else if (rol === 'albergue' && data.tipo === 'Entregas') show = true;
+            if (show) { count++; listaNotificacionesCache.push({ id: doc.id, ...data }); }
+        });
+        const badge = window.el('notification-badge-container');
+        const countEl = window.el('notif-count');
+        
+        // LOG PARA DEBUG
+        window.sysLog(`Notificaciones encontradas: ${count}`, "info");
+
+        if (count > 0) { 
+            window.safeShow('notification-badge-container'); 
+            countEl.innerText = count > 9 ? '9+' : count; 
+        } else { 
+            window.safeHide('notification-badge-container'); 
+        }
+    }, (error) => {
+        // CHIVATO DE ÍNDICE
+        window.sysLog(`Error Notificaciones: ${error.message}`, "error");
+    });
 };
-window.mostrarListaNotificaciones = function() { window.safeShow('modal-notificaciones'); const c = window.el('lista-notificaciones-content'); c.innerHTML = ""; if (listaNotificacionesCache.length === 0) { c.innerHTML = "<p style='text-align:center;color:#666;'>No hay derivaciones pendientes.</p>"; return; } listaNotificacionesCache.forEach(n => { let tabDestino = 'filiacion'; if(n.tipo === 'Sanitaria') tabDestino = 'sanitaria'; if(n.tipo === 'Psicosocial') tabDestino = 'psicosocial'; if(n.tipo === 'Entregas') tabDestino = 'entregas'; c.innerHTML += `<div class="notif-item" onclick="window.atenderNotificacion('${n.id}', '${n.personaId}', '${tabDestino}')"> <div class="notif-info"> <strong>${n.personaNombre}</strong> <span>${n.motivo}</span> <small style="color:#999;">${new Date(n.fecha.seconds * 1000).toLocaleTimeString()}</small> </div> <div class="notif-type notif-${n.tipo}">${n.tipo}</div> </div>`; }); };
-window.atenderNotificacion = async function(notifId, personaId, tabDestino) { window.safeHide('modal-notificaciones'); try { await updateDoc(doc(db, "derivaciones_pendientes", notifId), { estado: 'atendida' }); } catch(e) { console.error("Error updating notif", e); } window.cambiarPestana(tabDestino); const p = listaPersonasCache.find(x => x.id === personaId); if(p) { let prefix = ''; if(tabDestino === 'sanitaria') prefix = 'san'; else if(tabDestino === 'psicosocial') prefix = 'psi'; else if(tabDestino === 'entregas') prefix = 'ent'; if(prefix) { window.abrirFormularioIntervencion(p.id, prefix); } } else { alert("La persona ya no se encuentra en el listado activo."); } };
-window.confirmarDerivacion = async function() { const motivo = window.el('derivacion-motivo').value; if(!motivo) return alert("Escribe un motivo."); if(personaEnGestion) { await window.registrarLog(personaEnGestion.id, `Derivación ${tipoDerivacionActual}`, motivo); try { await addDoc(collection(db, "derivaciones_pendientes"), { albergueId: currentAlbergueId, personaId: personaEnGestion.id, personaNombre: `${personaEnGestion.nombre} ${personaEnGestion.ap1 || ''}`, tipo: tipoDerivacionActual, motivo: motivo, fecha: new Date(), estado: 'pendiente' }); } catch(e) { console.error("Error creando notificacion", e); } } window.sysLog(`Derivación a ${tipoDerivacionActual}: ${motivo}`, "warn"); window.safeHide('modal-derivacion'); window.showToast("✅ Derivación enviada"); window.resetIntervencion(); };
+
+window.mostrarListaNotificaciones = function() {
+    window.safeShow('modal-notificaciones');
+    const c = window.el('lista-notificaciones-content');
+    c.innerHTML = "";
+    if (listaNotificacionesCache.length === 0) { c.innerHTML = "<p style='text-align:center;color:#666;'>No hay derivaciones pendientes.</p>"; return; }
+    listaNotificacionesCache.forEach(n => {
+        let tabDestino = 'filiacion';
+        if(n.tipo === 'Sanitaria') tabDestino = 'sanitaria';
+        if(n.tipo === 'Psicosocial') tabDestino = 'psicosocial';
+        if(n.tipo === 'Entregas') tabDestino = 'entregas';
+        c.innerHTML += `<div class="notif-item" onclick="window.atenderNotificacion('${n.id}', '${n.personaId}', '${tabDestino}')"> <div class="notif-info"> <strong>${n.personaNombre}</strong> <span>${n.motivo}</span> <small style="color:#999;">${new Date(n.fecha.seconds * 1000).toLocaleTimeString()}</small> </div> <div class="notif-type notif-${n.tipo}">${n.tipo}</div> </div>`;
+    });
+};
+
+window.atenderNotificacion = async function(notifId, personaId, tabDestino) {
+    window.safeHide('modal-notificaciones');
+    try { await updateDoc(doc(db, "derivaciones_pendientes", notifId), { estado: 'atendida' }); } catch(e) { console.error("Error updating notif", e); }
+    window.cambiarPestana(tabDestino);
+    const p = listaPersonasCache.find(x => x.id === personaId);
+    if(p) {
+        let prefix = '';
+        if(tabDestino === 'sanitaria') prefix = 'san'; else if(tabDestino === 'psicosocial') prefix = 'psi'; else if(tabDestino === 'entregas') prefix = 'ent';
+        if(prefix) { window.abrirFormularioIntervencion(p.id, prefix); }
+    } else { alert("La persona ya no se encuentra en el listado activo."); }
+};
+
+window.confirmarDerivacion = async function() {
+    const motivo = window.el('derivacion-motivo').value;
+    if(!motivo) return alert("Escribe un motivo.");
+    if(personaEnGestion) {
+        await window.registrarLog(personaEnGestion.id, `Derivación ${tipoDerivacionActual}`, motivo);
+        try { 
+            window.sysLog("Intentando guardar notificación en nube...", "warn");
+            await addDoc(collection(db, "derivaciones_pendientes"), { albergueId: currentAlbergueId, personaId: personaEnGestion.id, personaNombre: `${personaEnGestion.nombre} ${personaEnGestion.ap1 || ''}`, tipo: tipoDerivacionActual, motivo: motivo, fecha: new Date(), estado: 'pendiente' }); 
+            window.sysLog("Notificación guardada OK.", "success");
+        } catch(e) { 
+            window.sysLog(`ERROR al guardar notif: ${e.message}`, "error");
+        }
+    }
+    window.safeHide('modal-derivacion'); window.showToast("✅ Derivación enviada"); window.resetIntervencion();
+};
 
 window.conectarListenersBackground = function(id) { if(unsubscribeAlbergueDoc) unsubscribeAlbergueDoc(); unsubscribeAlbergueDoc = onSnapshot(doc(db,"albergues",id), d=>{ if(d.exists()){ currentAlbergueData=d.data(); totalCapacidad=parseInt(currentAlbergueData.capacidad||0); window.actualizarContadores(); } }); };
 window.setupAutoSave = function() { const inputsFil = ['edit-nombre','edit-ap1','edit-ap2','edit-doc-num','edit-tel','edit-fecha']; inputsFil.forEach(id => { const el = window.el(id); if(el && !el.dataset.hasAutosave) { el.addEventListener('blur', () => window.guardarCambiosPersona(true)); el.dataset.hasAutosave = "true"; if(id === 'edit-fecha') el.oninput = function() { window.formatearFecha(this); }; } }); const inputsPref = ['man-nombre','man-ap1','man-ap2','man-doc-num','man-tel','man-fecha']; inputsPref.forEach(id => { const el = window.el(id); if(el && !el.dataset.hasAutosave) { el.addEventListener('blur', () => { if(prefiliacionEdicionId) window.adminPrefiliarManual(true); }); el.dataset.hasAutosave = "true"; if(id === 'man-fecha') el.oninput = function() { window.formatearFecha(this); }; } }); };

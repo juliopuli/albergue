@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gestión Albergue - Ver.2.7.4</title>
+    <title>Gestión Albergue - Ver.3.1.0</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -11,9 +11,7 @@
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 </head>
 <body>
-
-    <div class="version-tag">Ver.2.7.4</div>
-    
+    <div class="version-tag">Ver.3.1.0 (Stable)</div>
     <div id="toast" style="visibility: hidden;">Guardado automático</div>
     <div id="loading-overlay" class="hidden"><div class="spinner"></div><h2 style="color:var(--primary);">Cargando Datos...</h2></div>
 
@@ -51,12 +49,12 @@
         </header>
 
         <nav class="app-nav" style="position: relative;">
-            <div id="notification-badge-container" class="hidden" onclick="window.gestionarClicGlobo()" style="position: absolute; left: 20px; top: 50%; transform: translateY(-50%); cursor: pointer; z-index: 100;">
-                <div class="notif-icon" style="color: var(--primary); font-size: 1.5rem;"><i class="fa-solid fa-bell"></i></div>
-                <div id="notif-count" style="position: absolute; top: -8px; right: -8px; background: #ef4444; color: white; font-size: 0.75rem; font-weight: bold; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">0</div>
+            <div id="notification-badge-container" class="hidden" onclick="window.gestionarClicGlobo()" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; z-index: 1000; background: rgba(255,255,255,0.1); padding: 5px; border-radius: 50%;">
+                <div class="notif-icon" style="color: var(--primary); font-size: 1.4rem;"><i class="fa-solid fa-bell"></i></div>
+                <div id="notif-count" style="position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; font-size: 0.7rem; font-weight: bold; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">0</div>
             </div>
 
-            <div class="nav-item" id="nav-home" onclick="window.navegar('home')"><i class="fa-solid fa-house"></i><span>Inicio</span></div>
+            <div class="nav-item" id="nav-home" onclick="window.navegar('home')" style="margin-left: 50px;"><i class="fa-solid fa-house"></i><span>Inicio</span></div>
             <div class="nav-item" id="nav-intervencion" onclick="window.navegar('intervencion')"><i class="fa-solid fa-qrcode"></i><span>Intervención</span></div>
             <div class="nav-item" id="nav-albergues" onclick="window.navegar('gestion-albergues')"><i class="fa-solid fa-bed"></i><span>Gestión</span></div>
             <div class="nav-item" id="nav-mto" onclick="window.navegar('mantenimiento')"><i class="fa-solid fa-screwdriver-wrench"></i><span>Mantenimiento</span></div>
@@ -121,23 +119,7 @@
     <div id="modal-notificaciones" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><span class="close-modal" onclick="document.getElementById('modal-notificaciones').classList.add('hidden')">&times;</span><h3>Derivaciones</h3><div id="lista-notificaciones-content"></div></div></div>
     <div id="modal-derivacion" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><h3>Derivar</h3><textarea id="derivacion-motivo" placeholder="Motivo..."></textarea><button class="primary" onclick="window.confirmarDerivacion()">Enviar</button></div></div>
     <div id="modal-cama" class="modal-overlay hidden" onclick="if(event.target===this)window.cerrarMapaCamas()"><div class="modal-content modal-lg"><div id="grid-camas" class="bed-grid"></div></div></div>
-    
-    <div id="modal-bed-info" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
-        <div class="modal-content modal-lg" style="text-align:center; padding:40px;">
-            <span class="close-modal" onclick="document.getElementById('modal-bed-info').classList.add('hidden')">&times;</span>
-            <div style="font-size:3rem; color:var(--primary); margin-bottom:10px;"><i class="fa-solid fa-user-check"></i></div>
-            <h3 style="color:var(--text-light);">Cama <span id="info-cama-num"></span></h3>
-            <h2 id="info-nombre-completo" style="color:var(--primary);"></h2>
-            <p><span id="info-telefono"></span></p>
-            <br>
-            <button id="btn-historial-cama" class="dark hidden" style="margin-bottom:15px;">📜 Ver Historial</button>
-            <div style="margin-top:20px; text-align:left;">
-                <h4 style="border-bottom:1px solid #eee; padding-bottom:5px;">Unidad Familiar</h4>
-                <div id="info-familia-detalle"></div>
-            </div>
-        </div>
-    </div>
-
+    <div id="modal-bed-info" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content modal-lg"><h3 id="info-cama-num"></h3><h2 id="info-nombre-completo"></h2><p id="info-telefono"></p><div id="info-familia-detalle"></div><button id="btn-historial-cama" onclick="window.verHistorial()">Historial</button></div></div>
     <div id="modal-vincular-familia" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><input id="search-vincular" onkeyup="window.buscarParaVincular()"><div id="resultados-vincular"></div></div></div>
     <div id="modal-albergue" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><input id="mto-nombre"><input id="mto-capacidad"><input id="mto-columnas"><button onclick="window.guardarAlbergue()">Guardar</button><button id="btn-delete-albergue" onclick="window.eliminarAlbergueActual()">Eliminar</button></div></div>
     <div id="modal-crear-usuario" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><input id="new-user-name"><select id="new-user-role"></select><input id="new-user-email"><input id="new-user-pass" type="password"><input type="checkbox" id="new-user-active"><button onclick="window.guardarUsuario()">Guardar</button><button id="btn-delete-user" onclick="window.eliminarUsuario()">Borrar</button></div></div>
@@ -147,16 +129,7 @@
     <div id="modal-admin-add-familiar" class="modal-overlay hidden"><div class="modal-content"><input id="adm-fam-nombre"><input id="adm-fam-ap1"><input id="adm-fam-ap2"><select id="adm-fam-tipo-doc" onchange="window.verificarMenor('adm-fam')"><option>MENOR</option><option>DNI</option></select><input id="adm-fam-doc-num"><input id="adm-fam-fecha"><input id="adm-fam-tel"><button onclick="window.guardarFamiliarAdmin()">Añadir</button><button onclick="window.cerrarModalFamiliarAdmin()">Cerrar</button></div></div>
     <div id="modal-obs-detalle" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content modal-lg"><h3 id="obs-modal-title"></h3><div id="obs-modal-content"></div></div></div>
     <div id="modal-qr" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><div id="qrcode-display"></div></div></div>
-    
-    <div id="modal-carnet-qr" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
-        <div class="modal-content" style="text-align:center; max-width:400px;">
-            <span class="close-modal" onclick="document.getElementById('modal-carnet-qr').classList.add('hidden')">&times;</span>
-            <h3 style="color:var(--primary); margin-bottom:5px;">Carnet Digital</h3>
-            <div id="carnet-qrcode-display" style="display:inline-block; margin:20px; border:4px solid var(--text-main); padding:10px; border-radius:10px;"></div>
-            <h2 id="carnet-nombre" style="font-size:1.4rem; margin-bottom:5px;"></h2>
-            <p id="carnet-id" style="font-size:1rem; color:#666; font-family:monospace; font-weight:bold;"></p>
-        </div>
-    </div>
+    <div id="modal-carnet-qr" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><div id="carnet-qrcode-display"></div><h2 id="carnet-nombre"></h2><p id="carnet-id"></p></div></div>
     
     <div id="public-register-screen" class="hidden"><div id="public-welcome-screen" class="card"><h2 id="public-albergue-name"></h2><input type="checkbox" id="check-consent" onchange="window.toggleStartButton()"><button id="btn-start-public" disabled onclick="window.iniciarRegistro()">Empezar</button></div><div id="public-form-container" class="hidden"><input id="pub-nombre"><input id="pub-ap1"><input id="pub-ap2"><select id="pub-tipo-doc" onchange="window.verificarMenor('pub')"><option>DNI</option></select><input id="pub-doc-num"><input id="pub-fecha"><input id="pub-tel"><div id="lista-familiares-ui"></div><button onclick="window.abrirModalFamiliar()">+ Fam</button><button onclick="window.publicoGuardarTodo()">Enviar</button></div><div id="public-success-msg" class="hidden"><h1>OK</h1></div></div>
 

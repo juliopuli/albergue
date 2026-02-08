@@ -1,5 +1,5 @@
-import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, signInAnonymously, signOut, onAuthStateChanged, createUserWithEmailAndPassword, sendPasswordResetEmail, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signInAnonymously, signOut, onAuthStateChanged, createUserWithEmailAndPassword, reauthenticateWithCredential, EmailAuthProvider, updatePassword } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
 import { getFirestore, collection, addDoc, setDoc, query, where, getDocs, doc, updateDoc, onSnapshot, orderBy, deleteDoc, getDoc, writeBatch } 
 from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
@@ -35,9 +35,7 @@ window.sysLog = function(msg, type = 'info') {
     const now = new Date();
     const time = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
     let typeClass = 'log-type-info'; 
-    if (type === 'error') typeClass = 'log-type-error'; 
-    if (type === 'warn') typeClass = 'log-type-warn'; 
-    if (type === 'nav') typeClass = 'log-type-nav';
+    if (type === 'error') typeClass = 'log-type-error'; if (type === 'warn') typeClass = 'log-type-warn'; if (type === 'nav') typeClass = 'log-type-nav';
     const div = document.createElement('div'); div.className = 'log-entry';
     div.innerHTML = `<span class="log-time">[${time}]</span> <span class="${typeClass}">[${type.toUpperCase()}]</span> ${msg}`;
     c.appendChild(div); c.scrollTop = c.scrollHeight;
@@ -47,13 +45,14 @@ window.onerror = function(message, source, lineno, colno, error) { window.sysLog
 window.toggleCajaNegra = function() { const bb = document.getElementById('black-box-overlay'); if (bb) { if (bb.classList.contains('hidden')) { bb.classList.remove('hidden'); window.sysLog("Debug activado", "info"); } else { bb.classList.add('hidden'); } } };
 window.limpiarCajaNegra = function() { const c = document.getElementById('black-box-content'); if (c) c.innerHTML = ""; };
 
-window.sysLog("Sistema Iniciado. Versión 2.7.0 (Restored v2.5 Logic)", "info");
+window.sysLog("Sistema Iniciado. Versión 2.7.1 (Global Badge)", "info");
 
 // --- GLOBALES ---
 let isPublicMode = false;
-let currentAlbergueId = null;
+let currentAlbergueId = null; // Si es null, estamos en "Modo Global/Home"
+let alberguesMap = {}; // Cache para nombres de albergues
 const urlParams = new URLSearchParams(window.location.search);
-if (urlParams.get('public_id')) { isPublicMode = true; currentAlbergueId = urlParams.get('public_id'); window.sysLog(`Modo Público: ${currentAlbergueId}`, "info"); }
+if (urlParams.get('public_id')) { isPublicMode = true; currentAlbergueId = urlParams.get('public_id'); }
 
 let currentUserData = null;
 let currentAlbergueData = null;
@@ -62,7 +61,7 @@ let ocupacionActual = 0;
 let camasOcupadas = {};
 let listaPersonasCache = []; 
 let listaGlobalPrefiliacion = []; 
-let listaNotificacionesCache = [];
+let listaNotificacionesCache = []; // Ahora guarda TODO lo pendiente globalmente
 let unsubscribeUsers, unsubscribeAlberguesActivos, unsubscribeAlberguesMto, unsubscribePersonas, unsubscribeAlbergueDoc, unsubscribePool, unsubscribeNotifs;
 let personaSeleccionadaId = null;
 let personaEnGestion = null;
@@ -86,45 +85,118 @@ const TIPOS_INTERVENCION = {
     ent: { titulo: "Entregas", opciones: ["Entrega de Kit de Higiene", "Entrega de Ropa / Calzado", "Entrega de Manta / Abrigo", "Entrega de Alimentos (Biberones...)", "Entrega de Juguetes / Material Infantil", "Otros"] }
 };
 
-// --- [CRÍTICO] FUNCIONES DE INTERFAZ Y QR MOVIDAS AQUÍ ---
+// --- FUNCIONES INTERFAZ BÁSICAS ---
 window.resetIntervencion = function() { personaEnGestion = null; window.safeHide('view-scan-result'); window.safeShow('view-scan-ready'); resetScannerUI(); };
 window.detenerEscaner = function() { if (html5QrCode && html5QrCode.isScanning) { html5QrCode.stop().then(() => { window.sysLog("Cámara detenida.", "info"); html5QrCode.clear(); }).catch(err => console.error(err)).finally(() => { resetScannerUI(); }); } else { resetScannerUI(); } };
 function resetScannerUI() { window.safeHide('reader'); window.safeHide('btn-stop-camera'); window.safeShow('scan-placeholder'); window.safeShow('btn-start-camera'); }
-window.verCarnetQR = function() { if(!personaEnGestion) return; window.safeShow('modal-carnet-qr'); const container = window.el('carnet-qrcode-display'); container.innerHTML = ""; const currentUrl = window.location.href.split('?')[0]; const deepLink = `${currentUrl}?action=scan&aid=${currentAlbergueId}&pid=${personaEnGestion.id}`; new QRCode(container, { text: deepLink, width: 250, height: 250 }); const nombreCompleto = `${personaEnGestion.nombre} ${personaEnGestion.ap1 || ""} ${personaEnGestion.ap2 || ""}`; window.el('carnet-nombre').innerText = nombreCompleto; window.el('carnet-id').innerText = personaEnGestion.docNum || "ID: " + personaEnGestion.id.substring(0,8).toUpperCase(); };
-window.abrirModalQR = function() { setTimeout(() => { window.safeShow('modal-qr'); const d = window.el("qrcode-display"); d.innerHTML = ""; new QRCode(d, { text: window.location.href.split('?')[0] + `?public_id=${currentAlbergueId}`, width: 250, height: 250 }); }, 100); };
 
-// --- INTERVENCIONES ---
-window.buscarParaIntervencion = function(tipo) { const txt = window.safeVal(`search-${tipo}`).toLowerCase().trim(); const res = window.el(`res-${tipo}`); if (txt.length < 2) { res.classList.add('hidden'); return; } const hits = listaPersonasCache.filter(p => { const full = `${p.nombre} ${p.ap1 || ''} ${p.ap2 || ''}`.toLowerCase(); return full.includes(txt) || (p.docNum || "").toLowerCase().includes(txt); }); res.innerHTML = ""; if (hits.length === 0) { res.innerHTML = "<div class='search-item'>Sin resultados locales.</div>"; } else { hits.forEach(p => { const hasBed = p.cama ? `Cama ${p.cama}` : "Sin Cama"; res.innerHTML += ` <div class="search-item" onclick="window.abrirFormularioIntervencion('${p.id}', '${tipo}')"> <div> <strong>${p.nombre} ${p.ap1 || ''}</strong> <div style="font-size:0.8rem;color:#666;">${p.docNum || '-'} | ${hasBed}</div> </div> <button class="btn-icon-small" style="background:var(--primary);color:white;">Selecionar</button> </div>`; }); } res.classList.remove('hidden'); };
-window.abrirFormularioIntervencion = function(pid, tipo) { const p = listaPersonasCache.find(x => x.id === pid); if(!p) return; personaIntervencionActiva = p; window.safeHide(`res-${tipo}`); window.safeShow(`form-int-${tipo}`); window.el(`search-${tipo}`).value = ""; window.el(`name-int-${tipo}`).innerText = `${p.nombre} ${p.ap1 || ''}`; const sel = window.el(`sel-int-${tipo}`); sel.innerHTML = ""; TIPOS_INTERVENCION[tipo].opciones.forEach(op => { sel.add(new Option(op, op)); }); window.el(`det-int-${tipo}`).value = ""; };
-window.cerrarFormularioIntervencion = function(tipo) { window.safeHide(`form-int-${tipo}`); personaIntervencionActiva = null; };
+// --- NUEVA LÓGICA DE NOTIFICACIONES GLOBALES ---
 
-// [LA FUNCIÓN QUE FALTABA]
-window.registrarIntervencion = async function(tipo) {
-    if(!personaIntervencionActiva) return;
-    const subtipo = window.safeVal(`sel-int-${tipo}`);
-    const detalle = window.safeVal(`det-int-${tipo}`);
-    const nombrePersona = personaIntervencionActiva.nombre; 
+// Se llama al Login. Escucha TODO lo pendiente.
+window.suscribirNotificacionesGlobales = async function() {
+    if(unsubscribeNotifs) unsubscribeNotifs();
     
-    if(!subtipo) return alert("Selecciona un tipo.");
-    
+    // Primero, cargar mapa de nombres de albergues para mostrarlos bonitos
     try {
-        const data = {
-            fecha: new Date(),
-            usuario: currentUserData.nombre,
-            tipo: TIPOS_INTERVENCION[tipo].titulo,
-            subtipo: subtipo,
-            detalle: detalle
-        };
-        await addDoc(collection(db, "albergues", currentAlbergueId, "personas", personaIntervencionActiva.id, "intervenciones"), data);
-        window.showToast("Intervención Registrada");
-        window.sysLog(`Intervención ${tipo} registrada para ${nombrePersona}`, "success");
-        window.cerrarFormularioIntervencion(tipo); 
-    } catch(e) {
-        console.error(e);
-        alert("Error al guardar: " + e.message);
+        const snap = await getDocs(collection(db, "albergues"));
+        snap.forEach(d => { alberguesMap[d.id] = d.data().nombre; });
+    } catch(e) { console.warn("No se pudo cargar mapa de albergues", e); }
+
+    // Query Global: Dame todo lo pendiente
+    let q = query(collection(db, "derivaciones_pendientes"), where("estado", "==", "pendiente"));
+    window.sysLog("Iniciando escucha GLOBAL de notificaciones...", "info");
+
+    unsubscribeNotifs = onSnapshot(q, (snapshot) => {
+        const rol = currentUserData.rol || "";
+        let count = 0;
+        listaNotificacionesCache = []; // Reiniciamos cache global
+        
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            let show = false;
+            // Filtro de Rol
+            if (['admin', 'super_admin'].includes(rol)) show = true;
+            else if (rol === 'sanitario' && data.tipo === 'Sanitaria') show = true;
+            else if (rol === 'psicosocial' && data.tipo === 'Psicosocial') show = true;
+            else if (rol === 'albergue' && data.tipo === 'Entregas') show = true;
+            
+            if (show) { 
+                count++; 
+                listaNotificacionesCache.push({ id: doc.id, ...data }); 
+            }
+        });
+        
+        const badge = window.el('notification-badge-container');
+        const countEl = window.el('notif-count');
+        
+        // Actualizar globo en el header
+        if (count > 0) { 
+            window.safeShow('notification-badge-container'); 
+            if(countEl) countEl.innerText = count > 9 ? '9+' : count; 
+        } else { 
+            window.safeHide('notification-badge-container'); 
+        }
+    }, (error) => {
+        window.sysLog(`Error Notif Global: ${error.message}`, "error");
+    });
+};
+
+// Gestiona qué pasa al hacer clic en el globo según dónde estemos
+window.gestionarClicGlobo = function() {
+    window.safeShow('modal-notificaciones');
+    const c = window.el('lista-notificaciones-content');
+    c.innerHTML = "";
+
+    if (listaNotificacionesCache.length === 0) { 
+        c.innerHTML = "<p style='text-align:center;color:#666;'>No hay derivaciones pendientes.</p>"; 
+        return; 
+    }
+
+    // CASO A: Estamos DENTRO de un albergue -> Mostrar solo las de este albergue para actuar
+    if (currentAlbergueId) {
+        const locales = listaNotificacionesCache.filter(n => n.albergueId === currentAlbergueId);
+        if (locales.length === 0) {
+            c.innerHTML = "<p style='text-align:center;color:#666;'>No hay pendientes en este albergue.</p><hr><p style='text-align:center;font-size:0.8em'><a href='#' onclick='window.navegar(\"home\"); window.gestionarClicGlobo();'>Ver Globales</a></p>";
+            return;
+        }
+        locales.forEach(n => {
+            let tabDestino = 'filiacion';
+            if(n.tipo === 'Sanitaria') tabDestino = 'sanitaria';
+            if(n.tipo === 'Psicosocial') tabDestino = 'psicosocial';
+            if(n.tipo === 'Entregas') tabDestino = 'entregas';
+            c.innerHTML += `<div class="notif-item" onclick="window.atenderNotificacion('${n.id}', '${n.personaId}', '${tabDestino}')"> 
+                <div class="notif-info"> 
+                    <strong>${n.personaNombre}</strong> 
+                    <span>${n.motivo}</span> 
+                    <small style="color:#999;">${new Date(n.fecha.seconds * 1000).toLocaleTimeString()}</small> 
+                </div> 
+                <div class="notif-type notif-${n.tipo}">${n.tipo}</div> 
+            </div>`;
+        });
+        
+    // CASO B: Estamos FUERA (Home) -> Mostrar resumen por Albergue
+    } else {
+        // Agrupar por albergue
+        const resumen = {};
+        listaNotificacionesCache.forEach(n => {
+            if (!resumen[n.albergueId]) resumen[n.albergueId] = 0;
+            resumen[n.albergueId]++;
+        });
+
+        c.innerHTML = "<h4 style='margin-bottom:10px; color:var(--primary);'>Resumen Global</h4>";
+        Object.keys(resumen).forEach(albId => {
+            const nombreAlb = alberguesMap[albId] || "Albergue Desconocido";
+            const num = resumen[albId];
+            c.innerHTML += `<div class="notif-item" onclick="window.cargarDatosYEntrar('${albId}')"> 
+                <div class="notif-info"> 
+                    <strong>${nombreAlb}</strong> 
+                    <span style="color:var(--danger); font-weight:bold;">${num} Pendientes</span> 
+                </div> 
+                <div class="notif-type" style="background:#334155;">ENTRAR</div> 
+            </div>`;
+        });
     }
 };
-window.verHistorialIntervencion = function(tipo) { if(personaIntervencionActiva) window.verHistorial(personaIntervencionActiva.id); };
 
 // --- AUTH & USUARIOS ---
 window.iniciarSesion = async function() { try { window.sysLog("Click Login", "info"); await signInWithEmailAndPassword(auth, window.el('login-email').value, window.el('login-pass').value); window.sysLog("Auth Firebase OK", "success"); } catch(err) { window.sysLog("Error Auth: " + err.message, "error"); alert(err.message); } };
@@ -145,10 +217,16 @@ window.ejecutarCambioPass=async function(){const o=window.safeVal('chg-old-pass'
 // --- NAVEGACIÓN ---
 window.navegar = function(p) {
     window.sysLog(`Navegando: ${p}`, "nav");
+    // Al navegar por pantallas, NO desconectamos las notificaciones globales
     if(unsubscribeUsers) unsubscribeUsers(); 
     if(unsubscribeAlberguesActivos) unsubscribeAlberguesActivos();
-    // NOTIFICACIONES PERSISTEN (NO UNSUBSCRIBE AQUÍ)
     
+    // Si salimos a HOME o GESTION, estamos "fuera" del albergue específico
+    if (p === 'home' || p === 'gestion-albergues' || p === 'usuarios' || p === 'observatorio' || p === 'mantenimiento') {
+        currentAlbergueId = null; // Reset context
+        if(window.el('app-title')) window.el('app-title').innerText = "Albergue Pro";
+    }
+
     ['screen-home','screen-usuarios','screen-gestion-albergues','screen-mantenimiento','screen-operativa','screen-observatorio', 'screen-intervencion'].forEach(id=>window.safeHide(id));
     if(!currentUserData) return;
     
@@ -163,7 +241,6 @@ window.navegar = function(p) {
     else if(p==='usuarios') { window.cargarUsuarios(); window.safeShow('screen-usuarios'); }
     
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    
     if(p.includes('albergue')) window.safeAddActive('nav-albergues'); 
     else if(p.includes('obs')) window.safeAddActive('nav-obs'); 
     else if(p.includes('mantenimiento')) window.safeAddActive('nav-mto'); 
@@ -196,57 +273,10 @@ window.cargarDatosYEntrar = async function(id) {
         });
         if(unsubscribePool) unsubscribePool(); unsubscribePool = onSnapshot(collection(db, "pool_prefiliacion"), s => { listaGlobalPrefiliacion = []; s.forEach(d => { const p = d.data(); p.id = d.id; listaGlobalPrefiliacion.push(p); }); });
         
-        window.suscribirNotificaciones(id);
-        
         window.navegar('operativa');
         if(window.el('app-title')) window.el('app-title').innerText = currentAlbergueData.nombre;
         window.configurarDashboard(); window.actualizarContadores(); window.safeHide('loading-overlay'); window.conectarListenersBackground(id); window.setupAutoSave();
     } catch(e) { window.sysLog(`Error Cargando: ${e.message}`, "error"); alert(e.message); window.safeHide('loading-overlay'); }
-};
-
-// --- SISTEMA DE NOTIFICACIONES (V2.7.0 - RESTAURADO V2.5.0) ---
-window.suscribirNotificaciones = function(albId) {
-    if(unsubscribeNotifs) unsubscribeNotifs();
-    // Consulta "limpia" (solo por ID) para evitar conflictos de índice
-    let q = query(collection(db, "derivaciones_pendientes"), where("albergueId", "==", albId));
-    window.sysLog(`Escuchando notificaciones para: ${albId}`, "info");
-
-    unsubscribeNotifs = onSnapshot(q, (snapshot) => {
-        const rol = currentUserData.rol || "";
-        let count = 0;
-        listaNotificacionesCache = [];
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            // FILTRO MANUAL POR ESTADO (CLAVE DEL ÉXITO)
-            if(data.estado !== 'pendiente') return;
-
-            let show = false;
-            if (['admin', 'super_admin'].includes(rol)) show = true;
-            else if (rol === 'sanitario' && data.tipo === 'Sanitaria') show = true;
-            else if (rol === 'psicosocial' && data.tipo === 'Psicosocial') show = true;
-            else if (rol === 'albergue' && data.tipo === 'Entregas') show = true;
-            if (show) { count++; listaNotificacionesCache.push({ id: doc.id, ...data }); }
-        });
-        const badge = window.el('notification-badge-container');
-        const countEl = window.el('notif-count');
-        if (count > 0) { window.safeShow('notification-badge-container'); countEl.innerText = count > 9 ? '9+' : count; badge.classList.add('shake-animation'); } else { window.safeHide('notification-badge-container'); }
-    }, (error) => {
-        window.sysLog(`Error Notificaciones: ${error.message}`, "error");
-    });
-};
-
-window.mostrarListaNotificaciones = function() {
-    window.safeShow('modal-notificaciones');
-    const c = window.el('lista-notificaciones-content');
-    c.innerHTML = "";
-    if (listaNotificacionesCache.length === 0) { c.innerHTML = "<p style='text-align:center;color:#666;'>No hay derivaciones pendientes.</p>"; return; }
-    listaNotificacionesCache.forEach(n => {
-        let tabDestino = 'filiacion';
-        if(n.tipo === 'Sanitaria') tabDestino = 'sanitaria';
-        if(n.tipo === 'Psicosocial') tabDestino = 'psicosocial';
-        if(n.tipo === 'Entregas') tabDestino = 'entregas';
-        c.innerHTML += `<div class="notif-item" onclick="window.atenderNotificacion('${n.id}', '${n.personaId}', '${tabDestino}')"> <div class="notif-info"> <strong>${n.personaNombre}</strong> <span>${n.motivo}</span> <small style="color:#999;">${new Date(n.fecha.seconds * 1000).toLocaleTimeString()}</small> </div> <div class="notif-type notif-${n.tipo}">${n.tipo}</div> </div>`;
-    });
 };
 
 window.atenderNotificacion = async function(notifId, personaId, tabDestino) {
@@ -342,6 +372,9 @@ window.onload = async () => {
 onAuthStateChanged(auth, async (u) => {
     if(isPublicMode) return;
     if(u){
+        // CARGAR NOTIFICACIONES GLOBALES AL INICIAR SESIÓN
+        window.suscribirNotificacionesGlobales();
+
         const s = await getDoc(doc(db,"usuarios",u.uid));
         if(s.exists()){
             const d = s.data();

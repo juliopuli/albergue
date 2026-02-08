@@ -281,14 +281,38 @@ window.cargarDatosYEntrar = async function(id) {
 
 window.atenderNotificacion = async function(notifId, personaId, tabDestino) {
     window.safeHide('modal-notificaciones');
-    try { await updateDoc(doc(db, "derivaciones_pendientes", notifId), { estado: 'atendida' }); } catch(e) { console.error("Error updating notif", e); }
+    
+    // Marcar como atendida
+    try { 
+        await updateDoc(doc(db, "derivaciones_pendientes", notifId), { estado: 'atendida' }); 
+    } catch(e) { 
+        console.error("Error updating notif", e); 
+    }
+    
+    // Cambiar a la pestaña correcta
     window.cambiarPestana(tabDestino);
+    
+    // Buscar la persona en el listado local
     const p = listaPersonasCache.find(x => x.id === personaId);
-    if(p) {
+    
+    if (p) {
         let prefix = '';
-        if(tabDestino === 'sanitaria') prefix = 'san'; else if(tabDestino === 'psicosocial') prefix = 'psi'; else if(tabDestino === 'entregas') prefix = 'ent';
-        if(prefix) { window.abrirFormularioIntervencion(p.id, prefix); }
-    } else { alert("La persona ya no se encuentra en el listado activo."); }
+        
+        if (tabDestino === 'sanitaria') prefix = 'san';
+        else if (tabDestino === 'psicosocial') prefix = 'psi';
+        else if (tabDestino === 'entregas') prefix = 'ent';
+        
+        if (prefix) {
+            // Esperar 300ms para que se cargue la pestaña
+            setTimeout(() => {
+                window.abrirFormularioIntervencion(personaId, prefix);
+                window.sysLog(`Atendiendo derivación: ${p.nombre} → ${tabDestino}`, "info");
+            }, 300);
+        }
+    } else {
+        alert("La persona ya no se encuentra en el listado activo.");
+        window.sysLog(`Persona ${personaId} no encontrada en cache local`, "warn");
+    }
 };
 
 window.confirmarDerivacion = async function() {

@@ -544,12 +544,6 @@ window.cargarInterfazIntervencion = function(p) {
 window.abrirDerivacion = function(tipo) {
     window.abrirModalDerivacion(tipo);
 };
-    tipoDerivacionActual = tipo;
-    window.el('derivacion-tipo-titulo').innerText = `Derivar a ${tipo}`;
-    window.el('derivacion-motivo').value = '';
-    window.safeShow('modal-derivacion');
-};
-
 // === MÁS FUNCIONES DE INTERVENCIÓN ===
 window.abrirFormularioIntervencion = function(personaId, prefix) {
     const persona = listaPersonasCache.find(p => p.id === personaId);

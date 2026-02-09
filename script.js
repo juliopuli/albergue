@@ -539,7 +539,6 @@ window.getDerivacionesPermitidas = function() {
             return ['Derivación Entrega'];
         case 'sanitario':
             return ['Derivación Sanitaria'];
-        case 'psicologo':
         case 'psicosocial':
             return ['Derivación Psicosocial'];
         case 'observador':
@@ -715,10 +714,15 @@ window.navegarAAlbergueConDerivaciones = async function(albergueId) {
     document.getElementById('modal-resumen-albergues').classList.add('hidden');
     await window.cargarDatosYEntrar(albergueId);
     window.navegar('gestion-albergues');
-    // Wait a bit for the data to load
-    setTimeout(async () => {
-        await window.cargarDerivacionesAlbergue();
-    }, 1000);
+    // Wait for data to be loaded into cache before opening modal
+    const maxWait = 5000; // 5 seconds max
+    const startTime = Date.now();
+    const checkInterval = setInterval(() => {
+        if(listaPersonasCache.length > 0 || Date.now() - startTime > maxWait) {
+            clearInterval(checkInterval);
+            window.cargarDerivacionesAlbergue();
+        }
+    }, 200);
 };
 
 // Load derivations for active shelter
@@ -783,7 +787,8 @@ window.cargarDerivacionesAlbergue = async function() {
         let html = '';
         personasConDerivaciones.forEach(persona => {
             persona.derivaciones.forEach(deriv => {
-                const fecha = deriv.fecha.toDate();
+                // Handle both Firestore Timestamp and JavaScript Date objects
+                const fecha = deriv.fecha.toDate ? deriv.fecha.toDate() : new Date(deriv.fecha);
                 const fechaStr = `${fecha.getDate().toString().padStart(2,'0')}/${(fecha.getMonth()+1).toString().padStart(2,'0')}/${fecha.getFullYear()} ${fecha.getHours().toString().padStart(2,'0')}:${fecha.getMinutes().toString().padStart(2,'0')}`;
                 
                 let tipoClass = '';
@@ -827,6 +832,20 @@ window.cargarDerivacionesAlbergue = async function() {
     }
 };
 
+// Helper function to open intervention form for a derivation
+window.abrirFormularioDerivacion = function(personaId, tipoDerivacion, tabName) {
+    window.cambiarPestana(tabName);
+    
+    setTimeout(() => {
+        const persona = listaPersonasCache.find(p => p.id === personaId);
+        if(persona) {
+            const tipo = tipoDerivacion === 'Sanitaria' ? 'san' : 
+                         (tipoDerivacion === 'Psicosocial' ? 'psi' : 'ent');
+            window.abrirFormularioIntervencion(personaId, tipo);
+        }
+    }, 300);
+};
+
 // Navigate to correct tab and search for person
 window.navegarADerivacion = function(personaId, tipoDerivacion) {
     // Close modal
@@ -842,40 +861,19 @@ window.navegarADerivacion = function(personaId, tipoDerivacion) {
         tabName = 'entregas';
     }
     
+    if(!tabName) return;
+    
     // Make sure we're in gestion-albergues view
     if(!document.getElementById('screen-gestion-albergues').classList.contains('hidden')) {
         // Already in the screen, just switch tab
-        if(tabName) {
-            window.cambiarPestana(tabName);
-            
-            // Wait for tab switch then open intervention form
-            setTimeout(() => {
-                const persona = listaPersonasCache.find(p => p.id === personaId);
-                if(persona) {
-                    const tipo = tipoDerivacion === 'Sanitaria' ? 'san' : 
-                                 (tipoDerivacion === 'Psicosocial' ? 'psi' : 'ent');
-                    window.abrirFormularioIntervencion(personaId, tipo);
-                }
-            }, 300);
-        }
+        window.abrirFormularioDerivacion(personaId, tipoDerivacion, tabName);
     } else {
         // Navigate to gestion-albergues first
         window.navegar('gestion-albergues');
         
         // Wait for navigation to complete, then switch tab and open form
         setTimeout(() => {
-            if(tabName) {
-                window.cambiarPestana(tabName);
-                
-                setTimeout(() => {
-                    const persona = listaPersonasCache.find(p => p.id === personaId);
-                    if(persona) {
-                        const tipo = tipoDerivacion === 'Sanitaria' ? 'san' : 
-                                     (tipoDerivacion === 'Psicosocial' ? 'psi' : 'ent');
-                        window.abrirFormularioIntervencion(personaId, tipo);
-                    }
-                }, 300);
-            }
+            window.abrirFormularioDerivacion(personaId, tipoDerivacion, tabName);
         }, 500);
     }
 };
@@ -923,8 +921,16 @@ window.marcarDerivacionAtendida = async function(personaId, tipoDerivacion) {
 };
 
 // Setup real-time listener for derivations
+let derivacionesUpdateInterval = null;
+
 window.setupDerivacionesListener = function() {
     if(!currentUserData) return;
+    
+    // Clear any existing interval
+    if(derivacionesUpdateInterval) {
+        clearInterval(derivacionesUpdateInterval);
+        derivacionesUpdateInterval = null;
+    }
     
     const permitidas = window.getDerivacionesPermitidas();
     if(permitidas.length === 0) {
@@ -938,7 +944,7 @@ window.setupDerivacionesListener = function() {
     window.actualizarBadgeDerivaciones();
     
     // Update every 30 seconds (Firestore listeners for subcollections are complex, polling is simpler)
-    setInterval(() => {
+    derivacionesUpdateInterval = setInterval(() => {
         window.actualizarBadgeDerivaciones();
     }, 30000);
 };

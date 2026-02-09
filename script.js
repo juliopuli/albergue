@@ -571,7 +571,10 @@ window.abrirDerivacion = function(tipo) {
 // === MÁS FUNCIONES DE INTERVENCIÓN ===
 window.abrirFormularioIntervencion = function(personaId, prefix) {
     const persona = listaPersonasCache.find(p => p.id === personaId);
-    if (!persona) return;
+    if (!persona) {
+        alert("Persona no encontrada en el albergue");
+        return;
+    }
     
     personaIntervencionActiva = persona;
     
@@ -595,6 +598,14 @@ window.abrirFormularioIntervencion = function(personaId, prefix) {
             option.text = opt;
             selectEl.add(option);
         });
+    }
+    
+    const textareaEl = window.el(textareaId);
+    if (textareaEl) textareaEl.value = "";
+    
+    window.safeShow(modalId);
+    window.sysLog(`Modal intervención ${prefix} abierto para: ${persona.nombre}`, "info");
+};
     }
     
     const textareaEl = window.el(textareaId);

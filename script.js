@@ -347,15 +347,15 @@ window.abrirModalInfoCama = function(persona) {
     }
     
     // Construir nombre completo
-    const nombreCompleto = persona.nombre + " " + (persona.ap1 || "") + " " + (persona.ap2 || "");
+    var nombreCompleto = persona.nombre + " " + (persona.ap1 || "") + " " + (persona.ap2 || "");
     
     // Mostrar información en alert (método simple y compatible)
-    const info = "INFORMACIÓN DE LA CAMA\n\n" +
-                 "Cama: " + persona.cama + "\n" +
-                 "Nombre: " + nombreCompleto.trim() + "\n" +
-                 "DNI: " + (persona.docNum || "Sin DNI") + "\n" +
-                 "Teléfono: " + (persona.telefono || "Sin teléfono") + "\n" +
-                 "Presencia: " + (persona.presencia === 'dentro' ? '🟢 Dentro del albergue' : '🔴 Fuera del albergue') + "\n";
+    var info = "INFORMACIÓN DE LA CAMA\n\n" +
+               "Cama: " + persona.cama + "\n" +
+               "Nombre: " + nombreCompleto.trim() + "\n" +
+               "DNI: " + (persona.docNum || "Sin DNI") + "\n" +
+               "Teléfono: " + (persona.telefono || "Sin teléfono") + "\n" +
+               "Presencia: " + (persona.presencia === 'dentro' ? '🟢 Dentro del albergue' : '🔴 Fuera del albergue') + "\n";
     
     alert(info);
     window.sysLog("Info cama mostrada: " + nombreCompleto.trim() + " (Cama " + persona.cama + ")", "info");

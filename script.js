@@ -3,7 +3,7 @@ import { getAuth, signInWithEmailAndPassword, signInAnonymously, signOut, onAuth
 import { getFirestore, collection, addDoc, setDoc, query, where, getDocs, doc, updateDoc, onSnapshot, orderBy, deleteDoc, getDoc, writeBatch } 
 from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
-// --- CONFIGURACIÓN ---
+// --- CONFIGURACIÓN  ---
 const firebaseConfig = { 
     apiKey: "AIzaSyAzfEMwMd6M1VgvV0tJn7RS63RJghLE5UI", 
     authDomain: "albergues-temporales.firebaseapp.com", 

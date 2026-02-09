@@ -720,7 +720,11 @@ window.navegarAAlbergueConDerivaciones = async function(albergueId) {
     const checkInterval = setInterval(() => {
         if(listaPersonasCache.length > 0 || Date.now() - startTime > maxWait) {
             clearInterval(checkInterval);
-            window.cargarDerivacionesAlbergue();
+            try {
+                window.cargarDerivacionesAlbergue();
+            } catch(e) {
+                window.sysLog("Error cargando derivaciones: " + e.message, "error");
+            }
         }
     }, 200);
 };
@@ -788,7 +792,19 @@ window.cargarDerivacionesAlbergue = async function() {
         personasConDerivaciones.forEach(persona => {
             persona.derivaciones.forEach(deriv => {
                 // Handle both Firestore Timestamp and JavaScript Date objects
-                const fecha = deriv.fecha.toDate ? deriv.fecha.toDate() : new Date(deriv.fecha);
+                let fecha;
+                try {
+                    if(deriv.fecha && deriv.fecha.toDate) {
+                        fecha = deriv.fecha.toDate();
+                    } else if(deriv.fecha) {
+                        fecha = new Date(deriv.fecha);
+                    } else {
+                        fecha = new Date(); // Fallback to current date if missing
+                    }
+                } catch(e) {
+                    window.sysLog("Error parsing fecha in derivation: " + e.message, "warn");
+                    fecha = new Date();
+                }
                 const fechaStr = `${fecha.getDate().toString().padStart(2,'0')}/${(fecha.getMonth()+1).toString().padStart(2,'0')}/${fecha.getFullYear()} ${fecha.getHours().toString().padStart(2,'0')}:${fecha.getMinutes().toString().padStart(2,'0')}`;
                 
                 let tipoClass = '';
@@ -839,8 +855,15 @@ window.abrirFormularioDerivacion = function(personaId, tipoDerivacion, tabName) 
     setTimeout(() => {
         const persona = listaPersonasCache.find(p => p.id === personaId);
         if(persona) {
-            const tipo = tipoDerivacion === 'Sanitaria' ? 'san' : 
-                         (tipoDerivacion === 'Psicosocial' ? 'psi' : 'ent');
+            // Map derivation type to intervention type code
+            let tipo;
+            if(tipoDerivacion === 'Sanitaria') {
+                tipo = 'san';
+            } else if(tipoDerivacion === 'Psicosocial') {
+                tipo = 'psi';
+            } else {
+                tipo = 'ent';
+            }
             window.abrirFormularioIntervencion(personaId, tipo);
         }
     }, 300);
@@ -945,7 +968,11 @@ window.setupDerivacionesListener = function() {
     
     // Update every 30 seconds (Firestore listeners for subcollections are complex, polling is simpler)
     derivacionesUpdateInterval = setInterval(() => {
-        window.actualizarBadgeDerivaciones();
+        try {
+            window.actualizarBadgeDerivaciones();
+        } catch(e) {
+            window.sysLog("Error actualizando badge derivaciones: " + e.message, "error");
+        }
     }, 30000);
 };
 

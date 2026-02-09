@@ -290,27 +290,27 @@ body.focused-mode .app-nav { display: none !important; }
 .hist-item {
     display: flex;
     flex-direction: column;
-    padding: 15px;
+    padding: 12px;
     border-bottom: 1px solid #e2e8f0;
-    background: #fff;
-    margin-bottom: 10px;
+    background: #f8fafc;
+    margin-bottom: 12px;
     border-radius: 8px;
-    border-left: 4px solid var(--primary); /* Azul por defecto */
+    border-left: 4px solid #cbd5e1; /* Color por defecto */
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
 /* NUEVOS COLORES PARA INTERVENCIONES */
 .hist-type-san {
-    border-left: 4px solid var(--danger); /* Rojo */
-    background: #fff5f5; /* Tono rojizo muy suave */
+    border-left: 4px solid #3b82f6; /* Azul para Sanitaria */
+    background-color: #eff6ff;
 }
 .hist-type-psi {
-    border-left: 4px solid #9333ea; /* Morado */
-    background: #faf5ff; /* Tono morado muy suave */
+    border-left: 4px solid #10b981; /* Verde para Psicosocial */
+    background-color: #f0fdf4;
 }
 .hist-type-ent {
-    border-left: 4px solid #84cc16; /* Verde Lima */
-    background: #f7fee7; /* Tono lima muy suave */
+    border-left: 4px solid #f59e0b; /* Naranja para Entregas */
+    background-color: #fffbeb;
 }
 
 .hist-header {

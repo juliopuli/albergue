@@ -395,13 +395,13 @@ window.abrirFormularioIntervencion = async function(pid, tipo) {
     TIPOS_INTERVENCION[tipo].opciones.forEach(function(op) { sel.add(new Option(op, op)); });
     
     // Precargar motivo si existe derivación pendiente
-    const motivo = await obtenerMotivoDeriavacion(pid, tipo);
+    const motivo = await obtenerMotivoDerivacion(pid, tipo);
     window.el('motivo-int-' + tipo).value = motivo;
     window.el('det-int-' + tipo).value = "";
 };
 
 // NUEVA FUNCIÓN: Obtener motivo de derivación pendiente
-async function obtenerMotivoDeriavacion(personaId, tipoIntervencion) {
+async function obtenerMotivoDerivacion(personaId, tipoIntervencion) {
     const accionBuscada = {
         'san': 'Derivación Sanitaria',
         'psi': 'Derivación Psicosocial',

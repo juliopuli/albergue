@@ -281,6 +281,9 @@ window.confirmarDerivacion = async function() {
             ? collection(db, "pool_prefiliacion", personaEnGestion.id, "historial")
             : collection(db, "albergues", currentAlbergueId, "personas", personaEnGestion.id, "historial");
         await addDoc(path, logData);
+        
+        // Update badge count
+        window.actualizarBadgeDerivaciones();
     } 
     window.sysLog(`Derivación a ${tipoDerivacionActual}: ${motivo}`, "warn"); 
     window.safeHide('modal-derivacion'); 
@@ -829,27 +832,49 @@ window.navegarADerivacion = function(personaId, tipoDerivacion) {
     // Close modal
     document.getElementById('modal-derivaciones-albergue').classList.add('hidden');
     
-    // Map derivation type to tab
-    let tabId = '';
+    // Map derivation type to tab name
+    let tabName = '';
     if(tipoDerivacion === 'Sanitaria') {
-        tabId = 'intervencion';
+        tabName = 'sanitaria';
     } else if(tipoDerivacion === 'Psicosocial') {
-        tabId = 'intervencion';
+        tabName = 'psicosocial';
     } else if(tipoDerivacion === 'Entregas') {
-        tabId = 'intervencion';
+        tabName = 'entregas';
     }
     
-    // Navigate to tab
-    if(tabId) {
-        window.navegar(tabId);
+    // Make sure we're in gestion-albergues view
+    if(!document.getElementById('screen-gestion-albergues').classList.contains('hidden')) {
+        // Already in the screen, just switch tab
+        if(tabName) {
+            window.cambiarPestana(tabName);
+            
+            // Wait for tab switch then open intervention form
+            setTimeout(() => {
+                const persona = listaPersonasCache.find(p => p.id === personaId);
+                if(persona) {
+                    const tipo = tipoDerivacion === 'Sanitaria' ? 'san' : 
+                                 (tipoDerivacion === 'Psicosocial' ? 'psi' : 'ent');
+                    window.abrirFormularioIntervencion(personaId, tipo);
+                }
+            }, 300);
+        }
+    } else {
+        // Navigate to gestion-albergues first
+        window.navegar('gestion-albergues');
         
-        // Wait for navigation then search for person
+        // Wait for navigation to complete, then switch tab and open form
         setTimeout(() => {
-            // Find person in cache
-            const persona = listaPersonasCache.find(p => p.id === personaId);
-            if(persona) {
-                // Trigger QR scan flow to load person
-                window.iniciarModoFocalizado(currentAlbergueId, personaId);
+            if(tabName) {
+                window.cambiarPestana(tabName);
+                
+                setTimeout(() => {
+                    const persona = listaPersonasCache.find(p => p.id === personaId);
+                    if(persona) {
+                        const tipo = tipoDerivacion === 'Sanitaria' ? 'san' : 
+                                     (tipoDerivacion === 'Psicosocial' ? 'psi' : 'ent');
+                        window.abrirFormularioIntervencion(personaId, tipo);
+                    }
+                }, 300);
             }
         }, 500);
     }

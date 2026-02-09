@@ -685,18 +685,92 @@ window.buscarPersonaIntervencion = function(prefix) {
 };
 
 window.guardarCama = async function(numeroCama) {
-    if (!personaEnGestion) return;
+    if (!personaEnGestion) {
+        alert("No hay persona seleccionada");
+        return;
+    }
+    
+    // 🔹 CASO 1: La persona está en la NUBE (pool global) → INGRESAR
+    if (personaEnGestionEsGlobal) {
+        if (!confirm(`¿Ingresar a ${personaEnGestion.nombre} en cama ${numeroCama}?`)) return;
+        
+        try {
+            window.safeShow('loading-overlay');
+            
+            // Buscar familia completa
+            const familiaMembers = listaGlobalPrefiliacion.filter(p => 
+                p.familiaId === personaEnGestion.familiaId
+            );
+            
+            const batch = writeBatch(db);
+            
+            // Ingresar a todos los miembros
+            for (const member of familiaMembers) {
+                const newDocRef = doc(collection(db, "albergues", currentAlbergueId, "personas"));
+                const memberData = { ...member };
+                delete memberData.id;
+                
+                memberData.estado = 'ingresado';
+                memberData.fechaIngreso = new Date();
+                
+                // Asignar cama solo al seleccionado
+                if (member.id === personaEnGestion.id) {
+                    memberData.cama = numeroCama;
+                } else {
+                    memberData.cama = null;
+                }
+                
+                batch.set(newDocRef, memberData);
+                
+                // Eliminar del pool
+                batch.delete(doc(db, "pool_prefiliacion", member.id));
+                
+                // Registrar log
+                const logRef = collection(db, "albergues", currentAlbergueId, "personas", newDocRef.id, "historial");
+                batch.set(doc(logRef), {
+                    fecha: new Date(),
+                    usuario: currentUserData.nombre,
+                    accion: "Ingreso desde Pool",
+                    detalle: `Ingresado en ${currentAlbergueData.nombre}${memberData.cama ? ` - Cama ${memberData.cama}` : ''}`
+                });
+            }
+            
+            await batch.commit();
+            
+            window.sysLog(`Ingreso completado: ${familiaMembers.length} persona(s)`, "success");
+            window.showToast(`✅ ${familiaMembers.length} persona(s) ingresada(s)`);
+            
+            window.safeHide('loading-overlay');
+            window.cerrarMapaCamas();
+            window.safeHide('panel-gestion-persona');
+            window.safeHide('resultados-busqueda');
+            
+        } catch (e) {
+            window.safeHide('loading-overlay');
+            window.sysLog("Error ingresando desde pool: " + e.message, "error");
+            alert("Error: " + e.message);
+        }
+        
+        return;
+    }
+    
+    // 🔹 CASO 2: La persona YA está en el albergue → CAMBIAR CAMA
     if (personaEnGestion.cama) {
         if (!confirm(`¿Cambiar de cama ${personaEnGestion.cama} a ${numeroCama}?`)) return;
     }
     
     try {
-        await updateDoc(doc(db, "albergues", currentAlbergueId, "personas", personaEnGestion.id), { cama: numeroCama });
+        await updateDoc(doc(db, "albergues", currentAlbergueId, "personas", personaEnGestion.id), { 
+            cama: numeroCama 
+        });
+        
         window.registrarLog(personaEnGestion.id, "Asignación Cama", `Cama ${numeroCama}`);
         window.showToast(`✅ Cama ${numeroCama} asignada`);
         window.cerrarMapaCamas();
+        
     } catch (e) {
         window.sysLog("Error guardando cama: " + e.message, "error");
+        alert("Error al asignar cama");
     }
 };
 

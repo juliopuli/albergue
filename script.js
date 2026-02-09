@@ -912,12 +912,13 @@ window.navegarADerivacion = async function(personaId, tipoDerivacion) {
             window.navegar('gestion-albergues');
         }
         
-        // Wait for navigation and tab switching to complete
+        // Wait for navigation to complete before switching tab
+        // These delays are necessary for DOM rendering after navigation
         setTimeout(() => {
             // Switch to the correct tab
             window.cambiarPestana(tabName);
             
-            // Wait for tab to render, then fill search and open form
+            // Wait for tab to render before manipulating its elements
             setTimeout(() => {
                 // Fill the search input with the person's name
                 const searchInput = document.getElementById(`search-${tipo}`);
@@ -925,19 +926,19 @@ window.navegarADerivacion = async function(personaId, tipoDerivacion) {
                     searchInput.value = nombreCompleto;
                     // Trigger the search to populate results
                     window.buscarParaIntervencion(tipo);
+                } else {
+                    window.sysLog(`Advertencia: No se encontró el input de búsqueda para ${tipo}`, "warn");
                 }
                 
-                // Wait a bit for search results to populate, then open the form
+                // Wait for search results to populate before opening form
                 setTimeout(() => {
-                    // Try to open the intervention form directly
-                    if (listaPersonasCache.find(x => x.id === personaId)) {
-                        window.abrirFormularioIntervencion(personaId, tipo);
-                    } else {
-                        // If not in cache yet, add it and then open
+                    // Ensure person is in cache before opening form
+                    if (!listaPersonasCache.find(x => x.id === personaId)) {
                         listaPersonasCache.push(personaData);
-                        window.abrirFormularioIntervencion(personaId, tipo);
                     }
                     
+                    // Open the intervention form
+                    window.abrirFormularioIntervencion(personaId, tipo);
                     window.sysLog(`Navegando a derivación: ${tipoDerivacion} - ${nombreCompleto}`, "info");
                 }, 100);
             }, 200);

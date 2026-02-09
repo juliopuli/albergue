@@ -340,6 +340,26 @@ window.guardarCambiosPersona=async function(silent=false){if(!personaEnGestion)r
 window.abrirMapaGeneral=function(){modoMapaGeneral=true;window.mostrarGridCamas();};
 window.abrirSeleccionCama=function(){modoMapaGeneral=false;window.mostrarGridCamas();};
 window.cerrarMapaCamas=function(){highlightedFamilyId=null;window.safeHide('modal-cama');};
+window.abrirModalInfoCama = function(persona) {
+    if (!persona) {
+        alert("No hay datos de la persona");
+        return;
+    }
+    
+    // Construir nombre completo
+    var nombreCompleto = persona.nombre + " " + (persona.ap1 || "") + " " + (persona.ap2 || "");
+    
+    // Mostrar información en alert (método simple y compatible)
+    var info = "INFORMACIÓN DE LA CAMA\n\n" +
+               "Cama: " + persona.cama + "\n" +
+               "Nombre: " + nombreCompleto.trim() + "\n" +
+               "DNI: " + (persona.docNum || "Sin DNI") + "\n" +
+               "Teléfono: " + (persona.telefono || "Sin teléfono") + "\n" +
+               "Presencia: " + (persona.presencia === 'dentro' ? '🟢 Dentro del albergue' : '🔴 Fuera del albergue') + "\n";
+    
+    alert(info);
+    window.sysLog("Info cama mostrada: " + nombreCompleto.trim() + " (Cama " + persona.cama + ")", "info");
+};
 window.mostrarGridCamas = function() {
     const g = window.el('grid-camas');
     g.innerHTML = "";

@@ -382,19 +382,54 @@ window.buscarParaIntervencion = function(tipo) {
     res.classList.remove('hidden');
 };
 
-window.abrirFormularioIntervencion = function(pid, tipo) {
-    const p = listaPersonasCache.find(x => x.id === pid);
+window.abrirFormularioIntervencion = async function(pid, tipo) {
+    const p = listaPersonasCache.find(function(x) { return x.id === pid; });
     if(!p) return;
     personaIntervencionActiva = p;
-    window.safeHide(`res-${tipo}`);
-    window.safeShow(`form-int-${tipo}`);
-    window.el(`search-${tipo}`).value = ""; 
-    window.el(`name-int-${tipo}`).innerText = `${p.nombre} ${p.ap1 || ''}`;
-    const sel = window.el(`sel-int-${tipo}`);
+    window.safeHide('res-' + tipo);
+    window.safeShow('form-int-' + tipo);
+    window.el('search-' + tipo).value = ""; 
+    window.el('name-int-' + tipo).innerText = p.nombre + ' ' + (p.ap1 || '');
+    const sel = window.el('sel-int-' + tipo);
     sel.innerHTML = "";
-    TIPOS_INTERVENCION[tipo].opciones.forEach(op => { sel.add(new Option(op, op)); });
-    window.el(`det-int-${tipo}`).value = "";
+    TIPOS_INTERVENCION[tipo].opciones.forEach(function(op) { sel.add(new Option(op, op)); });
+    
+    // Precargar motivo si existe derivación pendiente
+    const motivo = await obtenerMotivoDerivacion(pid, tipo);
+    window.el('motivo-int-' + tipo).value = motivo;
+    window.el('det-int-' + tipo).value = "";
 };
+
+// NUEVA FUNCIÓN: Obtener motivo de derivación pendiente
+async function obtenerMotivoDerivacion(personaId, tipoIntervencion) {
+    const accionBuscada = {
+        'san': 'Derivación Sanitaria',
+        'psi': 'Derivación Psicosocial',
+        'ent': 'Derivación Entrega'
+    }[tipoIntervencion];
+    
+    if(!accionBuscada || !currentAlbergueId) return "";
+    
+    try {
+        const historialSnap = await getDocs(
+            collection(db, "albergues", currentAlbergueId, "personas", personaId, "historial")
+        );
+        
+        let motivoDerivacion = "";
+        
+        historialSnap.forEach(function(doc) {
+            const log = doc.data();
+            if (log.accion === accionBuscada && log.estado === 'pendiente') {
+                motivoDerivacion = log.detalle || "";
+            }
+        });
+        
+        return motivoDerivacion;
+    } catch (e) {
+        window.sysLog("Error obteniendo motivo derivación: " + e.message, "error");
+        return "";
+    }
+}
 
 window.cerrarFormularioIntervencion = function(tipo) {
     window.safeHide(`form-int-${tipo}`);
@@ -403,13 +438,17 @@ window.cerrarFormularioIntervencion = function(tipo) {
 
 window.registrarIntervencion = async function(tipo) {
     if(!personaIntervencionActiva) return;
-    const subtipo = window.safeVal(`sel-int-${tipo}`);
-    const detalle = window.safeVal(`det-int-${tipo}`);
+    const subtipo = window.safeVal('sel-int-' + tipo);
+    const motivo = window.safeVal('motivo-int-' + tipo).trim();
+    const detalle = window.safeVal('det-int-' + tipo).trim();
     // CORRECCIÓN V2.0.1: Guardar nombre antes de limpiar la variable global
     const nombrePersona = personaIntervencionActiva.nombre; 
     const personaId = personaIntervencionActiva.id;
     
     if(!subtipo) return alert("Selecciona un tipo.");
+    if(!motivo || !detalle) {
+        return alert("Por favor, completa el motivo y la resolución");
+    }
     
     try {
         const data = {
@@ -417,9 +456,31 @@ window.registrarIntervencion = async function(tipo) {
             usuario: currentUserData.nombre,
             tipo: TIPOS_INTERVENCION[tipo].titulo,
             subtipo: subtipo,
+            motivo: motivo,
             detalle: detalle
         };
         await addDoc(collection(db, "albergues", currentAlbergueId, "personas", personaId, "intervenciones"), data);
+        
+        // Guardar en historial
+        let accionHistorial = "Intervención ";
+        if(tipo === 'san') {
+            accionHistorial = "Intervención Sanitaria";
+        } else if(tipo === 'psi') {
+            accionHistorial = "Intervención Psicosocial";
+        } else if(tipo === 'ent') {
+            accionHistorial = "Intervención Entrega";
+        }
+        
+        const detalleHistorial = "Motivo: " + motivo + "\nResolución: " + detalle;
+        await addDoc(
+            collection(db, "albergues", currentAlbergueId, "personas", personaId, "historial"),
+            {
+                fecha: new Date(),
+                usuario: currentUserData.nombre,
+                accion: accionHistorial,
+                detalle: detalleHistorial
+            }
+        );
         
         // Auto-mark related derivations as attended
         const tipoCompleto = TIPOS_INTERVENCION[tipo].titulo;
@@ -427,7 +488,7 @@ window.registrarIntervencion = async function(tipo) {
         
         window.showToast("Intervención Registrada");
         // CORRECCIÓN V2.0.1: Usar la variable local capturada
-        window.sysLog(`Intervención ${tipo} registrada para ${nombrePersona}`, "success");
+        window.sysLog('Intervención ' + tipo + ' registrada para ' + nombrePersona, "success");
         window.cerrarFormularioIntervencion(tipo); // Ahora sí podemos limpiar
         
     } catch(e) {

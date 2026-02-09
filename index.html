@@ -259,10 +259,12 @@
 
                                 <div id="form-int-ent" class="hidden inter-form">
                                     <h4 class="int-header"><span id="name-int-ent">Persona</span></h4>
+                                    <label>Motivo de la entrega</label>
+                                    <textarea id="motivo-int-ent" rows="2" placeholder="Motivo de la entrega (se precarga si viene de derivación)"></textarea>
                                     <label>Material Entregado</label>
                                     <select id="sel-int-ent"></select>
-                                    <label>Comentarios</label>
-                                    <textarea id="det-int-ent" rows="3" placeholder="Cantidad, talla, notas..."></textarea>
+                                    <label>Artículos entregados / Detalles</label>
+                                    <textarea id="det-int-ent" rows="3" placeholder="Describe los artículos entregados"></textarea>
                                     <div class="btn-row">
                                         <button class="secondary" onclick="window.cerrarFormularioIntervencion('ent')">Cancelar</button>
                                         <button class="success" onclick="window.registrarIntervencion('ent')">Registrar</button>
@@ -282,10 +284,12 @@
                                 
                                 <div id="form-int-san" class="hidden inter-form">
                                     <h4 class="int-header"><span id="name-int-san">Paciente</span></h4>
+                                    <label>Motivo de la atención</label>
+                                    <textarea id="motivo-int-san" rows="2" placeholder="Motivo de la atención (se precarga si viene de derivación)"></textarea>
                                     <label>Tipo de Intervención</label>
                                     <select id="sel-int-san"></select>
-                                    <label>Detalles / Comentarios</label>
-                                    <textarea id="det-int-san" rows="3" placeholder="Descripción..."></textarea>
+                                    <label>Resolución / Acciones realizadas</label>
+                                    <textarea id="det-int-san" rows="4" placeholder="Describe las acciones realizadas y el resultado"></textarea>
                                     <div class="btn-row">
                                         <button class="secondary" onclick="window.cerrarFormularioIntervencion('san')">Cancelar</button>
                                         <button class="success" onclick="window.registrarIntervencion('san')">Registrar</button>
@@ -305,10 +309,12 @@
 
                                 <div id="form-int-psi" class="hidden inter-form">
                                     <h4 class="int-header"><span id="name-int-psi">Usuario</span></h4>
+                                    <label>Motivo de la atención</label>
+                                    <textarea id="motivo-int-psi" rows="2" placeholder="Motivo de la atención (se precarga si viene de derivación)"></textarea>
                                     <label>Tipo de Intervención</label>
                                     <select id="sel-int-psi"></select>
-                                    <label>Detalles / Observaciones</label>
-                                    <textarea id="det-int-psi" rows="3" placeholder="Descripción..."></textarea>
+                                    <label>Resolución / Acciones realizadas</label>
+                                    <textarea id="det-int-psi" rows="4" placeholder="Describe las acciones realizadas"></textarea>
                                     <div class="btn-row">
                                         <button class="secondary" onclick="window.cerrarFormularioIntervencion('psi')">Cancelar</button>
                                         <button class="success" onclick="window.registrarIntervencion('psi')">Registrar</button>

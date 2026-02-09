@@ -680,18 +680,18 @@ window.abrirFormularioIntervencion = function(personaId, prefix) {
     const tipoConfig = TIPOS_INTERVENCION[prefix];
     if (!tipoConfig) return;
     
-    const modalId = `modal-${prefix}`;
-    const selectId = `${prefix}-tipo`;
-    const textareaId = `${prefix}-detalle`;
-    const titleId = `${prefix}-modal-title`;
+    const modalId = "modal-" + prefix;
+    const selectId = prefix + "-tipo";
+    const textareaId = prefix + "-detalle";
+    const titleId = prefix + "-modal-title";
     
     const titleEl = window.el(titleId);
-    if (titleEl) titleEl.innerText = `${tipoConfig.titulo}: ${persona.nombre}`;
+    if (titleEl) titleEl.innerText = tipoConfig.titulo + ": " + persona.nombre;
     
     const selectEl = window.el(selectId);
     if (selectEl) {
         selectEl.innerHTML = "";
-        tipoConfig.opciones.forEach(opt => {
+        tipoConfig.opciones.forEach(function(opt) {
             const option = document.createElement('option');
             option.value = opt;
             option.text = opt;
@@ -703,7 +703,7 @@ window.abrirFormularioIntervencion = function(personaId, prefix) {
     if (textareaEl) textareaEl.value = "";
     
     window.safeShow(modalId);
-    window.sysLog(`Modal intervención ${prefix} abierto para: ${persona.nombre}`, "info");
+    window.sysLog("Modal intervención " + prefix + " abierto para: " + persona.nombre, "info");
 };
 window.cerrarFormularioIntervencion = function(prefix) {
     personaIntervencionActiva = null;
@@ -781,55 +781,44 @@ window.guardarCama = async function(numeroCama) {
         return;
     }
     
-    // 🔹 CASO 1: La persona está en la NUBE (pool global) → INGRESAR
+    // CASO 1: Persona en la nube → Ingresar
     if (personaEnGestionEsGlobal) {
-        if (!confirm(`¿Ingresar a ${personaEnGestion.nombre} en cama ${numeroCama}?`)) return;
+        if (!confirm("¿Ingresar a " + personaEnGestion.nombre + " en cama " + numeroCama + "?")) return;
         
         try {
             window.safeShow('loading-overlay');
             
-            // Buscar familia completa
-            const familiaMembers = listaGlobalPrefiliacion.filter(p => 
-                p.familiaId === personaEnGestion.familiaId
-            );
+            const familiaMembers = listaGlobalPrefiliacion.filter(function(p) {
+                return p.familiaId === personaEnGestion.familiaId;
+            });
             
             const batch = writeBatch(db);
             
-            // Ingresar a todos los miembros
             for (const member of familiaMembers) {
                 const newDocRef = doc(collection(db, "albergues", currentAlbergueId, "personas"));
-                const memberData = { ...member };
+                const memberData = Object.assign({}, member);
                 delete memberData.id;
                 
                 memberData.estado = 'ingresado';
                 memberData.fechaIngreso = new Date();
-                
-                // Asignar cama solo al seleccionado
-                if (member.id === personaEnGestion.id) {
-                    memberData.cama = numeroCama;
-                } else {
-                    memberData.cama = null;
-                }
+                memberData.cama = (member.id === personaEnGestion.id) ? numeroCama : null;
                 
                 batch.set(newDocRef, memberData);
-                
-                // Eliminar del pool
                 batch.delete(doc(db, "pool_prefiliacion", member.id));
                 
-                // Registrar log
                 const logRef = collection(db, "albergues", currentAlbergueId, "personas", newDocRef.id, "historial");
                 batch.set(doc(logRef), {
                     fecha: new Date(),
                     usuario: currentUserData.nombre,
                     accion: "Ingreso desde Pool",
-                    detalle: `Ingresado en ${currentAlbergueData.nombre}${memberData.cama ? ` - Cama ${memberData.cama}` : ''}`
+                    detalle: "Ingresado en " + currentAlbergueData.nombre + (memberData.cama ? " - Cama " + memberData.cama : "")
                 });
             }
             
             await batch.commit();
             
-            window.sysLog(`Ingreso completado: ${familiaMembers.length} persona(s)`, "success");
-            window.showToast(`✅ ${familiaMembers.length} persona(s) ingresada(s)`);
+            window.sysLog("Ingreso completado: " + familiaMembers.length + " persona(s)", "success");
+            window.showToast("✅ " + familiaMembers.length + " persona(s) ingresada(s)");
             
             window.safeHide('loading-overlay');
             window.cerrarMapaCamas();
@@ -845,9 +834,9 @@ window.guardarCama = async function(numeroCama) {
         return;
     }
     
-    // 🔹 CASO 2: La persona YA está en el albergue → CAMBIAR CAMA
+    // CASO 2: Persona ya en albergue → Cambiar cama
     if (personaEnGestion.cama) {
-        if (!confirm(`¿Cambiar de cama ${personaEnGestion.cama} a ${numeroCama}?`)) return;
+        if (!confirm("¿Cambiar de cama " + personaEnGestion.cama + " a " + numeroCama + "?")) return;
     }
     
     try {
@@ -855,8 +844,8 @@ window.guardarCama = async function(numeroCama) {
             cama: numeroCama 
         });
         
-        window.registrarLog(personaEnGestion.id, "Asignación Cama", `Cama ${numeroCama}`);
-        window.showToast(`✅ Cama ${numeroCama} asignada`);
+        window.registrarLog(personaEnGestion.id, "Asignación Cama", "Cama " + numeroCama);
+        window.showToast("✅ Cama " + numeroCama + " asignada");
         window.cerrarMapaCamas();
         
     } catch (e) {

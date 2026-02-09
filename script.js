@@ -904,12 +904,12 @@ window.navegarADerivacion = async function(personaId, tipoDerivacion) {
         const personaData = { id: personaSnap.id, ...personaSnap.data() };
         const nombreCompleto = `${personaData.nombre} ${personaData.ap1 || ''} ${personaData.ap2 || ''}`.trim();
         
-        // Make sure we're in gestion-albergues view
-        const inGestionAlbergues = !document.getElementById('screen-gestion-albergues').classList.contains('hidden');
+        // Make sure we're in operativa view (where intervention tabs are)
+        const inOperativa = !document.getElementById('screen-operativa').classList.contains('hidden');
         
-        if(!inGestionAlbergues) {
-            // Navigate to gestion-albergues first
-            window.navegar('gestion-albergues');
+        if(!inOperativa) {
+            // Navigate to operativa screen (maintains shelter context)
+            window.navegar('operativa');
         }
         
         // Wait for navigation to complete before switching tab
@@ -942,7 +942,7 @@ window.navegarADerivacion = async function(personaId, tipoDerivacion) {
                     window.sysLog(`Navegando a derivación: ${tipoDerivacion} - ${nombreCompleto}`, "info");
                 }, 100);
             }, 200);
-        }, inGestionAlbergues ? 100 : 500);
+        }, inOperativa ? 100 : 500);
         
     } catch (e) {
         window.sysLog("Error navegando a derivación: " + e.message, "error");

@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gestión Albergue - Ver.2.7.1</title>
+    <title>Gestión Albergue - Ver.2.0.2</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -13,14 +12,14 @@
 </head>
 <body>
 
-    <div class="version-tag">Ver.2.7.1</div>
+    <div class="version-tag">Ver.2.0.2</div>
     
     <div id="toast" style="visibility: hidden;">Guardado automático</div>
     <div id="loading-overlay" class="hidden"><div class="spinner"></div><h2 style="color:var(--primary);">Cargando Datos...</h2></div>
 
     <div id="black-box-overlay" class="hidden">
         <div class="bb-header">
-            <span><i class="fa-solid fa-terminal"></i> SYSTEM LOG</span>
+            <span><i class="fa-solid fa-terminal"></i> SYSTEM LOG (CAJA NEGRA)</span>
             <div>
                 <button class="bb-btn" onclick="window.limpiarCajaNegra()">LIMPIAR</button>
                 <button class="bb-btn close" onclick="window.toggleCajaNegra()">X</button>
@@ -42,13 +41,7 @@
     <div id="app-shell" class="hidden">
         <header class="app-header">
             <div class="brand"><i class="fa-solid fa-campground"></i> ALBERGUE PRO</div>
-            
             <div class="user-profile">
-                <div id="notification-badge-container" class="hidden" onclick="window.gestionarClicGlobo()" style="position: relative; margin-right: 15px; cursor: pointer;">
-                    <div class="notif-icon" style="color: var(--primary); font-size: 1.2rem;"><i class="fa-solid fa-bell"></i></div>
-                    <div id="notif-count" style="position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; font-size: 0.7rem; font-weight: bold; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 2px solid white;">0</div>
-                </div>
-
                 <div class="user-info">
                     <span class="user-name" id="user-name-display">...</span>
                     <span class="user-role" id="user-role-badge">...</span>
@@ -66,6 +59,7 @@
             <div class="nav-item" id="nav-albergues" onclick="window.navegar('gestion-albergues')"><i class="fa-solid fa-bed"></i><span>Gestión</span></div>
             <div class="nav-item" id="nav-mto" onclick="window.navegar('mantenimiento')"><i class="fa-solid fa-screwdriver-wrench"></i><span>Mantenimiento</span></div>
             <div class="nav-item" id="nav-obs" onclick="window.navegar('observatorio')"><i class="fa-solid fa-binoculars"></i><span>Observatorio</span></div>
+            <div class="nav-item disabled"><i class="fa-solid fa-chart-pie"></i><span>Informes</span></div>
         </nav>
 
         <main class="main-content">
@@ -258,6 +252,7 @@
                                     <input type="text" id="search-ent" placeholder="🔍 Buscar persona..." onkeyup="window.buscarParaIntervencion('ent')">
                                     <div id="res-ent" class="search-results hidden"></div>
                                 </div>
+
                                 <div id="form-int-ent" class="hidden inter-form">
                                     <h4 class="int-header"><span id="name-int-ent">Persona</span></h4>
                                     <label>Material Entregado</label>
@@ -280,6 +275,7 @@
                                     <input type="text" id="search-san" placeholder="🔍 Buscar paciente..." onkeyup="window.buscarParaIntervencion('san')">
                                     <div id="res-san" class="search-results hidden"></div>
                                 </div>
+                                
                                 <div id="form-int-san" class="hidden inter-form">
                                     <h4 class="int-header"><span id="name-int-san">Paciente</span></h4>
                                     <label>Tipo de Intervención</label>
@@ -302,6 +298,7 @@
                                     <input type="text" id="search-psi" placeholder="🔍 Buscar usuario..." onkeyup="window.buscarParaIntervencion('psi')">
                                     <div id="res-psi" class="search-results hidden"></div>
                                 </div>
+
                                 <div id="form-int-psi" class="hidden inter-form">
                                     <h4 class="int-header"><span id="name-int-psi">Usuario</span></h4>
                                     <label>Tipo de Intervención</label>
@@ -321,16 +318,6 @@
                 </div>
             </div>
         </main>
-    </div>
-
-    <div id="modal-notificaciones" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
-        <div class="modal-content">
-            <span class="close-modal" onclick="document.getElementById('modal-notificaciones').classList.add('hidden')">&times;</span>
-            <h3><i class="fa-solid fa-bell"></i> Derivaciones Pendientes</h3>
-            <div id="lista-notificaciones-content" style="margin-top:15px;">
-                <p style="color:#666; text-align:center;">No hay derivaciones pendientes.</p>
-            </div>
-        </div>
     </div>
 
     <div id="modal-qr" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content" style="text-align:center;"><span class="close-modal" onclick="document.getElementById('modal-qr').classList.add('hidden')">&times;</span><h3>Escanea para acceder</h3><div id="qrcode-display" style="display:inline-block; margin:20px;"></div><p style="color:#666;">Auto-registro móvil.</p></div></div>

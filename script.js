@@ -705,14 +705,6 @@ window.abrirFormularioIntervencion = function(personaId, prefix) {
     window.safeShow(modalId);
     window.sysLog(`Modal intervención ${prefix} abierto para: ${persona.nombre}`, "info");
 };
-    }
-    
-    const textareaEl = window.el(textareaId);
-    if (textareaEl) textareaEl.value = "";
-    
-    window.safeShow(modalId);
-};
-
 window.cerrarFormularioIntervencion = function(prefix) {
     personaIntervencionActiva = null;
     window.safeHide(`modal-${prefix}`);

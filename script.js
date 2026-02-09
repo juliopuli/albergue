@@ -361,7 +361,7 @@ window.cambiarEstadoAlbergue=async function(id,st){await updateDoc(doc(db,"alber
 window.abrirModalCambioPass=function(){window.setVal('chg-old-pass','');window.setVal('chg-new-pass','');window.setVal('chg-confirm-pass','');window.safeShow('modal-change-pass');};
 window.ejecutarCambioPass=async function(){const o=window.safeVal('chg-old-pass'),n=window.safeVal('chg-new-pass');try{await reauthenticateWithCredential(auth.currentUser,EmailAuthProvider.credential(auth.currentUser.email,o));await updatePassword(auth.currentUser,n);alert("OK");window.safeHide('modal-change-pass');window.sysLog("Contraseña cambiada.", "success");}catch(e){alert("Error");window.sysLog("Error cambio pass: "+e.message, "error");}};
 window.registrarLog=async function(pid,act,det,isPool=false){try{const usuarioLog=currentUserData?currentUserData.nombre:"Auto-QR";let path=isPool?collection(db,"pool_prefiliacion",pid,"historial"):collection(db,"albergues",currentAlbergueId,"personas",pid,"historial");await addDoc(path,{fecha:new Date(),usuario:usuarioLog,accion:act,detalle:det});window.sysLog(`Audit Log (${isPool?'Pool':'Local'}): ${act} - ${det}`,"info");}catch(e){console.error(e);}};
-window.verHistorial=async function(pId=null, forceIsGlobal=null, forceAlbId=null){let targetId=pId;let isPool=(forceIsGlobal!==null)?forceIsGlobal:personaEnGestionEsGlobal;const activeAlbId=forceAlbId||currentAlbergueId;if(!targetId&&personaEnGestion)targetId=personaEnGestion.id;if(pId&&forceIsGlobal===null&&listaPersonasCache.find(x=>x.id===pId))isPool=false;if(!targetId)return;let nombrePersona="Usuario";if(personaEnGestion&&personaEnGestion.id===targetId)nombrePersona=`${personaEnGestion.nombre} ${personaEnGestion.ap1||''}`;else if(listaPersonasCache.length>0){const found=listaPersonasCache.find(x=>x.id===targetId);if(found)nombrePersona=`${found.nombre} ${found.ap1||''}`;}else if(listaGlobalPrefiliacion.length>0){const found=listaGlobalPrefiliacion.find(x=>x.id===targetId);if(found)nombrePersona=`${found.nombre} ${found.ap1||''}`;}const headerEl=window.el('hist-modal-header');if(headerEl)headerEl.innerText=`Historial de: ${nombrePersona}`;window.safeShow('modal-historial');const content=window.el('historial-content');content.innerHTML='<div style="text-align:center"><div class="spinner"></div></div>';try{let items=[];let pathHist=isPool?collection(db,"pool_prefiliacion",targetId,"historial"):collection(db,"albergues",activeAlbId,"personas",targetId,"historial");const snapHist=await getDocs(pathHist);snapHist.forEach(d=>{const data=d.data();items.push({...data,type:'movimiento',id:d.id,sortDate:data.fecha.toDate()});});if(!isPool){let pathInt=collection(db,"albergues",activeAlbId,"personas",targetId,"intervenciones");const snapInt=await getDocs(pathInt);snapInt.forEach(d=>{const data=d.data();items.push({usuario:data.usuario,accion:data.tipo+": "+data.subtipo,detalle:data.detalle,fecha:data.fecha,type:'intervencion',rawType:data.tipo,id:d.id,sortDate:data.fecha.toDate()});});}items.sort((a,b)=>b.sortDate-a.sortDate);if(items.length===0){content.innerHTML="<p>No hay registros.</p>";return;}let html=`<div class="hist-timeline">`;items.forEach(d=>{const f=d.sortDate;const fmt=`${f.getDate().toString().padStart(2,'0')}/${(f.getMonth()+1).toString().padStart(2,'0')}/${f.getFullYear()} ${f.getHours().toString().padStart(2,'0')}:${f.getMinutes().toString().padStart(2,'0')}`;let extraClass='';if(d.type==='intervencion'){if(d.rawType==='Sanitaria')extraClass='hist-type-san';else if(d.rawType==='Psicosocial')extraClass='hist-type-psi';else if(d.rawType==='Entregas')extraClass='hist-type-ent';}const icon=d.type==='intervencion'?'<i class="fa-solid fa-hand-holding-medical"></i>':'<i class="fa-solid fa-shoe-prints"></i>';html+=`<div class="hist-item ${extraClass}"><div class="hist-header"><span class="hist-date"><i class="fa-regular fa-clock"></i> ${fmt}</span><span class="hist-user"><i class="fa-solid fa-user-tag"></i> ${d.usuario}</span></div><span class="hist-action">${icon} ${d.accion}</span>${d.detalle?`<span class="hist-detail">${d.detalle}</span>`:''}</div>`;});html+=`</div>`;content.innerHTML=html;}catch(e){content.innerHTML="Error cargando datos.";window.sysLog("Error historial mixto: "+e.message,"error");}};
+window.verHistorial=async function(pId=null, forceIsGlobal=null, forceAlbId=null){let targetId=pId;let isPool=(forceIsGlobal!==null)?forceIsGlobal:personaEnGestionEsGlobal;const activeAlbId=forceAlbId||currentAlbergueId;if(!targetId&&personaEnGestion)targetId=personaEnGestion.id;if(pId&&forceIsGlobal===null&&listaPersonasCache.find(x=>x.id===pId))isPool=false;if(!targetId)return;let nombrePersona="Usuario";if(personaEnGestion&&personaEnGestion.id===targetId)nombrePersona=`${personaEnGestion.nombre} ${personaEnGestion.ap1||''}`;else if(listaPersonasCache.length>0){const found=listaPersonasCache.find(x=>x.id===targetId);if(found)nombrePersona=`${found.nombre} ${found.ap1||''}`;}else if(listaGlobalPrefiliacion.length>0){const found=listaGlobalPrefiliacion.find(x=>x.id===targetId);if(found)nombrePersona=`${found.nombre} ${found.ap1||''}`;}const headerEl=window.el('hist-modal-header');if(headerEl)headerEl.innerText=`Historial de: ${nombrePersona}`;window.safeShow('modal-historial');const content=window.el('historial-content');content.innerHTML='<div style="text-align:center"><div class="spinner"></div></div>';try{let items=[];let pathHist=isPool?collection(db,"pool_prefiliacion",targetId,"historial"):collection(db,"albergues",activeAlbId,"personas",targetId,"historial");const snapHist=await getDocs(pathHist);snapHist.forEach(d=>{const data=d.data();items.push({...data,type:'movimiento',id:d.id,sortDate:data.fecha.toDate()});});if(!isPool){let pathInt=collection(db,"albergues",activeAlbId,"personas",targetId,"intervenciones");const snapInt=await getDocs(pathInt);snapInt.forEach(d=>{const data=d.data();items.push({usuario:data.usuario,accion:data.tipo+": "+data.subtipo,detalle:data.detalle,fecha:data.fecha,type:'intervencion',rawType:data.tipo,id:d.id,sortDate:data.fecha.toDate()});});}items.sort((a,b)=>b.sortDate-a.sortDate);if(items.length===0){content.innerHTML="<p>No hay registros.</p>";return;}let html=`<div class="hist-timeline">`;items.forEach(d=>{const f=d.sortDate;const fmt=`${f.getDate().toString().padStart(2,'0')}/${(f.getMonth()+1).toString().padStart(2,'0')}/${f.getFullYear()} ${f.getHours().toString().padStart(2,'0')}:${f.getMinutes().toString().padStart(2,'0')}`;let extraClass='';if(d.type==='intervencion'){if(d.rawType==='Sanitaria')extraClass='hist-type-san';else if(d.rawType==='Psicosocial')extraClass='hist-type-psi';else if(d.rawType==='Entregas')extraClass='hist-type-ent';}const icon=d.type==='intervencion'?'<i class="fa-solid fa-hand-holding-medical"></i>':'<i class="fa-solid fa-shoe-prints"></i>';html+=`<div class="hist-item ${extraClass}"><div class="hist-header"><span class="hist-date"><i class="fa-regular fa-clock"></i> ${fmt}</span><span class="hist-user"><i class="fa-solid fa-user-tag"></i> ${d.usuario}</span></div><span class="hist-action">${icon} ${d.accion}</span>${d.detalle?`<span class="hist-detail" style="white-space: pre-wrap;">${d.detalle}</span>`:''}</div>`;});html+=`</div>`;content.innerHTML=html;}catch(e){content.innerHTML="Error cargando datos.";window.sysLog("Error historial mixto: "+e.message,"error");}};
 window.verHistorialObservatorio = function(pId, isGlobal, albId){window.verHistorial(pId, isGlobal, albId);};
 
 // ==========================================
@@ -438,61 +438,69 @@ window.cerrarFormularioIntervencion = function(tipo) {
 
 window.registrarIntervencion = async function(tipo) {
     if(!personaIntervencionActiva) return;
-    const subtipo = window.safeVal('sel-int-' + tipo);
-    const motivo = window.safeVal('motivo-int-' + tipo).trim();
-    const detalle = window.safeVal('det-int-' + tipo).trim();
-    // CORRECCIÓN V2.0.1: Guardar nombre antes de limpiar la variable global
-    const nombrePersona = personaIntervencionActiva.nombre; 
-    const personaId = personaIntervencionActiva.id;
     
+    // Mapeo de tipos de intervención con iconos
+    var tipoMap = {
+        'san': { nombre: 'Sanitaria', icono: '🩺', accion: 'Intervención Sanitaria' },
+        'psi': { nombre: 'Psicosocial', icono: '💚', accion: 'Intervención Psicosocial' },
+        'ent': { nombre: 'Entregas', icono: '📦', accion: 'Intervención Entrega' }
+    };
+    
+    var info = tipoMap[tipo];
+    var subtipo = window.safeVal('sel-int-' + tipo);
+    var motivo = window.safeVal('motivo-int-' + tipo).trim();
+    var resolucion = window.safeVal('det-int-' + tipo).trim();
+    
+    // CORRECCIÓN V2.0.1: Guardar nombre antes de limpiar la variable global
+    var nombrePersona = personaIntervencionActiva.nombre; 
+    var personaId = personaIntervencionActiva.id;
+    
+    // Validación
     if(!subtipo) return alert("Selecciona un tipo.");
-    if(!motivo || !detalle) {
+    if(!motivo || !resolucion) {
         return alert("Por favor, completa el motivo y la resolución");
     }
     
     try {
-        const data = {
+        // Guardar en intervenciones
+        var data = {
             fecha: new Date(),
             usuario: currentUserData.nombre,
-            tipo: TIPOS_INTERVENCION[tipo].titulo,
+            tipo: info.nombre,
             subtipo: subtipo,
             motivo: motivo,
-            detalle: detalle
+            detalle: resolucion
         };
         await addDoc(collection(db, "albergues", currentAlbergueId, "personas", personaId, "intervenciones"), data);
         
-        // Guardar en historial
-        let accionHistorial = "Intervención ";
-        if(tipo === 'san') {
-            accionHistorial = "Intervención Sanitaria";
-        } else if(tipo === 'psi') {
-            accionHistorial = "Intervención Psicosocial";
-        } else if(tipo === 'ent') {
-            accionHistorial = "Intervención Entrega";
-        }
+        // Guardar UNA SOLA VEZ en historial con formato mejorado
+        var detalleFormateado = info.icono + " " + info.accion + " - " + subtipo + "\n" +
+                                "━━━━━━━━━━━━━━━━━━━━━━\n" +
+                                "📌 Motivo:\n" + motivo + "\n\n" +
+                                "✅ Resolución:\n" + resolucion;
         
-        const detalleHistorial = "Motivo: " + motivo + "\nResolución: " + detalle;
         await addDoc(
             collection(db, "albergues", currentAlbergueId, "personas", personaId, "historial"),
             {
                 fecha: new Date(),
                 usuario: currentUserData.nombre,
-                accion: accionHistorial,
-                detalle: detalleHistorial
+                accion: info.accion,
+                detalle: detalleFormateado
             }
         );
         
         // Auto-mark related derivations as attended
-        const tipoCompleto = TIPOS_INTERVENCION[tipo].titulo;
-        await window.marcarDerivacionAtendida(personaId, tipoCompleto);
+        await window.marcarDerivacionAtendida(personaId, info.nombre);
         
-        window.showToast("Intervención Registrada");
-        // CORRECCIÓN V2.0.1: Usar la variable local capturada
-        window.sysLog('Intervención ' + tipo + ' registrada para ' + nombrePersona, "success");
-        window.cerrarFormularioIntervencion(tipo); // Ahora sí podemos limpiar
+        window.showToast("✅ " + info.accion + " registrada");
+        window.sysLog(info.accion + " registrada para " + nombrePersona, "success");
+        
+        // Limpiar y cerrar
+        window.cerrarFormularioIntervencion(tipo);
         
     } catch(e) {
         console.error(e);
+        window.sysLog("Error registrando intervención: " + e.message, "error");
         alert("Error al guardar: " + e.message);
     }
 };

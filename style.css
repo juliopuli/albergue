@@ -340,6 +340,9 @@ body.focused-mode .app-nav { display: none !important; }
     margin-bottom: 8px;
     display: block;
     border: 1px solid rgba(0,0,0,0.05);
+    white-space: pre-wrap;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
 }
 
 .hist-user {

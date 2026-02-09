@@ -870,34 +870,83 @@ window.abrirFormularioDerivacion = function(personaId, tipoDerivacion, tabName) 
 };
 
 // Navigate to correct tab and search for person
-window.navegarADerivacion = function(personaId, tipoDerivacion) {
-    // Close modal
-    document.getElementById('modal-derivaciones-albergue').classList.add('hidden');
-    
-    // Map derivation type to tab name
-    let tabName = '';
-    if(tipoDerivacion === 'Sanitaria') {
-        tabName = 'sanitaria';
-    } else if(tipoDerivacion === 'Psicosocial') {
-        tabName = 'psicosocial';
-    } else if(tipoDerivacion === 'Entregas') {
-        tabName = 'entregas';
-    }
-    
-    if(!tabName) return;
-    
-    // Make sure we're in gestion-albergues view
-    if(!document.getElementById('screen-gestion-albergues').classList.contains('hidden')) {
-        // Already in the screen, just switch tab
-        window.abrirFormularioDerivacion(personaId, tipoDerivacion, tabName);
-    } else {
-        // Navigate to gestion-albergues first
-        window.navegar('gestion-albergues');
+window.navegarADerivacion = async function(personaId, tipoDerivacion) {
+    try {
+        // Close modal
+        document.getElementById('modal-derivaciones-albergue').classList.add('hidden');
         
-        // Wait for navigation to complete, then switch tab and open form
+        // Map derivation type to tab name and tipo code
+        let tabName = '';
+        let tipo = '';
+        if(tipoDerivacion === 'Sanitaria') {
+            tabName = 'sanitaria';
+            tipo = 'san';
+        } else if(tipoDerivacion === 'Psicosocial') {
+            tabName = 'psicosocial';
+            tipo = 'psi';
+        } else if(tipoDerivacion === 'Entregas') {
+            tabName = 'entregas';
+            tipo = 'ent';
+        }
+        
+        if(!tabName) return;
+        
+        // Get person data from Firestore to ensure we have the latest info
+        const personaRef = doc(db, "albergues", currentAlbergueId, "personas", personaId);
+        const personaSnap = await getDoc(personaRef);
+        
+        if (!personaSnap.exists()) {
+            alert("Persona no encontrada");
+            window.sysLog("Error: Persona no encontrada en derivación", "error");
+            return;
+        }
+        
+        const personaData = { id: personaSnap.id, ...personaSnap.data() };
+        const nombreCompleto = `${personaData.nombre} ${personaData.ap1 || ''} ${personaData.ap2 || ''}`.trim();
+        
+        // Make sure we're in gestion-albergues view
+        const inGestionAlbergues = !document.getElementById('screen-gestion-albergues').classList.contains('hidden');
+        
+        if(!inGestionAlbergues) {
+            // Navigate to gestion-albergues first
+            window.navegar('gestion-albergues');
+        }
+        
+        // Wait for navigation to complete before switching tab
+        // These delays are necessary for DOM rendering after navigation
         setTimeout(() => {
-            window.abrirFormularioDerivacion(personaId, tipoDerivacion, tabName);
-        }, 500);
+            // Switch to the correct tab
+            window.cambiarPestana(tabName);
+            
+            // Wait for tab to render before manipulating its elements
+            setTimeout(() => {
+                // Fill the search input with the person's name
+                const searchInput = document.getElementById(`search-${tipo}`);
+                if (searchInput) {
+                    searchInput.value = nombreCompleto;
+                    // Trigger the search to populate results
+                    window.buscarParaIntervencion(tipo);
+                } else {
+                    window.sysLog(`Advertencia: No se encontró el input de búsqueda para ${tipo}`, "warn");
+                }
+                
+                // Wait for search results to populate before opening form
+                setTimeout(() => {
+                    // Ensure person is in cache before opening form
+                    if (!listaPersonasCache.find(x => x.id === personaId)) {
+                        listaPersonasCache.push(personaData);
+                    }
+                    
+                    // Open the intervention form
+                    window.abrirFormularioIntervencion(personaId, tipo);
+                    window.sysLog(`Navegando a derivación: ${tipoDerivacion} - ${nombreCompleto}`, "info");
+                }, 100);
+            }, 200);
+        }, inGestionAlbergues ? 100 : 500);
+        
+    } catch (e) {
+        window.sysLog("Error navegando a derivación: " + e.message, "error");
+        alert("Error al abrir la ficha: " + e.message);
     }
 };
 

@@ -872,21 +872,21 @@ window.registrarMovimiento = async function(tipo) {
     
     const accion = tipo === 'entrada' ? 'Entrada Albergue' : 'Salida Albergue';
     const detalle = tipo === 'entrada' ? 
-        `Entrada registrada en ${currentAlbergueData.nombre}` : 
-        `Salida registrada de ${currentAlbergueData.nombre}`;
+        'Entrada registrada en ' + currentAlbergueData.nombre : 
+        'Salida registrada de ' + currentAlbergueData.nombre;
     
     try {
+        // Cambiar presencia (dentro/fuera) - NO sacar del albergue
+        const nuevoEstado = tipo === 'entrada' ? 'dentro' : 'fuera';
+        await window.cambiarPresenciaPersona(nuevoEstado);
+        
+        // Registrar log
         await window.registrarLog(personaEnGestion.id, accion, detalle);
         
-        if (tipo === 'salida') {
-            // Dar salida completa
-            await window.darSalidaPersona();
-        } else {
-            // Solo registrar el movimiento de entrada
-            window.showToast(`✅ ${accion} registrada`);
-        }
+        window.showToast("✅ " + accion + " registrada");
+        window.sysLog(accion + " registrada para " + personaEnGestion.nombre, "success");
     } catch (e) {
-        window.sysLog(`Error registrando movimiento: ${e.message}`, "error");
+        window.sysLog("Error registrando movimiento: " + e.message, "error");
         alert("Error al registrar movimiento");
     }
 };

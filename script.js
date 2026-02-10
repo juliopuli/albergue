@@ -86,7 +86,7 @@ window.toggleCajaNegra = function() {
 };
 window.limpiarCajaNegra = function() { const c = document.getElementById('black-box-content'); if (c) c.innerHTML = ""; };
 
-window.sysLog("Sistema Iniciado. Versión 3.0.9 (Fixed QR Reset)", "info");
+window.sysLog("Sistema Iniciado. Versión 3.1.0 (Fixed QR Camera Display)", "info");
 
 // --- GLOBALES ---
 let isPublicMode = false;
@@ -456,61 +456,122 @@ window.configurarDashboard = function() {
 // --- SIGUE EN PARTE 2 ---
 // --- PARTE 2 (Intervenciones & Lógica Compleja) ---
 
-window.iniciarEscanerReal = function() { window.detenerEscaner(); window.safeHide('scan-placeholder'); window.safeHide('btn-start-camera'); window.safeShow('reader'); window.safeShow('btn-stop-camera'); setTimeout(() => { if (!html5QrCode) { html5QrCode = new Html5Qrcode("reader"); } const config = { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 }; html5QrCode.start({ facingMode: "environment" }, config, window.onScanSuccess, (errorMessage) => { }).catch(err => { console.warn(err); window.sysLog(`Error cámara: ${err}`, "error"); alert("Error al iniciar cámara. Comprueba permisos y HTTPS."); window.detenerEscaner(); }); }, 300); };
-window.detenerEscaner = function() { if (html5QrCode && html5QrCode.isScanning) { html5QrCode.stop().then(() => { window.sysLog("Cámara detenida.", "info"); html5QrCode.clear(); }).catch(err => console.error(err)).finally(() => { resetScannerUI(); }); } else { resetScannerUI(); } };
-function resetScannerUI() { window.safeHide('reader'); window.safeHide('btn-stop-camera'); window.safeShow('scan-placeholder'); window.safeShow('btn-start-camera'); }
-window.onScanSuccess = function(decodedText, decodedResult) { if(html5QrCode) html5QrCode.stop().then(() => { window.sysLog(`QR Leído: ${decodedText}`, "success"); html5QrCode.clear(); resetScannerUI(); try { const url = new URL(decodedText); const aid = url.searchParams.get("aid"); const pid = url.searchParams.get("pid"); if(!aid || !pid) throw new Error("QR inválido"); if(currentAlbergueId && aid !== currentAlbergueId) { if(confirm(`Este QR es de otro albergue. ¿Quieres cambiar a ese albergue?`)) { window.cambiarAlberguePorQR(aid, pid); return; } else { return; } } if(!currentAlbergueId) { window.cambiarAlberguePorQR(aid, pid); return; } window.procesarLecturaPersona(pid); } catch (e) { alert("QR no válido o formato incorrecto."); } }); };
-window.cambiarAlberguePorQR = async function(aid, pid) { window.sysLog(`Cambiando albergue por QR a: ${aid}`, "warn"); currentAlbergueId = aid; window.safeShow('loading-overlay'); try { const dS = await getDoc(doc(db,"albergues",aid)); if(dS.exists()) { currentAlbergueData = dS.data(); totalCapacidad = parseInt(currentAlbergueData.capacidad||0); } else { alert("Albergue no existe"); window.safeHide('loading-overlay'); return; } if(unsubscribePersonas) unsubscribePersonas(); unsubscribePersonas = onSnapshot(collection(db,"albergues",aid,"personas"), s=>{ listaPersonasCache=[]; camasOcupadas={}; s.forEach(d=>{ const p=d.data(); p.id=d.id; listaPersonasCache.push(p); if(p.estado==='ingresado'){ if(p.cama) camasOcupadas[p.cama]=p.nombre; } }); const target = listaPersonasCache.find(p => p.id === pid); if(target) { window.safeHide('loading-overlay'); window.navegar('intervencion'); window.cargarInterfazIntervencion(target); } }); window.conectarListenersBackground(aid); } catch(e) { console.error(e); window.safeHide('loading-overlay'); } };
-window.procesarLecturaPersona = function(pid) { const targetPerson = listaPersonasCache.find(p => p.id === pid); if(targetPerson) { window.cargarInterfazIntervencion(targetPerson); } else { getDoc(doc(db, "albergues", currentAlbergueId, "personas", pid)).then(docSnap => { if(docSnap.exists()) { const pData = { id: docSnap.id, ...docSnap.data() }; window.cargarInterfazIntervencion(pData); } else { alert("Persona no encontrada en este albergue."); } }); } };
-window.cargarInterfazIntervencion = function(persona) { if(!persona) return; personaEnGestion = persona; window.safeHide('view-scan-ready'); window.safeHide('reader'); window.safeHide('btn-stop-camera'); window.safeShow('view-scan-result'); window.safeShow('btn-exit-focused'); window.el('interv-nombre').innerText = `${persona.nombre} ${persona.ap1 || ""}`; window.el('interv-doc').innerText = persona.docNum || "Sin Documento"; window.el('interv-estado').innerText = (persona.estado || "Desconocido").toUpperCase(); const presencia = persona.presencia || 'dentro'; const badgePresencia = window.el('interv-presencia'); badgePresencia.innerText = presencia.toUpperCase(); if(presencia === 'dentro') { badgePresencia.style.backgroundColor = '#dcfce7'; badgePresencia.style.color = '#166534'; } else { badgePresencia.style.backgroundColor = '#fee2e2'; badgePresencia.style.color = '#991b1b'; } if(currentAlbergueData) { const hName = window.el('interv-albergue-name'); if(hName) hName.innerText = currentAlbergueData.nombre || "ALBERGUE"; } };
-window.resetIntervencion = function() {
-    window.sysLog("Reseteando pantalla de intervención", "info");
+window.iniciarEscanerReal = function() {
+    window.sysLog("Iniciando escáner de QR...", "info");
     
-    // Limpiar persona en gestión
-    personaEnGestion = null;
-    personaEnGestionEsGlobal = false;
-    
-    // Detener cámara si está activa
+    // Detener cualquier escáner previo
     window.detenerEscaner();
     
-    // Ocultar vista de resultado (datos de la persona)
-    window.safeHide('view-scan-result');
+    // Ocultar placeholder y botón de inicio
+    window.safeHide('scan-placeholder');
+    window.safeHide('btn-start-camera');
     
-    // Mostrar vista inicial de escaneo
-    window.safeShow('view-scan-ready');
-    window.safeShow('screen-intervencion');
-    
-    // Mostrar el placeholder con icono y texto
-    var placeholder = window.el('scan-placeholder');
-    if (placeholder) {
-        placeholder.style.display = 'block';
+    // Mostrar reader y botón de detener
+    var readerEl = window.el('reader');
+    if (readerEl) {
+        readerEl.classList.remove('hidden');
+        readerEl.style.display = 'block';
+        window.sysLog("Elemento 'reader' mostrado", "info");
+    } else {
+        window.sysLog("ERROR: Elemento 'reader' no encontrado", "error");
+        alert("Error: No se encuentra el contenedor del escáner");
+        return;
     }
     
-    // Mostrar botón "Activar Cámara"
-    var btnStart = window.el('btn-start-camera');
-    if (btnStart) {
-        btnStart.classList.remove('hidden');
-        btnStart.style.display = 'block';
-    }
+    window.safeShow('btn-stop-camera');
     
-    // Ocultar botón "Detener Cámara"
-    var btnStop = window.el('btn-stop-camera');
-    if (btnStop) {
-        btnStop.classList.add('hidden');
-        btnStop.style.display = 'none';
-    }
-    
-    // Ocultar el lector de QR
+    // Iniciar escáner con delay para que el DOM se actualice
+    setTimeout(() => {
+        try {
+            if (!html5QrCode) {
+                window.sysLog("Creando nueva instancia de Html5Qrcode", "info");
+                html5QrCode = new Html5Qrcode("reader");
+            }
+            
+            const config = {
+                fps: 10,
+                qrbox: { width: 250, height: 250 },
+                aspectRatio: 1.0
+            };
+            
+            window.sysLog("Solicitando acceso a cámara...", "info");
+            
+            html5QrCode.start(
+                { facingMode: "environment" },
+                config,
+                window.onScanSuccess,
+                (errorMessage) => {
+                    // Ignorar errores de escaneo continuo
+                }
+            ).then(() => {
+                window.sysLog("✅ Cámara iniciada correctamente", "success");
+            }).catch(err => {
+                console.error(err);
+                window.sysLog(`❌ Error al iniciar cámara: ${err}`, "error");
+                alert("Error al iniciar cámara.\n\nVerifica:\n- Permisos de cámara\n- Conexión HTTPS\n- Navegador compatible");
+                window.detenerEscaner();
+            });
+            
+        } catch(e) {
+            console.error(e);
+            window.sysLog(`❌ Excepción al iniciar cámara: ${e.message}`, "error");
+            alert("Error crítico al iniciar cámara: " + e.message);
+            window.detenerEscaner();
+        }
+    }, 300);
+};
+window.detenerEscaner = function() { if (html5QrCode && html5QrCode.isScanning) { html5QrCode.stop().then(() => { window.sysLog("Cámara detenida.", "info"); html5QrCode.clear(); }).catch(err => console.error(err)).finally(() => { resetScannerUI(); }); } else { resetScannerUI(); } };
+function resetScannerUI() {
+    // Ocultar elementos de escaneo activo
     var reader = window.el('reader');
     if (reader) {
         reader.classList.add('hidden');
         reader.style.display = 'none';
     }
     
-    // Ocultar botón de salir (si existe en modo focused)
+    var btnStop = window.el('btn-stop-camera');
+    if (btnStop) {
+        btnStop.classList.add('hidden');
+        btnStop.style.display = 'none';
+    }
+    
+    // Mostrar elementos de estado inicial
+    var placeholder = window.el('scan-placeholder');
+    if (placeholder) {
+        placeholder.classList.remove('hidden');
+        placeholder.style.display = 'block';
+    }
+    
+    var btnStart = window.el('btn-start-camera');
+    if (btnStart) {
+        btnStart.classList.remove('hidden');
+        btnStart.style.display = 'block';
+    }
+    
+    window.sysLog("UI del escáner reseteada - Botón 'Activar Cámara' visible", "info");
+}
+window.onScanSuccess = function(decodedText, decodedResult) { if(html5QrCode) html5QrCode.stop().then(() => { window.sysLog(`QR Leído: ${decodedText}`, "success"); html5QrCode.clear(); resetScannerUI(); try { const url = new URL(decodedText); const aid = url.searchParams.get("aid"); const pid = url.searchParams.get("pid"); if(!aid || !pid) throw new Error("QR inválido"); if(currentAlbergueId && aid !== currentAlbergueId) { if(confirm(`Este QR es de otro albergue. ¿Quieres cambiar a ese albergue?`)) { window.cambiarAlberguePorQR(aid, pid); return; } else { return; } } if(!currentAlbergueId) { window.cambiarAlberguePorQR(aid, pid); return; } window.procesarLecturaPersona(pid); } catch (e) { alert("QR no válido o formato incorrecto."); } }); };
+window.cambiarAlberguePorQR = async function(aid, pid) { window.sysLog(`Cambiando albergue por QR a: ${aid}`, "warn"); currentAlbergueId = aid; window.safeShow('loading-overlay'); try { const dS = await getDoc(doc(db,"albergues",aid)); if(dS.exists()) { currentAlbergueData = dS.data(); totalCapacidad = parseInt(currentAlbergueData.capacidad||0); } else { alert("Albergue no existe"); window.safeHide('loading-overlay'); return; } if(unsubscribePersonas) unsubscribePersonas(); unsubscribePersonas = onSnapshot(collection(db,"albergues",aid,"personas"), s=>{ listaPersonasCache=[]; camasOcupadas={}; s.forEach(d=>{ const p=d.data(); p.id=d.id; listaPersonasCache.push(p); if(p.estado==='ingresado'){ if(p.cama) camasOcupadas[p.cama]=p.nombre; } }); const target = listaPersonasCache.find(p => p.id === pid); if(target) { window.safeHide('loading-overlay'); window.navegar('intervencion'); window.cargarInterfazIntervencion(target); } }); window.conectarListenersBackground(aid); } catch(e) { console.error(e); window.safeHide('loading-overlay'); } };
+window.procesarLecturaPersona = function(pid) { const targetPerson = listaPersonasCache.find(p => p.id === pid); if(targetPerson) { window.cargarInterfazIntervencion(targetPerson); } else { getDoc(doc(db, "albergues", currentAlbergueId, "personas", pid)).then(docSnap => { if(docSnap.exists()) { const pData = { id: docSnap.id, ...docSnap.data() }; window.cargarInterfazIntervencion(pData); } else { alert("Persona no encontrada en este albergue."); } }); } };
+window.cargarInterfazIntervencion = function(persona) { if(!persona) return; personaEnGestion = persona; window.safeHide('view-scan-ready'); window.safeHide('reader'); window.safeHide('btn-stop-camera'); window.safeShow('view-scan-result'); window.safeShow('btn-exit-focused'); window.el('interv-nombre').innerText = `${persona.nombre} ${persona.ap1 || ""}`; window.el('interv-doc').innerText = persona.docNum || "Sin Documento"; window.el('interv-estado').innerText = (persona.estado || "Desconocido").toUpperCase(); const presencia = persona.presencia || 'dentro'; const badgePresencia = window.el('interv-presencia'); badgePresencia.innerText = presencia.toUpperCase(); if(presencia === 'dentro') { badgePresencia.style.backgroundColor = '#dcfce7'; badgePresencia.style.color = '#166534'; } else { badgePresencia.style.backgroundColor = '#fee2e2'; badgePresencia.style.color = '#991b1b'; } if(currentAlbergueData) { const hName = window.el('interv-albergue-name'); if(hName) hName.innerText = currentAlbergueData.nombre || "ALBERGUE"; } };
+window.resetIntervencion = function() {
+    window.sysLog("Reseteando interfaz de intervención", "info");
+    
+    // Limpiar persona en gestión
+    personaEnGestion = null;
+    personaEnGestionEsGlobal = false;
+    
+    // Ocultar vista de resultado (datos de la persona)
+    window.safeHide('view-scan-result');
     window.safeHide('btn-exit-focused');
     
-    window.sysLog("Pantalla de intervención reseteada - Lista para escanear", "success");
+    // Mostrar vista inicial de escaneo (SOLO dentro de screen-intervencion)
+    window.safeShow('view-scan-ready');
+    
+    // Resetear UI del escáner
+    resetScannerUI();
+    
+    window.sysLog("Interfaz de intervención reseteada", "success");
 };
 window.salirModoFocalizado = function() { document.body.classList.remove('focused-mode'); window.navegar('home'); window.history.pushState({}, document.title, window.location.pathname); };
 window.iniciarModoFocalizado = async function(aid, pid) { window.sysLog(`Iniciando MODO FOCALIZADO. Alb: ${aid}, Pers: ${pid}`, "warn"); document.body.classList.add('focused-mode'); window.cambiarAlberguePorQR(aid, pid); };

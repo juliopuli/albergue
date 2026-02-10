@@ -86,7 +86,7 @@ window.toggleCajaNegra = function() {
 };
 window.limpiarCajaNegra = function() { const c = document.getElementById('black-box-content'); if (c) c.innerHTML = ""; };
 
-window.sysLog("Sistema Iniciado. Versión 3.0.3 (Desktop Intervention Search)", "info");
+window.sysLog("Sistema Iniciado. Versión 3.0.4 (Global Intervention Search)", "info");
 
 // --- GLOBALES ---
 let isPublicMode = false;
@@ -263,7 +263,24 @@ window.cargarInterfazIntervencion = function(persona) { if(!persona) return; per
 window.resetIntervencion = function() { personaEnGestion = null; window.safeHide('view-scan-result'); window.safeShow('view-scan-ready'); resetScannerUI(); };
 window.salirModoFocalizado = function() { document.body.classList.remove('focused-mode'); window.navegar('home'); window.history.pushState({}, document.title, window.location.pathname); };
 window.iniciarModoFocalizado = async function(aid, pid) { window.sysLog(`Iniciando MODO FOCALIZADO. Alb: ${aid}, Pers: ${pid}`, "warn"); document.body.classList.add('focused-mode'); window.cambiarAlberguePorQR(aid, pid); };
-window.registrarMovimiento = async function(tipo) { if(!personaEnGestion || !currentAlbergueId) return; try { const estadoPresencia = (tipo === 'entrada') ? 'dentro' : 'fuera'; const pRef = doc(db, "albergues", currentAlbergueId, "personas", personaEnGestion.id); await updateDoc(pRef, { presencia: estadoPresencia }); await window.registrarLog(personaEnGestion.id, "Movimiento", tipo.toUpperCase()); window.sysLog(`Movimiento: ${tipo} para ${personaEnGestion.nombre}`, "info"); window.showToast(`✅ ${tipo.toUpperCase()} Registrada`); window.resetIntervencion(); } catch(e) { console.error(e); alert("Error al registrar movimiento: " + e.message); } };
+window.registrarMovimiento = async function(tipo) { 
+    if(!personaEnGestion || !currentAlbergueId) return; 
+    try { 
+        const estadoPresencia = (tipo === 'entrada') ? 'dentro' : 'fuera'; 
+        const pRef = doc(db, "albergues", currentAlbergueId, "personas", personaEnGestion.id); 
+        await updateDoc(pRef, { presencia: estadoPresencia }); 
+        await window.registrarLog(personaEnGestion.id, "Movimiento", tipo.toUpperCase()); 
+        window.sysLog(`Movimiento: ${tipo} para ${personaEnGestion.nombre}`, "info"); 
+        window.showToast(`✅ ${tipo.toUpperCase()} Registrada`); 
+        window.resetIntervencion(); 
+        
+        // NUEVO: Volver a búsqueda de intervenciones
+        window.volverABusquedaIntervenciones();
+    } catch(e) { 
+        console.error(e); 
+        alert("Error al registrar movimiento: " + e.message); 
+    } 
+};
 window.abrirModalDerivacion = function(tipo) { tipoDerivacionActual = tipo; window.el('derivacion-titulo').innerText = `Derivar a ${tipo}`; window.el('derivacion-motivo').value = ""; window.safeShow('modal-derivacion'); };
 window.confirmarDerivacion = async function() { 
     const motivo = window.el('derivacion-motivo').value; 
@@ -289,23 +306,58 @@ window.confirmarDerivacion = async function() {
     window.safeHide('modal-derivacion'); 
     window.showToast("✅ Derivación enviada"); 
     window.resetIntervencion(); 
+    
+    // NUEVO: Volver a búsqueda de intervenciones
+    window.volverABusquedaIntervenciones();
 };
 window.verCarnetQR = function() { if(!personaEnGestion) return; window.safeShow('modal-carnet-qr'); const container = window.el('carnet-qrcode-display'); container.innerHTML = ""; const currentUrl = window.location.href.split('?')[0]; const deepLink = `${currentUrl}?action=scan&aid=${currentAlbergueId}&pid=${personaEnGestion.id}`; new QRCode(container, { text: deepLink, width: 250, height: 250 }); const nombreCompleto = `${personaEnGestion.nombre} ${personaEnGestion.ap1 || ""} ${personaEnGestion.ap2 || ""}`; window.el('carnet-nombre').innerText = nombreCompleto; window.el('carnet-id').innerText = personaEnGestion.docNum || "ID: " + personaEnGestion.id.substring(0,8).toUpperCase(); };
 
 // --- BÚSQUEDA DE PERSONAS PARA INTERVENCIÓN (Desktop) ---
-window.cargarPersonasParaIntervencion = function() {
+window.cargarPersonasParaIntervencion = async function() {
     var container = window.el('resultados-intervencion');
     if (!container) return;
     
-    container.innerHTML = '<p style="text-align:center; color:#999;">Cargando personas...</p>';
+    container.innerHTML = '<p style="text-align:center; color:#999;">Cargando personas de todos los albergues...</p>';
     
-    // Usar la lista de personas ya cargada
-    if (!listaPersonasCache || !Array.isArray(listaPersonasCache) || listaPersonasCache.length === 0) {
-        container.innerHTML = '<p style="text-align:center; color:#999;">No hay personas registradas.</p>';
-        return;
+    try {
+        // Cargar TODAS las personas de TODOS los albergues
+        var todasLasPersonas = [];
+        
+        // Obtener todos los albergues
+        var alberguesSnapshot = await getDocs(collection(db, "albergues"));
+        
+        // Para cada albergue, cargar sus personas
+        for (const albergueDoc of alberguesSnapshot.docs) {
+            var albergueId = albergueDoc.id;
+            var albergueNombre = albergueDoc.data().nombre || albergueId;
+            
+            // Cargar personas de este albergue
+            var personasSnapshot = await getDocs(
+                collection(db, "albergues", albergueId, "personas")
+            );
+            
+            personasSnapshot.forEach(function(doc) {
+                var p = doc.data();
+                p.id = doc.id;
+                p.albergueId = albergueId;
+                p.albergueNombre = albergueNombre;
+                todasLasPersonas.push(p);
+            });
+        }
+        
+        // Guardar en cache global para búsqueda
+        window.personasGlobalesIntervencion = todasLasPersonas;
+        
+        // Mostrar todas inicialmente
+        window.mostrarResultadosIntervencion(todasLasPersonas);
+        
+        window.sysLog('Cargadas ' + todasLasPersonas.length + ' personas de todos los albergues', 'info');
+        
+    } catch(e) {
+        console.error(e);
+        window.sysLog('Error cargando personas: ' + e.message, 'error');
+        container.innerHTML = '<p style="text-align:center; color:red;">Error al cargar personas.</p>';
     }
-    
-    window.mostrarResultadosIntervencion(listaPersonasCache);
 };
 
 window.filtrarPersonasIntervencion = function() {
@@ -314,26 +366,25 @@ window.filtrarPersonasIntervencion = function() {
     
     var term = searchInput.value.toLowerCase().trim();
     
+    // Si no hay búsqueda, mostrar todas
     if (term === '') {
-        window.mostrarResultadosIntervencion(listaPersonasCache || []);
+        window.mostrarResultadosIntervencion(window.personasGlobalesIntervencion || []);
         return;
     }
     
-    if (!listaPersonasCache || !Array.isArray(listaPersonasCache)) {
-        window.mostrarResultadosIntervencion([]);
-        return;
-    }
+    var todasPersonas = window.personasGlobalesIntervencion || [];
     
-    var filtradas = listaPersonasCache.filter(function(p) {
-        var nombre = (p.nombre || '').toLowerCase();
-        var ap1 = (p.ap1 || '').toLowerCase();
-        var ap2 = (p.ap2 || '').toLowerCase();
+    var filtradas = todasPersonas.filter(function(p) {
+        // Concatenar nombre completo en un solo string
+        var nombreCompleto = (p.nombre || '') + ' ' + 
+                            (p.ap1 || '') + ' ' + 
+                            (p.ap2 || '');
+        nombreCompleto = nombreCompleto.toLowerCase();
+        
         var docNum = (p.docNum || '').toLowerCase();
         
-        return nombre.includes(term) || 
-               ap1.includes(term) || 
-               ap2.includes(term) || 
-               docNum.includes(term);
+        // Buscar el término en el nombre completo O en el DNI
+        return nombreCompleto.includes(term) || docNum.includes(term);
     });
     
     window.mostrarResultadosIntervencion(filtradas);
@@ -356,8 +407,14 @@ window.mostrarResultadosIntervencion = function(personas) {
             ? '<span class="badge badge-active">Activo</span>' 
             : '<span class="badge badge-inactive">Inactivo</span>';
         
-        html += '<div class="user-card-item" onclick="window.seleccionarPersonaIntervencion(\'' + p.id + '\')" style="cursor:pointer;">';
+        html += '<div class="user-card-item" onclick="window.seleccionarPersonaIntervencion(\'' + p.id + '\', \'' + p.albergueId + '\')" style="cursor:pointer;">';
         html += '<div><strong style="font-size:1.1rem;">' + nombreCompleto + '</strong></div>';
+        
+        // NUEVO: Mostrar albergue
+        html += '<div style="color:#9333ea; font-size:0.85rem; margin-top:3px;">';
+        html += '<i class="fa-solid fa-building"></i> ' + (p.albergueNombre || 'Albergue');
+        html += '</div>';
+        
         html += '<div style="color:#666; font-size:0.9rem; margin-top:5px;">';
         html += '<i class="fa-solid fa-id-card"></i> ' + (p.docNum || 'Sin documento');
         html += '</div>';
@@ -369,13 +426,12 @@ window.mostrarResultadosIntervencion = function(personas) {
     container.innerHTML = html;
 };
 
-window.seleccionarPersonaIntervencion = function(personaId) {
-    if (!listaPersonasCache || !Array.isArray(listaPersonasCache)) {
-        alert('Error: No se pudo cargar la lista de personas');
-        return;
-    }
+window.seleccionarPersonaIntervencion = function(personaId, albergueId) {
+    var todasPersonas = window.personasGlobalesIntervencion || [];
+    var persona = todasPersonas.find(function(p) { 
+        return p.id === personaId && p.albergueId === albergueId; 
+    });
     
-    var persona = listaPersonasCache.find(function(p) { return p.id === personaId; });
     if (!persona) {
         alert('Persona no encontrada');
         return;
@@ -383,6 +439,14 @@ window.seleccionarPersonaIntervencion = function(personaId) {
     
     // Guardar la persona seleccionada como activa
     personaIntervencionActiva = persona;
+    personaIntervencionActiva.albergueIdActual = albergueId; // Guardar el albergue
+    
+    // Cambiar temporalmente el albergue actual para que las intervenciones se guarden correctamente
+    var albergueAnterior = currentAlbergueId;
+    currentAlbergueId = albergueId;
+    
+    // Guardar albergue anterior para restaurarlo después
+    window.albergueAnteriorIntervenciones = albergueAnterior;
     
     // Ocultar pantalla de búsqueda
     window.safeHide('intervencion-search-screen');
@@ -391,7 +455,38 @@ window.seleccionarPersonaIntervencion = function(personaId) {
     window.safeShow('screen-intervencion');
     window.cargarInterfazIntervencion(persona);
     
-    window.sysLog('Persona seleccionada para intervención: ' + persona.nombre, 'info');
+    window.sysLog('Persona seleccionada para intervención: ' + persona.nombre + ' (Albergue: ' + persona.albergueNombre + ')', 'info');
+};
+
+window.volverABusquedaIntervenciones = function() {
+    // Limpiar persona activa
+    personaIntervencionActiva = null;
+    
+    // Restaurar albergue anterior si existía
+    if (window.albergueAnteriorIntervenciones !== undefined) {
+        currentAlbergueId = window.albergueAnteriorIntervenciones;
+        window.albergueAnteriorIntervenciones = undefined;
+    }
+    
+    // Ocultar pantalla de intervención
+    window.safeHide('screen-intervencion');
+    
+    // Limpiar campo de búsqueda
+    var searchInput = window.el('search-intervencion-persona');
+    if (searchInput) {
+        searchInput.value = '';
+    }
+    
+    // Mostrar pantalla de búsqueda vacía
+    window.safeShow('intervencion-search-screen');
+    
+    // Limpiar resultados (mostrar lista vacía o mensaje inicial)
+    var container = window.el('resultados-intervencion');
+    if (container) {
+        container.innerHTML = '<p style="text-align:center; color:#999; padding:40px;">🔍 Escribe para buscar personas...</p>';
+    }
+    
+    window.sysLog('Volviendo a búsqueda de intervenciones', 'info');
 };
 
 window.actualizarInfoPersonaIntervencion = function() {
@@ -613,6 +708,9 @@ window.registrarIntervencion = async function(tipo) {
         
         // Limpiar y cerrar
         window.cerrarFormularioIntervencion(tipo);
+        
+        // NUEVO: Volver a búsqueda de intervenciones
+        window.volverABusquedaIntervenciones();
         
     } catch(e) {
         console.error(e);

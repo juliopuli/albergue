@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gestión Albergue - Ver.3.1.4</title>
+    <title>Gestión Albergue - Ver.3.1.5</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -12,7 +12,7 @@
 </head>
 <body>
 
-    <div class="version-tag">Ver.3.1.4</div>
+    <div class="version-tag">Ver.3.1.5</div>
     
     <div id="toast" style="visibility: hidden;">Guardado automático</div>
     <div id="loading-overlay" class="hidden"><div class="spinner"></div><h2 style="color:var(--primary);">Cargando Datos...</h2></div>
@@ -34,7 +34,7 @@
             <input type="email" id="login-email" placeholder="Correo electrónico">
             <input type="password" id="login-pass" placeholder="Contraseña">
             <button class="primary" style="width:100%" onclick="window.iniciarSesion()">Iniciar Sesión</button>
-            <p class="forgot-password" onclick="window.recuperarContrasena()">¿Olvidaste tu contraseña?</p>
+            <p class="forgot-password" onclick="window.mostrarModalResetPass()">¿Olvidaste tu contraseña?</p>
         </div>
     </div>
 
@@ -425,7 +425,17 @@
             </button>
         </div>
     </div>
-    
+    <!-- Modal Reset Password (añadir entre los otros modales y el cierre de body) -->
+<div id="modal-reset-pass" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
+  <div class="modal-content" style="max-width:350px;text-align:center;">
+    <span class="close-modal" onclick="window.safeHide('modal-reset-pass')">&times;</span>
+    <h2 style="color:var(--primary);margin-bottom:10px;">Recuperar Contraseña</h2>
+    <p style="color:#666;margin-bottom:18px;">Introduce tu email registrado. Si es válido, recibirás un enlace para restablecer tu contraseña.</p>
+    <input type="email" id="reset-pass-email" placeholder="Email" style="width:100%;padding:10px;font-size:1em;margin-bottom:15px;">
+    <button class="primary" id="btn-reset-pass" onclick="window.enviarResetPasswordEmail()" style="width:100%;padding:12px 0;">Enviar Email de Recuperación</button>
+    <div id="reset-pass-feedback" style="margin-top:10px;font-size:0.95em;color:#09f;"></div>
+  </div>
+</div>
     <div id="modal-derivacion" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
         <div class="modal-content">
             <span class="close-modal" onclick="document.getElementById('modal-derivacion').classList.add('hidden')">&times;</span>

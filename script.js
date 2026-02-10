@@ -678,9 +678,9 @@ window.volverABusquedaIntervenciones = function() {
     window.safeHide('screen-intervencion');
     
     // NUEVO: Detectar si estamos en modo QR (focused-mode)
-    var isFocusedMode = document.body.classList.contains('focused-mode');
+    var isQRMode = document.body.classList.contains('focused-mode');
     
-    if (isFocusedMode) {
+    if (isQRMode) {
         // MODO QR (MÓVIL) - Volver a pantalla de escaneo
         window.sysLog('Modo QR: Volviendo a pantalla de escaneo', 'info');
         window.resetIntervencion(); // Resetear y mostrar pantalla QR

@@ -490,7 +490,16 @@
             <div id="resumen-albergues-content" style="margin-top:20px;"></div>
         </div>
     </div>
-
+<!-- Modal Cambio de Contraseña por Link -->
+<div id="modal-custom-resetpass" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
+  <div class="modal-content" style="max-width:350px;text-align:center;">
+    <span class="close-modal" onclick="window.safeHide('modal-custom-resetpass')">&times;</span>
+    <h2 style="color:var(--primary);margin-bottom:10px;">Establecer nueva contraseña</h2>
+    <input type="password" id="reset-pass-new-pw" placeholder="Nueva contraseña" style="width:100%;padding:10px;font-size:1em;margin-bottom:10px;" minlength="6">
+    <button class="primary" id="btn-set-newpass" style="width:100%;padding:12px 0;">Guardar contraseña</button>
+    <div id="resetpass-custom-feedback" style="margin-top:10px;font-size:0.95em;"></div>
+  </div>
+</div>
     <!-- Modal: Personas con Derivaciones en Albergue Activo -->
     <div id="modal-derivaciones-albergue" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
         <div class="modal-content modal-lg">

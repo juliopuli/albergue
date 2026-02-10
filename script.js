@@ -315,7 +315,7 @@ window.generarTarjetaAlbergue = function(albergue, esArchivado) {
 
 window.editarAlbergueMantenimiento = function(albergueId) {
     // Reutilizar la función existente de edición
-    window.editarAlbergue(albergueId);
+    window.abrirModalAlbergue(albergueId);
 };
 
 window.archivarAlbergue = async function(albergueId) {

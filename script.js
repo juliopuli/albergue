@@ -300,7 +300,7 @@ window.cargarPersonasParaIntervencion = function() {
     container.innerHTML = '<p style="text-align:center; color:#999;">Cargando personas...</p>';
     
     // Usar la lista de personas ya cargada
-    if (listaPersonasCache.length === 0) {
+    if (!listaPersonasCache || !Array.isArray(listaPersonasCache) || listaPersonasCache.length === 0) {
         container.innerHTML = '<p style="text-align:center; color:#999;">No hay personas registradas.</p>';
         return;
     }
@@ -315,7 +315,12 @@ window.filtrarPersonasIntervencion = function() {
     var term = searchInput.value.toLowerCase().trim();
     
     if (term === '') {
-        window.mostrarResultadosIntervencion(listaPersonasCache);
+        window.mostrarResultadosIntervencion(listaPersonasCache || []);
+        return;
+    }
+    
+    if (!listaPersonasCache || !Array.isArray(listaPersonasCache)) {
+        window.mostrarResultadosIntervencion([]);
         return;
     }
     
@@ -365,6 +370,11 @@ window.mostrarResultadosIntervencion = function(personas) {
 };
 
 window.seleccionarPersonaIntervencion = function(personaId) {
+    if (!listaPersonasCache || !Array.isArray(listaPersonasCache)) {
+        alert('Error: No se pudo cargar la lista de personas');
+        return;
+    }
+    
     var persona = listaPersonasCache.find(function(p) { return p.id === personaId; });
     if (!persona) {
         alert('Persona no encontrada');

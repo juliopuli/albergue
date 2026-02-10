@@ -86,7 +86,7 @@ window.toggleCajaNegra = function() {
 };
 window.limpiarCajaNegra = function() { const c = document.getElementById('black-box-content'); if (c) c.innerHTML = ""; };
 
-window.sysLog("Sistema Iniciado. Versión 3.1.2 (Fixed Desktop Interventions + QR Logs)", "info");
+window.sysLog("Sistema Iniciado. Versión 3.1.3 (QR Filiación + Permisos Borrado)", "info");
 
 // --- GLOBALES ---
 let isPublicMode = false;
@@ -269,6 +269,10 @@ window.generarTarjetaAlbergue = function(albergue, esArchivado) {
     var direccion = albergue.direccion || 'Sin dirección';
     var capacidad = albergue.capacidad || 0;
     
+    // Verificar rol del usuario actual
+    var rolUsuario = currentUserData ? currentUserData.rol : '';
+    var esSuperAdmin = (rolUsuario === 'super_admin');
+    
     var claseEstado = esArchivado ? 'albergue-card-archivado' : 'albergue-card-activo';
     var badge = esArchivado 
         ? '<span class="badge" style="background:#94a3b8; color:white;">Archivado</span>'
@@ -286,29 +290,35 @@ window.generarTarjetaAlbergue = function(albergue, esArchivado) {
     html += '</div>';
     
     html += '<div class="albergue-card-actions">';
+    
+    // Botón Editar (todos los admins)
     html += '<button class="btn-icon" onclick="window.editarAlbergueMantenimiento(\'' + albergue.id + '\')" title="Editar">';
     html += '<i class="fa-solid fa-pen"></i>';
     html += '</button>';
     
     if (esArchivado) {
-        // Opción de reactivar
+        // Botón Reactivar (admin y super_admin)
         html += '<button class="btn-icon" style="background:#10b981; color:white;" onclick="window.reactivarAlbergue(\'' + albergue.id + '\')" title="Reactivar">';
         html += '<i class="fa-solid fa-rotate-left"></i>';
         html += '</button>';
     } else {
-        // Opción de archivar
+        // Botón Archivar (admin y super_admin)
         html += '<button class="btn-icon" style="background:#f59e0b; color:white;" onclick="window.archivarAlbergue(\'' + albergue.id + '\')" title="Archivar">';
         html += '<i class="fa-solid fa-box-archive"></i>';
         html += '</button>';
     }
     
+    // Botón QR (todos los admins)
     html += '<button class="btn-icon" style="background:#06b6d4; color:white;" onclick="window.mostrarQRFiliacion(\'' + albergue.id + '\')" title="Ver QR Filiación">';
     html += '<i class="fa-solid fa-qrcode"></i>';
     html += '</button>';
     
-    html += '<button class="btn-icon" style="background:#ef4444; color:white;" onclick="window.confirmarBorrarAlbergue(\'' + albergue.id + '\', \'' + nombre + '\')" title="Borrar permanentemente">';
-    html += '<i class="fa-solid fa-trash"></i>';
-    html += '</button>';
+    // Botón Borrar - SOLO SUPER_ADMIN
+    if (esSuperAdmin) {
+        html += '<button class="btn-icon" style="background:#ef4444; color:white;" onclick="window.confirmarBorrarAlbergue(\'' + albergue.id + '\', \'' + nombre.replace(/'/g, "\\'") + '\')" title="Borrar permanentemente">';
+        html += '<i class="fa-solid fa-trash"></i>';
+        html += '</button>';
+    }
     
     html += '</div>';
     html += '</div>';
@@ -364,11 +374,18 @@ window.reactivarAlbergue = async function(albergueId) {
 };
 
 window.confirmarBorrarAlbergue = function(albergueId, nombreAlbergue) {
-    if (!confirm('⚠️ ATENCIÓN: ¿Borrar permanentemente el albergue "' + nombreAlbergue + '"?\n\nEsta acción NO se puede deshacer y eliminará:\n- El albergue\n- Todas sus personas (requiere limpieza manual de subcolecciones)\n- Todo su historial\n\n¿Estás seguro?')) {
+    // Verificación de permisos
+    if (!currentUserData || currentUserData.rol !== 'super_admin') {
+        alert("⛔ Acceso denegado\n\nSolo los Super Administradores pueden borrar albergues permanentemente.");
+        window.sysLog("INTENTO NO AUTORIZADO de borrar albergue por: " + (currentUserData ? currentUserData.nombre : "desconocido"), "warn");
         return;
     }
     
-    if (!confirm('Última confirmación: ¿ELIMINAR PERMANENTEMENTE "' + nombreAlbergue + '"?')) {
+    if (!confirm('⚠️ ATENCIÓN: ¿Borrar permanentemente el albergue "' + nombreAlbergue + '"?\n\nEsta acción NO se puede deshacer y eliminará:\n- El albergue\n- Todas sus personas\n- Todo su historial\n\n¿Estás ABSOLUTAMENTE seguro?')) {
+        return;
+    }
+    
+    if (!confirm('ÚLTIMA CONFIRMACIÓN:\n\n¿ELIMINAR PERMANENTEMENTE "' + nombreAlbergue + '"?\n\nEscribe tu nombre en tu mente para confirmar que eres ' + currentUserData.nombre)) {
         return;
     }
     
@@ -395,14 +412,64 @@ window.borrarAlberguePermanente = async function(albergueId, nombreAlbergue) {
     }
 };
 
-window.mostrarQRFiliacion = function(albergueId) {
-    // Generar URL pública para filiación
-    var urlFiliacion = window.location.origin + window.location.pathname + '?public_id=' + albergueId;
-    
-    // Mostrar URL temporalmente con toast
-    window.showToast('URL de filiación: ' + urlFiliacion);
-    console.log('URL de filiación para QR:', urlFiliacion);
-    // TODO: Crear modal bonito con QR usando la librería qrcode.js
+window.mostrarQRFiliacion = async function(albergueId) {
+    try {
+        // Obtener datos del albergue
+        var albergueDoc = await getDoc(doc(db, "albergues", albergueId));
+        if (!albergueDoc.exists()) {
+            alert("Albergue no encontrado");
+            return;
+        }
+        
+        var albergueData = albergueDoc.data();
+        var nombreAlbergue = albergueData.nombre || "Albergue";
+        
+        // Generar URL pública para filiación
+        var urlFiliacion = window.location.origin + window.location.pathname + '?public_id=' + albergueId;
+        
+        window.sysLog("Generando QR de filiación para: " + nombreAlbergue, "info");
+        
+        // Mostrar modal
+        window.safeShow('modal-qr-filiacion');
+        
+        // Actualizar título del modal
+        var tituloEl = window.el('qr-filiacion-titulo');
+        if (tituloEl) {
+            tituloEl.innerText = nombreAlbergue;
+        }
+        
+        // Limpiar contenedor y generar QR
+        var container = window.el('qrcode-filiacion-display');
+        if (container) {
+            container.innerHTML = ""; // Limpiar QR anterior
+            
+            // Generar nuevo QR
+            new QRCode(container, {
+                text: urlFiliacion,
+                width: 300,
+                height: 300,
+                colorDark: "#4f46e5",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+            
+            window.sysLog("QR generado correctamente", "success");
+        } else {
+            window.sysLog("ERROR: Contenedor QR no encontrado", "error");
+            alert("Error: No se encuentra el contenedor del QR");
+        }
+        
+        // Mostrar URL en el modal
+        var urlEl = window.el('qr-filiacion-url');
+        if (urlEl) {
+            urlEl.innerText = urlFiliacion;
+        }
+        
+    } catch(e) {
+        console.error(e);
+        window.sysLog("Error generando QR: " + e.message, "error");
+        alert("Error al generar QR: " + e.message);
+    }
 };
 window.cargarObservatorio = async function() { const list = window.el('obs-list-container'); if(!list) return; list.innerHTML = '<div style="text-align:center; padding:20px;"><div class="spinner"></div></div>'; window.el('kpi-espera').innerText = "-"; window.el('kpi-alojados').innerText = "-"; window.el('kpi-libres').innerText = "-"; window.el('kpi-percent').innerText = "-%"; try { let totalEspera = 0, totalAlojados = 0, totalCapacidadGlobal = 0, htmlList = ""; const alberguesSnap = await getDocs(query(collection(db, "albergues"), where("activo", "==", true))); const promesas = alberguesSnap.docs.map(async (docAlb) => { const dataAlb = docAlb.data(); const cap = parseInt(dataAlb.capacidad || 0); const esperaSnap = await getDocs(query(collection(db, "pool_prefiliacion"), where("origenAlbergueId", "==", docAlb.id), where("estado", "==", "espera"))); const w = esperaSnap.size; const alojadosSnap = await getDocs(query(collection(db, "albergues", docAlb.id, "personas"), where("estado", "==", "ingresado"))); const h = alojadosSnap.size; return { id: docAlb.id, nombre: dataAlb.nombre, capacidad: cap, espera: w, alojados: h }; }); const resultados = await Promise.all(promesas); resultados.forEach(res => { totalEspera += res.espera; totalAlojados += res.alojados; totalCapacidadGlobal += res.capacidad; const libres = Math.max(0, res.capacidad - res.alojados); const porcentaje = res.capacidad > 0 ? Math.round((res.alojados / res.capacidad) * 100) : 0; let barClass = "low"; if(porcentaje > 50) barClass = "med"; if(porcentaje > 85) barClass = "high"; htmlList += `<div class="obs-row"><div class="obs-row-title">${res.nombre}</div><div class="obs-stats-group"><div class="obs-mini-stat"><span>Espera</span><strong class="obs-clickable" onclick="window.verListaObservatorio('${res.id}', 'espera')">${res.espera}</strong></div><div class="obs-mini-stat"><span>Alojados</span><strong class="obs-clickable" onclick="window.verListaObservatorio('${res.id}', 'alojados')">${res.alojados}</strong></div><div class="obs-mini-stat"><span>Ocupación</span><strong>${res.alojados} / ${res.capacidad}</strong></div><div class="obs-mini-stat"><span>Libres</span><strong>${libres}</strong></div></div><div class="prog-container"><div class="prog-track"><div class="prog-fill ${barClass}" style="width: ${porcentaje}%"></div></div></div></div>`; }); const globalLibres = Math.max(0, totalCapacidadGlobal - totalAlojados); const globalPercent = totalCapacidadGlobal > 0 ? Math.round((totalAlojados / totalCapacidadGlobal) * 100) : 0; window.el('kpi-espera').innerText = totalEspera; window.el('kpi-alojados').innerText = totalAlojados; window.el('kpi-libres').innerText = globalLibres; window.el('kpi-percent').innerText = `${globalPercent}%`; list.innerHTML = htmlList; } catch(e) { window.sysLog("Error obs: " + e.message, "error"); list.innerHTML = "<p>Error cargando datos.</p>"; } };
 window.verListaObservatorio = async function(albId, tipo) { const c = window.el('obs-modal-content'); const t = window.el('obs-modal-title'); c.innerHTML = '<div style="text-align:center;"><div class="spinner"></div></div>'; t.innerText = tipo === 'espera' ? 'Personas en Espera' : 'Personas Alojadas'; window.safeShow('modal-obs-detalle'); try { let q; let isGlobal = false; if (tipo === 'espera') { q = query(collection(db, "pool_prefiliacion"), where("origenAlbergueId", "==", albId), where("estado", "==", "espera")); isGlobal = true; } else { q = query(collection(db, "albergues", albId, "personas"), where("estado", "==", "ingresado")); } const snap = await getDocs(q); if (snap.empty) { c.innerHTML = '<p>Sin registros.</p>'; return; } let data = []; snap.forEach(d => data.push({ id: d.id, ...d.data() })); if (tipo === 'espera') { data.sort((a, b) => (b.fechaRegistro?.seconds || 0) - (a.fechaRegistro?.seconds || 0)); } else { data.sort((a, b) => { if (!a.cama && !b.cama) return 0; if (!a.cama) return -1; if (!b.cama) return 1; return parseInt(a.cama) - parseInt(b.cama); }); } let h = `<table class="fam-table"><thead><tr><th style="width:40px;"></th>`; if(tipo === 'alojados') h += `<th>Cama</th>`; h += `<th>Nombre</th><th>DNI</th><th>Tel</th></tr></thead><tbody>`; data.forEach(d => { const histBtn = `<button class="btn-icon-small" onclick="window.verHistorialObservatorio('${d.id}', ${isGlobal}, '${albId}')"><i class="fa-solid fa-clock-rotate-left"></i></button>`; h += `<tr><td style="text-align:center;">${histBtn}</td>`; if(tipo === 'alojados') h += `<td><strong>${d.cama || '-'}</strong></td>`; h += `<td>${d.nombre} ${d.ap1||''}</td><td>${d.docNum||'-'}</td><td>${d.telefono||'-'}</td></tr>`; }); h += '</tbody></table>'; c.innerHTML = h; } catch (e) { window.sysLog("Error list: " + e.message, "error"); c.innerHTML = "<p>Error al cargar lista.</p>"; } };

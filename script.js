@@ -361,7 +361,7 @@ window.reactivarAlbergue = async function(albergueId) {
 };
 
 window.confirmarBorrarAlbergue = function(albergueId, nombreAlbergue) {
-    if (!confirm('⚠️ ATENCIÓN: ¿Borrar permanentemente el albergue "' + nombreAlbergue + '"?\n\nEsta acción NO se puede deshacer y eliminará:\n- El albergue\n- Todas sus personas\n- Todo su historial\n\n¿Estás seguro?')) {
+    if (!confirm('⚠️ ATENCIÓN: ¿Borrar permanentemente el albergue "' + nombreAlbergue + '"?\n\nEsta acción NO se puede deshacer y eliminará:\n- El albergue\n- Todas sus personas (requiere limpieza manual de subcolecciones)\n- Todo su historial\n\n¿Estás seguro?')) {
         return;
     }
     
@@ -396,8 +396,9 @@ window.mostrarQRFiliacion = function(albergueId) {
     // Generar URL pública para filiación
     var urlFiliacion = window.location.origin + window.location.pathname + '?public_id=' + albergueId;
     
-    // Mostrar modal con QR
-    alert('QR para filiación:\n\n' + urlFiliacion + '\n\n(Implementar modal con QR generado)');
+    // Mostrar URL temporalmente con toast
+    window.showToast('URL de filiación: ' + urlFiliacion);
+    console.log('URL de filiación para QR:', urlFiliacion);
     // TODO: Crear modal bonito con QR usando la librería qrcode.js
 };
 window.cargarObservatorio = async function() { const list = window.el('obs-list-container'); if(!list) return; list.innerHTML = '<div style="text-align:center; padding:20px;"><div class="spinner"></div></div>'; window.el('kpi-espera').innerText = "-"; window.el('kpi-alojados').innerText = "-"; window.el('kpi-libres').innerText = "-"; window.el('kpi-percent').innerText = "-%"; try { let totalEspera = 0, totalAlojados = 0, totalCapacidadGlobal = 0, htmlList = ""; const alberguesSnap = await getDocs(query(collection(db, "albergues"), where("activo", "==", true))); const promesas = alberguesSnap.docs.map(async (docAlb) => { const dataAlb = docAlb.data(); const cap = parseInt(dataAlb.capacidad || 0); const esperaSnap = await getDocs(query(collection(db, "pool_prefiliacion"), where("origenAlbergueId", "==", docAlb.id), where("estado", "==", "espera"))); const w = esperaSnap.size; const alojadosSnap = await getDocs(query(collection(db, "albergues", docAlb.id, "personas"), where("estado", "==", "ingresado"))); const h = alojadosSnap.size; return { id: docAlb.id, nombre: dataAlb.nombre, capacidad: cap, espera: w, alojados: h }; }); const resultados = await Promise.all(promesas); resultados.forEach(res => { totalEspera += res.espera; totalAlojados += res.alojados; totalCapacidadGlobal += res.capacidad; const libres = Math.max(0, res.capacidad - res.alojados); const porcentaje = res.capacidad > 0 ? Math.round((res.alojados / res.capacidad) * 100) : 0; let barClass = "low"; if(porcentaje > 50) barClass = "med"; if(porcentaje > 85) barClass = "high"; htmlList += `<div class="obs-row"><div class="obs-row-title">${res.nombre}</div><div class="obs-stats-group"><div class="obs-mini-stat"><span>Espera</span><strong class="obs-clickable" onclick="window.verListaObservatorio('${res.id}', 'espera')">${res.espera}</strong></div><div class="obs-mini-stat"><span>Alojados</span><strong class="obs-clickable" onclick="window.verListaObservatorio('${res.id}', 'alojados')">${res.alojados}</strong></div><div class="obs-mini-stat"><span>Ocupación</span><strong>${res.alojados} / ${res.capacidad}</strong></div><div class="obs-mini-stat"><span>Libres</span><strong>${libres}</strong></div></div><div class="prog-container"><div class="prog-track"><div class="prog-fill ${barClass}" style="width: ${porcentaje}%"></div></div></div></div>`; }); const globalLibres = Math.max(0, totalCapacidadGlobal - totalAlojados); const globalPercent = totalCapacidadGlobal > 0 ? Math.round((totalAlojados / totalCapacidadGlobal) * 100) : 0; window.el('kpi-espera').innerText = totalEspera; window.el('kpi-alojados').innerText = totalAlojados; window.el('kpi-libres').innerText = globalLibres; window.el('kpi-percent').innerText = `${globalPercent}%`; list.innerHTML = htmlList; } catch(e) { window.sysLog("Error obs: " + e.message, "error"); list.innerHTML = "<p>Error cargando datos.</p>"; } };

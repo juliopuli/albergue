@@ -457,28 +457,19 @@ window.configurarDashboard = function() {
 // --- PARTE 2 (Intervenciones & Lógica Compleja) ---
 
 window.iniciarEscanerReal = function() {
-    window.sysLog("=== INICIANDO ESCÁNER QR ===", "warn");
+    window.sysLog("=== INICIANDO ESCÁNER QR ===", "info");
     
     // Detener cualquier escáner previo
     window.detenerEscaner();
     
     // Ocultar placeholder y botón de inicio
-    var placeholder = window.el('scan-placeholder');
-    if (placeholder) {
-        placeholder.classList.add('hidden');
-        placeholder.style.display = 'none';
-    }
-    
-    var btnStart = window.el('btn-start-camera');
-    if (btnStart) {
-        btnStart.classList.add('hidden');
-        btnStart.style.display = 'none';
-    }
+    window.safeHide('scan-placeholder');
+    window.safeHide('btn-start-camera');
     
     // CRÍTICO: Mostrar el elemento reader con AMBOS métodos
     var readerEl = window.el('reader');
     if (!readerEl) {
-        window.sysLog("❌ ERROR CRÍTICO: Elemento 'reader' no encontrado en el DOM", "error");
+        window.sysLog("ERROR CRÍTICO: Elemento 'reader' no encontrado en el DOM", "error");
         alert("Error: No se encuentra el contenedor del escáner. Recarga la página.");
         return;
     }
@@ -489,16 +480,12 @@ window.iniciarEscanerReal = function() {
     readerEl.style.visibility = 'visible';
     readerEl.style.opacity = '1';
     
-    window.sysLog("✅ Elemento 'reader' forzado a visible", "info");
+    window.sysLog("Elemento 'reader' forzado a visible", "info");
     window.sysLog("   - display: " + readerEl.style.display, "info");
     window.sysLog("   - visibility: " + readerEl.style.visibility, "info");
     
     // Mostrar botón de detener
-    var btnStop = window.el('btn-stop-camera');
-    if (btnStop) {
-        btnStop.classList.remove('hidden');
-        btnStop.style.display = 'block';
-    }
+    window.safeShow('btn-stop-camera');
     
     // Iniciar escáner con delay para que el DOM se actualice
     setTimeout(function() {
@@ -514,7 +501,7 @@ window.iniciarEscanerReal = function() {
                 aspectRatio: 1.0
             };
             
-            window.sysLog("📷 Solicitando acceso a cámara trasera...", "info");
+            window.sysLog("Solicitando acceso a cámara trasera...", "info");
             
             html5QrCode.start(
                 { facingMode: "environment" },
@@ -524,19 +511,21 @@ window.iniciarEscanerReal = function() {
                     // Ignorar errores de escaneo continuo (son normales)
                 }
             ).then(function() {
-                window.sysLog("✅ ¡CÁMARA INICIADA CORRECTAMENTE!", "success");
+                window.sysLog("Cámara iniciada correctamente!", "success");
                 window.sysLog("   El cuadro de la cámara debería ser visible ahora", "success");
             }).catch(function(err) {
                 console.error(err);
-                window.sysLog("❌ Error al iniciar cámara: " + err, "error");
+                window.sysLog("Error al iniciar cámara: " + err, "error");
                 
-                var mensajeError = "Error al iniciar la cámara.\n\n";
-                mensajeError += "Verifica:\n";
-                mensajeError += "✓ Permisos de cámara concedidos\n";
-                mensajeError += "✓ Conexión HTTPS (necesaria para cámara)\n";
-                mensajeError += "✓ Navegador compatible (Chrome, Safari)\n";
-                mensajeError += "✓ Otra app no esté usando la cámara\n\n";
-                mensajeError += "Error técnico: " + err;
+                var mensajeError = [
+                    "Error al iniciar la cámara.\n",
+                    "\nVerifica:",
+                    "\n- Permisos de cámara concedidos",
+                    "\n- Conexión HTTPS (necesaria para cámara)",
+                    "\n- Navegador compatible (Chrome, Safari)",
+                    "\n- Otra app no esté usando la cámara",
+                    "\n\nError técnico: " + err
+                ].join('');
                 
                 alert(mensajeError);
                 window.detenerEscaner();
@@ -544,7 +533,7 @@ window.iniciarEscanerReal = function() {
             
         } catch(e) {
             console.error(e);
-            window.sysLog("❌ Excepción crítica: " + e.message, "error");
+            window.sysLog("Excepción crítica: " + e.message, "error");
             alert("Error crítico al iniciar cámara:\n\n" + e.message + "\n\nRecarga la página e intenta de nuevo.");
             window.detenerEscaner();
         }
@@ -555,32 +544,14 @@ function resetScannerUI() {
     window.sysLog("Reseteando UI del escáner", "info");
     
     // Ocultar elementos de escaneo activo
-    var reader = window.el('reader');
-    if (reader) {
-        reader.classList.add('hidden');
-        reader.style.display = 'none';
-    }
-    
-    var btnStop = window.el('btn-stop-camera');
-    if (btnStop) {
-        btnStop.classList.add('hidden');
-        btnStop.style.display = 'none';
-    }
+    window.safeHide('reader');
+    window.safeHide('btn-stop-camera');
     
     // Mostrar elementos de estado inicial
-    var placeholder = window.el('scan-placeholder');
-    if (placeholder) {
-        placeholder.classList.remove('hidden');
-        placeholder.style.display = 'block';
-    }
+    window.safeShow('scan-placeholder');
+    window.safeShow('btn-start-camera');
     
-    var btnStart = window.el('btn-start-camera');
-    if (btnStart) {
-        btnStart.classList.remove('hidden');
-        btnStart.style.display = 'block';
-    }
-    
-    window.sysLog("✅ Botón 'Activar Cámara' visible y listo", "success");
+    window.sysLog("Botón 'Activar Cámara' visible y listo", "success");
 }
 window.onScanSuccess = function(decodedText, decodedResult) { if(html5QrCode) html5QrCode.stop().then(() => { window.sysLog(`QR Leído: ${decodedText}`, "success"); html5QrCode.clear(); resetScannerUI(); try { const url = new URL(decodedText); const aid = url.searchParams.get("aid"); const pid = url.searchParams.get("pid"); if(!aid || !pid) throw new Error("QR inválido"); if(currentAlbergueId && aid !== currentAlbergueId) { if(confirm(`Este QR es de otro albergue. ¿Quieres cambiar a ese albergue?`)) { window.cambiarAlberguePorQR(aid, pid); return; } else { return; } } if(!currentAlbergueId) { window.cambiarAlberguePorQR(aid, pid); return; } window.procesarLecturaPersona(pid); } catch (e) { alert("QR no válido o formato incorrecto."); } }); };
 window.cambiarAlberguePorQR = async function(aid, pid) { window.sysLog(`Cambiando albergue por QR a: ${aid}`, "warn"); currentAlbergueId = aid; window.safeShow('loading-overlay'); try { const dS = await getDoc(doc(db,"albergues",aid)); if(dS.exists()) { currentAlbergueData = dS.data(); totalCapacidad = parseInt(currentAlbergueData.capacidad||0); } else { alert("Albergue no existe"); window.safeHide('loading-overlay'); return; } if(unsubscribePersonas) unsubscribePersonas(); unsubscribePersonas = onSnapshot(collection(db,"albergues",aid,"personas"), s=>{ listaPersonasCache=[]; camasOcupadas={}; s.forEach(d=>{ const p=d.data(); p.id=d.id; listaPersonasCache.push(p); if(p.estado==='ingresado'){ if(p.cama) camasOcupadas[p.cama]=p.nombre; } }); const target = listaPersonasCache.find(p => p.id === pid); if(target) { window.safeHide('loading-overlay'); window.navegar('intervencion'); window.cargarInterfazIntervencion(target); } }); window.conectarListenersBackground(aid); } catch(e) { console.error(e); window.safeHide('loading-overlay'); } };

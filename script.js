@@ -86,7 +86,7 @@ window.toggleCajaNegra = function() {
 };
 window.limpiarCajaNegra = function() { const c = document.getElementById('black-box-content'); if (c) c.innerHTML = ""; };
 
-window.sysLog("Sistema Iniciado. Versión 3.1.1 (Fixed QR Mode Return)", "info");
+window.sysLog("Sistema Iniciado. Versión 3.1.2 (Fixed Desktop Interventions + QR Logs)", "info");
 
 // --- GLOBALES ---
 let isPublicMode = false;
@@ -583,18 +583,27 @@ window.registrarMovimiento = async function(tipo) {
     
     try { 
         const estadoPresencia = (tipo === 'entrada') ? 'dentro' : 'fuera'; 
+        
+        // Actualizar campo de presencia en Firestore
         const pRef = doc(db, "albergues", currentAlbergueId, "personas", personaEnGestion.id); 
         await updateDoc(pRef, { presencia: estadoPresencia }); 
-        await window.registrarLog(personaEnGestion.id, "Movimiento", tipo.toUpperCase()); 
+        
+        // CORREGIDO: Pasar personaEnGestionEsGlobal como 4to parámetro
+        await window.registrarLog(
+            personaEnGestion.id, 
+            "Movimiento", 
+            tipo.toUpperCase(), 
+            personaEnGestionEsGlobal // ← AGREGADO: indica si es del pool global
+        ); 
         
         window.sysLog(`Movimiento: ${tipo} para ${personaEnGestion.nombre}`, "info"); 
         window.showToast(`✅ ${tipo.toUpperCase()} Registrada`); 
         
-        // Solo llamar a volverABusquedaIntervenciones (que ya hace el reset)
         window.volverABusquedaIntervenciones();
         
     } catch(e) { 
         console.error(e); 
+        window.sysLog("Error al registrar movimiento: " + e.message, "error");
         alert("Error al registrar movimiento: " + e.message); 
     } 
 };
@@ -910,7 +919,38 @@ window.eliminarAlbergueActual=async function(){if(albergueEdicionId&&confirm("¿
 window.cambiarEstadoAlbergue=async function(id,st){await updateDoc(doc(db,"albergues",id),{activo:st});window.sysLog(`Estado Albergue ${id}: ${st}`, "info");};
 window.abrirModalCambioPass=function(){window.setVal('chg-old-pass','');window.setVal('chg-new-pass','');window.setVal('chg-confirm-pass','');window.safeShow('modal-change-pass');};
 window.ejecutarCambioPass=async function(){const o=window.safeVal('chg-old-pass'),n=window.safeVal('chg-new-pass');try{await reauthenticateWithCredential(auth.currentUser,EmailAuthProvider.credential(auth.currentUser.email,o));await updatePassword(auth.currentUser,n);alert("OK");window.safeHide('modal-change-pass');window.sysLog("Contraseña cambiada.", "success");}catch(e){alert("Error");window.sysLog("Error cambio pass: "+e.message, "error");}};
-window.registrarLog=async function(pid,act,det,isPool=false){try{const usuarioLog=currentUserData?currentUserData.nombre:"Auto-QR";let path=isPool?collection(db,"pool_prefiliacion",pid,"historial"):collection(db,"albergues",currentAlbergueId,"personas",pid,"historial");await addDoc(path,{fecha:new Date(),usuario:usuarioLog,accion:act,detalle:det});window.sysLog(`Audit Log (${isPool?'Pool':'Local'}): ${act} - ${det}`,"info");}catch(e){console.error(e);}};
+window.registrarLog = async function(pid, act, det, isPool=false) {
+    try {
+        const usuarioLog = currentUserData ? currentUserData.nombre : "Auto-QR";
+        
+        let path;
+        if (isPool) {
+            path = collection(db, "pool_prefiliacion", pid, "historial");
+            window.sysLog(`Guardando log en POOL GLOBAL: ${act} - ${det}`, "info");
+        } else {
+            if (!currentAlbergueId) {
+                window.sysLog("ERROR: No hay albergue seleccionado para guardar log", "error");
+                throw new Error("No hay albergue seleccionado");
+            }
+            path = collection(db, "albergues", currentAlbergueId, "personas", pid, "historial");
+            window.sysLog(`Guardando log en ALBERGUE LOCAL (${currentAlbergueId}): ${act} - ${det}`, "info");
+        }
+        
+        await addDoc(path, {
+            fecha: new Date(),
+            usuario: usuarioLog,
+            accion: act,
+            detalle: det
+        });
+        
+        window.sysLog(`✅ Log guardado correctamente: ${act}`, "success");
+        
+    } catch(e) {
+        console.error("Error en registrarLog:", e);
+        window.sysLog(`❌ ERROR guardando log: ${e.message}`, "error");
+        throw e; // Re-lanzar para que la función llamadora sepa que falló
+    }
+};
 window.verHistorial=async function(pId=null, forceIsGlobal=null, forceAlbId=null){let targetId=pId;let isPool=(forceIsGlobal!==null)?forceIsGlobal:personaEnGestionEsGlobal;const activeAlbId=forceAlbId||currentAlbergueId;if(!targetId&&personaEnGestion)targetId=personaEnGestion.id;if(pId&&forceIsGlobal===null&&listaPersonasCache.find(x=>x.id===pId))isPool=false;if(!targetId)return;let nombrePersona="Usuario";if(personaEnGestion&&personaEnGestion.id===targetId)nombrePersona=`${personaEnGestion.nombre} ${personaEnGestion.ap1||''}`;else if(listaPersonasCache.length>0){const found=listaPersonasCache.find(x=>x.id===targetId);if(found)nombrePersona=`${found.nombre} ${found.ap1||''}`;}else if(listaGlobalPrefiliacion.length>0){const found=listaGlobalPrefiliacion.find(x=>x.id===targetId);if(found)nombrePersona=`${found.nombre} ${found.ap1||''}`;}const headerEl=window.el('hist-modal-header');if(headerEl)headerEl.innerText=`Historial de: ${nombrePersona}`;window.safeShow('modal-historial');const content=window.el('historial-content');content.innerHTML='<div style="text-align:center"><div class="spinner"></div></div>';try{let items=[];let pathHist=isPool?collection(db,"pool_prefiliacion",targetId,"historial"):collection(db,"albergues",activeAlbId,"personas",targetId,"historial");const snapHist=await getDocs(pathHist);snapHist.forEach(d=>{const data=d.data();items.push({...data,type:'movimiento',id:d.id,sortDate:data.fecha.toDate()});});items.sort((a,b)=>b.sortDate-a.sortDate);if(items.length===0){content.innerHTML="<p>No hay registros.</p>";return;}let html=`<div class="hist-timeline">`;items.forEach(d=>{const f=d.sortDate;const fmt=`${f.getDate().toString().padStart(2,'0')}/${(f.getMonth()+1).toString().padStart(2,'0')}/${f.getFullYear()} ${f.getHours().toString().padStart(2,'0')}:${f.getMinutes().toString().padStart(2,'0')}`;let extraClass='';let icon='<i class="fa-solid fa-shoe-prints"></i>';if(d.accion&&d.accion.includes('Intervención')){if(d.accion.includes('Sanitaria')){extraClass='hist-type-san';icon='<i class="fa-solid fa-hand-holding-medical"></i>';}else if(d.accion.includes('Psicosocial')){extraClass='hist-type-psi';icon='<i class="fa-solid fa-hand-holding-medical"></i>';}else if(d.accion.includes('Entrega')){extraClass='hist-type-ent';icon='<i class="fa-solid fa-hand-holding-medical"></i>';}else{icon='<i class="fa-solid fa-hand-holding-medical"></i>';}}html+=`<div class="hist-item ${extraClass}"><div class="hist-header"><span class="hist-date"><i class="fa-regular fa-clock"></i> ${fmt}</span><span class="hist-user"><i class="fa-solid fa-user-tag"></i> ${d.usuario}</span></div><span class="hist-action">${icon} ${d.accion}</span>${d.detalle?`<span class="hist-detail" style="white-space: pre-wrap;">${d.detalle}</span>`:''}</div>`;});html+=`</div>`;content.innerHTML=html;}catch(e){content.innerHTML="Error cargando datos.";window.sysLog("Error historial mixto: "+e.message,"error");}};
 window.verHistorialObservatorio = function(pId, isGlobal, albId){window.verHistorial(pId, isGlobal, albId);};
 
@@ -1048,8 +1088,8 @@ window.registrarIntervencion = async function(tipo) {
         // Limpiar y cerrar
         window.cerrarFormularioIntervencion(tipo);
         
-        // NUEVO: Volver a búsqueda de intervenciones
-        window.volverABusquedaIntervenciones();
+        // NO llamar a volverABusquedaIntervenciones() aquí porque estamos en modo Operativa (desktop)
+        // El formulario ya se cerró con cerrarFormularioIntervencion()
         
     } catch(e) {
         console.error(e);

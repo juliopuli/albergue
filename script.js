@@ -15,6 +15,15 @@ const firebaseConfig = {
 };
 const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db = getFirestore(app);
 
+// --- QR CODE CONFIG ---
+const QR_CONFIG = {
+    width: 300,
+    height: 300,
+    colorDark: "#4f46e5",
+    colorLight: "#ffffff",
+    correctLevel: QRCode.CorrectLevel.H
+};
+
 // --- TIPOS DE INTERVENCIÓN ---
 const TIPOS_INTERVENCION = {
     san: {
@@ -385,7 +394,7 @@ window.confirmarBorrarAlbergue = function(albergueId, nombreAlbergue) {
         return;
     }
     
-    if (!confirm('ÚLTIMA CONFIRMACIÓN:\n\n¿ELIMINAR PERMANENTEMENTE "' + nombreAlbergue + '"?\n\nEscribe tu nombre en tu mente para confirmar que eres ' + currentUserData.nombre)) {
+    if (!confirm('ÚLTIMA CONFIRMACIÓN:\n\n¿ELIMINAR PERMANENTEMENTE "' + nombreAlbergue + '"?\n\nEsta acción es irreversible y será registrada bajo tu usuario: ' + currentUserData.nombre)) {
         return;
     }
     
@@ -446,11 +455,11 @@ window.mostrarQRFiliacion = async function(albergueId) {
             // Generar nuevo QR
             new QRCode(container, {
                 text: urlFiliacion,
-                width: 300,
-                height: 300,
-                colorDark: "#4f46e5",
-                colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.H
+                width: QR_CONFIG.width,
+                height: QR_CONFIG.height,
+                colorDark: QR_CONFIG.colorDark,
+                colorLight: QR_CONFIG.colorLight,
+                correctLevel: QR_CONFIG.correctLevel
             });
             
             window.sysLog("QR generado correctamente", "success");

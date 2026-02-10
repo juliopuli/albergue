@@ -439,7 +439,6 @@ window.seleccionarPersonaIntervencion = function(personaId, albergueId) {
     
     // Guardar la persona seleccionada como activa
     personaIntervencionActiva = persona;
-    personaIntervencionActiva.albergueIdActual = albergueId; // Guardar el albergue
     
     // Cambiar temporalmente el albergue actual para que las intervenciones se guarden correctamente
     var albergueAnterior = currentAlbergueId;

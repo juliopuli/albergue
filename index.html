@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gestión Albergue - Ver.3.0.4</title>
+    <title>Gestión Albergue - Ver.3.0.5</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -12,7 +12,7 @@
 </head>
 <body>
 
-    <div class="version-tag">Ver.3.0.4</div>
+    <div class="version-tag">Ver.3.0.5</div>
     
     <div id="toast" style="visibility: hidden;">Guardado automático</div>
     <div id="loading-overlay" class="hidden"><div class="spinner"></div><h2 style="color:var(--primary);">Cargando Datos...</h2></div>
@@ -176,8 +176,51 @@
             </div>
 
             <div id="screen-mantenimiento" class="hidden">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;"><h2><i class="fa-solid fa-tools"></i> Mantenimiento</h2><div id="container-ver-ocultos" class="hidden"><label class="toggle-switch"><input type="checkbox" class="toggle-input" id="check-ver-ocultos" onchange="window.cargarAlberguesMantenimiento()"><span class="toggle-slider"></span><span style="font-size:0.9rem; font-weight:600; margin-left:10px;">Mostrar Ocultos</span></label></div></div>
-                <div id="mto-container" class="mto-grid"></div>
+                <div class="section-header">
+                    <h2><i class="fa-solid fa-screwdriver-wrench"></i> Mantenimiento del Sistema</h2>
+                </div>
+                
+                <div class="mto-grid">
+                    <div class="mto-card mto-card-albergue" onclick="window.abrirModalAlbergue()">
+                        <div class="mto-card-icon">
+                            <i class="fa-solid fa-hotel"></i>
+                        </div>
+                        <h3 class="mto-card-title">Crear Albergue</h3>
+                        <p class="mto-card-desc">Registrar nuevo albergue en el sistema</p>
+                    </div>
+                    
+                    <div class="mto-card mto-card-list" onclick="window.navegar('gestion-albergues')">
+                        <div class="mto-card-icon">
+                            <i class="fa-solid fa-list"></i>
+                        </div>
+                        <h3 class="mto-card-title">Ver Albergues</h3>
+                        <p class="mto-card-desc">Listado completo de todos los albergues</p>
+                    </div>
+                    
+                    <div class="mto-card mto-card-pool" onclick="window.navegar('observatorio')">
+                        <div class="mto-card-icon">
+                            <i class="fa-solid fa-users"></i>
+                        </div>
+                        <h3 class="mto-card-title">Pool de Prefiliación</h3>
+                        <p class="mto-card-desc">Gestionar personas sin asignar</p>
+                    </div>
+                    
+                    <div class="mto-card mto-card-backup" onclick="window.showToast('Función de backup en desarrollo')">
+                        <div class="mto-card-icon">
+                            <i class="fa-solid fa-download"></i>
+                        </div>
+                        <h3 class="mto-card-title">Backup Completo</h3>
+                        <p class="mto-card-desc">Descargar copia de seguridad Excel</p>
+                    </div>
+                    
+                    <div class="mto-card mto-card-stats" onclick="window.navegar('observatorio')">
+                        <div class="mto-card-icon">
+                            <i class="fa-solid fa-chart-line"></i>
+                        </div>
+                        <h3 class="mto-card-title">Observatorio</h3>
+                        <p class="mto-card-desc">Estadísticas y análisis del sistema</p>
+                    </div>
+                </div>
             </div>
 
             <div id="screen-observatorio" class="hidden">

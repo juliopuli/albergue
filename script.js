@@ -86,7 +86,7 @@ window.toggleCajaNegra = function() {
 };
 window.limpiarCajaNegra = function() { const c = document.getElementById('black-box-content'); if (c) c.innerHTML = ""; };
 
-window.sysLog("Sistema Iniciado. Versión 3.0.4 (Global Intervention Search)", "info");
+window.sysLog("Sistema Iniciado. Versión 3.0.5 (Empty Search + Better Maintenance UI)", "info");
 
 // --- GLOBALES ---
 let isPublicMode = false;
@@ -348,8 +348,12 @@ window.cargarPersonasParaIntervencion = async function() {
         // Guardar en cache global para búsqueda
         window.personasGlobalesIntervencion = todasLasPersonas;
         
-        // Mostrar todas inicialmente
-        window.mostrarResultadosIntervencion(todasLasPersonas);
+        // NO mostrar ninguna persona inicialmente, solo guardar en cache
+        // El usuario debe escribir algo para ver resultados
+        var container = window.el('resultados-intervencion');
+        if (container) {
+            container.innerHTML = '<p style="text-align:center; color:#999; padding:40px; font-size:1.1rem;"><i class="fa-solid fa-magnifying-glass" style="font-size:3rem; display:block; margin-bottom:15px; opacity:0.3;"></i>🔍 Escribe un nombre o DNI para buscar...</p>';
+        }
         
         window.sysLog('Cargadas ' + todasLasPersonas.length + ' personas de todos los albergues', 'info');
         
@@ -366,9 +370,12 @@ window.filtrarPersonasIntervencion = function() {
     
     var term = searchInput.value.toLowerCase().trim();
     
-    // Si no hay búsqueda, mostrar todas
+    // Si no hay búsqueda, mostrar mensaje vacío (NO todas las personas)
     if (term === '') {
-        window.mostrarResultadosIntervencion(window.personasGlobalesIntervencion || []);
+        var container = window.el('resultados-intervencion');
+        if (container) {
+            container.innerHTML = '<p style="text-align:center; color:#999; padding:40px; font-size:1.1rem;"><i class="fa-solid fa-magnifying-glass" style="font-size:3rem; display:block; margin-bottom:15px; opacity:0.3;"></i>🔍 Escribe un nombre o DNI para buscar...</p>';
+        }
         return;
     }
     

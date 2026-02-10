@@ -770,4 +770,9 @@ body.focused-mode .app-nav { display: none !important; }
 .btn-icon:active {
     transform: scale(0.98);
 }
-
+#modal-custom-resetpass .modal-content {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+    padding: 30px 20px;
+}

@@ -700,11 +700,13 @@ body.focused-mode .app-nav { display: none !important; }
     font-size: 1.2rem;
     color: var(--text-main);
     margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px; /* Using gap instead of margin-right for consistent spacing */
 }
 
 .albergue-card-header h3 i {
     color: var(--primary);
-    margin-right: 8px;
 }
 
 .albergue-card-info {
@@ -715,10 +717,12 @@ body.focused-mode .app-nav { display: none !important; }
     margin: 8px 0;
     color: var(--text-light);
     font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 8px; /* Using gap instead of margin-right for consistent spacing */
 }
 
 .albergue-card-info i {
-    margin-right: 8px;
     color: var(--primary);
     width: 18px;
     text-align: center;
@@ -730,10 +734,21 @@ body.focused-mode .app-nav { display: none !important; }
     justify-content: flex-end;
     padding-top: 15px;
     border-top: 1px solid #e2e8f0;
+    flex-wrap: wrap;
 }
 
 .albergue-card-actions .btn-icon {
-    padding: 8px 12px;
-    font-size: 0.9rem;
+    padding: 10px 14px;
+    font-size: 1rem;
+}
+
+/* Enhanced button icon styles for maintenance view */
+.btn-icon:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.btn-icon:active {
+    transform: scale(0.98);
 }
 

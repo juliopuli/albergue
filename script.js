@@ -324,7 +324,8 @@ window.generarTarjetaAlbergue = function(albergue, esArchivado) {
     
     // Botón Borrar - SOLO SUPER_ADMIN
     if (esSuperAdmin) {
-        html += '<button class="btn-icon" style="background:#ef4444; color:white;" onclick="window.confirmarBorrarAlbergue(\'' + albergue.id + '\', \'' + nombre.replace(/'/g, "\\'") + '\')" title="Borrar permanentemente">';
+        var nombreEscapado = nombre.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+        html += '<button class="btn-icon" style="background:#ef4444; color:white;" onclick="window.confirmarBorrarAlbergue(\'' + albergue.id + '\', \'' + nombreEscapado + '\')" title="Borrar permanentemente">';
         html += '<i class="fa-solid fa-trash"></i>';
         html += '</button>';
     }

@@ -86,7 +86,7 @@ window.toggleCajaNegra = function() {
 };
 window.limpiarCajaNegra = function() { const c = document.getElementById('black-box-content'); if (c) c.innerHTML = ""; };
 
-window.sysLog("Sistema Iniciado. Versión 3.0.6 (Simplified Maintenance)", "info");
+window.sysLog("Sistema Iniciado. Versión 3.0.7 (Fixed Maintenance + QR Return)", "info");
 
 // --- GLOBALES ---
 let isPublicMode = false;
@@ -677,22 +677,32 @@ window.volverABusquedaIntervenciones = function() {
     // Ocultar pantalla de intervención
     window.safeHide('screen-intervencion');
     
-    // Limpiar campo de búsqueda
-    var searchInput = window.el('search-intervencion-persona');
-    if (searchInput) {
-        searchInput.value = '';
+    // NUEVO: Detectar si estamos en modo QR (focused-mode)
+    var isQRMode = document.body.classList.contains('focused-mode');
+    
+    if (isQRMode) {
+        // MODO QR (MÓVIL) - Volver a pantalla de escaneo
+        window.sysLog('Modo QR: Volviendo a pantalla de escaneo', 'info');
+        window.resetIntervencion(); // Resetear y mostrar pantalla QR
+    } else {
+        // MODO DESKTOP - Volver a búsqueda
+        window.sysLog('Modo Desktop: Volviendo a búsqueda de intervenciones', 'info');
+        
+        // Limpiar campo de búsqueda
+        var searchInput = window.el('search-intervencion-persona');
+        if (searchInput) {
+            searchInput.value = '';
+        }
+        
+        // Mostrar pantalla de búsqueda vacía
+        window.safeShow('intervencion-search-screen');
+        
+        // Limpiar resultados
+        var container = window.el('resultados-intervencion');
+        if (container) {
+            container.innerHTML = '<p style="text-align:center; color:#999; padding:40px; font-size:1.1rem;"><i class="fa-solid fa-magnifying-glass" style="font-size:3rem; display:block; margin-bottom:15px; opacity:0.3;"></i>🔍 Escribe un nombre o DNI para buscar...</p>';
+        }
     }
-    
-    // Mostrar pantalla de búsqueda vacía
-    window.safeShow('intervencion-search-screen');
-    
-    // Limpiar resultados (mostrar lista vacía o mensaje inicial)
-    var container = window.el('resultados-intervencion');
-    if (container) {
-        container.innerHTML = '<p style="text-align:center; color:#999; padding:40px;">🔍 Escribe para buscar personas...</p>';
-    }
-    
-    window.sysLog('Volviendo a búsqueda de intervenciones', 'info');
 };
 
 window.actualizarInfoPersonaIntervencion = function() {

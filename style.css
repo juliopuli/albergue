@@ -299,18 +299,18 @@ body.focused-mode .app-nav { display: none !important; }
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
-/* NUEVOS COLORES PARA INTERVENCIONES */
+/* NUEVOS COLORES PARA INTERVENCIONES - Coinciden con botones de derivación */
 .hist-type-san {
-    border-left: 4px solid #3b82f6; /* Azul para Sanitaria */
-    background-color: #eff6ff;
+    border-left: 4px solid #fda4af; /* Rosa claro - mismo que botón sanitario */
+    background-color: #ffe4e6; /* Fondo rosa muy claro */
 }
 .hist-type-psi {
-    border-left: 4px solid #10b981; /* Verde para Psicosocial */
-    background-color: #f0fdf4;
+    border-left: 4px solid #d8b4fe; /* Morado claro - mismo que botón psicosocial */
+    background-color: #f3e8ff; /* Fondo morado muy claro */
 }
 .hist-type-ent {
-    border-left: 4px solid #f59e0b; /* Naranja para Entregas */
-    background-color: #fffbeb;
+    border-left: 4px solid #fdba74; /* Naranja claro - mismo que botón entregas */
+    background-color: #fff7ed; /* Fondo naranja muy claro */
 }
 
 .hist-header {

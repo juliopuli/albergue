@@ -702,7 +702,7 @@ body.focused-mode .app-nav { display: none !important; }
     margin: 0;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 8px; /* Using gap instead of margin-right for consistent spacing */
 }
 
 .albergue-card-header h3 i {
@@ -719,7 +719,7 @@ body.focused-mode .app-nav { display: none !important; }
     font-size: 0.9rem;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 8px; /* Using gap instead of margin-right for consistent spacing */
 }
 
 .albergue-card-info i {

@@ -86,7 +86,7 @@ window.toggleCajaNegra = function() {
 };
 window.limpiarCajaNegra = function() { const c = document.getElementById('black-box-content'); if (c) c.innerHTML = ""; };
 
-window.sysLog("Sistema Iniciado. Versión 3.1.0 (Fixed QR Camera Display)", "info");
+window.sysLog("Sistema Iniciado. Versión 3.1.1 (Fixed QR Mode Return)", "info");
 
 // --- GLOBALES ---
 let isPublicMode = false;
@@ -457,7 +457,7 @@ window.configurarDashboard = function() {
 // --- PARTE 2 (Intervenciones & Lógica Compleja) ---
 
 window.iniciarEscanerReal = function() {
-    window.sysLog("Iniciando escáner de QR...", "info");
+    window.sysLog("=== INICIANDO ESCÁNER QR ===", "info");
     
     // Detener cualquier escáner previo
     window.detenerEscaner();
@@ -466,89 +466,92 @@ window.iniciarEscanerReal = function() {
     window.safeHide('scan-placeholder');
     window.safeHide('btn-start-camera');
     
-    // Mostrar reader y botón de detener
+    // CRÍTICO: Mostrar el elemento reader con AMBOS métodos
     var readerEl = window.el('reader');
-    if (readerEl) {
-        readerEl.classList.remove('hidden');
-        readerEl.style.display = 'block';
-        window.sysLog("Elemento 'reader' mostrado", "info");
-    } else {
-        window.sysLog("ERROR: Elemento 'reader' no encontrado", "error");
-        alert("Error: No se encuentra el contenedor del escáner");
+    if (!readerEl) {
+        window.sysLog("ERROR CRÍTICO: Elemento 'reader' no encontrado en el DOM", "error");
+        alert("Error: No se encuentra el contenedor del escáner. Recarga la página.");
         return;
     }
     
+    // Forzar visibilidad del reader con múltiples métodos
+    readerEl.classList.remove('hidden');
+    readerEl.style.display = 'block';
+    readerEl.style.visibility = 'visible';
+    readerEl.style.opacity = '1';
+    
+    window.sysLog("Elemento 'reader' forzado a visible", "info");
+    window.sysLog("   - display: " + readerEl.style.display, "info");
+    window.sysLog("   - visibility: " + readerEl.style.visibility, "info");
+    
+    // Mostrar botón de detener
     window.safeShow('btn-stop-camera');
     
     // Iniciar escáner con delay para que el DOM se actualice
-    setTimeout(() => {
+    setTimeout(function() {
         try {
             if (!html5QrCode) {
                 window.sysLog("Creando nueva instancia de Html5Qrcode", "info");
                 html5QrCode = new Html5Qrcode("reader");
             }
             
-            const config = {
+            var config = {
                 fps: 10,
                 qrbox: { width: 250, height: 250 },
                 aspectRatio: 1.0
             };
             
-            window.sysLog("Solicitando acceso a cámara...", "info");
+            window.sysLog("Solicitando acceso a cámara trasera...", "info");
             
             html5QrCode.start(
                 { facingMode: "environment" },
                 config,
                 window.onScanSuccess,
-                (errorMessage) => {
-                    // Ignorar errores de escaneo continuo
+                function(errorMessage) {
+                    // Ignorar errores de escaneo continuo (son normales)
                 }
-            ).then(() => {
-                window.sysLog("✅ Cámara iniciada correctamente", "success");
-            }).catch(err => {
+            ).then(function() {
+                window.sysLog("Cámara iniciada correctamente!", "success");
+                window.sysLog("   El cuadro de la cámara debería ser visible ahora", "success");
+            }).catch(function(err) {
                 console.error(err);
-                window.sysLog(`❌ Error al iniciar cámara: ${err}`, "error");
-                alert("Error al iniciar cámara.\n\nVerifica:\n- Permisos de cámara\n- Conexión HTTPS\n- Navegador compatible");
+                window.sysLog("Error al iniciar cámara: " + err, "error");
+                
+                var mensajeError = [
+                    "Error al iniciar la cámara.\n",
+                    "\nVerifica:",
+                    "\n- Permisos de cámara concedidos",
+                    "\n- Conexión HTTPS (necesaria para cámara)",
+                    "\n- Navegador compatible (Chrome, Safari)",
+                    "\n- Otra app no esté usando la cámara",
+                    "\n\nError técnico: " + err
+                ].join('');
+                
+                alert(mensajeError);
                 window.detenerEscaner();
             });
             
         } catch(e) {
             console.error(e);
-            window.sysLog(`❌ Excepción al iniciar cámara: ${e.message}`, "error");
-            alert("Error crítico al iniciar cámara: " + e.message);
+            window.sysLog("Excepción crítica: " + e.message, "error");
+            alert("Error crítico al iniciar cámara:\n\n" + e.message + "\n\nRecarga la página e intenta de nuevo.");
             window.detenerEscaner();
         }
     }, 300);
 };
 window.detenerEscaner = function() { if (html5QrCode && html5QrCode.isScanning) { html5QrCode.stop().then(() => { window.sysLog("Cámara detenida.", "info"); html5QrCode.clear(); }).catch(err => console.error(err)).finally(() => { resetScannerUI(); }); } else { resetScannerUI(); } };
 function resetScannerUI() {
-    // Ocultar elementos de escaneo activo
-    var reader = window.el('reader');
-    if (reader) {
-        reader.classList.add('hidden');
-        reader.style.display = 'none';
-    }
+    window.sysLog("Reseteando UI del escáner", "info");
     
-    var btnStop = window.el('btn-stop-camera');
-    if (btnStop) {
-        btnStop.classList.add('hidden');
-        btnStop.style.display = 'none';
-    }
+    // Ocultar elementos de escaneo activo
+    window.safeHide('reader');
+    window.safeHide('btn-stop-camera');
     
     // Mostrar elementos de estado inicial
-    var placeholder = window.el('scan-placeholder');
-    if (placeholder) {
-        placeholder.classList.remove('hidden');
-        placeholder.style.display = 'block';
-    }
+    window.safeShow('scan-placeholder');
+    window.safeShow('btn-start-camera');
     
-    var btnStart = window.el('btn-start-camera');
-    if (btnStart) {
-        btnStart.classList.remove('hidden');
-        btnStart.style.display = 'block';
-    }
-    
-    window.sysLog("UI del escáner reseteada - Botón 'Activar Cámara' visible", "info");
+    window.sysLog("Botón 'Activar Cámara' visible y listo", "success");
 }
 window.onScanSuccess = function(decodedText, decodedResult) { if(html5QrCode) html5QrCode.stop().then(() => { window.sysLog(`QR Leído: ${decodedText}`, "success"); html5QrCode.clear(); resetScannerUI(); try { const url = new URL(decodedText); const aid = url.searchParams.get("aid"); const pid = url.searchParams.get("pid"); if(!aid || !pid) throw new Error("QR inválido"); if(currentAlbergueId && aid !== currentAlbergueId) { if(confirm(`Este QR es de otro albergue. ¿Quieres cambiar a ese albergue?`)) { window.cambiarAlberguePorQR(aid, pid); return; } else { return; } } if(!currentAlbergueId) { window.cambiarAlberguePorQR(aid, pid); return; } window.procesarLecturaPersona(pid); } catch (e) { alert("QR no válido o formato incorrecto."); } }); };
 window.cambiarAlberguePorQR = async function(aid, pid) { window.sysLog(`Cambiando albergue por QR a: ${aid}`, "warn"); currentAlbergueId = aid; window.safeShow('loading-overlay'); try { const dS = await getDoc(doc(db,"albergues",aid)); if(dS.exists()) { currentAlbergueData = dS.data(); totalCapacidad = parseInt(currentAlbergueData.capacidad||0); } else { alert("Albergue no existe"); window.safeHide('loading-overlay'); return; } if(unsubscribePersonas) unsubscribePersonas(); unsubscribePersonas = onSnapshot(collection(db,"albergues",aid,"personas"), s=>{ listaPersonasCache=[]; camasOcupadas={}; s.forEach(d=>{ const p=d.data(); p.id=d.id; listaPersonasCache.push(p); if(p.estado==='ingresado'){ if(p.cama) camasOcupadas[p.cama]=p.nombre; } }); const target = listaPersonasCache.find(p => p.id === pid); if(target) { window.safeHide('loading-overlay'); window.navegar('intervencion'); window.cargarInterfazIntervencion(target); } }); window.conectarListenersBackground(aid); } catch(e) { console.error(e); window.safeHide('loading-overlay'); } };
@@ -565,13 +568,13 @@ window.resetIntervencion = function() {
     window.safeHide('view-scan-result');
     window.safeHide('btn-exit-focused');
     
-    // Mostrar vista inicial de escaneo (SOLO dentro de screen-intervencion)
+    // Mostrar vista inicial de escaneo (SOLO dentro de screen-intervencion que ya está visible)
     window.safeShow('view-scan-ready');
     
     // Resetear UI del escáner
     resetScannerUI();
     
-    window.sysLog("Interfaz de intervención reseteada", "success");
+    window.sysLog("Interfaz de intervención reseteada - Botón visible", "success");
 };
 window.salirModoFocalizado = function() { document.body.classList.remove('focused-mode'); window.navegar('home'); window.history.pushState({}, document.title, window.location.pathname); };
 window.iniciarModoFocalizado = async function(aid, pid) { window.sysLog(`Iniciando MODO FOCALIZADO. Alb: ${aid}, Pers: ${pid}`, "warn"); document.body.classList.add('focused-mode'); window.cambiarAlberguePorQR(aid, pid); };
@@ -787,19 +790,26 @@ window.volverABusquedaIntervenciones = function() {
         window.albergueAnteriorIntervenciones = undefined;
     }
     
-    // Ocultar pantalla de intervención
-    window.safeHide('screen-intervencion');
-    
-    // NUEVO: Detectar si estamos en modo QR (focused-mode)
+    // Detectar si estamos en modo QR (focused-mode) ANTES de ocultar nada
     var isQRMode = document.body.classList.contains('focused-mode');
     
     if (isQRMode) {
         // MODO QR (MÓVIL) - Volver a pantalla de escaneo
         window.sysLog('Modo QR: Volviendo a pantalla de escaneo', 'info');
-        window.resetIntervencion(); // Resetear y mostrar pantalla QR
+        
+        // NO ocultar screen-intervencion en modo QR
+        // Solo resetear la interfaz dentro de ella
+        window.resetIntervencion();
+        
+        // CRÍTICO: Asegurar que screen-intervencion esté visible en modo QR
+        window.safeShow('screen-intervencion');
+        
     } else {
         // MODO DESKTOP - Volver a búsqueda
         window.sysLog('Modo Desktop: Volviendo a búsqueda de intervenciones', 'info');
+        
+        // Ocultar pantalla de intervención (SOLO en modo desktop)
+        window.safeHide('screen-intervencion');
         
         // Limpiar campo de búsqueda
         var searchInput = window.el('search-intervencion-persona');

@@ -86,7 +86,7 @@ window.toggleCajaNegra = function() {
 };
 window.limpiarCajaNegra = function() { const c = document.getElementById('black-box-content'); if (c) c.innerHTML = ""; };
 
-window.sysLog("Sistema Iniciado. Versión 3.0.7 (Fixed Maintenance + QR Return)", "info");
+window.sysLog("Sistema Iniciado. Versión 3.0.8 (Fixed Maintenance Display)", "info");
 
 // --- GLOBALES ---
 let isPublicMode = false;
@@ -233,10 +233,13 @@ window.cargarAlberguesMantenimiento = async function() {
 };
 
 window.renderizarAlberguesMantenimiento = function(activos, archivados) {
-    var containerActivos = window.el('lista-albergues-activos');
-    var containerArchivados = window.el('lista-albergues-archivados');
+    var containerActivos = window.el('mto-lista-activos');
+    var containerArchivados = window.el('mto-lista-archivados');
     
-    if (!containerActivos || !containerArchivados) return;
+    if (!containerActivos || !containerArchivados) {
+        window.sysLog("ERROR: No se encontraron contenedores de mantenimiento", "error");
+        return;
+    }
     
     // Renderizar activos
     if (activos.length === 0) {

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gestión Albergue - Ver.3.1.2</title>
+    <title>Gestión Albergue - Ver.3.1.3</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -12,7 +12,7 @@
 </head>
 <body>
 
-    <div class="version-tag">Ver.3.1.2</div>
+    <div class="version-tag">Ver.3.1.3</div>
     
     <div id="toast" style="visibility: hidden;">Guardado automático</div>
     <div id="loading-overlay" class="hidden"><div class="spinner"></div><h2 style="color:var(--primary);">Cargando Datos...</h2></div>
@@ -390,6 +390,39 @@
             <div id="carnet-qrcode-display" style="display:inline-block; margin:20px; border:4px solid var(--text-main); padding:10px; border-radius:10px;"></div>
             <h2 id="carnet-nombre" style="font-size:1.4rem; margin-bottom:5px;"></h2>
             <p id="carnet-id" style="font-size:1rem; color:#666; font-family:monospace; font-weight:bold;"></p>
+        </div>
+    </div>
+    
+    <!-- Modal QR Filiación (Mantenimiento) -->
+    <div id="modal-qr-filiacion" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
+        <div class="modal-content" style="text-align:center; max-width: 500px;">
+            <span class="close-modal" onclick="window.safeHide('modal-qr-filiacion')">&times;</span>
+            
+            <h2 style="color: var(--primary); margin-bottom: 10px;">
+                <i class="fa-solid fa-qrcode"></i> QR de Filiación Pública
+            </h2>
+            
+            <h3 id="qr-filiacion-titulo" style="color: var(--text-main); margin-bottom: 20px;">
+                Nombre del Albergue
+            </h3>
+            
+            <div id="qrcode-filiacion-display" style="display:inline-block; margin:20px; padding: 20px; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);"></div>
+            
+            <p style="color:#666; font-size: 0.9rem; margin-top: 20px; line-height: 1.6;">
+                <strong>Escanea este QR para acceso público.</strong><br>
+                Los usuarios podrán auto-registrarse sin login.
+            </p>
+            
+            <div style="background: #f1f5f9; padding: 15px; border-radius: 8px; margin-top: 20px;">
+                <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 5px;">URL de acceso directo:</p>
+                <p id="qr-filiacion-url" style="font-size: 0.8rem; color: var(--primary); word-break: break-all; font-family: monospace;">
+                    https://...
+                </p>
+            </div>
+            
+            <button class="secondary" style="margin-top: 20px; width: 100%;" onclick="window.safeHide('modal-qr-filiacion')">
+                Cerrar
+            </button>
         </div>
     </div>
     

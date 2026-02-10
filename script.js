@@ -146,7 +146,44 @@ window.getDatosFormulario = function(p) { return { nombre: window.safeVal(`${p}-
 // --- AUTH & USER MANAGEMENT ---
 window.iniciarSesion = async function() { try { window.sysLog("Click Login", "info"); await signInWithEmailAndPassword(auth, window.el('login-email').value, window.el('login-pass').value); window.sysLog("Auth Firebase OK", "success"); } catch(err) { window.sysLog("Error Auth: " + err.message, "error"); alert(err.message); } };
 window.cerrarSesion = function() { window.sysLog("Cerrando sesión", "warn"); signOut(auth); location.reload(); };
+// Mostrar modal de recuperación
+window.mostrarModalResetPass = function() {
+    window.safeShow('modal-reset-pass'); // Usa tu helper global de modales
+    window.el('reset-pass-email').value = "";
+    window.el('reset-pass-feedback').innerText = "";
+    window.el('btn-reset-pass').disabled = false;
+};
 
+// Enviar email de recuperación
+window.enviarResetPasswordEmail = async function() {
+    const email = window.safeVal('reset-pass-email').trim();
+    const feedback = window.el('reset-pass-feedback');
+    const btn = window.el('btn-reset-pass');
+    feedback.innerText = "";
+    btn.disabled = true;
+
+    if (!email.match(/^[^@]+@[^@]+\.[^@]{2,}$/)) {
+        feedback.style.color = "red";
+        feedback.innerText = "Introduce un correo válido";
+        btn.disabled = false;
+        return;
+    }
+
+    try {
+        // auth está definido arriba como: const auth = getAuth(app);
+        await sendPasswordResetEmail(auth, email);
+        feedback.style.color = "green";
+        feedback.innerText = "✅ Enviado: Revisa tu correo para recuperar la contraseña.";
+    } catch (e) {
+        feedback.style.color = "red";
+        if (e.code && e.code.includes("user-not-found")) {
+            feedback.innerText = "No existe ningún usuario con ese email.";
+        } else {
+            feedback.innerText = "Error: " + (e.message || e.code || e);
+        }
+    }
+    btn.disabled = false;
+};
 window.cambiarEstadoUsuarioDirecto = async function(uid, nuevoEstado) {
     if (currentUserData.rol !== 'super_admin' && currentUserData.rol !== 'admin') { alert("Sin permisos"); window.cargarUsuarios(); return; }
     const targetDoc = await getDoc(doc(db, "usuarios", uid));

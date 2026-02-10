@@ -1852,3 +1852,44 @@ onAuthStateChanged(auth, async (u) => {
         window.safeShow('login-screen');
     }
 });
+import { confirmPasswordReset } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+
+// Detecta link de contraseña y muestra modal
+function checkResetPasswordLink() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('mode') === 'resetPassword' && params.get('oobCode')) {
+        window.safeShow('modal-custom-resetpass');
+        // Evita la navegación o scroll fuera del modal, opcional
+        document.body.style.overflow = 'hidden';
+        const btn = document.getElementById('btn-set-newpass');
+        const feedback = document.getElementById('resetpass-custom-feedback');
+        btn.onclick = async function() {
+            feedback.innerText = "";
+            const newPassword = document.getElementById('reset-pass-new-pw').value;
+            if (!newPassword || newPassword.length < 6) {
+                feedback.style.color = "red";
+                feedback.innerText = "La contraseña debe tener mínimo 6 caracteres";
+                return;
+            }
+            btn.disabled = true;
+            try {
+                await confirmPasswordReset(auth, params.get('oobCode'), newPassword);
+                feedback.style.color = "green";
+                feedback.innerText = "✅ Contraseña actualizada. Ahora puedes iniciar sesión.";
+                // Opcional: limpiar parámetros de la URL
+                setTimeout(() => {
+                    window.location.href = window.location.pathname; // Redirige al login limpio
+                }, 3000);
+            } catch (e) {
+                feedback.style.color = "red";
+                if (e.code && e.code.includes("expired")) {
+                    feedback.innerText = "El enlace ha expirado o ya fue usado.";
+                } else {
+                    feedback.innerText = "Error: " + (e.message || e.code || e);
+                }
+            }
+            btn.disabled = false;
+        };
+    }
+}
+window.addEventListener('DOMContentLoaded', checkResetPasswordLink);

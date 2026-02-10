@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gestión Albergue - Ver.3.0.2</title>
+    <title>Gestión Albergue - Ver.3.0.3</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -12,7 +12,7 @@
 </head>
 <body>
 
-    <div class="version-tag">Ver.3.0.0</div>
+    <div class="version-tag">Ver.3.0.3</div>
     
     <div id="toast" style="visibility: hidden;">Guardado automático</div>
     <div id="loading-overlay" class="hidden"><div class="spinner"></div><h2 style="color:var(--primary);">Cargando Datos...</h2></div>
@@ -133,6 +133,26 @@
                                 <i class="fa-solid fa-right-from-bracket"></i> Salir al Menú Principal
                             </button>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BÚSQUEDA DE PERSONA PARA INTERVENCIÓN (Desktop) -->
+            <div id="intervencion-search-screen" class="hidden">
+                <div class="section-header">
+                    <h2><i class="fa-solid fa-magnifying-glass"></i> Buscar Persona para Intervención</h2>
+                </div>
+                
+                <div class="card">
+                    <input 
+                        type="text" 
+                        id="search-intervencion-persona" 
+                        placeholder="🔍 Buscar por nombre, apellidos o DNI..." 
+                        oninput="window.filtrarPersonasIntervencion()"
+                        style="margin-bottom: 20px;">
+                    
+                    <div id="resultados-intervencion" style="max-height: 500px; overflow-y: auto;">
+                        <!-- Resultados de búsqueda -->
                     </div>
                 </div>
             </div>

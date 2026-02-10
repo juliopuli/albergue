@@ -86,7 +86,7 @@ window.toggleCajaNegra = function() {
 };
 window.limpiarCajaNegra = function() { const c = document.getElementById('black-box-content'); if (c) c.innerHTML = ""; };
 
-window.sysLog("Sistema Iniciado. Versión 3.0.2 (Matched History Colors)", "info");
+window.sysLog("Sistema Iniciado. Versión 3.0.3 (Desktop Intervention Search)", "info");
 
 // --- GLOBALES ---
 let isPublicMode = false;
@@ -206,7 +206,7 @@ window.verListaObservatorio = async function(albId, tipo) { const c = window.el(
 window.verHistorialObservatorio = function(pId, isGlobal, albId){ window.verHistorial(pId, isGlobal, albId); };
 window.cargarUsuarios = function() { const c = window.el('lista-usuarios-container'); const filterText = window.safeVal('search-user').toLowerCase().trim(); unsubscribeUsers = onSnapshot(query(collection(db,"usuarios")), s => { c.innerHTML = ""; if(s.empty) { c.innerHTML="<p>No hay usuarios.</p>"; return; } s.forEach(d => { const u = d.data(); if(filterText && !u.nombre.toLowerCase().includes(filterText) && !u.email.toLowerCase().includes(filterText)) return; if(currentUserData.rol === 'admin' && u.rol === 'super_admin') return; const isSuper = (u.rol === 'super_admin'); const inactiveClass = (u.activo === false) ? 'inactive' : 'active'; const disabledAttr = isSuper ? 'disabled title="Super Admin no se puede desactivar"' : ''; c.innerHTML += ` <div class="user-card-item ${inactiveClass}" onclick="window.abrirModalUsuario('${d.id}')"> <div style="display:flex; justify-content:space-between; align-items:center; width:100%;"> <div><strong>${u.nombre}</strong><br><small class="role-badge role-${u.rol}">${u.rol}</small></div> <div onclick="event.stopPropagation()"> <label class="toggle-switch small"> <input type="checkbox" class="toggle-input" onchange="window.cambiarEstadoUsuarioDirecto('${d.id}', this.checked)" ${u.activo!==false?'checked':''} ${disabledAttr}> <span class="toggle-slider"></span> </label> </div> </div> </div>`; }); }); };
 
-window.navegar = function(p) { window.sysLog(`Navegando: ${p}`, "nav"); if(unsubscribeUsers) unsubscribeUsers(); if(unsubscribeAlberguesActivos) unsubscribeAlberguesActivos(); ['screen-home','screen-usuarios','screen-gestion-albergues','screen-mantenimiento','screen-operativa','screen-observatorio', 'screen-intervencion'].forEach(id=>window.safeHide(id)); if(!currentUserData) return; if(p !== 'intervencion') { window.resetIntervencion(); window.detenerEscaner(); } if(['home', 'mantenimiento', 'observatorio', 'usuarios', 'gestion-albergues'].includes(p)) { currentAlbergueId = null; currentAlbergueData = null; } if(p==='home') window.safeShow('screen-home'); else if(p==='intervencion') { window.safeShow('screen-intervencion'); } else if(p==='gestion-albergues') { window.cargarAlberguesActivos(); window.safeShow('screen-gestion-albergues'); } else if(p==='mantenimiento') { window.cargarAlberguesMantenimiento(); window.safeShow('screen-mantenimiento'); } else if(p==='operativa') { window.safeShow('screen-operativa'); const t = window.configurarTabsPorRol(); window.cambiarPestana(t); } else if(p==='observatorio') { window.cargarObservatorio(); window.safeShow('screen-observatorio'); } else if(p==='usuarios') { window.cargarUsuarios(); window.safeShow('screen-usuarios'); } document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); if(p.includes('albergue')) window.safeAddActive('nav-albergues'); else if(p.includes('obs')) window.safeAddActive('nav-obs'); else if(p.includes('mantenimiento')) window.safeAddActive('nav-mto'); else if(p === 'intervencion') window.safeAddActive('nav-intervencion'); else window.safeAddActive('nav-home'); };
+window.navegar = function(p) { window.sysLog(`Navegando: ${p}`, "nav"); if(unsubscribeUsers) unsubscribeUsers(); if(unsubscribeAlberguesActivos) unsubscribeAlberguesActivos(); ['screen-home','screen-usuarios','screen-gestion-albergues','screen-mantenimiento','screen-operativa','screen-observatorio', 'screen-intervencion','intervencion-search-screen'].forEach(id=>window.safeHide(id)); if(!currentUserData) return; if(p !== 'intervencion') { window.resetIntervencion(); window.detenerEscaner(); } if(['home', 'mantenimiento', 'observatorio', 'usuarios', 'gestion-albergues'].includes(p)) { currentAlbergueId = null; currentAlbergueData = null; } if(p==='home') window.safeShow('screen-home'); else if(p==='intervencion') { window.sysLog("Navegando a: Intervenciones", "nav"); var isFocusedMode = document.body.classList.contains('focused-mode'); if (isFocusedMode) { window.safeShow('screen-intervencion'); } else { window.safeShow('intervencion-search-screen'); window.cargarPersonasParaIntervencion(); } } else if(p==='gestion-albergues') { window.cargarAlberguesActivos(); window.safeShow('screen-gestion-albergues'); } else if(p==='mantenimiento') { window.cargarAlberguesMantenimiento(); window.safeShow('screen-mantenimiento'); } else if(p==='operativa') { window.safeShow('screen-operativa'); const t = window.configurarTabsPorRol(); window.cambiarPestana(t); } else if(p==='observatorio') { window.cargarObservatorio(); window.safeShow('screen-observatorio'); } else if(p==='usuarios') { window.cargarUsuarios(); window.safeShow('screen-usuarios'); } document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); if(p.includes('albergue')) window.safeAddActive('nav-albergues'); else if(p.includes('obs')) window.safeAddActive('nav-obs'); else if(p.includes('mantenimiento')) window.safeAddActive('nav-mto'); else if(p === 'intervencion') window.safeAddActive('nav-intervencion'); else window.safeAddActive('nav-home'); };
 window.configurarTabsPorRol = function() { const r = (currentUserData.rol || "").toLowerCase().trim(); ['btn-tab-pref', 'btn-tab-fil', 'btn-tab-san', 'btn-tab-psi', 'btn-tab-ent'].forEach(id => window.safeHide(id)); if(['super_admin', 'admin'].includes(r)) { ['btn-tab-pref', 'btn-tab-fil', 'btn-tab-san', 'btn-tab-psi', 'btn-tab-ent'].forEach(id => window.safeShow(id)); return 'filiacion'; } if(r === 'albergue') { window.safeShow('btn-tab-pref'); window.safeShow('btn-tab-fil'); window.safeShow('btn-tab-ent'); return 'filiacion'; } if(['sanitario', 'psicosocial'].includes(r)) { window.safeShow('btn-tab-san'); window.safeShow('btn-tab-psi'); return 'sanitaria'; } return 'filiacion'; };
 window.cambiarPestana = function(t) { window.sysLog(`Pestaña: ${t}`, "nav"); ['tab-prefiliacion', 'tab-filiacion', 'tab-sanitaria', 'tab-psicosocial', 'tab-entregas'].forEach(id => window.safeHide(id)); ['btn-tab-pref', 'btn-tab-fil', 'btn-tab-san', 'btn-tab-psi', 'btn-tab-ent'].forEach(id => window.safeRemoveActive(id)); window.safeAddActive(`btn-tab-${t.substring(0,3)}`); window.safeShow(`tab-${t}`); 
     if (t === 'prefiliacion') { window.limpiarFormulario('man'); adminFamiliaresTemp = []; if(window.actualizarListaFamiliaresAdminUI) window.actualizarListaFamiliaresAdminUI(); if(window.el('existing-family-list-ui')) window.el('existing-family-list-ui').innerHTML = ""; window.cancelarEdicionPref(); } 
@@ -291,6 +291,112 @@ window.confirmarDerivacion = async function() {
     window.resetIntervencion(); 
 };
 window.verCarnetQR = function() { if(!personaEnGestion) return; window.safeShow('modal-carnet-qr'); const container = window.el('carnet-qrcode-display'); container.innerHTML = ""; const currentUrl = window.location.href.split('?')[0]; const deepLink = `${currentUrl}?action=scan&aid=${currentAlbergueId}&pid=${personaEnGestion.id}`; new QRCode(container, { text: deepLink, width: 250, height: 250 }); const nombreCompleto = `${personaEnGestion.nombre} ${personaEnGestion.ap1 || ""} ${personaEnGestion.ap2 || ""}`; window.el('carnet-nombre').innerText = nombreCompleto; window.el('carnet-id').innerText = personaEnGestion.docNum || "ID: " + personaEnGestion.id.substring(0,8).toUpperCase(); };
+
+// --- BÚSQUEDA DE PERSONAS PARA INTERVENCIÓN (Desktop) ---
+window.cargarPersonasParaIntervencion = function() {
+    var container = window.el('resultados-intervencion');
+    if (!container) return;
+    
+    container.innerHTML = '<p style="text-align:center; color:#999;">Cargando personas...</p>';
+    
+    // Usar la lista de personas ya cargada
+    if (listaPersonasCache.length === 0) {
+        container.innerHTML = '<p style="text-align:center; color:#999;">No hay personas registradas.</p>';
+        return;
+    }
+    
+    window.mostrarResultadosIntervencion(listaPersonasCache);
+};
+
+window.filtrarPersonasIntervencion = function() {
+    var searchInput = window.el('search-intervencion-persona');
+    if (!searchInput) return;
+    
+    var term = searchInput.value.toLowerCase().trim();
+    
+    if (term === '') {
+        window.mostrarResultadosIntervencion(listaPersonasCache);
+        return;
+    }
+    
+    var filtradas = listaPersonasCache.filter(function(p) {
+        var nombre = (p.nombre || '').toLowerCase();
+        var ap1 = (p.ap1 || '').toLowerCase();
+        var ap2 = (p.ap2 || '').toLowerCase();
+        var docNum = (p.docNum || '').toLowerCase();
+        
+        return nombre.includes(term) || 
+               ap1.includes(term) || 
+               ap2.includes(term) || 
+               docNum.includes(term);
+    });
+    
+    window.mostrarResultadosIntervencion(filtradas);
+};
+
+window.mostrarResultadosIntervencion = function(personas) {
+    var container = window.el('resultados-intervencion');
+    if (!container) return;
+    
+    if (personas.length === 0) {
+        container.innerHTML = '<p style="text-align:center; color:#999;">No se encontraron resultados.</p>';
+        return;
+    }
+    
+    var html = '<div class="user-list-grid">';
+    
+    personas.forEach(function(p) {
+        var nombreCompleto = p.nombre + ' ' + (p.ap1 || '') + ' ' + (p.ap2 || '');
+        var estadoBadge = p.estado === 'activo' 
+            ? '<span class="badge badge-active">Activo</span>' 
+            : '<span class="badge badge-inactive">Inactivo</span>';
+        
+        html += '<div class="user-card-item" onclick="window.seleccionarPersonaIntervencion(\'' + p.id + '\')" style="cursor:pointer;">';
+        html += '<div><strong style="font-size:1.1rem;">' + nombreCompleto + '</strong></div>';
+        html += '<div style="color:#666; font-size:0.9rem; margin-top:5px;">';
+        html += '<i class="fa-solid fa-id-card"></i> ' + (p.docNum || 'Sin documento');
+        html += '</div>';
+        html += '<div style="margin-top:8px;">' + estadoBadge + '</div>';
+        html += '</div>';
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+};
+
+window.seleccionarPersonaIntervencion = function(personaId) {
+    var persona = listaPersonasCache.find(function(p) { return p.id === personaId; });
+    if (!persona) {
+        alert('Persona no encontrada');
+        return;
+    }
+    
+    // Guardar la persona seleccionada como activa
+    personaIntervencionActiva = persona;
+    
+    // Ocultar pantalla de búsqueda
+    window.safeHide('intervencion-search-screen');
+    
+    // Mostrar la pantalla de intervención y cargar interfaz
+    window.safeShow('screen-intervencion');
+    window.cargarInterfazIntervencion(persona);
+    
+    window.sysLog('Persona seleccionada para intervención: ' + persona.nombre, 'info');
+};
+
+window.actualizarInfoPersonaIntervencion = function() {
+    if (!personaIntervencionActiva) return;
+    
+    // Actualizar información visible en cada módulo de intervención
+    ['san', 'psi', 'ent'].forEach(function(tipo) {
+        var nombreEl = window.el('nombre-persona-' + tipo);
+        if (nombreEl) {
+            nombreEl.textContent = personaIntervencionActiva.nombre + ' ' + 
+                                   (personaIntervencionActiva.ap1 || '') + ' ' + 
+                                   (personaIntervencionActiva.ap2 || '');
+        }
+    });
+};
 
 // --- LOGICA DE NEGOCIO ---
 window.cargarDatosYEntrar = async function(id) {

@@ -86,7 +86,7 @@ window.toggleCajaNegra = function() {
 };
 window.limpiarCajaNegra = function() { const c = document.getElementById('black-box-content'); if (c) c.innerHTML = ""; };
 
-window.sysLog("Sistema Iniciado. Versión 3.0.8 (Fixed Maintenance Display)", "info");
+window.sysLog("Sistema Iniciado. Versión 3.0.9 (Fixed QR Reset)", "info");
 
 // --- GLOBALES ---
 let isPublicMode = false;
@@ -463,22 +463,72 @@ window.onScanSuccess = function(decodedText, decodedResult) { if(html5QrCode) ht
 window.cambiarAlberguePorQR = async function(aid, pid) { window.sysLog(`Cambiando albergue por QR a: ${aid}`, "warn"); currentAlbergueId = aid; window.safeShow('loading-overlay'); try { const dS = await getDoc(doc(db,"albergues",aid)); if(dS.exists()) { currentAlbergueData = dS.data(); totalCapacidad = parseInt(currentAlbergueData.capacidad||0); } else { alert("Albergue no existe"); window.safeHide('loading-overlay'); return; } if(unsubscribePersonas) unsubscribePersonas(); unsubscribePersonas = onSnapshot(collection(db,"albergues",aid,"personas"), s=>{ listaPersonasCache=[]; camasOcupadas={}; s.forEach(d=>{ const p=d.data(); p.id=d.id; listaPersonasCache.push(p); if(p.estado==='ingresado'){ if(p.cama) camasOcupadas[p.cama]=p.nombre; } }); const target = listaPersonasCache.find(p => p.id === pid); if(target) { window.safeHide('loading-overlay'); window.navegar('intervencion'); window.cargarInterfazIntervencion(target); } }); window.conectarListenersBackground(aid); } catch(e) { console.error(e); window.safeHide('loading-overlay'); } };
 window.procesarLecturaPersona = function(pid) { const targetPerson = listaPersonasCache.find(p => p.id === pid); if(targetPerson) { window.cargarInterfazIntervencion(targetPerson); } else { getDoc(doc(db, "albergues", currentAlbergueId, "personas", pid)).then(docSnap => { if(docSnap.exists()) { const pData = { id: docSnap.id, ...docSnap.data() }; window.cargarInterfazIntervencion(pData); } else { alert("Persona no encontrada en este albergue."); } }); } };
 window.cargarInterfazIntervencion = function(persona) { if(!persona) return; personaEnGestion = persona; window.safeHide('view-scan-ready'); window.safeHide('reader'); window.safeHide('btn-stop-camera'); window.safeShow('view-scan-result'); window.safeShow('btn-exit-focused'); window.el('interv-nombre').innerText = `${persona.nombre} ${persona.ap1 || ""}`; window.el('interv-doc').innerText = persona.docNum || "Sin Documento"; window.el('interv-estado').innerText = (persona.estado || "Desconocido").toUpperCase(); const presencia = persona.presencia || 'dentro'; const badgePresencia = window.el('interv-presencia'); badgePresencia.innerText = presencia.toUpperCase(); if(presencia === 'dentro') { badgePresencia.style.backgroundColor = '#dcfce7'; badgePresencia.style.color = '#166534'; } else { badgePresencia.style.backgroundColor = '#fee2e2'; badgePresencia.style.color = '#991b1b'; } if(currentAlbergueData) { const hName = window.el('interv-albergue-name'); if(hName) hName.innerText = currentAlbergueData.nombre || "ALBERGUE"; } };
-window.resetIntervencion = function() { personaEnGestion = null; window.safeHide('view-scan-result'); window.safeShow('view-scan-ready'); resetScannerUI(); };
+window.resetIntervencion = function() {
+    window.sysLog("Reseteando pantalla de intervención", "info");
+    
+    // Limpiar persona en gestión
+    personaEnGestion = null;
+    personaEnGestionEsGlobal = false;
+    
+    // Detener cámara si está activa
+    window.detenerEscaner();
+    
+    // Ocultar vista de resultado (datos de la persona)
+    window.safeHide('view-scan-result');
+    
+    // Mostrar vista inicial de escaneo
+    window.safeShow('view-scan-ready');
+    window.safeShow('screen-intervencion');
+    
+    // Mostrar el placeholder con icono y texto
+    var placeholder = window.el('scan-placeholder');
+    if (placeholder) {
+        placeholder.style.display = 'block';
+    }
+    
+    // Mostrar botón "Activar Cámara"
+    var btnStart = window.el('btn-start-camera');
+    if (btnStart) {
+        btnStart.classList.remove('hidden');
+        btnStart.style.display = 'block';
+    }
+    
+    // Ocultar botón "Detener Cámara"
+    var btnStop = window.el('btn-stop-camera');
+    if (btnStop) {
+        btnStop.classList.add('hidden');
+        btnStop.style.display = 'none';
+    }
+    
+    // Ocultar el lector de QR
+    var reader = window.el('reader');
+    if (reader) {
+        reader.classList.add('hidden');
+        reader.style.display = 'none';
+    }
+    
+    // Ocultar botón de salir (si existe en modo focused)
+    window.safeHide('btn-exit-focused');
+    
+    window.sysLog("Pantalla de intervención reseteada - Lista para escanear", "success");
+};
 window.salirModoFocalizado = function() { document.body.classList.remove('focused-mode'); window.navegar('home'); window.history.pushState({}, document.title, window.location.pathname); };
 window.iniciarModoFocalizado = async function(aid, pid) { window.sysLog(`Iniciando MODO FOCALIZADO. Alb: ${aid}, Pers: ${pid}`, "warn"); document.body.classList.add('focused-mode'); window.cambiarAlberguePorQR(aid, pid); };
 window.registrarMovimiento = async function(tipo) { 
     if(!personaEnGestion || !currentAlbergueId) return; 
+    
     try { 
         const estadoPresencia = (tipo === 'entrada') ? 'dentro' : 'fuera'; 
         const pRef = doc(db, "albergues", currentAlbergueId, "personas", personaEnGestion.id); 
         await updateDoc(pRef, { presencia: estadoPresencia }); 
         await window.registrarLog(personaEnGestion.id, "Movimiento", tipo.toUpperCase()); 
+        
         window.sysLog(`Movimiento: ${tipo} para ${personaEnGestion.nombre}`, "info"); 
         window.showToast(`✅ ${tipo.toUpperCase()} Registrada`); 
-        window.resetIntervencion(); 
         
-        // NUEVO: Volver a búsqueda de intervenciones
+        // Solo llamar a volverABusquedaIntervenciones (que ya hace el reset)
         window.volverABusquedaIntervenciones();
+        
     } catch(e) { 
         console.error(e); 
         alert("Error al registrar movimiento: " + e.message); 
@@ -488,8 +538,8 @@ window.abrirModalDerivacion = function(tipo) { tipoDerivacionActual = tipo; wind
 window.confirmarDerivacion = async function() { 
     const motivo = window.el('derivacion-motivo').value; 
     if(!motivo) return alert("Escribe un motivo."); 
+    
     if(personaEnGestion) { 
-        // Add estado: "pendiente" to the log
         const logData = {
             fecha: new Date(),
             usuario: currentUserData.nombre,
@@ -502,15 +552,14 @@ window.confirmarDerivacion = async function() {
             : collection(db, "albergues", currentAlbergueId, "personas", personaEnGestion.id, "historial");
         await addDoc(path, logData);
         
-        // Update badge count
         window.actualizarBadgeDerivaciones();
     } 
+    
     window.sysLog(`Derivación a ${tipoDerivacionActual}: ${motivo}`, "warn"); 
     window.safeHide('modal-derivacion'); 
     window.showToast("✅ Derivación enviada"); 
-    window.resetIntervencion(); 
     
-    // NUEVO: Volver a búsqueda de intervenciones
+    // Solo llamar a volverABusquedaIntervenciones (que ya hace el reset)
     window.volverABusquedaIntervenciones();
 };
 window.verCarnetQR = function() { if(!personaEnGestion) return; window.safeShow('modal-carnet-qr'); const container = window.el('carnet-qrcode-display'); container.innerHTML = ""; const currentUrl = window.location.href.split('?')[0]; const deepLink = `${currentUrl}?action=scan&aid=${currentAlbergueId}&pid=${personaEnGestion.id}`; new QRCode(container, { text: deepLink, width: 250, height: 250 }); const nombreCompleto = `${personaEnGestion.nombre} ${personaEnGestion.ap1 || ""} ${personaEnGestion.ap2 || ""}`; window.el('carnet-nombre').innerText = nombreCompleto; window.el('carnet-id').innerText = personaEnGestion.docNum || "ID: " + personaEnGestion.id.substring(0,8).toUpperCase(); };

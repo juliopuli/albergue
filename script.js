@@ -1138,7 +1138,8 @@ window.abrirModalInfoCama=function(p){window.el('info-cama-num').innerText=p.cam
 window.liberarCamaMantener=async function(){if(!personaEnGestion)return;if(!confirm(`¿Liberar cama de ${personaEnGestion.nombre}?`))return;try{await updateDoc(doc(db,"albergues",currentAlbergueId,"personas",personaEnGestion.id),{cama:null});window.registrarLog(personaEnGestion.id,"Liberar Cama","Se mantiene en albergue");window.sysLog("Cama liberada.","success");if(!modoMapaGeneral)window.cerrarMapaCamas();}catch(e){window.sysLog("Error liberando cama: "+e.message,"error");}};
 window.abrirModalFamiliar=function(){window.limpiarFormulario('fam');window.safeShow('modal-add-familiar');if(window.el('fam-tipo-doc'))window.el('fam-tipo-doc').value="MENOR";window.verificarMenor('fam');};
 window.cerrarModalFamiliar=function(){window.safeHide('modal-add-familiar');};
-window.guardarFamiliarEnLista=function(){const d=window.getDatosFormulario('fam');
+window.guardarFamiliarEnLista = function() {
+    const d = window.getDatosFormulario('fam');
     
     // Validar documento
     if (!validarDocumento(d.tipoDoc, d.docNum)) {
@@ -1149,7 +1150,23 @@ window.guardarFamiliarEnLista=function(){const d=window.getDatosFormulario('fam'
     if (!validarEdadNODNI(d.tipoDoc, d.fechaNac)) {
         return;
     }
-                                         if(!d.nombre)return alert("Nombre obligatorio");listaFamiliaresTemp.push(d);window.actualizarListaFamiliaresUI();window.cerrarModalFamiliar();};
+    
+    if (!d.nombre) return alert("Nombre obligatorio");
+    
+    listaFamiliaresTemp.push(d);
+    window.actualizarListaFamiliaresUI();
+    window.cerrarModalFamiliar();
+    
+    // Limpiar campos adicionales
+    const intolEl = document.getElementById('fam-tiene-intolerancia');
+    if (intolEl) intolEl.value = 'no';
+    const detContainer = document.getElementById('fam-intolerancia-detalle-container');
+    if (detContainer) detContainer.classList.add('hidden');
+    const detInput = document.getElementById('fam-intolerancia-detalle');
+    if (detInput) detInput.value = '';
+    const noLocEl = document.getElementById('fam-no-localizacion');
+    if (noLocEl) noLocEl.checked = false;
+};
 window.actualizarListaFamiliaresUI=function(){const d=window.el('lista-familiares-ui');if(!d)return;d.innerHTML="";if(listaFamiliaresTemp.length===0){d.innerHTML='<p style="color:#999;font-style:italic;">Ninguno añadido.</p>';return;}listaFamiliaresTemp.forEach((f,i)=>{d.innerHTML+=`<div class="fam-item"><div><strong>${f.nombre}</strong></div><button class="danger" style="margin:0;padding:2px 8px;width:auto;" onclick="window.borrarFamiliarTemp(${i})">X</button></div>`;});};
 window.borrarFamiliarTemp=function(i){listaFamiliaresTemp.splice(i,1);window.actualizarListaFamiliaresUI();};
 window.abrirModalFamiliarAdmin=function(){window.limpiarFormulario('adm-fam');window.safeShow('modal-admin-add-familiar');if(window.el('adm-fam-tipo-doc'))window.el('adm-fam-tipo-doc').value="MENOR";window.verificarMenor('adm-fam');};

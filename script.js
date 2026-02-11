@@ -2211,8 +2211,11 @@ onAuthStateChanged(auth, async (u) => {
             signOut(auth);
         }
     } else {
-        window.sysLog("Esperando inicio de sesión...", "info");
-        window.safeHide('app-shell');
-        window.safeShow('login-screen');
+        // Solo mostrar login si NO está en modo público
+        if (!isPublicMode) {
+            window.sysLog("Esperando inicio de sesión...", "info");
+            window.safeHide('app-shell');
+            window.safeShow('login-screen');
+        }
     }
 });

@@ -319,6 +319,17 @@ window.toggleStartButton = function() { window.el('btn-start-public').disabled =
 window.iniciarRegistro = function() { window.safeHide('public-welcome-screen'); window.safeShow('public-form-container'); };
 window.publicoGuardarTodo = async function() {
     const d = window.getDatosFormulario('pub'); if (!d.nombre) return alert("Falta nombre");
+    
+    // Validar documento
+    if (!validarDocumento(d.tipoDoc, d.docNum)) {
+        return;
+    }
+    
+    // Validar edad si es NODNI
+    if (!validarEdadNODNI(d.tipoDoc, d.fechaNac)) {
+        return;
+    }
+    
     if (!auth.currentUser) { try { await signInAnonymously(auth); } catch (e) {} }
     let nombreAlb = "Albergue (QR)";
     const hAlb = window.el('public-albergue-name');

@@ -1157,8 +1157,8 @@ window.cargarDatosYEntrar = async function(id) {
                  if(u && u.id === personaEnGestion.id) { personaEnGestion = u; }
             }
         });
-        if(unsubscribePool) unsubscribePool();
-        unsubscribePool = onSnapshot(
+if(unsubscribePool) unsubscribePool();
+unsubscribePool = onSnapshot(
     query(collection(db, "pool_prefiliacion"), where("origenAlbergueId", "==", currentAlbergueId)), 
     s => { 
         listaGlobalPrefiliacion = []; 
@@ -1170,7 +1170,8 @@ window.cargarDatosYEntrar = async function(id) {
         window.sysLog(`Pre-Filiación: ${listaGlobalPrefiliacion.length} registros`, "info"); 
     }
 );
-        if(window.el('app-title')) window.el('app-title').innerText = currentAlbergueData.nombre;
+window.navegar('operativa');
+if(window.el('app-title')) window.el('app-title').innerText = currentAlbergueData.nombre;
         window.configurarDashboard(); window.actualizarContadores(); window.safeHide('loading-overlay'); window.conectarListenersBackground(id); window.setupAutoSave();
     } catch(e) { window.sysLog(`Error Cargando: ${e.message}`, "error"); alert(e.message); window.safeHide('loading-overlay'); }
 };

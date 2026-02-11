@@ -1122,8 +1122,105 @@ window.setupAutoSave = function() {
     const inputsPref = ['man-nombre','man-ap1','man-ap2','man-doc-num','man-tel','man-fecha'];
     inputsPref.forEach(id => { const el = window.el(id); if(el && !el.dataset.hasAutosave) { el.addEventListener('blur', () => { if(prefiliacionEdicionId) window.adminPrefiliarManual(true); }); el.dataset.hasAutosave = "true"; if(id === 'man-fecha') el.oninput = function() { window.formatearFecha(this); }; } });
 };
-window.adminPrefiliarManual=async function(silent=false){if(silent&&!prefiliacionEdicionId)return;if(prefiliacionEdicionId&&isGlobalEdit){const p=window.getDatosFormulario('man');await updateDoc(doc(db,"pool_prefiliacion",prefiliacionEdicionId),p);window.registrarLog(prefiliacionEdicionId,"Edición Pre-Filiación","Manual",true);if(!silent){window.showToast("Pool Actualizado");window.cancelarEdicionPref();}return;}const n=window.safeVal('man-nombre');if(!n)return alert("Falta nombre");const fid=new Date().getTime().toString();const t=window.getDatosFormulario('man');t.estado='espera';t.familiaId=fid;t.rolFamilia='TITULAR';t.fechaRegistro=new Date();t.origenAlbergueId=currentAlbergueId;const ref=await addDoc(collection(db,"pool_prefiliacion"),t);window.registrarLog(ref.id,"Alta Staff","Titular",true);for(const f of adminFamiliaresTemp){const refF=await addDoc(collection(db,"pool_prefiliacion"),{...f,estado:'espera',familiaId:fid,rolFamilia:'MIEMBRO',fechaRegistro:new Date(),origenAlbergueId:currentAlbergueId});window.registrarLog(refF.id,"Alta Staff","Familiar",true);}if(!silent){alert("Guardado en Pool Global");window.limpiarFormulario('man');adminFamiliaresTemp=[];if(window.el('admin-lista-familiares-ui'))window.el('admin-lista-familiares-ui').innerHTML="Ninguno.";}};
-window.cancelarEdicionPref=function(){prefiliacionEdicionId=null;window.limpiarFormulario('man');if(window.el('existing-family-list-ui'))window.el('existing-family-list-ui').innerHTML="";window.safeHide('btn-cancelar-edicion-pref');window.safeHide('btn-ingresar-pref');};
+window.adminPrefiliarManual = async function(silent = false) {
+    if (silent && !prefiliacionEdicionId) return;
+    
+    if (prefiliacionEdicionId && isGlobalEdit) {
+        const p = window.getDatosFormulario('man');
+        
+        // Validar documento al editar
+        if (!validarDocumento(p.tipoDoc, p.docNum)) {
+            return;
+        }
+        
+        // Validar edad si es NODNI
+        if (!validarEdadNODNI(p.tipoDoc, p.fechaNac)) {
+            return;
+        }
+        
+        await updateDoc(doc(db, "pool_prefiliacion", prefiliacionEdicionId), p);
+        window.registrarLog(prefiliacionEdicionId, "Edición Pre-Filiación", "Manual", true);
+        if (!silent) {
+            window.showToast("Pool Actualizado");
+            window.cancelarEdicionPref();
+        }
+        return;
+    }
+    
+    const n = window.safeVal('man-nombre');
+    if (!n) return alert("Falta nombre");
+    
+    const fid = new Date().getTime().toString();
+    const t = window.getDatosFormulario('man');
+    
+    // Validar documento del titular
+    if (!validarDocumento(t.tipoDoc, t.docNum)) {
+        return;
+    }
+    
+    // Validar edad si es NODNI
+    if (!validarEdadNODNI(t.tipoDoc, t.fechaNac)) {
+        return;
+    }
+    
+    t.estado = 'espera';
+    t.familiaId = fid;
+    t.rolFamilia = 'TITULAR';
+    t.fechaRegistro = new Date();
+    t.origenAlbergueId = currentAlbergueId;
+    
+    const ref = await addDoc(collection(db, "pool_prefiliacion"), t);
+    window.registrarLog(ref.id, "Alta Staff", "Titular", true);
+    
+    for (const f of adminFamiliaresTemp) {
+        const refF = await addDoc(collection(db, "pool_prefiliacion"), {
+            ...f,
+            estado: 'espera',
+            familiaId: fid,
+            rolFamilia: 'MIEMBRO',
+            fechaRegistro: new Date(),
+            origenAlbergueId: currentAlbergueId
+        });
+        window.registrarLog(refF.id, "Alta Staff", "Familiar", true);
+    }
+    
+    if (!silent) {
+        alert("Guardado en Pool Global");
+        window.limpiarFormulario('man');
+        
+        // Limpiar campos adicionales
+        const intolEl = document.getElementById('man-tiene-intolerancia');
+        if (intolEl) intolEl.value = 'no';
+        const detContainer = document.getElementById('man-intolerancia-detalle-container');
+        if (detContainer) detContainer.classList.add('hidden');
+        const detInput = document.getElementById('man-intolerancia-detalle');
+        if (detInput) detInput.value = '';
+        const noLocEl = document.getElementById('man-no-localizacion');
+        if (noLocEl) noLocEl.checked = false;
+        
+        adminFamiliaresTemp = [];
+        if (window.el('admin-lista-familiares-ui')) window.el('admin-lista-familiares-ui').innerHTML = "Ninguno.";
+    }
+};
+
+window.cancelarEdicionPref = function() {
+    prefiliacionEdicionId = null;
+    window.limpiarFormulario('man');
+    
+    // Limpiar campos adicionales
+    const intolEl = document.getElementById('man-tiene-intolerancia');
+    if (intolEl) intolEl.value = 'no';
+    const detContainer = document.getElementById('man-intolerancia-detalle-container');
+    if (detContainer) detContainer.classList.add('hidden');
+    const detInput = document.getElementById('man-intolerancia-detalle');
+    if (detInput) detInput.value = '';
+    const noLocEl = document.getElementById('man-no-localizacion');
+    if (noLocEl) noLocEl.checked = false;
+    
+    if (window.el('existing-family-list-ui')) window.el('existing-family-list-ui').innerHTML = "";
+    window.safeHide('btn-cancelar-edicion-pref');
+    window.safeHide('btn-ingresar-pref');
+};
 window.buscarEnPrefiliacion=function(){const t=window.safeVal('buscador-pref').toLowerCase().trim();const r=window.el('resultados-pref');if(t.length<2){window.safeHide('resultados-pref');return;}const hits=listaGlobalPrefiliacion.filter(p=>{const full=`${p.nombre} ${p.ap1||''} ${p.ap2||''}`.toLowerCase();return full.includes(t)||(p.docNum||"").toLowerCase().includes(t)||(p.telefono||"").includes(t);});r.innerHTML="";if(hits.length===0)r.innerHTML="<div class='search-item'>Sin resultados en Pre-Filiación Global</div>";hits.forEach(p=>{r.innerHTML+=`<div class="search-item" onclick="window.cargarParaEdicionPref('${p.id}')"><strong>${p.nombre} ${p.ap1||''} ${p.ap2||''}</strong><br><small>📋 PRE-FILIACIÓN | ${p.docNum||'-'} | ${p.telefono||'-'}</small></div>`;});window.safeShow('resultados-pref');};
 window.cargarParaEdicionPref=function(pid){const p=listaGlobalPrefiliacion.find(x=>x.id===pid);if(!p)return;prefiliacionEdicionId=p.id;isGlobalEdit=true;window.safeHide('resultados-pref');window.el('buscador-pref').value="";window.setVal('man-nombre',p.nombre);window.setVal('man-ap1',p.ap1);window.setVal('man-ap2',p.ap2);window.setVal('man-tipo-doc',p.tipoDoc);window.setVal('man-doc-num',p.docNum);window.setVal('man-fecha',p.fechaNac);window.setVal('man-tel',p.telefono);const l=window.el('existing-family-list-ui');l.innerHTML="";if(p.familiaId){const fs=listaGlobalPrefiliacion.filter(x=>x.familiaId===p.familiaId&&x.id!==p.id);if(fs.length>0){l.innerHTML="<h5>Familiares en Pre-Filiación:</h5>";fs.forEach(f=>{l.innerHTML+=`<div class="fam-item existing"><div><strong>${f.nombre} ${f.ap1||''}</strong><br><small style="color:#666;">${f.docNum||'-'}</small></div></div>`;});}}window.el('btn-save-pref').innerText="Actualizar en Pre-Filiación Global";window.safeShow('btn-cancelar-edicion-pref');};
 window.darSalidaPersona=async function(){if(!personaEnGestion||personaEnGestionEsGlobal)return;if(!confirm(`¿Dar salida a ${personaEnGestion.nombre}? Saldrá individualmente a Pre-Filiación Global.`))return;try{const batch=writeBatch(db);const poolRef=doc(collection(db,"pool_prefiliacion"));const memberData={...personaEnGestion};delete memberData.id;memberData.cama=null;memberData.estado='espera';memberData.fechaSalidaAlbergue=new Date();memberData.ultimoAlbergueId=currentAlbergueId;batch.set(poolRef,memberData);batch.delete(doc(db,"albergues",currentAlbergueId,"personas",personaEnGestion.id));const logRef=collection(db,"pool_prefiliacion",poolRef.id,"historial");batch.set(doc(logRef),{fecha:new Date(),usuario:currentUserData.nombre,accion:"Salida Albergue",detalle:`Salida Individual de ${currentAlbergueData.nombre}`});await batch.commit();window.sysLog(`Salida individual realizada.`,"nav");window.showToast("Salida completada.");window.safeHide('panel-gestion-persona');window.safeHide('resultados-busqueda');window.el('buscador-persona').value="";}catch(e){window.sysLog("Error salida: "+e.message,"error");alert("Error: "+e.message);}};

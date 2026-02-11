@@ -1927,6 +1927,13 @@ onAuthStateChanged(auth, async (u) => {
             window.safeHide('login-screen');
             window.safeShow('app-shell');
             window.configurarDashboard();
+                        
+            // Configurar toggles de intolerancia en todos los formularios
+            setupIntoleranciaToggle('pub-tiene-intolerancia', 'pub-intolerancia-detalle-container');
+            setupIntoleranciaToggle('man-tiene-intolerancia', 'man-intolerancia-detalle-container');
+            setupIntoleranciaToggle('edit-tiene-intolerancia', 'edit-intolerancia-detalle-container');
+            setupIntoleranciaToggle('fam-tiene-intolerancia', 'fam-intolerancia-detalle-container');
+            setupIntoleranciaToggle('adm-fam-tiene-intolerancia', 'adm-fam-intolerancia-detalle-container');
             const params = new URLSearchParams(window.location.search);
             if(params.get('action') === 'scan' && params.get('aid') && params.get('pid')) { window.iniciarModoFocalizado(params.get('aid'), params.get('pid')); } else { window.navegar('home'); }
         } else {

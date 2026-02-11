@@ -139,6 +139,94 @@ window.safeVal = function(id) { const e = window.el(id); return e ? e.value : ""
 window.setVal = function(id, val) { const e = window.el(id); if (e) e.value = val; };
 window.actualizarContadores = function() { const elOcc = window.el('ocupacion-count'); const elCap = window.el('capacidad-total'); if (elOcc) elOcc.innerText = ocupacionActual; if (elCap) elCap.innerText = totalCapacidad; };
 window.showToast = function(msg) { const t = window.el('toast'); if(t) { t.style.visibility = 'visible'; t.innerText = msg; t.classList.add('show'); setTimeout(() => { t.classList.remove('show'); setTimeout(()=>{t.style.visibility='hidden'},300); }, 2000); } };
+// ============================================
+// VALIDACIONES DE DOCUMENTOS Y EDAD
+// ============================================
+
+// Validar formato y letra de DNI/NIE
+function validarDocumento(tipo, numero) {
+    if (!numero || numero.trim() === '') return true; // Permitir vacío
+    
+    numero = numero.toUpperCase().trim();
+    
+    if (tipo === 'DNI') {
+        // Formato: 8 números + 1 letra
+        const dniRegex = /^[0-9]{8}[A-Z]$/;
+        if (!dniRegex.test(numero)) {
+            alert('Formato DNI incorrecto. Debe ser 8 números seguidos de 1 letra (ejemplo: 12345678A)');
+            return false;
+        }
+        // Validar letra correcta
+        const letras = 'TRWAGMYFPDXBNJZSQVHLCKE';
+        const num = parseInt(numero.substr(0, 8));
+        const letraCorrecta = letras[num % 23];
+        if (numero.charAt(8) !== letraCorrecta) {
+            alert('La letra del DNI no es correcta');
+            return false;
+        }
+    }
+    
+    if (tipo === 'NIE') {
+        // Formato: X/Y/Z + 7 números + 1 letra
+        const nieRegex = /^[XYZ][0-9]{7}[A-Z]$/;
+        if (!nieRegex.test(numero)) {
+            alert('Formato NIE incorrecto. Debe empezar por X, Y o Z, seguido de 7 números y 1 letra (ejemplo: X1234567A)');
+            return false;
+        }
+        // Validar letra (convertir primera letra a número)
+        const nieNum = numero.replace('X', '0').replace('Y', '1').replace('Z', '2');
+        const letras = 'TRWAGMYFPDXBNJZSQVHLCKE';
+        const num = parseInt(nieNum.substr(0, 8));
+        const letraCorrecta = letras[num % 23];
+        if (numero.charAt(8) !== letraCorrecta) {
+            alert('La letra del NIE no es correcta');
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+// Validar edad para NODNI
+function validarEdadNODNI(tipoDoc, fechaNac) {
+    if (tipoDoc !== 'NODNI') return true;
+    if (!fechaNac || fechaNac.trim() === '') return true;
+    
+    // Parsear fecha DD/MM/AAAA
+    const partes = fechaNac.split('/');
+    if (partes.length !== 3) return true;
+    
+    const fechaNacimiento = new Date(partes[2], partes[1] - 1, partes[0]);
+    const hoy = new Date();
+    let edad = hoy.getFullYear() - fechaNacimiento.getFullYear();
+    const mes = hoy.getMonth() - fechaNacimiento.getMonth();
+    if (mes < 0 || (mes === 0 && hoy.getDate() < fechaNacimiento.getDate())) {
+        edad--;
+    }
+    
+    if (edad >= 14) {
+        alert('Error: Las personas mayores de 14 años deben tener DNI. Por favor, seleccione tipo de documento DNI o NIE.');
+        return false;
+    }
+    
+    return true;
+}
+
+// Setup para mostrar/ocultar campo de intolerancia
+function setupIntoleranciaToggle(selectId, containerId) {
+    const select = document.getElementById(selectId);
+    const container = document.getElementById(containerId);
+    if (select && container) {
+        select.addEventListener('change', function() {
+            if (this.value === 'si') {
+                container.classList.remove('hidden');
+            } else {
+                container.classList.add('hidden');
+            }
+        });
+    }
+}
+
 window.formatearFecha = function(i) { let v = i.value.replace(/\D/g, '').slice(0, 8); if (v.length >= 5) i.value = `${v.slice(0, 2)}/${v.slice(2, 4)}/${v.slice(4)}`; else if (v.length >= 3) i.value = `${v.slice(0, 2)}/${v.slice(2)}`; else i.value = v; };
 window.verificarMenor = function(p) { const t = window.el(`${p}-tipo-doc`).value; const i = window.el(`${p}-doc-num`); if (i && t === 'MENOR') { i.value = "MENOR-SIN-DNI"; i.disabled = true; } else if (i) { i.disabled = false; if (i.value === "MENOR-SIN-DNI") i.value = ""; } };
 window.limpiarFormulario = function(p) { ['nombre', 'ap1', 'ap2', 'doc-num', 'fecha', 'tel'].forEach(f => { const e = window.el(`${p}-${f}`); if (e) e.value = ""; }); const i = window.el(`${p}-doc-num`); if (i) i.disabled = false; };

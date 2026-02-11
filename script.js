@@ -2172,9 +2172,17 @@ window.marcarDerivacionAtendida = async function(personaId, tipoDerivacion) {
 let derivacionesUpdateInterval = null;
 
 window.setupDerivacionesListener = function() {
+    // DESACTIVADO TEMPORALMENTE - Consumía toda la cuota de Firestore
+    console.log('⚠️ Sistema de notificaciones desactivado temporalmente');
+    
+    const badge = document.getElementById('derivaciones-notif-badge');
+    if(badge) badge.classList.add('hidden');
+    
+    return;
+    
+    /* CÓDIGO ORIGINAL (desactivado):
     if(!currentUserData) return;
     
-    // Clear any existing interval
     if(derivacionesUpdateInterval) {
         clearInterval(derivacionesUpdateInterval);
         derivacionesUpdateInterval = null;
@@ -2182,16 +2190,13 @@ window.setupDerivacionesListener = function() {
     
     const permitidas = window.getDerivacionesPermitidas();
     if(permitidas.length === 0) {
-        // Hide badge for observers
         const badge = document.getElementById('derivaciones-notif-badge');
         if(badge) badge.classList.add('hidden');
         return;
     }
     
-    // Initial count
     window.actualizarBadgeDerivaciones();
     
-    // Update every 30 seconds (Firestore listeners for subcollections are complex, polling is simpler)
     derivacionesUpdateInterval = setInterval(() => {
         try {
             window.actualizarBadgeDerivaciones();
@@ -2199,9 +2204,8 @@ window.setupDerivacionesListener = function() {
             window.sysLog("Error actualizando badge derivaciones: " + e.message, "error");
         }
     }, 30000);
+    */
 };
-
-// --- INIT (NO HOISTING NEEDED, RUNS LAST) ---
 window.onload = async () => {
     if(isPublicMode){
         console.log('🔍 Modo público detectado, inicializando...');

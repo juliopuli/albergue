@@ -1345,7 +1345,7 @@ window.guardarFamiliarEnLista = function() {
     if (!d.nombre) return alert("Nombre obligatorio");
     
     listaFamiliaresTemp.push(d);
-    window.actualizarListaFamiliaresUI();
+    window.actualizarListaFamiliaresPublicaUI();
     window.cerrarModalFamiliar();
     
     // Limpiar campos adicionales

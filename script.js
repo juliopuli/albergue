@@ -1359,6 +1359,37 @@ window.guardarFamiliarEnLista = function() {
     if (noLocEl) noLocEl.checked = false;
 };
 window.actualizarListaFamiliaresUI=function(){const d=window.el('lista-familiares-ui');if(!d)return;d.innerHTML="";if(listaFamiliaresTemp.length===0){d.innerHTML='<p style="color:#999;font-style:italic;">Ninguno añadido.</p>';return;}listaFamiliaresTemp.forEach((f,i)=>{d.innerHTML+=`<div class="fam-item"><div><strong>${f.nombre}</strong></div><button class="danger" style="margin:0;padding:2px 8px;width:auto;" onclick="window.borrarFamiliarTemp(${i})">X</button></div>`;});};
+window.actualizarListaFamiliaresPublicaUI = function() {
+    const d = window.el('public-lista-familiares');
+    if (!d) return;
+    
+    d.innerHTML = "";
+    
+    if (listaFamiliaresTemp.length === 0) {
+        d.innerHTML = '<p style="color:#999;font-style:italic;">Ninguno añadido aún.</p>';
+        return;
+    }
+    
+    listaFamiliaresTemp.forEach((f, i) => {
+        const nombreCompleto = `${f.nombre} ${f.ap1 || ''} ${f.ap2 || ''}`.trim();
+        d.innerHTML += `
+            <div class="fam-item" style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:#f8f9fa; margin-bottom:8px; border-radius:8px;">
+                <div>
+                    <strong style="color:#111;">${nombreCompleto}</strong><br>
+                    <small style="color:#666;">${f.tipoDoc}: ${f.docNum || 'Sin documento'}</small>
+                </div>
+                <button class="danger" style="margin:0; padding:6px 12px; width:auto;" onclick="window.borrarFamiliarPublico(${i})">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            </div>
+        `;
+    });
+};
+
+window.borrarFamiliarPublico = function(i) {
+    listaFamiliaresTemp.splice(i, 1);
+    window.actualizarListaFamiliaresPublicaUI();
+};
 window.borrarFamiliarTemp=function(i){listaFamiliaresTemp.splice(i,1);window.actualizarListaFamiliaresUI();};
 window.abrirModalFamiliarAdmin=function(){window.limpiarFormulario('adm-fam');window.safeShow('modal-admin-add-familiar');if(window.el('adm-fam-tipo-doc'))window.el('adm-fam-tipo-doc').value="MENOR";window.verificarMenor('adm-fam');};
 window.cerrarModalFamiliarAdmin=function(){window.safeHide('modal-admin-add-familiar');};

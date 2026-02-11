@@ -230,7 +230,29 @@ function setupIntoleranciaToggle(selectId, containerId) {
 window.formatearFecha = function(i) { let v = i.value.replace(/\D/g, '').slice(0, 8); if (v.length >= 5) i.value = `${v.slice(0, 2)}/${v.slice(2, 4)}/${v.slice(4)}`; else if (v.length >= 3) i.value = `${v.slice(0, 2)}/${v.slice(2)}`; else i.value = v; };
 window.verificarMenor = function(p) { const t = window.el(`${p}-tipo-doc`).value; const i = window.el(`${p}-doc-num`); if (i && t === 'MENOR') { i.value = "MENOR-SIN-DNI"; i.disabled = true; } else if (i) { i.disabled = false; if (i.value === "MENOR-SIN-DNI") i.value = ""; } };
 window.limpiarFormulario = function(p) { ['nombre', 'ap1', 'ap2', 'doc-num', 'fecha', 'tel'].forEach(f => { const e = window.el(`${p}-${f}`); if (e) e.value = ""; }); const i = window.el(`${p}-doc-num`); if (i) i.disabled = false; };
-window.getDatosFormulario = function(p) { return { nombre: window.safeVal(`${p}-nombre`), ap1: window.safeVal(`${p}-ap1`), ap2: window.safeVal(`${p}-ap2`), tipoDoc: window.safeVal(`${p}-tipo-doc`), docNum: window.safeVal(`${p}-doc-num`), fechaNac: window.safeVal(`${p}-fecha`), telefono: window.safeVal(`${p}-tel`) }; };
+window.getDatosFormulario = function(p) { 
+    const tipoDoc = window.safeVal(`${p}-tipo-doc`);
+    const docNum = window.safeVal(`${p}-doc-num`);
+    const fechaNac = window.safeVal(`${p}-fecha`);
+    const tieneIntoleranciaEl = document.getElementById(`${p}-tiene-intolerancia`);
+    const tieneIntolerancia = tieneIntoleranciaEl ? tieneIntoleranciaEl.value === 'si' : false;
+    const intoleranciaDetalle = tieneIntolerancia ? window.safeVal(`${p}-intolerancia-detalle`) : '';
+    const noLocalizacionEl = document.getElementById(`${p}-no-localizacion`);
+    const noLocalizacion = noLocalizacionEl ? noLocalizacionEl.checked : false;
+    
+    return { 
+        nombre: window.safeVal(`${p}-nombre`), 
+        ap1: window.safeVal(`${p}-ap1`), 
+        ap2: window.safeVal(`${p}-ap2`), 
+        tipoDoc: tipoDoc, 
+        docNum: docNum, 
+        fechaNac: fechaNac, 
+        telefono: window.safeVal(`${p}-tel`),
+        tieneIntolerancia: tieneIntolerancia,
+        intoleranciaDetalle: intoleranciaDetalle,
+        noLocalizacion: noLocalizacion
+    }; 
+};
 
 // --- AUTH & USER MANAGEMENT ---
 window.iniciarSesion = async function() { try { window.sysLog("Click Login", "info"); await signInWithEmailAndPassword(auth, window.el('login-email').value, window.el('login-pass').value); window.sysLog("Auth Firebase OK", "success"); } catch(err) { window.sysLog("Error Auth: " + err.message, "error"); alert(err.message); } };

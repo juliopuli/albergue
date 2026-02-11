@@ -1171,7 +1171,35 @@ window.actualizarListaFamiliaresUI=function(){const d=window.el('lista-familiare
 window.borrarFamiliarTemp=function(i){listaFamiliaresTemp.splice(i,1);window.actualizarListaFamiliaresUI();};
 window.abrirModalFamiliarAdmin=function(){window.limpiarFormulario('adm-fam');window.safeShow('modal-admin-add-familiar');if(window.el('adm-fam-tipo-doc'))window.el('adm-fam-tipo-doc').value="MENOR";window.verificarMenor('adm-fam');};
 window.cerrarModalFamiliarAdmin=function(){window.safeHide('modal-admin-add-familiar');};
-window.guardarFamiliarAdmin=function(){const d=window.getDatosFormulario('adm-fam');if(!d.nombre)return alert("Nombre obligatorio");adminFamiliaresTemp.push(d);window.actualizarListaFamiliaresAdminUI();window.cerrarModalFamiliarAdmin();};
+window.guardarFamiliarAdmin = function() {
+    const d = window.getDatosFormulario('adm-fam');
+    
+    // Validar documento
+    if (!validarDocumento(d.tipoDoc, d.docNum)) {
+        return;
+    }
+    
+    // Validar edad si es NODNI
+    if (!validarEdadNODNI(d.tipoDoc, d.fechaNac)) {
+        return;
+    }
+    
+    if (!d.nombre) return alert("Nombre obligatorio");
+    
+    adminFamiliaresTemp.push(d);
+    window.actualizarListaFamiliaresAdminUI();
+    window.cerrarModalFamiliarAdmin();
+    
+    // Limpiar campos adicionales
+    const intolEl = document.getElementById('adm-fam-tiene-intolerancia');
+    if (intolEl) intolEl.value = 'no';
+    const detContainer = document.getElementById('adm-fam-intolerancia-detalle-container');
+    if (detContainer) detContainer.classList.add('hidden');
+    const detInput = document.getElementById('adm-fam-intolerancia-detalle');
+    if (detInput) detInput.value = '';
+    const noLocEl = document.getElementById('adm-fam-no-localizacion');
+    if (noLocEl) noLocEl.checked = false;
+};
 window.actualizarListaFamiliaresAdminUI=function(){const d=window.el('admin-lista-familiares-ui');if(!d)return;d.innerHTML="";if(adminFamiliaresTemp.length===0){d.innerHTML='<p style="color:#999;font-style:italic;">Ninguno.</p>';return;}adminFamiliaresTemp.forEach((f,i)=>{d.innerHTML+=`<div class="fam-item"><div><strong>${f.nombre} ${f.ap1}</strong> <small>(${f.docNum})</small></div><button class="danger" style="margin:0;padding:2px 8px;width:auto;" onclick="window.borrarFamiliarAdminTemp(${i})">X</button></div>`;});};
 window.borrarFamiliarAdminTemp=function(i){adminFamiliaresTemp.splice(i,1);window.actualizarListaFamiliaresAdminUI();};
 window.abrirModalVincularFamilia=function(){if(!personaEnGestion)return;if(window.el('search-vincular'))window.el('search-vincular').value="";if(window.el('resultados-vincular'))window.el('resultados-vincular').innerHTML="";window.safeShow('modal-vincular-familia');};

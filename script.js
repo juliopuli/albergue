@@ -2274,11 +2274,27 @@ window.onload = async () => {
 };
 onAuthStateChanged(auth, async (u) => {
     if(isPublicMode) return;
+    
     if(u){
+        // ============================================
+        // LIMPIAR TODOS LOS LISTENERS ANTES
+        // ============================================
+        if (unsubscribePersonas) { unsubscribePersonas(); unsubscribePersonas = null; }
+        if (unsubscribePool) { unsubscribePool(); unsubscribePool = null; }
+        if (unsubscribeAlbergueDoc) { unsubscribeAlbergueDoc(); unsubscribeAlbergueDoc = null; }
+        if (unsubscribeUsers) { unsubscribeUsers(); unsubscribeUsers = null; }
+        if (unsubscribeAlberguesActivos) { unsubscribeAlberguesActivos(); unsubscribeAlberguesActivos = null; }
+        if (unsubscribeAlberguesMto) { unsubscribeAlberguesMto(); unsubscribeAlberguesMto = null; }
+        
         const s = await getDoc(doc(db,"usuarios",u.uid));
         if(s.exists()){
             const d = s.data();
-            if (d.activo === false) { window.sysLog("Acceso denegado: Usuario inactivo", "warn"); alert("Este usuario ha sido desactivado por administración."); signOut(auth); return; }
+            if (d.activo === false) { 
+                window.sysLog("Acceso denegado: Usuario inactivo", "warn"); 
+                alert("Este usuario ha sido desactivado por administración."); 
+                signOut(auth); 
+                return; 
+            }
             currentUserData = {...d, uid: u.uid};
             window.sysLog(`Usuario autenticado: ${currentUserData.nombre} (${currentUserData.rol})`, "success");
             window.safeHide('login-screen');
@@ -2291,11 +2307,21 @@ onAuthStateChanged(auth, async (u) => {
             setupIntoleranciaToggle('edit-tiene-intolerancia', 'edit-intolerancia-detalle-container');
             setupIntoleranciaToggle('fam-tiene-intolerancia', 'fam-intolerancia-detalle-container');
             setupIntoleranciaToggle('adm-fam-tiene-intolerancia', 'adm-fam-intolerancia-detalle-container');
+            
             const params = new URLSearchParams(window.location.search);
-            if(params.get('action') === 'scan' && params.get('aid') && params.get('pid')) { window.iniciarModoFocalizado(params.get('aid'), params.get('pid')); } else { window.navegar('home'); }
+            if(params.get('action') === 'scan' && params.get('aid') && params.get('pid')) { 
+                window.iniciarModoFocalizado(params.get('aid'), params.get('pid')); 
+            } else { 
+                window.navegar('home'); 
+            }
         } else {
             window.sysLog("Usuario fantasma detectado. Restaurando INACTIVO...", "warn");
-            await setDoc(doc(db,"usuarios",u.uid), { email: u.email, nombre: u.email.split('@')[0], rol: "observador", activo: false });
+            await setDoc(doc(db,"usuarios",u.uid), { 
+                email: u.email, 
+                nombre: u.email.split('@')[0], 
+                rol: "observador", 
+                activo: false 
+            });
             alert("Tu usuario ha sido restaurado pero está INACTIVO por seguridad.\n\nContacta con un administrador para que te active.");
             signOut(auth);
         }

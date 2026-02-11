@@ -2179,8 +2179,8 @@ window.onload = async () => {
         window.safeHide('login-screen');
         window.safeHide('app-shell');
         
-        // Mostrar pantalla pública
-        window.safeShow('public-register-screen');
+        // Mostrar pantalla pública (NOMBRE CORREGIDO)
+        window.safeShow('public-screen');
         
         console.log('🔍 Configurando toggles...');
         // Configurar toggles ANTES de conectar a Firebase
@@ -2211,6 +2211,29 @@ window.onload = async () => {
             console.error("❌ Error init público:", e); 
             alert("Error de conexión con el albergue: " + e.message); 
         }
+        
+        // FORZAR VISIBILIDAD (por si acaso hay CSS que lo oculta)
+        setTimeout(() => {
+            const screen = document.getElementById('public-screen');
+            const container = document.getElementById('public-form-container');
+            
+            if (screen) {
+                screen.classList.remove('hidden');
+                screen.style.display = 'block';
+                screen.style.visibility = 'visible';
+                screen.style.opacity = '1';
+                console.log('🔧 Forzado display en public-screen');
+            }
+            
+            if (container) {
+                container.classList.remove('hidden');
+                container.style.display = 'block';
+                container.style.visibility = 'visible';
+                container.style.opacity = '1';
+                console.log('🔧 Forzado display en public-form-container');
+            }
+        }, 500);
+        
     } else {
         const passInput = document.getElementById('login-pass');
         if(passInput) passInput.addEventListener('keypress', e=>{ if(e.key==='Enter') window.iniciarSesion(); });
@@ -2218,7 +2241,6 @@ window.onload = async () => {
     const params = new URLSearchParams(window.location.search);
     if(params.get('action') === 'scan') { window.sysLog("Deep Link detectado. Esperando Auth...", "info"); }
 };
-
 onAuthStateChanged(auth, async (u) => {
     if(isPublicMode) return;
     if(u){

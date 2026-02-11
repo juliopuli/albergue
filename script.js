@@ -2115,6 +2115,10 @@ window.onload = async () => {
                 if(window.el('public-albergue-name')) window.el('public-albergue-name').innerText = d.nombre;
             }
         } catch(e) { console.error("Error init público:", e); alert("Error de conexión con el albergue."); }
+        
+        // Configurar toggles para el formulario público
+        setupIntoleranciaToggle('pub-tiene-intolerancia', 'pub-intolerancia-detalle-container');
+        setupIntoleranciaToggle('fam-tiene-intolerancia', 'fam-intolerancia-detalle-container');
     } else {
         const passInput = document.getElementById('login-pass');
         if(passInput) passInput.addEventListener('keypress', e=>{ if(e.key==='Enter') window.iniciarSesion(); });

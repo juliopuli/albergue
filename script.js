@@ -2173,24 +2173,44 @@ window.setupDerivacionesListener = function() {
 // --- INIT (NO HOISTING NEEDED, RUNS LAST) ---
 window.onload = async () => {
     if(isPublicMode){
-        window.safeHide('login-screen');
-        window.safeShow('public-register-screen');
-        window.safeShow('public-welcome-screen');
-        window.safeHide('public-form-container');
-        window.safeHide('app-shell'); 
-        try {
-            await signInAnonymously(auth);
-            const docRef = doc(db, "albergues", currentAlbergueId);
-            const docSnap = await getDoc(docRef);
-            if(docSnap.exists()){
-                const d = docSnap.data();
-                if(window.el('public-albergue-name')) window.el('public-albergue-name').innerText = d.nombre;
-            }
-        } catch(e) { console.error("Error init público:", e); alert("Error de conexión con el albergue."); }
+        console.log('🔍 Modo público detectado, inicializando...');
         
-        // Configurar toggles para el formulario público
+        // Ocultar login y app
+        window.safeHide('login-screen');
+        window.safeHide('app-shell');
+        
+        // Mostrar pantalla pública
+        window.safeShow('public-register-screen');
+        
+        console.log('🔍 Configurando toggles...');
+        // Configurar toggles ANTES de conectar a Firebase
         setupIntoleranciaToggle('pub-tiene-intolerancia', 'pub-intolerancia-detalle-container');
         setupIntoleranciaToggle('fam-tiene-intolerancia', 'fam-intolerancia-detalle-container');
+        
+        try {
+            console.log('🔍 Conectando con Firebase...');
+            await signInAnonymously(auth);
+            
+            console.log('🔍 Obteniendo datos del albergue:', currentAlbergueId);
+            const docRef = doc(db, "albergues", currentAlbergueId);
+            const docSnap = await getDoc(docRef);
+            
+            if(docSnap.exists()){
+                const d = docSnap.data();
+                console.log('🔍 Albergue encontrado:', d.nombre);
+                if(window.el('public-albergue-name')) {
+                    window.el('public-albergue-name').innerText = d.nombre;
+                }
+            } else {
+                console.error('❌ Albergue no encontrado');
+                alert('Error: Albergue no encontrado');
+            }
+            
+            console.log('✅ Modo público listo');
+        } catch(e) { 
+            console.error("❌ Error init público:", e); 
+            alert("Error de conexión con el albergue: " + e.message); 
+        }
     } else {
         const passInput = document.getElementById('login-pass');
         if(passInput) passInput.addEventListener('keypress', e=>{ if(e.key==='Enter') window.iniciarSesion(); });

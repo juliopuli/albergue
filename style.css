@@ -250,6 +250,100 @@ button.dark { background: #334155; color: white; }
 .fam-table td { padding: 8px; border-bottom: 1px solid #f1f5f9; }
 .fam-row-current { background-color: #e0e7ff; font-weight: bold; color: var(--primary); }
 
+/* ============================================ */
+/* NUEVOS CAMPOS: INTOLERANCIA + NO LOCALIZACIÓN */
+/* ============================================ */
+
+/* Contenedor del campo de intolerancia (se muestra/oculta) */
+.intolerancia-detalle-container {
+    margin-top: 15px;
+    padding: 15px;
+    background: #fef3c7;
+    border-left: 4px solid #f59e0b;
+    border-radius: 8px;
+    animation: slideDown 0.3s ease;
+}
+
+.intolerancia-detalle-container label {
+    color: #92400e;
+    font-weight: 600;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.intolerancia-detalle-container textarea {
+    width: 100%;
+    border: 1px solid #fbbf24;
+    background: #fffbeb;
+    color: #78350f;
+    padding: 10px;
+    border-radius: 6px;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 60px;
+}
+
+.intolerancia-detalle-container textarea:focus {
+    outline: none;
+    border-color: #f59e0b;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+}
+
+/* Campo de checkbox "No deseo ser localizado" */
+.campo-no-localizacion {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 15px;
+    padding: 12px 15px;
+    background: #fef2f2;
+    border-left: 4px solid #ef4444;
+    border-radius: 8px;
+}
+
+.campo-no-localizacion input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: #ef4444;
+}
+
+.campo-no-localizacion label {
+    margin: 0;
+    color: #991b1b;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    user-select: none;
+}
+
+/* Animación de entrada */
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .intolerancia-detalle-container {
+        padding: 12px;
+    }
+    
+    .campo-no-localizacion {
+        padding: 10px 12px;
+    }
+    
+    .campo-no-localizacion label {
+        font-size: 0.9rem;
+    }
+}
+
 /* UTILS */
 .hidden { display: none !important; }
 .sticky-header { position: sticky; top: 130px; z-index: 80; background: var(--surface); margin: -30px -30px 20px -30px; padding: 20px 30px; border-bottom: 1px solid #e2e8f0; border-radius: var(--radius) var(--radius) 0 0; }

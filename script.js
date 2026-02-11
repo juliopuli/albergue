@@ -1231,14 +1231,17 @@ window.guardarCambiosPersona = async function(silent = false) {
     
     const p = window.getDatosFormulario('edit');
     
-    // Validar documento
-    if (!validarDocumento(p.tipoDoc, p.docNum)) {
-        return;
-    }
-    
-    // Validar edad si es NODNI
-    if (!validarEdadNODNI(p.tipoDoc, p.fechaNac)) {
-        return;
+    // Solo validar si NO es guardado automático
+    if (!silent) {
+        // Validar documento
+        if (!validarDocumento(p.tipoDoc, p.docNum)) {
+            return;
+        }
+        
+        // Validar edad si es NODNI
+        if (!validarEdadNODNI(p.tipoDoc, p.fechaNac)) {
+            return;
+        }
     }
     
     await updateDoc(doc(db, "albergues", currentAlbergueId, "personas", personaEnGestion.id), p);

@@ -1158,8 +1158,18 @@ window.cargarDatosYEntrar = async function(id) {
             }
         });
         if(unsubscribePool) unsubscribePool();
-        unsubscribePool = onSnapshot(collection(db, "pool_prefiliacion"), s => { listaGlobalPrefiliacion = []; s.forEach(d => { const p = d.data(); p.id = d.id; listaGlobalPrefiliacion.push(p); }); window.sysLog(`Pre-Filiación Global: ${listaGlobalPrefiliacion.length} registros`, "info"); });
-        window.navegar('operativa');
+        unsubscribePool = onSnapshot(
+    query(collection(db, "pool_prefiliacion"), where("origenAlbergueId", "==", currentAlbergueId)), 
+    s => { 
+        listaGlobalPrefiliacion = []; 
+        s.forEach(d => { 
+            const p = d.data(); 
+            p.id = d.id; 
+            listaGlobalPrefiliacion.push(p); 
+        }); 
+        window.sysLog(`Pre-Filiación: ${listaGlobalPrefiliacion.length} registros`, "info"); 
+    }
+);
         if(window.el('app-title')) window.el('app-title').innerText = currentAlbergueData.nombre;
         window.configurarDashboard(); window.actualizarContadores(); window.safeHide('loading-overlay'); window.conectarListenersBackground(id); window.setupAutoSave();
     } catch(e) { window.sysLog(`Error Cargando: ${e.message}`, "error"); alert(e.message); window.safeHide('loading-overlay'); }

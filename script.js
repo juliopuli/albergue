@@ -99,8 +99,8 @@ window.limpiarCajaNegra = function() { const c = document.getElementById('black-
 window.sysLog("Sistema Iniciado. Versión 3.1.4 (Nomenclatura Pre-Filiación)", "info");
 
 // --- GLOBALES ---
-let isPublicMode = false;
-let currentAlbergueId = null;
+const isPublicMode = new URLSearchParams(window.location.search).get('public_id');
+const currentAlbergueId = isPublicMode || localStorage.getItem('currentAlbergueId') || null;
 const urlParams = new URLSearchParams(window.location.search);
 if (urlParams.get('public_id')) { isPublicMode = true; currentAlbergueId = urlParams.get('public_id'); window.sysLog(`Modo Público: ${currentAlbergueId}`, "info"); }
 

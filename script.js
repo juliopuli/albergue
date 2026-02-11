@@ -98,36 +98,52 @@ window.limpiarCajaNegra = function() { const c = document.getElementById('black-
 
 window.sysLog("Sistema Iniciado. Versión 3.1.4 (Nomenclatura Pre-Filiación)", "info");
 
-// --- GLOBALES ---
-const isPublicMode = new URLSearchParams(window.location.search).get('public_id');
-let currentAlbergueId = isPublicMode || localStorage.getItem('currentAlbergueId') || null;
-const urlParams = new URLSearchParams(window.location.search);
-if (urlParams.get('public_id')) { isPublicMode = true; currentAlbergueId = urlParams.get('public_id'); window.sysLog(`Modo Público: ${currentAlbergueId}`, "info"); }
+// ============================================
+// VARIABLES GLOBALES
+// ============================================
 
+// Detección de modo público
+const urlParams = new URLSearchParams(window.location.search);
+const isPublicMode = urlParams.get('public_id') || false;
+let currentAlbergueId = isPublicMode || localStorage.getItem('currentAlbergueId') || null;
+
+// Variables de estado principal
 let currentUserData = null;
 let currentAlbergueData = null;
 let totalCapacidad = 0;
 let ocupacionActual = 0;
 let camasOcupadas = {};
+
+// Listas y cache
 let listaPersonasCache = []; 
 let listaGlobalPrefiliacion = []; 
-let unsubscribeUsers, unsubscribeAlberguesActivos, unsubscribeAlberguesMto, unsubscribePersonas, unsubscribeAlbergueDoc, unsubscribePool;
+let listaFamiliaresTemp = [];
+let adminFamiliaresTemp = [];
+
+// Gestión de personas
 let personaSeleccionadaId = null;
 let personaEnGestion = null;
 let personaEnGestionEsGlobal = false;
+let personaIntervencionActiva = null;
+
+// Modos y estados
 let modoCambioCama = false;
 let modoMapaGeneral = false;
 let prefiliacionEdicionId = null;
+let isGlobalEdit = false;
 let highlightedFamilyId = null;
-let listaFamiliaresTemp = [];
-let adminFamiliaresTemp = [];
+let savingLock = false;
+
+// Edición
 let userEditingId = null;
 let albergueEdicionId = null;
-let isGlobalEdit = false; 
-let savingLock = false;
-let tipoDerivacionActual = null; 
+let tipoDerivacionActual = null;
+
+// Firebase unsubscribers
+let unsubscribeUsers, unsubscribeAlberguesActivos, unsubscribeAlberguesMto, unsubscribePersonas, unsubscribeAlbergueDoc, unsubscribePool;
+
+// QR Scanner
 let html5QrCode = null;
-let personaIntervencionActiva = null; 
 
 // --- DOM HELPERS ---
 window.el = function(id) { return document.getElementById(id); };

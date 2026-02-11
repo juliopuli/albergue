@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gestión Albergue - Ver.3.1.7</title>
+    <title>Gestión Albergue - Ver.3.1.8</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -13,7 +13,7 @@
 </head>
 <body>
 
-    <div class="version-tag">Ver.3.1.7</div>
+    <div class="version-tag">Ver.3.1.8</div>
     
     <div id="toast" style="visibility: hidden;">Guardado automático</div>
     <div id="loading-overlay" class="hidden"><div class="spinner"></div><h2 style="color:var(--primary);">Cargando Datos...</h2></div>
@@ -221,7 +221,7 @@
                 </div>
                 <div class="card"><h3>Detalle por Albergue</h3><div id="obs-list-container" style="margin-top:20px;"><p style="color:#666; text-align:center;">Cargando datos...</p></div></div>
             </div>
-
+            
             <div id="screen-operativa" class="hidden">
                 <div class="card">
                     <div class="sticky-header">
@@ -256,8 +256,25 @@
                                 <h3 id="gestion-nombre-titulo" style="color:var(--primary);">Nombre</h3>
                                 <p style="margin-bottom:15px;">Estado: <span id="gestion-estado" class="badge">...</span> <strong id="gestion-cama-info"></strong></p>
                                 <div class="row"><div class="col"><label>Nombre</label><input type="text" id="edit-nombre"></div><div class="col"><label>Ap 1</label><input type="text" id="edit-ap1"></div><div class="col"><label>Ap 2</label><input type="text" id="edit-ap2"></div></div>
-                                <div class="row"><div class="col"><label>Doc</label><select id="edit-tipo-doc"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Num</label><input type="text" id="edit-doc-num"></div></div>
+                                <div class="row"><div class="col"><label>Doc</label><select id="edit-tipo-doc"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="NODNI">NODNI</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Num</label><input type="text" id="edit-doc-num"></div></div>
                                 <div class="row"><div class="col"><label>F. Nac</label><input type="tel" id="edit-fecha" oninput="window.formatearFecha(this)" maxlength="10"></div><div class="col"><label>Tel</label><input type="tel" id="edit-tel"></div></div>
+                                <div class="row">
+                                    <div class="col">
+                                        <label>¿Tiene alguna intolerancia?</label>
+                                        <select id="edit-tiene-intolerancia">
+                                            <option value="no">No</option>
+                                            <option value="si">Sí</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div id="edit-intolerancia-detalle-container" class="intolerancia-detalle-container hidden">
+                                    <label>Indique Intolerancia:</label>
+                                    <textarea id="edit-intolerancia-detalle" rows="3" placeholder="Describa la intolerancia..."></textarea>
+                                </div>
+                                <div class="campo-no-localizacion">
+                                    <input type="checkbox" id="edit-no-localizacion">
+                                    <label for="edit-no-localizacion">No deseo ser localizado/a por nadie</label>
+                                </div>
                                 <div class="btn-group-horizontal" id="btns-local-actions">
                                     <button class="dark" onclick="window.verCarnetQR()"><i class="fa-solid fa-id-card"></i> Carnet QR</button>
                                     <button class="primary" onclick="window.abrirSeleccionCama()">Asignar Cama</button>
@@ -293,8 +310,25 @@
                                         <div><button id="btn-cancelar-edicion-pref" class="secondary hidden" style="font-size:0.7em; padding:4px 8px;" onclick="window.cancelarEdicionPref()">Cancelar Edición</button></div>
                                     </div>
                                     <div class="row"><div class="col"><label>Nombre (*)</label><input type="text" id="man-nombre"></div><div class="col"><label>Ap 1</label><input type="text" id="man-ap1"></div><div class="col"><label>Ap 2</label><input type="text" id="man-ap2"></div></div>
-                                    <div class="row"><div class="col"><label>Doc</label><select id="man-tipo-doc"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Número</label><input type="text" id="man-doc-num"></div></div>
+                                    <div class="row"><div class="col"><label>Doc</label><select id="man-tipo-doc"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="NODNI">NODNI</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Número</label><input type="text" id="man-doc-num"></div></div>
                                     <div class="row"><div class="col"><label>F. Nac</label><input type="tel" id="man-fecha" maxlength="10" oninput="window.formatearFecha(this)"></div><div class="col"><label>Tel</label><input type="tel" id="man-tel"></div></div>
+                                    <div class="row">
+                                        <div class="col">
+                                            <label>¿Tiene alguna intolerancia?</label>
+                                            <select id="man-tiene-intolerancia">
+                                                <option value="no">No</option>
+                                                <option value="si">Sí</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div id="man-intolerancia-detalle-container" class="intolerancia-detalle-container hidden">
+                                        <label>Indique Intolerancia:</label>
+                                        <textarea id="man-intolerancia-detalle" rows="3" placeholder="Describa la intolerancia..."></textarea>
+                                    </div>
+                                    <div class="campo-no-localizacion">
+                                        <input type="checkbox" id="man-no-localizacion">
+                                        <label for="man-no-localizacion">No deseo ser localizado/a por nadie</label>
+                                    </div>
                                     <div class="fam-list"><h4><i class="fa-solid fa-people-roof"></i> Integrantes</h4><div id="existing-family-list-ui"></div><div id="admin-lista-familiares-ui"><p style="color:#999; margin-top:5px;">Añade nuevos miembros abajo.</p></div><button class="secondary" onclick="window.abrirModalFamiliarAdmin()">+ Añadir Familiar</button></div>
                                     <button id="btn-save-pref" class="success" style="width:100%; margin-top:20px;" onclick="window.adminPrefiliarManual()">💾 Guardar en Pre-Filiación</button>
                                 </div>
@@ -381,7 +415,7 @@
             </div>
         </main>
     </div>
-
+    
     <div id="modal-qr" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content" style="text-align:center;"><span class="close-modal" onclick="document.getElementById('modal-qr').classList.add('hidden')">&times;</span><h3>Escanea para acceder</h3><div id="qrcode-display" style="display:inline-block; margin:20px;"></div><p style="color:#666;">Auto-registro móvil.</p></div></div>
     
     <div id="modal-carnet-qr" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
@@ -426,17 +460,19 @@
             </button>
         </div>
     </div>
-    <!-- Modal Reset Password (añadir entre los otros modales y el cierre de body) -->
-<div id="modal-reset-pass" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
-  <div class="modal-content" style="max-width:350px;text-align:center;">
-    <span class="close-modal" onclick="window.safeHide('modal-reset-pass')">&times;</span>
-    <h2 style="color:var(--primary);margin-bottom:10px;">Recuperar Contraseña</h2>
-    <p style="color:#666;margin-bottom:18px;">Introduce tu email registrado. Si es válido, recibirás un enlace para restablecer tu contraseña.</p>
-    <input type="email" id="reset-pass-email" placeholder="Email" style="width:100%;padding:10px;font-size:1em;margin-bottom:15px;">
-    <button class="primary" id="btn-reset-pass" onclick="window.enviarResetPasswordEmail()" style="width:100%;padding:12px 0;">Enviar Email de Recuperación</button>
-    <div id="reset-pass-feedback" style="margin-top:10px;font-size:0.95em;color:#09f;"></div>
-  </div>
-</div>
+
+    <!-- Modal Reset Password -->
+    <div id="modal-reset-pass" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
+      <div class="modal-content" style="max-width:350px;text-align:center;">
+        <span class="close-modal" onclick="window.safeHide('modal-reset-pass')">&times;</span>
+        <h2 style="color:var(--primary);margin-bottom:10px;">Recuperar Contraseña</h2>
+        <p style="color:#666;margin-bottom:18px;">Introduce tu email registrado. Si es válido, recibirás un enlace para restablecer tu contraseña.</p>
+        <input type="email" id="reset-pass-email" placeholder="Email" style="width:100%;padding:10px;font-size:1em;margin-bottom:15px;">
+        <button class="primary" id="btn-reset-pass" onclick="window.enviarResetPasswordEmail()" style="width:100%;padding:12px 0;">Enviar Email de Recuperación</button>
+        <div id="reset-pass-feedback" style="margin-top:10px;font-size:0.95em;color:#09f;"></div>
+      </div>
+    </div>
+
     <div id="modal-derivacion" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
         <div class="modal-content">
             <span class="close-modal" onclick="document.getElementById('modal-derivacion').classList.add('hidden')">&times;</span>
@@ -450,8 +486,11 @@
     </div>
 
     <div id="modal-cama" class="modal-overlay hidden" onclick="if(event.target===this)window.cerrarMapaCamas()"><div class="modal-content modal-lg"><span class="close-modal" onclick="window.cerrarMapaCamas()">&times;</span><h3>Seleccionar Cama</h3><p style="font-size:0.8rem;color:#666;">Verde Borde=Sugerencia | Naranja=Reserva Familia</p><div id="grid-camas" class="bed-grid"></div></div></div>
+    
     <div id="modal-bed-info" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content modal-lg" style="text-align:center; padding:40px;"><span class="close-modal" onclick="document.getElementById('modal-bed-info').classList.add('hidden')">&times;</span><div style="font-size:3rem; color:var(--primary); margin-bottom:10px;"><i class="fa-solid fa-user-check"></i></div><h3 style="color:var(--text-light);">Cama <span id="info-cama-num"></span></h3><h2 id="info-nombre-completo" style="color:var(--primary);"></h2><p><span id="info-telefono"></span></p><br><button id="btn-historial-cama" class="dark hidden" style="margin-bottom:15px;">📜 Ver Historial</button><div style="margin-top:20px; text-align:left;"><h4 style="border-bottom:1px solid #eee; padding-bottom:5px;">Unidad Familiar</h4><div id="info-familia-detalle"></div></div></div></div>
+    
     <div id="modal-vincular-familia" class="modal-overlay hidden" style="z-index: 2000;" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><span class="close-modal" onclick="document.getElementById('modal-vincular-familia').classList.add('hidden')">&times;</span><h3>Unir a Familia</h3><input type="text" id="search-vincular" placeholder="Buscar..." onkeyup="window.buscarParaVincular()" autocomplete="off"><div id="resultados-vincular" class="search-results hidden"></div></div></div>
+    
     <div id="modal-albergue" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><span class="close-modal" onclick="document.getElementById('modal-albergue').classList.add('hidden')">&times;</span><h3 id="mto-modal-title">Nuevo</h3><label>Nombre</label><input type="text" id="mto-nombre"><div class="row"><div class="col"><label>Cap</label><input type="number" id="mto-capacidad"></div><div class="col"><label>Cols</label><input type="number" id="mto-columnas" value="8"></div></div><div class="btn-row"><button class="primary" onclick="window.guardarAlbergue()">Guardar</button></div><br><button id="btn-delete-albergue" class="danger hidden" style="width:100%" onclick="window.eliminarAlbergueActual()">Eliminar Albergue</button></div></div>
     
     <div id="modal-crear-usuario" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
@@ -469,6 +508,7 @@
             <div class="btn-row"><button id="btn-save-user" class="primary" onclick="window.guardarUsuario()">Guardar</button></div><br><button id="btn-delete-user" class="danger hidden" style="width:100%" onclick="window.eliminarUsuario()">Eliminar Usuario</button>
         </div>
     </div>
+
     <div id="modal-change-pass" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><span class="close-modal" onclick="document.getElementById('modal-change-pass').classList.add('hidden')">&times;</span><h3>Cambiar Contraseña</h3><label>Contraseña Actual</label><input type="password" id="chg-old-pass"><label>Nueva Contraseña</label><input type="password" id="chg-new-pass"><label>Confirmar Nueva</label><input type="password" id="chg-confirm-pass"><div class="btn-row"><button class="primary" onclick="window.ejecutarCambioPass()">Actualizar</button></div></div></div>
     
     <div id="modal-historial" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
@@ -479,8 +519,65 @@
         </div>
     </div>
     
-    <div id="modal-add-familiar" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><span class="close-modal" onclick="window.cerrarModalFamiliar()">&times;</span><h3>Familiar (QR)</h3><div class="row"><div class="col"><label>Nombre</label><input type="text" id="fam-nombre"></div></div><div class="row"><div class="col"><label>Ap 1</label><input type="text" id="fam-ap1"></div><div class="col"><label>Ap 2</label><input type="text" id="fam-ap2"></div></div><div class="row"><div class="col"><label>Doc</label><select id="fam-tipo-doc" onchange="window.verificarMenor('fam')"><option value="MENOR">MENOR</option><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option></select></div><div class="col"><label>Num</label><input type="text" id="fam-doc-num" disabled></div></div><div class="row"><div class="col"><label>F. Nac</label><input type="tel" id="fam-fecha" oninput="window.formatearFecha(this)" maxlength="10"></div></div><div class="btn-row"><button class="primary" onclick="window.guardarFamiliarEnLista()">Añadir</button></div></div></div>
-    <div id="modal-admin-add-familiar" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content"><span class="close-modal" onclick="window.cerrarModalFamiliarAdmin()">&times;</span><h3>Miembro (Admin)</h3><div class="row"><div class="col"><label>Nombre</label><input type="text" id="adm-fam-nombre"></div><div class="col"><label>Ap 1</label><input type="text" id="adm-fam-ap1"></div><div class="col"><label>Ap 2</label><input type="text" id="adm-fam-ap2"></div></div><div class="row"><div class="col"><label>Doc</label><select id="adm-fam-tipo-doc" onchange="window.verificarMenor('adm-fam')"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Num</label><input type="text" id="adm-fam-doc-num"></div></div><div class="row"><div class="col"><label>F. Nac</label><input type="tel" id="adm-fam-fecha" oninput="window.formatearFecha(this)" maxlength="10"></div><div class="col"><label>Tel</label><input type="tel" id="adm-fam-tel"></div></div><div class="btn-row"><button class="primary" onclick="window.guardarFamiliarAdmin()">Añadir</button></div></div></div>
+    <!-- MODAL AÑADIR FAMILIAR (PÚBLICO - CON NUEVOS CAMPOS) -->
+    <div id="modal-add-familiar" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
+        <div class="modal-content">
+            <span class="close-modal" onclick="window.cerrarModalFamiliar()">&times;</span>
+            <h3>Familiar (QR)</h3>
+            <div class="row"><div class="col"><label>Nombre</label><input type="text" id="fam-nombre"></div></div>
+            <div class="row"><div class="col"><label>Ap 1</label><input type="text" id="fam-ap1"></div><div class="col"><label>Ap 2</label><input type="text" id="fam-ap2"></div></div>
+            <div class="row"><div class="col"><label>Doc</label><select id="fam-tipo-doc" onchange="window.verificarMenor('fam')"><option value="MENOR">MENOR</option><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="NODNI">NODNI</option></select></div><div class="col"><label>Num</label><input type="text" id="fam-doc-num" disabled></div></div>
+            <div class="row"><div class="col"><label>F. Nac</label><input type="tel" id="fam-fecha" oninput="window.formatearFecha(this)" maxlength="10"></div></div>
+            <div class="row">
+                <div class="col">
+                    <label>¿Tiene alguna intolerancia?</label>
+                    <select id="fam-tiene-intolerancia">
+                        <option value="no">No</option>
+                        <option value="si">Sí</option>
+                    </select>
+                </div>
+            </div>
+            <div id="fam-intolerancia-detalle-container" class="intolerancia-detalle-container hidden">
+                <label>Indique Intolerancia:</label>
+                <textarea id="fam-intolerancia-detalle" rows="3" placeholder="Describa la intolerancia..."></textarea>
+            </div>
+            <div class="campo-no-localizacion">
+                <input type="checkbox" id="fam-no-localizacion">
+                <label for="fam-no-localizacion">No deseo ser localizado/a por nadie</label>
+            </div>
+            <div class="btn-row"><button class="primary" onclick="window.guardarFamiliarEnLista()">Añadir</button></div>
+        </div>
+    </div>
+
+    <!-- MODAL AÑADIR FAMILIAR (ADMIN - CON NUEVOS CAMPOS) -->
+    <div id="modal-admin-add-familiar" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
+        <div class="modal-content">
+            <span class="close-modal" onclick="window.cerrarModalFamiliarAdmin()">&times;</span>
+            <h3>Miembro (Admin)</h3>
+            <div class="row"><div class="col"><label>Nombre</label><input type="text" id="adm-fam-nombre"></div><div class="col"><label>Ap 1</label><input type="text" id="adm-fam-ap1"></div><div class="col"><label>Ap 2</label><input type="text" id="adm-fam-ap2"></div></div>
+            <div class="row"><div class="col"><label>Doc</label><select id="adm-fam-tipo-doc" onchange="window.verificarMenor('adm-fam')"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="NODNI">NODNI</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Num</label><input type="text" id="adm-fam-doc-num"></div></div>
+            <div class="row"><div class="col"><label>F. Nac</label><input type="tel" id="adm-fam-fecha" oninput="window.formatearFecha(this)" maxlength="10"></div><div class="col"><label>Tel</label><input type="tel" id="adm-fam-tel"></div></div>
+            <div class="row">
+                <div class="col">
+                    <label>¿Tiene alguna intolerancia?</label>
+                    <select id="adm-fam-tiene-intolerancia">
+                        <option value="no">No</option>
+                        <option value="si">Sí</option>
+                    </select>
+                </div>
+            </div>
+            <div id="adm-fam-intolerancia-detalle-container" class="intolerancia-detalle-container hidden">
+                <label>Indique Intolerancia:</label>
+                <textarea id="adm-fam-intolerancia-detalle" rows="3" placeholder="Describa la intolerancia..."></textarea>
+            </div>
+            <div class="campo-no-localizacion">
+                <input type="checkbox" id="adm-fam-no-localizacion">
+                <label for="adm-fam-no-localizacion">No deseo ser localizado/a por nadie</label>
+            </div>
+            <div class="btn-row"><button class="primary" onclick="window.guardarFamiliarAdmin()">Añadir</button></div>
+        </div>
+    </div>
+
     <div id="modal-obs-detalle" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content modal-lg"><span class="close-modal" onclick="document.getElementById('modal-obs-detalle').classList.add('hidden')">&times;</span><h3 id="obs-modal-title">Listado</h3><div id="obs-modal-content" style="margin-top:20px;"></div></div></div>
     
     <!-- Modal: Resumen de Albergues con Derivaciones -->
@@ -491,16 +588,18 @@
             <div id="resumen-albergues-content" style="margin-top:20px;"></div>
         </div>
     </div>
-<!-- Modal Cambio de Contraseña por Link -->
-<div id="modal-custom-resetpass" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
-  <div class="modal-content" style="max-width:350px;text-align:center;">
-    <span class="close-modal" onclick="window.safeHide('modal-custom-resetpass')">&times;</span>
-    <h2 style="color:var(--primary);margin-bottom:10px;">Establecer nueva contraseña</h2>
-    <input type="password" id="reset-pass-new-pw" placeholder="Nueva contraseña" style="width:100%;padding:10px;font-size:1em;margin-bottom:10px;" minlength="6">
-    <button class="primary" id="btn-set-newpass" style="width:100%;padding:12px 0;">Guardar contraseña</button>
-    <div id="resetpass-custom-feedback" style="margin-top:10px;font-size:0.95em;"></div>
-  </div>
-</div>
+
+    <!-- Modal Cambio de Contraseña por Link -->
+    <div id="modal-custom-resetpass" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
+      <div class="modal-content" style="max-width:350px;text-align:center;">
+        <span class="close-modal" onclick="window.safeHide('modal-custom-resetpass')">&times;</span>
+        <h2 style="color:var(--primary);margin-bottom:10px;">Establecer nueva contraseña</h2>
+        <input type="password" id="reset-pass-new-pw" placeholder="Nueva contraseña" style="width:100%;padding:10px;font-size:1em;margin-bottom:10px;" minlength="6">
+        <button class="primary" id="btn-set-newpass" style="width:100%;padding:12px 0;">Guardar contraseña</button>
+        <div id="resetpass-custom-feedback" style="margin-top:10px;font-size:0.95em;"></div>
+      </div>
+    </div>
+
     <!-- Modal: Personas con Derivaciones en Albergue Activo -->
     <div id="modal-derivaciones-albergue" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
         <div class="modal-content modal-lg">
@@ -510,30 +609,140 @@
         </div>
     </div>
     
-    <div id="public-register-screen" class="hidden">
-        <div id="public-welcome-screen" class="card" style="max-width:500px; width:100%; margin:20px auto;">
-            <div class="welcome-box">
-                <i class="fa-solid fa-door-open welcome-icon"></i>
-                <h2 style="color:var(--text-main); margin-bottom:10px;">Bienvenido/a</h2>
-                <p style="font-size:1.1rem; line-height:1.5; margin-bottom:20px; color:var(--text-main);">Está a punto de rellenar la ficha de registro de sus datos y el de sus familiares para acceder al <strong id="public-albergue-name" style="color:var(--primary);">Albergue...</strong></p>
-                <div class="consent-box"><input type="checkbox" id="check-consent" onchange="window.toggleStartButton()"><label for="check-consent" style="cursor:pointer; margin:0; margin-left:5px;">He leído la información y acepto facilitar sus datos.</label></div>
-                <button id="btn-start-public" class="primary" style="width:100%; padding:15px; font-size:1.1rem;" disabled onclick="window.iniciarRegistro()">COMENZAR REGISTRO</button>
-            </div>
+    <!-- PANTALLA PÚBLICA (QR PÚBLICO) - CON NUEVOS CAMPOS -->
+    <div id="public-screen" class="hidden">
+        <div class="public-hero">
+            <i class="fa-solid fa-campground" style="font-size:3rem;color:var(--primary);"></i>
+            <h1 id="public-albergue-name" style="margin:10px 0; color:var(--text-main);">Nombre Albergue</h1>
+            <p style="color:var(--text-light);">Pre-registro familiar</p>
         </div>
-        <div id="public-form-container" class="hidden">
-            <div class="public-form-header"><h2 style="text-align:center; color:var(--primary); margin:0;">Tus Datos</h2></div>
-            <div class="public-form-body">
+
+        <div id="public-form-container">
+            <div class="public-card">
+                <h3 style="color:var(--primary);margin-bottom:10px;"><i class="fa-solid fa-user"></i> Tus Datos</h3>
                 <div class="row"><div class="col"><label>Nombre (*)</label><input type="text" id="pub-nombre"></div></div>
-                <div class="row"><div class="col"><label>Ap 1</label><input type="text" id="pub-ap1"></div><div class="col"><label>Ap 2</label><input type="text" id="pub-ap2"></div></div>
-                <div class="row"><div class="col"><label>Doc</label><select id="pub-tipo-doc" onchange="window.verificarMenor('pub')"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Num</label><input type="text" id="pub-doc-num"></div></div>
-                <div class="row"><div class="col"><label>F. Nac</label><input type="tel" id="pub-fecha" placeholder="DD/MM/AAAA" maxlength="10" oninput="window.formatearFecha(this)"></div><div class="col"><label>Tel</label><input type="tel" id="pub-tel"></div></div>
-                <div class="fam-list"><h4>Acompañantes</h4><div id="lista-familiares-ui"><p style="color:#999;">Ninguno.</p></div><button class="secondary" onclick="window.abrirModalFamiliar()">+ Añadir Acompañante</button></div>
+                <div class="row"><div class="col"><label>Apellido 1</label><input type="text" id="pub-ap1"></div><div class="col"><label>Apellido 2</label><input type="text" id="pub-ap2"></div></div>
+                <div class="row"><div class="col"><label>Tipo Doc</label><select id="pub-tipo-doc" onchange="window.verificarMenor('pub')"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="NODNI">NODNI</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Número</label><input type="text" id="pub-doc-num"></div></div>
+                <div class="row"><div class="col"><label>Fecha Nac. (DD/MM/AAAA)</label><input type="tel" id="pub-fecha" oninput="window.formatearFecha(this)" maxlength="10"></div><div class="col"><label>Teléfono</label><input type="tel" id="pub-tel"></div></div>
+                <div class="row">
+                    <div class="col">
+                        <label>¿Tiene alguna intolerancia?</label>
+                        <select id="pub-tiene-intolerancia">
+                            <option value="no">No</option>
+                            <option value="si">Sí</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="pub-intolerancia-detalle-container" class="intolerancia-detalle-container hidden">
+                    <label>Indique Intolerancia:</label>
+                    <textarea id="pub-intolerancia-detalle" rows="3" placeholder="Describa la intolerancia..."></textarea>
+                </div>
+                <div class="campo-no-localizacion">
+                    <input type="checkbox" id="pub-no-localizacion">
+                    <label for="pub-no-localizacion">No deseo ser localizado/a por nadie</label>
+                </div>
             </div>
-            <div class="public-form-footer"><button class="success" style="width:100%; padding:15px; font-size:1.2rem; box-shadow: 0 -2px 10px rgba(0,0,0,0.1);" onclick="window.publicoGuardarTodo()">ENVIAR DATOS</button></div>
+
+            <div class="public-card">
+                <h3 style="color:var(--primary);margin-bottom:10px;"><i class="fa-solid fa-people-roof"></i> Tu Familia</h3>
+                <p style="font-size:0.85rem;color:#666;margin-bottom:10px;">¿Vienes acompañado/a? Añade a tus familiares.</p>
+                <div id="public-lista-familiares"></div>
+                <button class="secondary" onclick="window.abrirModalFamiliar()" style="width:100%;margin-top:10px;">+ Añadir Familiar</button>
+            </div>
+
+            <button class="primary" onclick="window.publicoGuardarTodo()" style="width:100%;padding:18px;font-size:1.1rem;margin-top:20px;">Enviar Pre-Registro</button>
         </div>
-        <div id="public-success-msg" class="hidden" style="text-align:center; padding:20px; background:white; height:100%;"><div class="success-icon"><i class="fa-solid fa-circle-check"></i></div><h1 style="margin-bottom:10px;">¡Datos Enviados!</h1><p style="font-size:1.2rem; color:var(--text-light);">Gracias. Por favor, acércate a la mesa de entrada.</p></div>
+
+        <div id="public-success-container" class="hidden" style="text-align:center;padding:40px 20px;">
+            <i class="fa-solid fa-circle-check" style="font-size:4rem;color:var(--success);margin-bottom:20px;"></i>
+            <h2 style="color:var(--success);margin-bottom:10px;">¡Registro Recibido!</h2>
+            <p style="color:#666;font-size:1rem;">Gracias. Tu información ha sido enviada correctamente. El personal del albergue revisará tu solicitud.</p>
+        </div>
     </div>
 
-    <script type="module" src="script.js"></script>
+    <!-- MODAL: MAPA GENERAL DE CAMAS (sin asignar) -->
+    <div id="modal-mapa-general" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
+        <div class="modal-content modal-lg">
+            <span class="close-modal" onclick="document.getElementById('modal-mapa-general').classList.add('hidden')">&times;</span>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0;"><i class="fa-solid fa-bed"></i> Mapa General de Camas</h3>
+                <div style="display: flex; gap: 10px;">
+                    <button class="secondary" onclick="window.exportarDatosAlbergue()">
+                        <i class="fa-solid fa-download"></i> Exportar Excel
+                    </button>
+                    <button class="danger" onclick="window.confirmarSalidaMasiva()">
+                        <i class="fa-solid fa-door-open"></i> Salida Masiva
+                    </button>
+                </div>
+            </div>
+            
+            <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <div style="display: flex; gap: 20px; flex-wrap: wrap; font-size: 0.9rem;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div style="width: 20px; height: 20px; background: #10b981; border-radius: 4px;"></div>
+                        <span>Disponible</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div style="width: 20px; height: 20px; background: #ef4444; border-radius: 4px;"></div>
+                        <span>Ocupada</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div style="width: 20px; height: 20px; background: #f97316; border-radius: 4px;"></div>
+                        <span>Familia</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="grid-camas-general" class="bed-grid"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, getDoc, doc, setDoc, updateDoc, deleteDoc, query, where, onSnapshot, serverTimestamp, orderBy, writeBatch, increment } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD3osCPWxxLRsNMO8Ou71-xkwwj9MpYbdE",
+            authDomain: "albergue-45c0a.firebaseapp.com",
+            projectId: "albergue-45c0a",
+            storageBucket: "albergue-45c0a.firebasestorage.app",
+            messagingSenderId: "688293039626",
+            appId: "1:688293039626:web:aef41ae4f3ed5baa0c7ec1"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        window.firebaseApp = app;
+        window.auth = auth;
+        window.db = db;
+        window.addDoc = addDoc;
+        window.collection = collection;
+        window.getDocs = getDocs;
+        window.getDoc = getDoc;
+        window.doc = doc;
+        window.setDoc = setDoc;
+        window.updateDoc = updateDoc;
+        window.deleteDoc = deleteDoc;
+        window.query = query;
+        window.where = where;
+        window.onSnapshot = onSnapshot;
+        window.serverTimestamp = serverTimestamp;
+        window.orderBy = orderBy;
+        window.writeBatch = writeBatch;
+        window.increment = increment;
+        window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+        window.signOut = signOut;
+        window.onAuthStateChanged = onAuthStateChanged;
+        window.sendPasswordResetEmail = sendPasswordResetEmail;
+        window.updatePassword = updatePassword;
+        window.reauthenticateWithCredential = reauthenticateWithCredential;
+        window.EmailAuthProvider = EmailAuthProvider;
+    </script>
+
+    <script src="script.js"></script>
 </body>
 </html>

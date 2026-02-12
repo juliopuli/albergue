@@ -870,3 +870,17 @@ body.focused-mode .app-nav { display: none !important; }
     box-shadow: 0 2px 12px rgba(0,0,0,0.12);
     padding: 30px 20px;
 }
+/* Animación de entrada para el check */
+@keyframes scaleIn {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}

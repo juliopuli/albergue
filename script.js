@@ -2296,16 +2296,19 @@ window.onload = async () => {
             const docRef = doc(db, "albergues", currentAlbergueId);
             const docSnap = await getDoc(docRef);
             
-            if(docSnap.exists()){
-                const d = docSnap.data();
-                console.log('🔍 Albergue encontrado:', d.nombre);
-                if(window.el('public-albergue-name')) {
-                    window.el('public-albergue-name').innerText = d.nombre;
-                }
-            } else {
-                console.error('❌ Albergue no encontrado');
-                alert('Error: Albergue no encontrado');
-            }
+       if(docSnap.exists()){
+    const d = docSnap.data();
+    console.log('🔍 Albergue encontrado:', d.nombre);
+    if(window.el('public-albergue-name')) {
+        window.el('public-albergue-name').innerText = d.nombre;
+    }
+    if(window.el('public-albergue-name-welcome')) {
+        window.el('public-albergue-name-welcome').innerText = d.nombre;
+    }
+} else {
+    console.error('❌ Albergue no encontrado');
+    alert('Error: Albergue no encontrado');
+}
             
             console.log('✅ Modo público listo');
         } catch(e) { 

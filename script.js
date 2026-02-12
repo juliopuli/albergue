@@ -2300,7 +2300,7 @@ window.setupDerivacionesListener = function() {
         } catch(e) {
             window.sysLog("Error actualizando badge derivaciones: " + e.message, "error");
         }
-    }, 120000); // 2 minutos = 120000 ms
+    }, 1200000); // 20 minutos = 1200000 ms
 };
 window.onload = async () => {
     if(isPublicMode){

@@ -2289,7 +2289,6 @@ if(marcadas > 0) {
 let derivacionesUpdateInterval = null;
 
 window.setupDerivacionesListener = function() {
-    // Versión optimizada - solo cuenta al cargar, no en tiempo real
     const permitidas = window.getDerivacionesPermitidas();
     
     if(permitidas.length === 0) {
@@ -2298,21 +2297,40 @@ window.setupDerivacionesListener = function() {
         return;
     }
     
-    // Actualizar badge al inicio
-    window.actualizarBadgeDerivaciones();
-    
-    // Actualizar cada 2 minutos (en lugar de 30 segundos para ahorrar quota)
-    if(derivacionesUpdateInterval) {
-        clearInterval(derivacionesUpdateInterval);
+    // Limpiar listener anterior si existe
+    if(unsubscribeDerivaciones) {
+        unsubscribeDerivaciones();
+        unsubscribeDerivaciones = null;
     }
     
-    derivacionesUpdateInterval = setInterval(() => {
-        try {
-            window.actualizarBadgeDerivaciones();
-        } catch(e) {
-            window.sysLog("Error actualizando badge derivaciones: " + e.message, "error");
+    // ⭐ TIEMPO REAL: Escuchar solo derivaciones pendientes del usuario
+    const q = query(
+        collection(db, "derivaciones"),
+        where("estado", "==", "pendiente"),
+        where("tipo", "in", permitidas)
+    );
+    
+    unsubscribeDerivaciones = onSnapshot(q, (snapshot) => {
+        const count = snapshot.size;
+        const badge = document.getElementById('derivaciones-notif-badge');
+        const badgeCount = document.getElementById('badge-count');
+        
+        if(badge && badgeCount) {
+            badgeCount.innerText = count;
+            
+            if(count > 0) {
+                badge.classList.remove('hidden');
+                badge.classList.add('has-notifications');
+            } else {
+                badge.classList.add('hidden');
+                badge.classList.remove('has-notifications');
+            }
         }
-    }, 1200000); // 20 minutos = 1200000 ms
+        
+        window.sysLog(`📬 Derivaciones actualizadas: ${count} pendientes`, "info");
+    }, (error) => {
+        window.sysLog("Error en listener derivaciones: " + error.message, "error");
+    });
 };
 window.onload = async () => {
     if(isPublicMode){

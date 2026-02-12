@@ -242,6 +242,186 @@ const SUBFORMULARIOS_CONFIG = {
         }
     }
 };
+// --- FUNCIONES PARA SUBFORMULARIOS DINÁMICOS ---
+
+window.mostrarSubformulario = function(tipo) {
+    const select = document.getElementById(`sel-int-${tipo}`);
+    const container = document.getElementById(`subform-${tipo}`);
+    const subtipo = select.value;
+    
+    // Limpiar contenedor
+    container.innerHTML = '';
+    
+    if (!subtipo || subtipo === "" || !SUBFORMULARIOS_CONFIG[tipo] || !SUBFORMULARIOS_CONFIG[tipo][subtipo]) {
+        return;
+    }
+    
+    const config = SUBFORMULARIOS_CONFIG[tipo][subtipo];
+    
+    // Crear campos dinámicamente
+    config.campos.forEach(campo => {
+        const wrapper = document.createElement('div');
+        wrapper.style.marginTop = '15px';
+        
+        // Si el campo es condicional, ocultarlo inicialmente
+        if (campo.condicional) {
+            wrapper.id = `wrapper-${campo.id}`;
+            wrapper.classList.add('hidden');
+        }
+        
+        if (campo.tipo === 'checkbox-group') {
+            // Grupo de checkboxes
+            const label = document.createElement('label');
+            label.innerHTML = `${campo.label}${campo.requerido ? ' (*)' : ''}`;
+            wrapper.appendChild(label);
+            
+            campo.opciones.forEach(opcion => {
+                const checkDiv = document.createElement('div');
+                checkDiv.style.marginTop = '5px';
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = `${campo.id}_${opcion.replace(/\s+/g, '_')}`;
+                checkbox.value = opcion;
+                checkbox.style.width = 'auto';
+                checkbox.style.marginRight = '8px';
+                
+                const labelCheck = document.createElement('label');
+                labelCheck.htmlFor = checkbox.id;
+                labelCheck.innerHTML = opcion;
+                labelCheck.style.fontWeight = 'normal';
+                labelCheck.style.display = 'inline';
+                
+                checkDiv.appendChild(checkbox);
+                checkDiv.appendChild(labelCheck);
+                wrapper.appendChild(checkDiv);
+            });
+        } else if (campo.tipo === 'checkbox') {
+            // Checkbox simple
+            const checkDiv = document.createElement('div');
+            checkDiv.style.display = 'flex';
+            checkDiv.style.alignItems = 'center';
+            checkDiv.style.gap = '8px';
+            
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.id = campo.id;
+            checkbox.style.width = 'auto';
+            checkbox.style.marginBottom = '0';
+            
+            // Si es un checkbox que controla campos condicionales
+            if (config.campos.some(c => c.condicional === campo.id)) {
+                checkbox.addEventListener('change', function() {
+                    config.campos.forEach(c => {
+                        if (c.condicional === campo.id) {
+                            const conditionalWrapper = document.getElementById(`wrapper-${c.id}`);
+                            if (conditionalWrapper) {
+                                if (this.checked) {
+                                    conditionalWrapper.classList.remove('hidden');
+                                } else {
+                                    conditionalWrapper.classList.add('hidden');
+                                    // Limpiar el campo
+                                    const field = document.getElementById(c.id);
+                                    if (field) field.value = '';
+                                }
+                            }
+                        }
+                    });
+                });
+            }
+            
+            const label = document.createElement('label');
+            label.htmlFor = campo.id;
+            label.innerHTML = campo.label;
+            label.style.fontWeight = 'normal';
+            label.style.marginBottom = '0';
+            label.style.cursor = 'pointer';
+            
+            checkDiv.appendChild(checkbox);
+            checkDiv.appendChild(label);
+            wrapper.appendChild(checkDiv);
+        } else {
+            // Otros tipos de campos
+            const label = document.createElement('label');
+            label.htmlFor = campo.id;
+            label.innerHTML = `${campo.label}${campo.requerido ? ' (*)' : ''}`;
+            wrapper.appendChild(label);
+            
+            let input;
+            if (campo.tipo === 'textarea') {
+                input = document.createElement('textarea');
+                input.rows = 3;
+            } else if (campo.tipo === 'select') {
+                input = document.createElement('select');
+                const optionDefault = document.createElement('option');
+                optionDefault.value = '';
+                optionDefault.textContent = '-- Selecciona --';
+                input.appendChild(optionDefault);
+                
+                campo.opciones.forEach(opcion => {
+                    const option = document.createElement('option');
+                    option.value = opcion;
+                    option.textContent = opcion;
+                    input.appendChild(option);
+                });
+            } else {
+                input = document.createElement('input');
+                input.type = campo.tipo;
+                if (campo.step) input.step = campo.step;
+            }
+            
+            input.id = campo.id;
+            if (campo.placeholder) input.placeholder = campo.placeholder;
+            if (campo.value) input.value = campo.value;
+            if (campo.requerido) input.required = true;
+            
+            wrapper.appendChild(input);
+        }
+        
+        container.appendChild(wrapper);
+    });
+};
+
+// Función para recopilar datos del subformulario
+window.recopilarDatosSubformulario = function(tipo) {
+    const select = document.getElementById(`sel-int-${tipo}`);
+    const subtipo = select.value;
+    
+    if (!subtipo || !SUBFORMULARIOS_CONFIG[tipo] || !SUBFORMULARIOS_CONFIG[tipo][subtipo]) {
+        return {};
+    }
+    
+    const config = SUBFORMULARIOS_CONFIG[tipo][subtipo];
+    const datos = {};
+    
+    config.campos.forEach(campo => {
+        if (campo.tipo === 'checkbox-group') {
+            // Recopilar checkboxes marcados
+            const seleccionados = [];
+            campo.opciones.forEach(opcion => {
+                const checkbox = document.getElementById(`${campo.id}_${opcion.replace(/\s+/g, '_')}`);
+                if (checkbox && checkbox.checked) {
+                    seleccionados.push(opcion);
+                }
+            });
+            if (seleccionados.length > 0) {
+                datos[campo.id] = seleccionados.join(', ');
+            }
+        } else if (campo.tipo === 'checkbox') {
+            const checkbox = document.getElementById(campo.id);
+            if (checkbox) {
+                datos[campo.id] = checkbox.checked;
+            }
+        } else {
+            const input = document.getElementById(campo.id);
+            if (input && input.value) {
+                datos[campo.id] = input.value;
+            }
+        }
+    });
+    
+    return datos;
+};
 // --- UTILIDADES Y LOGS ---
 window.sysLog = function(msg, type = 'info') {
     const c = document.getElementById('black-box-content');

@@ -1692,7 +1692,7 @@ await addDoc(
         fecha: new Date(),
         usuario: currentUserData.nombre,
         accion: info.accion,
-        detalle: detalleFormateado
+        detalle: detalleFormateado || "" // ⭐ Protección contra undefined
     }
 );
 

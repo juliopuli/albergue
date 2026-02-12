@@ -333,6 +333,27 @@ window.desactivarUsuariosMasivo = async function() { if (currentUserData.rol !==
 window.abrirModalQR = function() { setTimeout(() => { window.safeShow('modal-qr'); const d = window.el("qrcode-display"); d.innerHTML = ""; new QRCode(d, { text: window.location.href.split('?')[0] + `?public_id=${currentAlbergueId}`, width: 250, height: 250 }); }, 100); };
 window.toggleStartButton = function() { window.el('btn-start-public').disabled = !window.el('check-consent').checked; };
 window.iniciarRegistro = function() { window.safeHide('public-welcome-screen'); window.safeShow('public-form-container'); };
+window.mostrarFormularioPublico = function() {
+    window.safeHide('public-welcome-screen');
+    window.safeShow('public-form-container');
+    
+    // Añadir encabezado al formulario con el nombre del albergue
+    const nombreAlbergue = document.getElementById('public-albergue-name-welcome').innerText;
+    const formContainer = document.getElementById('public-form-container');
+    
+    // Crear header si no existe
+    if (!document.getElementById('public-form-header')) {
+        const header = document.createElement('div');
+        header.id = 'public-form-header';
+        header.style.cssText = 'text-align: center; padding: 20px 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; margin-bottom: 20px;';
+        header.innerHTML = `
+            <i class="fa-solid fa-campground" style="font-size: 2rem; color: white; margin-bottom: 10px; display: block;"></i>
+            <h2 style="color: white; margin: 0 0 5px 0; font-size: 1.3rem;">${nombreAlbergue}</h2>
+            <p style="color: rgba(255,255,255,0.9); font-size: 0.9rem; margin: 0;">Pre-registro familiar</p>
+        `;
+        formContainer.insertBefore(header, formContainer.firstChild);
+    }
+};
 window.publicoGuardarTodo = async function() {
     const d = window.getDatosFormulario('pub'); if (!d.nombre) return alert("Falta nombre");
     

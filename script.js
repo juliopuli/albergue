@@ -927,35 +927,47 @@ window.confirmarDerivacion = async function() {
     if(!motivo) return alert("Escribe un motivo."); 
     
     if(personaEnGestion) { 
-const logData = {
-    fecha: new Date(),
-    usuario: currentUserData.nombre,
-    accion: `Derivación ${tipoDerivacionActual}`,
-    detalle: motivo,
-    estado: "pendiente"
-};
-const path = personaEnGestionEsGlobal 
-    ? collection(db, "pool_prefiliacion", personaEnGestion.id, "historial")
-    : collection(db, "albergues", currentAlbergueId, "personas", personaEnGestion.id, "historial");
-await addDoc(path, logData);
+        const logData = {
+            fecha: new Date(),
+            usuario: currentUserData.nombre,
+            accion: `Derivación ${tipoDerivacionActual}`,
+            detalle: motivo,
+            estado: "pendiente"
+        };
+        
+        const path = personaEnGestionEsGlobal 
+            ? collection(db, "pool_prefiliacion", personaEnGestion.id, "historial")
+            : collection(db, "albergues", currentAlbergueId, "personas", personaEnGestion.id, "historial");
+        
+        await addDoc(path, logData);
 
-// Incrementar contador en el albergue
-if(!personaEnGestionEsGlobal && currentAlbergueId) {
-    const campoContador = tipoDerivacionActual === 'Sanitaria' ? 'derivacionesPendientes.sanitaria' :
-                          tipoDerivacionActual === 'Psicosocial' ? 'derivacionesPendientes.psicosocial' :
-                          'derivacionesPendientes.entregas';
-    
-    await updateDoc(doc(db, "albergues", currentAlbergueId), {
-        [campoContador]: increment(1)
-    });
-}
+        // ⭐ NUEVO: Crear también en colección plana para notificaciones eficientes
+        if(!personaEnGestionEsGlobal && currentAlbergueId) {
+            await addDoc(collection(db, "derivaciones"), {
+                albergueId: currentAlbergueId,
+                personaId: personaEnGestion.id,
+                personaNombre: personaEnGestion.nombre,
+                tipo: `Derivación ${tipoDerivacionActual}`,
+                estado: "pendiente",
+                motivo: motivo,
+                usuario: currentUserData.nombre,
+                fecha: new Date()
+            });
+            
+            // Incrementar contador en el albergue
+            const campoContador = tipoDerivacionActual === 'Sanitaria' ? 'derivacionesPendientes.sanitaria' :
+                                  tipoDerivacionActual === 'Psicosocial' ? 'derivacionesPendientes.psicosocial' :
+                                  'derivacionesPendientes.entregas';
+            
+            await updateDoc(doc(db, "albergues", currentAlbergueId), {
+                [campoContador]: increment(1)
+            });
+        }
     } 
     
     window.sysLog(`Derivación a ${tipoDerivacionActual}: ${motivo}`, "warn"); 
     window.safeHide('modal-derivacion'); 
     window.showToast("✅ Derivación enviada"); 
-    
-    // Solo llamar a volverABusquedaIntervenciones (que ya hace el reset)
     window.volverABusquedaIntervenciones();
 };
 window.verCarnetQR = function() { if(!personaEnGestion) return; window.safeShow('modal-carnet-qr'); const container = window.el('carnet-qrcode-display'); container.innerHTML = ""; const currentUrl = window.location.href.split('?')[0]; const deepLink = `${currentUrl}?action=scan&aid=${currentAlbergueId}&pid=${personaEnGestion.id}`; new QRCode(container, { text: deepLink, width: 250, height: 250 }); const nombreCompleto = `${personaEnGestion.nombre} ${personaEnGestion.ap1 || ""} ${personaEnGestion.ap2 || ""}`; window.el('carnet-nombre').innerText = nombreCompleto; window.el('carnet-id').innerText = personaEnGestion.docNum || "ID: " + personaEnGestion.id.substring(0,8).toUpperCase(); };

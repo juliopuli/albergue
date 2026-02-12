@@ -2270,6 +2270,7 @@ window.navegarADerivacion = async function(personaId, tipoDerivacion) {
 };
 
 // Mark derivation as attended
+// Mark derivation as attended
 window.marcarDerivacionAtendida = async function(personaId, tipoDerivacion) {
     if(!currentAlbergueId || !personaId) return;
     
@@ -2299,20 +2300,37 @@ window.marcarDerivacionAtendida = async function(personaId, tipoDerivacion) {
             }
         });
         
-if(marcadas > 0) {
-    await batch.commit();
-    
-    // Decrementar contador en el albergue
-    const campoContador = accionBuscada === 'Derivación Sanitaria' ? 'derivacionesPendientes.sanitaria' :
-                          accionBuscada === 'Derivación Psicosocial' ? 'derivacionesPendientes.psicosocial' :
-                          'derivacionesPendientes.entregas';
-    
-    await updateDoc(doc(db, "albergues", currentAlbergueId), {
-        [campoContador]: increment(-marcadas)
-    });
-    
-    window.sysLog(`${marcadas} derivaciones de ${accionBuscada} marcadas como atendidas`, "success");
-}
+        if(marcadas > 0) {
+            await batch.commit();
+            
+            // Decrementar contador en el albergue
+            const campoContador = accionBuscada === 'Derivación Sanitaria' ? 'derivacionesPendientes.sanitaria' :
+                                  accionBuscada === 'Derivación Psicosocial' ? 'derivacionesPendientes.psicosocial' :
+                                  'derivacionesPendientes.entregas';
+            
+            await updateDoc(doc(db, "albergues", currentAlbergueId), {
+                [campoContador]: increment(-marcadas)
+            });
+            
+            // ⭐ NUEVO: Marcar como resuelta en colección plana
+            const qDeriv = query(
+                collection(db, "derivaciones"),
+                where("personaId", "==", personaId),
+                where("tipo", "==", accionBuscada),
+                where("estado", "==", "pendiente")
+            );
+            
+            const derivSnap = await getDocs(qDeriv);
+            derivSnap.forEach(async (docDeriv) => {
+                await updateDoc(doc(db, "derivaciones", docDeriv.id), {
+                    estado: "resuelta",
+                    fechaResolucion: new Date(),
+                    usuarioResolucion: currentUserData.nombre
+                });
+            });
+            
+            window.sysLog(`${marcadas} derivaciones de ${accionBuscada} marcadas como atendidas`, "success");
+        }
         
     } catch(e) {
         window.sysLog("Error marcando derivación atendida: " + e.message, "error");

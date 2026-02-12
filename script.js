@@ -63,7 +63,185 @@ const TIPOS_INTERVENCION = {
         ]
     }
 };
-
+// --- CONFIGURACIÓN DE SUBFORMULARIOS DINÁMICOS ---
+const SUBFORMULARIOS_CONFIG = {
+    san: {
+        "Atención Urgente / Primeros Auxilios": {
+            campos: [
+                { tipo: "select", id: "tipo_urgencia", label: "Tipo de urgencia", opciones: ["Trauma", "Caída", "Dolor torácico", "Dificultad respiratoria", "Pérdida de conciencia", "Convulsiones", "Reacción alérgica", "Hemorragia", "Otro"], requerido: true },
+                { tipo: "select", id: "gravedad", label: "Nivel de gravedad", opciones: ["Leve", "Moderado", "Grave", "Crítico"], requerido: true },
+                { tipo: "checkbox", id: "requiere_ambulancia", label: "¿Requiere ambulancia?" },
+                { tipo: "textarea", id: "actuacion", label: "Actuación realizada", requerido: true }
+            ]
+        },
+        "Toma de Constantes": {
+            campos: [
+                { tipo: "text", id: "tension_arterial", label: "Tensión Arterial (ej: 120/80)", placeholder: "120/80 mmHg" },
+                { tipo: "number", id: "frecuencia_cardiaca", label: "Frecuencia Cardíaca (ppm)", placeholder: "75" },
+                { tipo: "number", id: "temperatura", label: "Temperatura (°C)", placeholder: "36.5", step: "0.1" },
+                { tipo: "number", id: "saturacion_oxigeno", label: "Saturación de Oxígeno (%)", placeholder: "98" },
+                { tipo: "number", id: "glucemia", label: "Glucemia (mg/dL)", placeholder: "100" },
+                { tipo: "textarea", id: "observaciones_constantes", label: "Observaciones" }
+            ]
+        },
+        "Administración de Medicación": {
+            campos: [
+                { tipo: "text", id: "medicamento", label: "Nombre del medicamento", requerido: true },
+                { tipo: "text", id: "dosis", label: "Dosis administrada", placeholder: "500mg, 2 comprimidos", requerido: true },
+                { tipo: "select", id: "via_administracion", label: "Vía de administración", opciones: ["Oral", "Intramuscular", "Intravenosa", "Subcutánea", "Tópica", "Inhalada"], requerido: true },
+                { tipo: "time", id: "hora_administracion", label: "Hora de administración" },
+                { tipo: "text", id: "prescrito_por", label: "Prescrito por" },
+                { tipo: "datetime-local", id: "proxima_dosis", label: "Próxima dosis prevista (opcional)" }
+            ]
+        },
+        "Cura de Heridas": {
+            campos: [
+                { tipo: "text", id: "localizacion_herida", label: "Localización", placeholder: "Brazo izquierdo, rodilla derecha", requerido: true },
+                { tipo: "select", id: "tipo_herida", label: "Tipo de herida", opciones: ["Contusión", "Erosión", "Laceración", "Quemadura", "Úlcera", "Ampolla"], requerido: true },
+                { tipo: "text", id: "tamano_herida", label: "Tamaño aproximado", placeholder: "3x2 cm" },
+                { tipo: "select", id: "estado_herida", label: "Estado", opciones: ["Limpia", "Infectada", "Cicatrizando"] },
+                { tipo: "text", id: "material_utilizado", label: "Material utilizado", placeholder: "Betadine, gasa estéril, apósito" },
+                { tipo: "checkbox", id: "requiere_seguimiento_herida", label: "Requiere seguimiento" },
+                { tipo: "date", id: "fecha_proxima_cura", label: "Fecha próxima cura", condicional: "requiere_seguimiento_herida" }
+            ]
+        },
+        "Consulta Médica": {
+            campos: [
+                { tipo: "textarea", id: "motivo_consulta", label: "Motivo de consulta", requerido: true },
+                { tipo: "text", id: "sintomas_principales", label: "Síntomas principales", placeholder: "Fiebre, dolor abdominal" },
+                { tipo: "textarea", id: "diagnostico", label: "Diagnóstico/Impresión" },
+                { tipo: "textarea", id: "tratamiento_recomendado", label: "Tratamiento recomendado" },
+                { tipo: "checkbox", id: "requiere_seguimiento_consulta", label: "Requiere seguimiento" },
+                { tipo: "date", id: "fecha_revision", label: "Fecha de revisión", condicional: "requiere_seguimiento_consulta" }
+            ]
+        },
+        "Derivación Hospitalaria": {
+            campos: [
+                { tipo: "textarea", id: "motivo_derivacion_hosp", label: "Motivo de derivación", requerido: true },
+                { tipo: "select", id: "servicio_derivado", label: "Servicio derivado", opciones: ["Urgencias", "Medicina Interna", "Traumatología", "Pediatría", "Ginecología", "Psiquiatría", "Otro"], requerido: true },
+                { tipo: "text", id: "hospital_destino", label: "Hospital destino" },
+                { tipo: "select", id: "medio_traslado", label: "Medio de traslado", opciones: ["Ambulancia medicalizada", "Ambulancia convencional", "Vehículo particular", "Taxi"] },
+                { tipo: "time", id: "hora_salida", label: "Hora de salida" },
+                { tipo: "text", id: "acompanante", label: "Acompañante (opcional)" }
+            ]
+        },
+        "Otros": {
+            campos: [
+                { tipo: "textarea", id: "descripcion_otros_san", label: "Descripción", requerido: true }
+            ]
+        }
+    },
+    psi: {
+        "Valoración Inicial": {
+            campos: [
+                { tipo: "select", id: "estado_emocional", label: "Estado emocional observado", opciones: ["Tranquilo", "Ansioso", "Deprimido", "Agitado", "Confuso", "Colaborador"], requerido: true },
+                { tipo: "textarea", id: "motivo_llegada", label: "Motivo de llegada", requerido: true },
+                { tipo: "text", id: "situacion_familiar", label: "Situación familiar" },
+                { tipo: "textarea", id: "necesidades_detectadas", label: "Necesidades detectadas" },
+                { tipo: "select", id: "riesgo_identificado", label: "Riesgo identificado", opciones: ["Sin riesgo", "Riesgo bajo", "Riesgo medio", "Riesgo alto"] }
+            ]
+        },
+        "Acompañamiento / Contención Emocional": {
+            campos: [
+                { tipo: "select", id: "duracion", label: "Duración aproximada", opciones: ["<15 min", "15-30 min", "30-60 min", ">60 min"] },
+                { tipo: "textarea", id: "motivo_acomp", label: "Motivo", requerido: true },
+                { tipo: "select", id: "estado_inicial", label: "Estado inicial", opciones: ["Crisis", "Llanto", "Angustia", "Miedo", "Ira", "Confusión"] },
+                { tipo: "select", id: "estado_final", label: "Estado final", opciones: ["Calmado", "Mejoría", "Sin cambios", "Requiere más apoyo"] },
+                { tipo: "text", id: "tecnicas_aplicadas", label: "Técnicas aplicadas", placeholder: "Escucha activa, respiración..." }
+            ]
+        },
+        "Comunicación de Malas Noticias": {
+            campos: [
+                { tipo: "select", id: "tipo_noticia", label: "Tipo de noticia", opciones: ["Fallecimiento", "Enfermedad grave", "Pérdida material", "Separación familiar", "Otra"], requerido: true },
+                { tipo: "textarea", id: "reaccion_inicial", label: "Reacción inicial" },
+                { tipo: "textarea", id: "apoyo_prestado", label: "Apoyo prestado" },
+                { tipo: "text", id: "red_apoyo", label: "Red de apoyo activada", placeholder: "Familia, amigos, servicios sociales" },
+                { tipo: "checkbox", id: "seguimiento_psicologico", label: "Requiere seguimiento psicológico" }
+            ]
+        },
+        "Gestión de Trámites": {
+            campos: [
+                { tipo: "select", id: "tipo_tramite", label: "Tipo de trámite", opciones: ["Documentación", "Ayudas sociales", "Padrón", "Salud", "Escolarización", "Jurídico", "Laboral", "Otro"], requerido: true },
+                { tipo: "text", id: "entidad_organismo", label: "Entidad/organismo" },
+                { tipo: "select", id: "estado_tramite", label: "Estado", opciones: ["Iniciado", "En proceso", "Completado", "Pendiente documentación"] },
+                { tipo: "textarea", id: "proxima_accion", label: "Próxima acción" },
+                { tipo: "date", id: "fecha_seguimiento_tramite", label: "Fecha de seguimiento" }
+            ]
+        },
+        "Resolución de Conflictos": {
+            campos: [
+                { tipo: "select", id: "tipo_conflicto", label: "Tipo de conflicto", opciones: ["Convivencia", "Familiar", "Comunicación", "Recursos", "Normativa", "Otro"], requerido: true },
+                { tipo: "text", id: "personas_implicadas", label: "Personas implicadas", placeholder: "Número o iniciales" },
+                { tipo: "textarea", id: "mediacion_realizada", label: "Mediación realizada" },
+                { tipo: "textarea", id: "acuerdos_alcanzados", label: "Acuerdos alcanzados" },
+                { tipo: "select", id: "resultado_conflicto", label: "Resultado", opciones: ["Resuelto", "Parcialmente resuelto", "Sin resolver", "Requiere intervención externa"] }
+            ]
+        },
+        "Atención a Menores": {
+            campos: [
+                { tipo: "number", id: "edad_menor", label: "Edad del menor", requerido: true },
+                { tipo: "text", id: "acompanado_por", label: "Acompañado por", placeholder: "Madre, padre, tutor..." },
+                { tipo: "textarea", id: "motivo_atencion_menor", label: "Motivo de atención" },
+                { tipo: "text", id: "actividad_realizada", label: "Actividad realizada", placeholder: "Juego, apoyo escolar, conversación" },
+                { tipo: "select", id: "estado_menor", label: "Estado del menor", opciones: ["Tranquilo", "Activo", "Retraído", "Angustiado", "Colaborador"] },
+                { tipo: "checkbox", id: "seguimiento_menor", label: "Requiere seguimiento específico" }
+            ]
+        },
+        "Otros": {
+            campos: [
+                { tipo: "textarea", id: "descripcion_otros_psi", label: "Descripción", requerido: true }
+            ]
+        }
+    },
+    ent: {
+        "Entrega de Kit de Higiene": {
+            campos: [
+                { tipo: "checkbox-group", id: "contenido_kit", label: "Contenido", opciones: ["Jabón", "Champú", "Pasta + Cepillo dientes", "Pañales", "Toallas sanitarias", "Papel higiénico", "Toalla", "Otro"] },
+                { tipo: "text", id: "talla_panales", label: "Talla de pañales (si aplica)" },
+                { tipo: "text", id: "otro_contenido", label: "Otro (especificar)" },
+                { tipo: "number", id: "cantidad_kit", label: "Cantidad de unidades", value: "1" }
+            ]
+        },
+        "Entrega de Ropa / Calzado": {
+            campos: [
+                { tipo: "checkbox-group", id: "tipo_ropa", label: "Tipo", opciones: ["Ropa interior", "Pantalón", "Camisa/Camiseta", "Abrigo", "Zapatos", "Calcetines", "Otro"] },
+                { tipo: "text", id: "tallas_ropa", label: "Tallas", placeholder: "Indicar talla de cada prenda" },
+                { tipo: "text", id: "para_quien_ropa", label: "Para quién", placeholder: "Adulto/Niño - Nombre" },
+                { tipo: "select", id: "estado_ropa", label: "Estado", opciones: ["Nuevo", "Como nuevo", "Buen estado", "Usado"] }
+            ]
+        },
+        "Entrega de Manta / Abrigo": {
+            campos: [
+                { tipo: "select", id: "tipo_manta", label: "Tipo", opciones: ["Manta", "Edredón", "Saco de dormir", "Abrigo", "Chaqueta", "Otro"], requerido: true },
+                { tipo: "text", id: "talla_abrigo", label: "Talla (si aplica)" },
+                { tipo: "number", id: "cantidad_manta", label: "Cantidad", value: "1" }
+            ]
+        },
+        "Entrega de Alimentos (Biberones, específicos...)": {
+            campos: [
+                { tipo: "checkbox-group", id: "tipo_alimento", label: "Tipo", opciones: ["Leche de fórmula", "Biberones", "Papillas", "Alimentos sin gluten", "Alimentos sin lactosa", "Otro"] },
+                { tipo: "text", id: "especificar_tipo_leche", label: "Especificar tipo de leche (si aplica)" },
+                { tipo: "text", id: "cantidad_alimentos", label: "Cantidad" },
+                { tipo: "date", id: "caducidad_alimentos", label: "Caducidad (si relevante)" },
+                { tipo: "text", id: "observaciones_alimentos", label: "Observaciones", placeholder: "Por intolerancia/alergia" }
+            ]
+        },
+        "Entrega de Juguetes / Material Infantil": {
+            campos: [
+                { tipo: "text", id: "tipo_juguete", label: "Tipo", placeholder: "Peluche, libro, juego de mesa..." },
+                { tipo: "text", id: "edad_recomendada", label: "Edad recomendada" },
+                { tipo: "text", id: "para_quien_juguete", label: "Para quién", placeholder: "Nombre del menor" },
+                { tipo: "number", id: "cantidad_juguetes", label: "Cantidad", value: "1" }
+            ]
+        },
+        "Otros": {
+            campos: [
+                { tipo: "textarea", id: "descripcion_otros_ent", label: "Descripción del artículo", requerido: true },
+                { tipo: "number", id: "cantidad_otros_ent", label: "Cantidad", value: "1" }
+            ]
+        }
+    }
+};
 // --- UTILIDADES Y LOGS ---
 window.sysLog = function(msg, type = 'info') {
     const c = document.getElementById('black-box-content');

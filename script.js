@@ -422,6 +422,202 @@ window.recopilarDatosSubformulario = function(tipo) {
     
     return datos;
 };
+// --- FORMATEAR DATOS PARA HISTORIAL ---
+window.formatearDatosHistorial = function(tipo, subtipo, datosSubform) {
+    let resultado = '';
+    
+    // Mapeo de iconos por tipo
+    const iconosTipo = {
+        'san': '🩺',
+        'psi': '💚',
+        'ent': '📦'
+    };
+    
+    // Mapeo de iconos específicos por subtipo sanitario
+    const iconosSanitarios = {
+        "Atención Urgente / Primeros Auxilios": "🚨",
+        "Toma de Constantes": "📊",
+        "Administración de Medicación": "💊",
+        "Cura de Heridas": "🩹",
+        "Consulta Médica": "👨‍⚕️",
+        "Derivación Hospitalaria": "🏥"
+    };
+    
+    const iconosPsicosociales = {
+        "Valoración Inicial": "📋",
+        "Acompañamiento / Contención Emocional": "💚",
+        "Comunicación de Malas Noticias": "💔",
+        "Gestión de Trámites": "📄",
+        "Resolución de Conflictos": "⚖️",
+        "Atención a Menores": "👶"
+    };
+    
+    const iconosEntregas = {
+        "Entrega de Kit de Higiene": "🧴",
+        "Entrega de Ropa / Calzado": "👕",
+        "Entrega de Manta / Abrigo": "🧥",
+        "Entrega de Alimentos (Biberones, específicos...)": "🍼",
+        "Entrega de Juguetes / Material Infantil": "🎨"
+    };
+    
+    let icono = iconosTipo[tipo] || '📋';
+    if (tipo === 'san' && iconosSanitarios[subtipo]) icono = iconosSanitarios[subtipo];
+    if (tipo === 'psi' && iconosPsicosociales[subtipo]) icono = iconosPsicosociales[subtipo];
+    if (tipo === 'ent' && iconosEntregas[subtipo]) icono = iconosEntregas[subtipo];
+    
+    resultado = `${icono} ${subtipo.toUpperCase()}\n━━━━━━━━━━━━━━━━━━━━━━\n`;
+    
+    // Formatear según el subtipo específico
+    if (!datosSubform || Object.keys(datosSubform).length === 0) {
+        return resultado;
+    }
+    
+    // SANITARIAS
+    if (tipo === 'san') {
+        if (subtipo === "Toma de Constantes") {
+            if (datosSubform.tension_arterial) resultado += `🩺 Tensión Arterial: ${datosSubform.tension_arterial} mmHg\n`;
+            if (datosSubform.frecuencia_cardiaca) resultado += `💓 Frecuencia Cardíaca: ${datosSubform.frecuencia_cardiaca} ppm\n`;
+            if (datosSubform.temperatura) resultado += `🌡️ Temperatura: ${datosSubform.temperatura}°C\n`;
+            if (datosSubform.saturacion_oxigeno) resultado += `🫁 Saturación O₂: ${datosSubform.saturacion_oxigeno}%\n`;
+            if (datosSubform.glucemia) resultado += `🩸 Glucemia: ${datosSubform.glucemia} mg/dL\n`;
+            if (datosSubform.observaciones_constantes) {
+                resultado += `━━━━━━━━━━━━━━━━━━━━━━\n📝 Observaciones:\n${datosSubform.observaciones_constantes}\n`;
+            }
+        } else if (subtipo === "Atención Urgente / Primeros Auxilios") {
+            if (datosSubform.tipo_urgencia) resultado += `🔹 Tipo: ${datosSubform.tipo_urgencia}\n`;
+            if (datosSubform.gravedad) resultado += `🔹 Gravedad: ${datosSubform.gravedad}\n`;
+            if (datosSubform.requiere_ambulancia) resultado += `🚑 Requiere ambulancia: ${datosSubform.requiere_ambulancia ? 'Sí' : 'No'}\n`;
+            if (datosSubform.actuacion) {
+                resultado += `━━━━━━━━━━━━━━━━━━━━━━\n📋 Actuación:\n${datosSubform.actuacion}\n`;
+            }
+        } else if (subtipo === "Administración de Medicación") {
+            if (datosSubform.medicamento) resultado += `💊 Medicamento: ${datosSubform.medicamento}\n`;
+            if (datosSubform.dosis) resultado += `📏 Dosis: ${datosSubform.dosis}\n`;
+            if (datosSubform.via_administracion) resultado += `💉 Vía: ${datosSubform.via_administracion}\n`;
+            if (datosSubform.hora_administracion) resultado += `🕐 Hora: ${datosSubform.hora_administracion}h\n`;
+            if (datosSubform.prescrito_por) resultado += `👨‍⚕️ Prescrito por: ${datosSubform.prescrito_por}\n`;
+            if (datosSubform.proxima_dosis) {
+                const fecha = new Date(datosSubform.proxima_dosis);
+                resultado += `⏰ Próxima dosis: ${fecha.toLocaleDateString()} - ${fecha.toLocaleTimeString()}\n`;
+            }
+        } else if (subtipo === "Cura de Heridas") {
+            if (datosSubform.localizacion_herida) resultado += `📍 Localización: ${datosSubform.localizacion_herida}\n`;
+            if (datosSubform.tipo_herida) resultado += `🔸 Tipo: ${datosSubform.tipo_herida}\n`;
+            if (datosSubform.tamano_herida) resultado += `📐 Tamaño: ${datosSubform.tamano_herida}\n`;
+            if (datosSubform.estado_herida) resultado += `✨ Estado: ${datosSubform.estado_herida}\n`;
+            if (datosSubform.material_utilizado) resultado += `🧴 Material usado: ${datosSubform.material_utilizado}\n`;
+            if (datosSubform.requiere_seguimiento_herida) resultado += `🔁 Seguimiento: Sí\n`;
+            if (datosSubform.fecha_proxima_cura) resultado += `📅 Próxima cura: ${datosSubform.fecha_proxima_cura}\n`;
+        } else if (subtipo === "Consulta Médica") {
+            if (datosSubform.motivo_consulta) resultado += `🔹 Motivo: ${datosSubform.motivo_consulta}\n━━━━━━━━━━━━━━━━━━━━━━\n`;
+            if (datosSubform.sintomas_principales) resultado += `🩺 Síntomas: ${datosSubform.sintomas_principales}\n━━━━━━━━━━━━━━━━━━━━━━\n`;
+            if (datosSubform.diagnostico) resultado += `📋 Diagnóstico:\n${datosSubform.diagnostico}\n━━━━━━━━━━━━━━━━━━━━━━\n`;
+            if (datosSubform.tratamiento_recomendado) resultado += `💊 Tratamiento:\n${datosSubform.tratamiento_recomendado}\n━━━━━━━━━━━━━━━━━━━━━━\n`;
+            if (datosSubform.requiere_seguimiento_consulta && datosSubform.fecha_revision) {
+                resultado += `🔁 Seguimiento: Sí - Revisión: ${datosSubform.fecha_revision}\n`;
+            }
+        } else if (subtipo === "Derivación Hospitalaria") {
+            if (datosSubform.motivo_derivacion_hosp) resultado += `📋 Motivo: ${datosSubform.motivo_derivacion_hosp}\n`;
+            if (datosSubform.servicio_derivado) resultado += `🏥 Servicio: ${datosSubform.servicio_derivado}\n`;
+            if (datosSubform.hospital_destino) resultado += `🏢 Hospital: ${datosSubform.hospital_destino}\n`;
+            if (datosSubform.medio_traslado) resultado += `🚑 Traslado: ${datosSubform.medio_traslado}\n`;
+            if (datosSubform.hora_salida) resultado += `🕐 Salida: ${datosSubform.hora_salida}h\n`;
+            if (datosSubform.acompanante) resultado += `👤 Acompañante: ${datosSubform.acompanante}\n`;
+        }
+    }
+    
+    // PSICOSOCIALES
+    if (tipo === 'psi') {
+        if (subtipo === "Valoración Inicial") {
+            if (datosSubform.estado_emocional) resultado += `😊 Estado emocional: ${datosSubform.estado_emocional}\n━━━━━━━━━━━━━━━━━━━━━━\n`;
+            if (datosSubform.motivo_llegada) resultado += `🔹 Motivo de llegada:\n${datosSubform.motivo_llegada}\n━━━━━━━━━━━━━━━━━━━━━━\n`;
+            if (datosSubform.situacion_familiar) resultado += `👨‍👩‍👧 Situación familiar: ${datosSubform.situacion_familiar}\n━━━━━━━━━━━━━━━━━━━━━━\n`;
+            if (datosSubform.necesidades_detectadas) resultado += `⚠️ Necesidades detectadas:\n${datosSubform.necesidades_detectadas}\n━━━━━━━━━━━━━━━━━━━━━━\n`;
+            if (datosSubform.riesgo_identificado) resultado += `⚠️ Nivel de riesgo: ${datosSubform.riesgo_identificado}\n`;
+        } else if (subtipo === "Acompañamiento / Contención Emocional") {
+            if (datosSubform.duracion) resultado += `⏱️ Duración: ${datosSubform.duracion}\n━━━━━━━━━━━━━━━━━━━━━━\n`;
+            if (datosSubform.motivo_acomp) resultado += `🔹 Motivo:\n${datosSubform.motivo_acomp}\n━━━━━━━━━━━━━━━━━━━━━━\n`;
+            if (datosSubform.estado_inicial) resultado += `😔 Estado inicial: ${datosSubform.estado_inicial}\n`;
+            if (datosSubform.estado_final) resultado += `😌 Estado final: ${datosSubform.estado_final}\n━━━━━━━━━━━━━━━━━━━━━━\n`;
+            if (datosSubform.tecnicas_aplicadas) resultado += `🛠️ Técnicas: ${datosSubform.tecnicas_aplicadas}\n`;
+        } else if (subtipo === "Comunicación de Malas Noticias") {
+            if (datosSubform.tipo_noticia) resultado += `📋 Tipo: ${datosSubform.tipo_noticia}\n━━━━━━━━━━━━━━━━━━━━━━\n`;
+            if (datosSubform.reaccion_inicial) resultado += `😢 Reacción inicial:\n${datosSubform.reaccion_inicial}\n━━━━━━━━━━━━━━━━━━━━━━\n`;
+            if (datosSubform.apoyo_prestado) resultado += `💚 Apoyo prestado:\n${datosSubform.apoyo_prestado}\n━━━━━━━━━━━━━━━━━━━━━━\n`;
+            if (datosSubform.red_apoyo) resultado += `🤝 Red activada: ${datosSubform.red_apoyo}\n`;
+            if (datosSubform.seguimiento_psicologico) resultado += `🔁 Seguimiento psicológico: Sí\n`;
+        } else if (subtipo === "Gestión de Trámites") {
+            if (datosSubform.tipo_tramite) resultado += `📋 Tipo: ${datosSubform.tipo_tramite}\n`;
+            if (datosSubform.entidad_organismo) resultado += `🏢 Organismo: ${datosSubform.entidad_organismo}\n`;
+            if (datosSubform.estado_tramite) resultado += `📊 Estado: ${datosSubform.estado_tramite}\n━━━━━━━━━━━━━━━━━━━━━━\n`;
+            if (datosSubform.proxima_accion) resultado += `📝 Próxima acción:\n${datosSubform.proxima_accion}\n━━━━━━━━━━━━━━━━━━━━━━\n`;
+            if (datosSubform.fecha_seguimiento_tramite) resultado += `📅 Seguimiento: ${datosSubform.fecha_seguimiento_tramite}\n`;
+        } else if (subtipo === "Resolución de Conflictos") {
+            if (datosSubform.tipo_conflicto) resultado += `🔹 Tipo: ${datosSubform.tipo_conflicto}\n`;
+            if (datosSubform.personas_implicadas) resultado += `👥 Personas implicadas: ${datosSubform.personas_implicadas}\n━━━━━━━━━━━━━━━━━━━━━━\n`;
+            if (datosSubform.mediacion_realizada) resultado += `💬 Mediación:\n${datosSubform.mediacion_realizada}\n━━━━━━━━━━━━━━━━━━━━━━\n`;
+            if (datosSubform.acuerdos_alcanzados) resultado += `✅ Acuerdos:\n${datosSubform.acuerdos_alcanzados}\n━━━━━━━━━━━━━━━━━━━━━━\n`;
+            if (datosSubform.resultado_conflicto) resultado += `📊 Resultado: ${datosSubform.resultado_conflicto}\n`;
+        } else if (subtipo === "Atención a Menores") {
+            if (datosSubform.edad_menor) resultado += `👦 Edad: ${datosSubform.edad_menor} años\n`;
+            if (datosSubform.acompanado_por) resultado += `👨‍👩‍👧 Acompañado por: ${datosSubform.acompanado_por}\n━━━━━━━━━━━━━━━━━━━━━━\n`;
+            if (datosSubform.motivo_atencion_menor) resultado += `🔹 Motivo: ${datosSubform.motivo_atencion_menor}\n━━━━━━━━━━━━━━━━━━━━━━\n`;
+            if (datosSubform.actividad_realizada) resultado += `🎨 Actividad realizada: ${datosSubform.actividad_realizada}\n━━━━━━━━━━━━━━━━━━━━━━\n`;
+            if (datosSubform.estado_menor) resultado += `😊 Estado: ${datosSubform.estado_menor}\n`;
+            if (datosSubform.seguimiento_menor) resultado += `🔁 Seguimiento específico: Sí\n`;
+        }
+    }
+    
+    // ENTREGAS
+    if (tipo === 'ent') {
+        if (subtipo === "Entrega de Kit de Higiene") {
+            resultado += `📦 Contenido:\n`;
+            if (datosSubform.contenido_kit) {
+                const items = datosSubform.contenido_kit.split(', ');
+                items.forEach(item => resultado += `  ✓ ${item}\n`);
+            }
+            if (datosSubform.talla_panales) resultado += `  • Talla pañales: ${datosSubform.talla_panales}\n`;
+            if (datosSubform.otro_contenido) resultado += `  • Otro: ${datosSubform.otro_contenido}\n`;
+            resultado += `━━━━━━━━━━━━━━━━━━━━━━\n`;
+            if (datosSubform.cantidad_kit) resultado += `📊 Cantidad: ${datosSubform.cantidad_kit} kit(s)\n`;
+        } else if (subtipo === "Entrega de Ropa / Calzado") {
+            resultado += `📦 Artículos entregados:\n`;
+            if (datosSubform.tipo_ropa) {
+                const items = datosSubform.tipo_ropa.split(', ');
+                items.forEach(item => resultado += `  • ${item}\n`);
+            }
+            resultado += `━━━━━━━━━━━━━━━━━━━━━━\n`;
+            if (datosSubform.tallas_ropa) resultado += `📏 Tallas: ${datosSubform.tallas_ropa}\n`;
+            if (datosSubform.para_quien_ropa) resultado += `👤 Para: ${datosSubform.para_quien_ropa}\n`;
+            if (datosSubform.estado_ropa) resultado += `✨ Estado: ${datosSubform.estado_ropa}\n`;
+        } else if (subtipo === "Entrega de Manta / Abrigo") {
+            if (datosSubform.tipo_manta) resultado += `🔹 Tipo: ${datosSubform.tipo_manta}\n`;
+            if (datosSubform.talla_abrigo) resultado += `📏 Talla: ${datosSubform.talla_abrigo}\n`;
+            if (datosSubform.cantidad_manta) resultado += `📊 Cantidad: ${datosSubform.cantidad_manta} unidad(es)\n`;
+        } else if (subtipo === "Entrega de Alimentos (Biberones, específicos...)") {
+            resultado += `📦 Artículos:\n`;
+            if (datosSubform.tipo_alimento) {
+                const items = datosSubform.tipo_alimento.split(', ');
+                items.forEach(item => resultado += `  ✓ ${item}\n`);
+            }
+            if (datosSubform.especificar_tipo_leche) resultado += `  • Tipo de leche: ${datosSubform.especificar_tipo_leche}\n`;
+            resultado += `━━━━━━━━━━━━━━━━━━━━━━\n`;
+            if (datosSubform.cantidad_alimentos) resultado += `📊 Cantidad: ${datosSubform.cantidad_alimentos}\n`;
+            if (datosSubform.caducidad_alimentos) resultado += `📅 Caducidad: ${datosSubform.caducidad_alimentos}\n`;
+            if (datosSubform.observaciones_alimentos) resultado += `📝 Observaciones: ${datosSubform.observaciones_alimentos}\n`;
+        } else if (subtipo === "Entrega de Juguetes / Material Infantil") {
+            if (datosSubform.tipo_juguete) resultado += `🎁 Artículos: ${datosSubform.tipo_juguete}\n`;
+            if (datosSubform.edad_recomendada) resultado += `👶 Edad recomendada: ${datosSubform.edad_recomendada}\n`;
+            if (datosSubform.para_quien_juguete) resultado += `👤 Para: ${datosSubform.para_quien_juguete}\n`;
+            if (datosSubform.cantidad_juguetes) resultado += `📊 Cantidad: ${datosSubform.cantidad_juguetes}\n`;
+        } else if (subtipo === "Otros") {
+            if (datosSubform.descripcion_otros_ent) resultado += `📦 Descripción: ${datosSubform.descripcion_otros_ent}\n`;
+            if (datosSubform.cantidad_otros_ent) resultado += `📊 Cantidad: ${datosSubform.cantidad_otros_ent}\n`;
+        }
+    }
+    
+    return resultado;
+};
 // --- UTILIDADES Y LOGS ---
 window.sysLog = function(msg, type = 'info') {
     const c = document.getElementById('black-box-content');

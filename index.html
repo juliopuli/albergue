@@ -343,20 +343,26 @@
                                     <div id="res-ent" class="search-results hidden"></div>
                                 </div>
 
-                                <div id="form-int-ent" class="hidden inter-form">
-                                    <h4 class="int-header"><span id="name-int-ent">Persona</span></h4>
-                                    <label>Motivo de la entrega</label>
-                                    <textarea id="motivo-int-ent" rows="2" placeholder="Motivo de la entrega (se precarga si viene de derivación)"></textarea>
-                                    <label>Material Entregado</label>
-                                    <select id="sel-int-ent"></select>
-                                    <label>Artículos entregados / Detalles</label>
-                                    <textarea id="det-int-ent" rows="3" placeholder="Describe los artículos entregados"></textarea>
-                                    <div class="btn-row">
-                                        <button class="secondary" onclick="window.cerrarFormularioIntervencion('ent')">Cancelar</button>
-                                        <button class="success" onclick="window.registrarIntervencion('ent')">Registrar</button>
-                                        <button class="dark" onclick="window.verHistorialIntervencion('ent')">📜 Ver Historial</button>
-                                    </div>
-                                </div>
+                               <div id="form-int-ent" class="hidden inter-form">
+    <h4 class="int-header"><span id="name-int-ent">Usuario</span></h4>
+    <label>Motivo de la entrega</label>
+    <textarea id="motivo-int-ent" rows="2" placeholder="Motivo de la entrega (se precarga si viene de derivación)"></textarea>
+    <label>Material Entregado</label>
+    <select id="sel-int-ent" onchange="window.mostrarSubformulario('ent')">
+        <option value="">-- Selecciona material --</option>
+    </select>
+    
+    <!-- Contenedor dinámico para subformularios -->
+    <div id="subform-ent" class="subform-container"></div>
+    
+    <label>Artículos entregados / Detalles</label>
+    <textarea id="det-int-ent" rows="3" placeholder="Describe los artículos entregados"></textarea>
+    <div class="btn-row">
+        <button class="secondary" onclick="window.cerrarFormularioIntervencion('ent')">Cancelar</button>
+        <button class="success" onclick="window.registrarIntervencion('ent')">Registrar</button>
+        <button class="dark" onclick="window.verHistorialIntervencion('ent')">📜 Ver Historial</button>
+    </div>
+</div>
                             </div>
                         </div>
 
@@ -369,19 +375,25 @@
                                 </div>
                                 
                                 <div id="form-int-san" class="hidden inter-form">
-                                    <h4 class="int-header"><span id="name-int-san">Paciente</span></h4>
-                                    <label>Motivo de la atención</label>
-                                    <textarea id="motivo-int-san" rows="2" placeholder="Motivo de la atención (se precarga si viene de derivación)"></textarea>
-                                    <label>Tipo de Intervención</label>
-                                    <select id="sel-int-san"></select>
-                                    <label>Resolución / Acciones realizadas</label>
-                                    <textarea id="det-int-san" rows="4" placeholder="Describe las acciones realizadas y el resultado"></textarea>
-                                    <div class="btn-row">
-                                        <button class="secondary" onclick="window.cerrarFormularioIntervencion('san')">Cancelar</button>
-                                        <button class="success" onclick="window.registrarIntervencion('san')">Registrar</button>
-                                        <button class="dark" onclick="window.verHistorialIntervencion('san')">📜 Ver Historial</button>
-                                    </div>
-                                </div>
+    <h4 class="int-header"><span id="name-int-san">Paciente</span></h4>
+    <label>Motivo de la atención</label>
+    <textarea id="motivo-int-san" rows="2" placeholder="Motivo de la atención (se precarga si viene de derivación)"></textarea>
+    <label>Tipo de Intervención</label>
+    <select id="sel-int-san" onchange="window.mostrarSubformulario('san')">
+        <option value="">-- Selecciona tipo de intervención --</option>
+    </select>
+    
+    <!-- Contenedor dinámico para subformularios -->
+    <div id="subform-san" class="subform-container"></div>
+    
+    <label>Resolución / Acciones realizadas</label>
+    <textarea id="det-int-san" rows="4" placeholder="Describe las acciones realizadas y el resultado"></textarea>
+    <div class="btn-row">
+        <button class="secondary" onclick="window.cerrarFormularioIntervencion('san')">Cancelar</button>
+        <button class="success" onclick="window.registrarIntervencion('san')">Registrar</button>
+        <button class="dark" onclick="window.verHistorialIntervencion('san')">📜 Ver Historial</button>
+    </div>
+</div>
                             </div>
                         </div>
 
@@ -394,19 +406,25 @@
                                 </div>
 
                                 <div id="form-int-psi" class="hidden inter-form">
-                                    <h4 class="int-header"><span id="name-int-psi">Usuario</span></h4>
-                                    <label>Motivo de la atención</label>
-                                    <textarea id="motivo-int-psi" rows="2" placeholder="Motivo de la atención (se precarga si viene de derivación)"></textarea>
-                                    <label>Tipo de Intervención</label>
-                                    <select id="sel-int-psi"></select>
-                                    <label>Resolución / Acciones realizadas</label>
-                                    <textarea id="det-int-psi" rows="4" placeholder="Describe las acciones realizadas"></textarea>
-                                    <div class="btn-row">
-                                        <button class="secondary" onclick="window.cerrarFormularioIntervencion('psi')">Cancelar</button>
-                                        <button class="success" onclick="window.registrarIntervencion('psi')">Registrar</button>
-                                        <button class="dark" onclick="window.verHistorialIntervencion('psi')">📜 Ver Historial</button>
-                                    </div>
-                                </div>
+    <h4 class="int-header"><span id="name-int-psi">Usuario</span></h4>
+    <label>Motivo de la atención</label>
+    <textarea id="motivo-int-psi" rows="2" placeholder="Motivo de la atención (se precarga si viene de derivación)"></textarea>
+    <label>Tipo de Intervención</label>
+    <select id="sel-int-psi" onchange="window.mostrarSubformulario('psi')">
+        <option value="">-- Selecciona tipo de intervención --</option>
+    </select>
+    
+    <!-- Contenedor dinámico para subformularios -->
+    <div id="subform-psi" class="subform-container"></div>
+    
+    <label>Resolución / Comentarios</label>
+    <textarea id="det-int-psi" rows="4" placeholder="Describe las acciones realizadas y el resultado"></textarea>
+    <div class="btn-row">
+        <button class="secondary" onclick="window.cerrarFormularioIntervencion('psi')">Cancelar</button>
+        <button class="success" onclick="window.registrarIntervencion('psi')">Registrar</button>
+        <button class="dark" onclick="window.verHistorialIntervencion('psi')">📜 Ver Historial</button>
+    </div>
+</div>
                             </div>
                         </div>
 

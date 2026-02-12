@@ -2277,30 +2277,22 @@ if(marcadas > 0) {
 let derivacionesUpdateInterval = null;
 
 window.setupDerivacionesListener = function() {
-    // DESACTIVADO TEMPORALMENTE - Consumía toda la cuota de Firestore
-    console.log('⚠️ Sistema de notificaciones desactivado temporalmente');
-    
-    const badge = document.getElementById('derivaciones-notif-badge');
-    if(badge) badge.classList.add('hidden');
-    
-    return;
-    
-    /* CÓDIGO ORIGINAL (desactivado):
-    if(!currentUserData) return;
-    
-    if(derivacionesUpdateInterval) {
-        clearInterval(derivacionesUpdateInterval);
-        derivacionesUpdateInterval = null;
-    }
-    
+    // Versión optimizada - solo cuenta al cargar, no en tiempo real
     const permitidas = window.getDerivacionesPermitidas();
+    
     if(permitidas.length === 0) {
         const badge = document.getElementById('derivaciones-notif-badge');
         if(badge) badge.classList.add('hidden');
         return;
     }
     
+    // Actualizar badge al inicio
     window.actualizarBadgeDerivaciones();
+    
+    // Actualizar cada 2 minutos (en lugar de 30 segundos para ahorrar quota)
+    if(derivacionesUpdateInterval) {
+        clearInterval(derivacionesUpdateInterval);
+    }
     
     derivacionesUpdateInterval = setInterval(() => {
         try {
@@ -2308,8 +2300,7 @@ window.setupDerivacionesListener = function() {
         } catch(e) {
             window.sysLog("Error actualizando badge derivaciones: " + e.message, "error");
         }
-    }, 30000);
-    */
+    }, 120000); // 2 minutos = 120000 ms
 };
 window.onload = async () => {
     if(isPublicMode){

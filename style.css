@@ -898,3 +898,26 @@ body.focused-mode .app-nav { display: none !important; }
         opacity: 1;
     }
 }
+/* SUBFORMULARIOS DINÁMICOS */
+.subform-container {
+    background: #f8fafc;
+    border: 2px dashed #cbd5e1;
+    border-radius: 8px;
+    padding: 15px;
+    margin: 15px 0;
+}
+
+.subform-container:empty {
+    display: none;
+}
+
+.subform-container label {
+    color: var(--primary);
+    font-weight: 600;
+    margin-top: 10px;
+}
+
+.subform-container input[type="checkbox"] {
+    width: auto;
+    margin-right: 8px;
+}

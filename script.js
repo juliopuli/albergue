@@ -2244,14 +2244,7 @@ window.marcarDerivacionAtendida = async function(personaId, tipoDerivacion) {
 // Setup real-time listener for derivations
 let derivacionesUpdateInterval = null;
 
-window.setupDerivacionesListener = function() {
-    // DESACTIVADO TEMPORALMENTE - Consumía toda la cuota de Firestore
-    console.log('⚠️ Sistema de notificaciones desactivado temporalmente');
-    
-    const badge = document.getElementById('derivaciones-notif-badge');
-    if(badge) badge.classList.add('hidden');
-    
-    return;
+window.setupDerivacionesListener
     
     /* CÓDIGO ORIGINAL (desactivado):
     if(!currentUserData) return;

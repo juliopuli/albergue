@@ -2238,12 +2238,20 @@ window.marcarDerivacionAtendida = async function(personaId, tipoDerivacion) {
             }
         });
         
-        if(marcadas > 0) {
-            await batch.commit();
-            window.sysLog(`${marcadas} derivaciones de ${accionBuscada} marcadas como atendidas`, "success");
-            // Update badge count
-            window.actualizarBadgeDerivaciones();
-        }
+if(marcadas > 0) {
+    await batch.commit();
+    
+    // Decrementar contador en el albergue
+    const campoContador = accionBuscada === 'Derivación Sanitaria' ? 'derivacionesPendientes.sanitaria' :
+                          accionBuscada === 'Derivación Psicosocial' ? 'derivacionesPendientes.psicosocial' :
+                          'derivacionesPendientes.entregas';
+    
+    await updateDoc(doc(db, "albergues", currentAlbergueId), {
+        [campoContador]: increment(-marcadas)
+    });
+    
+    window.sysLog(`${marcadas} derivaciones de ${accionBuscada} marcadas como atendidas`, "success");
+}
         
     } catch(e) {
         window.sysLog("Error marcando derivación atendida: " + e.message, "error");

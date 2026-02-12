@@ -698,11 +698,38 @@
             <button class="primary" onclick="window.publicoGuardarTodo()" style="width:100%;padding:18px;font-size:1.1rem;margin-top:20px;">Enviar Pre-Registro</button>
         </div>
 
-        <div id="public-success-container" class="hidden" style="text-align:center;padding:40px 20px;">
-            <i class="fa-solid fa-circle-check" style="font-size:4rem;color:var(--success);margin-bottom:20px;"></i>
-            <h2 style="color:var(--success);margin-bottom:10px;">¡Registro Recibido!</h2>
-            <p style="color:#666;font-size:1rem;">Gracias. Tu información ha sido enviada correctamente. El personal del albergue revisará tu solicitud.</p>
+    <div id="public-success-container" class="hidden" style="min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 30px; background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+    <div style="text-align: center; max-width: 500px;">
+        <div style="background: white; border-radius: 50%; width: 120px; height: 120px; display: flex; align-items: center; justify-content: center; margin: 0 auto 30px; box-shadow: 0 15px 40px rgba(0,0,0,0.2); animation: scaleIn 0.5s ease-out;">
+            <i class="fa-solid fa-circle-check" style="font-size: 4rem; color: #10b981;"></i>
         </div>
+        
+        <h1 style="color: white; font-size: 2rem; margin-bottom: 20px; font-weight: 700;">
+            Estimado/a,
+        </h1>
+        
+        <h2 id="public-success-name" style="color: white; font-size: 2.5rem; margin-bottom: 30px; font-weight: 800; text-shadow: 0 2px 10px rgba(0,0,0,0.2);">
+            [Nombre]
+        </h2>
+        
+        <div style="background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); border-radius: 16px; padding: 25px; margin-bottom: 30px; border: 1px solid rgba(255,255,255,0.2);">
+            <p style="color: white; font-size: 1.2rem; line-height: 1.8; margin: 0;">
+                Sus datos ya han quedado <strong>incorporados</strong> en nuestros sistemas.
+            </p>
+        </div>
+        
+        <div style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+            <i class="fa-solid fa-door-open" style="font-size: 2.5rem; color: #10b981; margin-bottom: 10px; display: block;"></i>
+            <p style="color: #334155; font-size: 1.1rem; line-height: 1.6; margin: 0;">
+                Diríjase a la <strong style="color: #10b981;">entrada del albergue</strong> para poder realizar el proceso de ingreso.
+            </p>
+        </div>
+        
+        <p style="color: rgba(255,255,255,0.9); font-size: 0.9rem; margin-top: 25px;">
+            <i class="fa-solid fa-clock"></i> El personal le atenderá en breve
+        </p>
+    </div>
+</div>
     </div>
 
     <!-- MODAL: MAPA GENERAL DE CAMAS (sin asignar) -->

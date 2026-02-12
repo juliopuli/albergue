@@ -2225,6 +2225,9 @@ window.registrarIntervencion = async function(tipo) {
     var motivo = window.safeVal('motivo-int-' + tipo).trim();
     var resolucion = window.safeVal('det-int-' + tipo).trim();
     
+    // ⭐ NUEVO: Recopilar datos del subformulario
+    var datosSubform = window.recopilarDatosSubformulario(tipo);
+    
     // CORRECCIÓN V2.0.1: Guardar nombre antes de limpiar la variable global
     var nombrePersona = personaIntervencionActiva.nombre; 
     var personaId = personaIntervencionActiva.id;
@@ -2236,53 +2239,21 @@ window.registrarIntervencion = async function(tipo) {
     }
     
     try {
-        // Guardar en intervenciones
+        // Guardar en intervenciones (con datos del subformulario)
         var data = {
             fecha: new Date(),
             usuario: currentUserData.nombre,
             tipo: info.nombre,
             subtipo: subtipo,
             motivo: motivo,
-            detalle: resolucion
+            detalle: resolucion,
+            datosEstructurados: datosSubform // ⭐ NUEVO: Guardar datos estructurados
         };
         await addDoc(collection(db, "albergues", currentAlbergueId, "personas", personaId, "intervenciones"), data);
-    // Después de guardar en historial (alrededor de línea 1680)
-await addDoc(
-    collection(db, "albergues", currentAlbergueId, "personas", personaId, "historial"),
-    {
-        fecha: new Date(),
-        usuario: currentUserData.nombre,
-        accion: info.accion,
-        detalle: detalleFormateado || "" // ⭐ Protección contra undefined
-    }
-);
-
-// ⭐ NUEVO: Marcar derivación como resuelta en colección plana
-const derivacionTipo = {
-    'san': 'Derivación Sanitaria',
-    'psi': 'Derivación Psicosocial',
-    'ent': 'Derivación Entrega'
-}[tipo];
-
-if(derivacionTipo) {
-    const qDeriv = query(
-        collection(db, "derivaciones"),
-        where("personaId", "==", personaId),
-        where("tipo", "==", derivacionTipo),
-        where("estado", "==", "pendiente")
-    );
-    
-    const derivSnap = await getDocs(qDeriv);
-    derivSnap.forEach(async (docDeriv) => {
-        await updateDoc(doc(db, "derivaciones", docDeriv.id), {
-            estado: "resuelta",
-            fechaResolucion: new Date(),
-            usuarioResolucion: currentUserData.nombre
-        });
-    });
-}
-        // Guardar UNA SOLA VEZ en historial con formato mejorado
-        var detalleFormateado = info.icono + " " + info.accion + " - " + subtipo + "\n" +
+        
+        // ⭐ NUEVO: Formatear detalle para historial usando subformulario
+        var detalleSubform = window.formatearDatosHistorial(tipo, subtipo, datosSubform);
+        var detalleFormateado = detalleSubform + 
                                 "━━━━━━━━━━━━━━━━━━━━━━\n" +
                                 "📌 Motivo:\n" + motivo + "\n\n" +
                                 "✅ Resolución:\n" + resolucion;
@@ -2293,7 +2264,7 @@ if(derivacionTipo) {
                 fecha: new Date(),
                 usuario: currentUserData.nombre,
                 accion: info.accion,
-                detalle: detalleFormateado
+                detalle: detalleFormateado || ""
             }
         );
         
@@ -2315,7 +2286,6 @@ if(derivacionTipo) {
         alert("Error al guardar: " + e.message);
     }
 };
-
 window.verHistorialIntervencion = function(tipo) {
     if(personaIntervencionActiva) {
         window.verHistorial(personaIntervencionActiva.id);

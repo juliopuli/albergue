@@ -379,8 +379,15 @@ window.publicoGuardarTodo = async function() {
     b.set(doc(lRef), { fecha: new Date(), usuario: "Auto-QR", accion: "Alta en Pre-Filiación", detalle: `Desde QR ${nombreAlb}` });
     listaFamiliaresTemp.forEach(async f => { const fRef = doc(collection(db, "pool_prefiliacion")); b.set(fRef, { ...f, familiaId: fid, rolFamilia: 'MIEMBRO', estado: 'espera', origenAlbergueId: currentAlbergueId, fechaRegistro: new Date() }); });
     await b.commit();
-    window.safeHide('public-form-container');
-    window.safeShow('public-success-msg');
+// Obtener el nombre para mostrarlo en el mensaje
+const nombrePersona = d.nombre + (d.ap1 ? ' ' + d.ap1 : '');
+const successNameEl = document.getElementById('public-success-name');
+if (successNameEl) {
+    successNameEl.innerText = nombrePersona;
+}
+
+window.safeHide('public-form-container');
+window.safeShow('public-success-container');
 }
 
 // --- LOADERS & NAV ---

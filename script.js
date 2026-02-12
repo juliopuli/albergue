@@ -1178,8 +1178,23 @@ window.actualizarInfoPersonaIntervencion = function() {
 window.cargarDatosYEntrar = async function(id) {
     currentAlbergueId = id; window.sysLog(`Entrando en Albergue: ${id}`, "info"); window.safeShow('loading-overlay');
     try {
-        const dS = await getDoc(doc(db,"albergues",id));
-        if(dS.exists()) { currentAlbergueData = dS.data(); totalCapacidad = parseInt(currentAlbergueData.capacidad||0); }
+ const dS = await getDoc(doc(db,"albergues",id));
+if(dS.exists()) { 
+    currentAlbergueData = dS.data(); 
+    totalCapacidad = parseInt(currentAlbergueData.capacidad||0); 
+    
+    // Inicializar contadores de derivaciones si no existen
+    if(!currentAlbergueData.derivacionesPendientes) {
+        await updateDoc(doc(db, "albergues", id), {
+            derivacionesPendientes: {
+                sanitaria: 0,
+                psicosocial: 0,
+                entregas: 0
+            }
+        });
+        window.sysLog("✅ Contadores de derivaciones inicializados", "info");
+    }
+}
         if(unsubscribePersonas) unsubscribePersonas();
         unsubscribePersonas = onSnapshot(collection(db,"albergues",id,"personas"), s=>{
             listaPersonasCache=[]; camasOcupadas={}; let c=0;

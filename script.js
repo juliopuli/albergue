@@ -1961,9 +1961,16 @@ window.abrirFormularioIntervencion = async function(pid, tipo) {
     window.safeShow('form-int-' + tipo);
     window.el('search-' + tipo).value = ""; 
     window.el('name-int-' + tipo).innerText = p.nombre + ' ' + (p.ap1 || '');
+    
     const sel = window.el('sel-int-' + tipo);
-    sel.innerHTML = "";
-    TIPOS_INTERVENCION[tipo].opciones.forEach(function(op) { sel.add(new Option(op, op)); });
+    sel.innerHTML = '<option value="">-- Selecciona tipo de intervención --</option>'; // ⭐ CAMBIO: Sin preselección
+    TIPOS_INTERVENCION[tipo].opciones.forEach(function(op) { 
+        sel.add(new Option(op, op)); 
+    });
+    
+    // Limpiar subformulario
+    const subformContainer = document.getElementById(`subform-${tipo}`);
+    if (subformContainer) subformContainer.innerHTML = '';
     
     // Precargar motivo si existe derivación pendiente
     const motivo = await obtenerMotivoDerivacion(pid, tipo);

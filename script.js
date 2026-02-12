@@ -927,19 +927,28 @@ window.confirmarDerivacion = async function() {
     if(!motivo) return alert("Escribe un motivo."); 
     
     if(personaEnGestion) { 
-        const logData = {
-            fecha: new Date(),
-            usuario: currentUserData.nombre,
-            accion: `Derivación ${tipoDerivacionActual}`,
-            detalle: motivo,
-            estado: "pendiente"
-        };
-        const path = personaEnGestionEsGlobal 
-            ? collection(db, "pool_prefiliacion", personaEnGestion.id, "historial")
-            : collection(db, "albergues", currentAlbergueId, "personas", personaEnGestion.id, "historial");
-        await addDoc(path, logData);
-        
-        window.actualizarBadgeDerivaciones();
+const logData = {
+    fecha: new Date(),
+    usuario: currentUserData.nombre,
+    accion: `Derivación ${tipoDerivacionActual}`,
+    detalle: motivo,
+    estado: "pendiente"
+};
+const path = personaEnGestionEsGlobal 
+    ? collection(db, "pool_prefiliacion", personaEnGestion.id, "historial")
+    : collection(db, "albergues", currentAlbergueId, "personas", personaEnGestion.id, "historial");
+await addDoc(path, logData);
+
+// Incrementar contador en el albergue
+if(!personaEnGestionEsGlobal && currentAlbergueId) {
+    const campoContador = tipoDerivacionActual === 'Sanitaria' ? 'derivacionesPendientes.sanitaria' :
+                          tipoDerivacionActual === 'Psicosocial' ? 'derivacionesPendientes.psicosocial' :
+                          'derivacionesPendientes.entregas';
+    
+    await updateDoc(doc(db, "albergues", currentAlbergueId), {
+        [campoContador]: increment(1)
+    });
+}
     } 
     
     window.sysLog(`Derivación a ${tipoDerivacionActual}: ${motivo}`, "warn"); 

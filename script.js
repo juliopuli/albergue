@@ -1019,6 +1019,7 @@ window.publicoGuardarTodo = async function() {
     const btnContinuar = document.getElementById('btn-continuar-public');
     if(btnContinuar) btnContinuar.disabled = true;
 };
+
 // --- LOADERS & NAV ---
 window.cargarAlberguesActivos = function() {
     const c = window.el('lista-albergues-activos');

@@ -1,5 +1,6 @@
 
 
+
 import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signInAnonymously, signOut, onAuthStateChanged, createUserWithEmailAndPassword, sendPasswordResetEmail, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
 import { getFirestore, collection, addDoc, setDoc, query, where, getDocs, doc, updateDoc, onSnapshot, orderBy, deleteDoc, getDoc, writeBatch, increment } 
@@ -1353,15 +1354,7 @@ window.cargarUsuarios = function() {
     }); 
 };
 
-window.navegar = function(p) { 
-    // ⭐ NUEVO: Guardar cambios antes de navegar si hay persona en gestión
-    if (personaEnGestion && !personaEnGestionEsGlobal) {
-        window.guardarCambiosPersona(true).catch(e => console.error("Error guardando:", e));
-    }
-    
-    window.sysLog(`Navegando: ${p}`, "nav"); 
-    // ... resto del código original
-    if(unsubscribeUsers) unsubscribeUsers(); if(unsubscribeAlberguesActivos) unsubscribeAlberguesActivos(); ['screen-home','screen-usuarios','screen-gestion-albergues','view-mantenimiento','screen-operativa','screen-observatorio', 'screen-intervencion','intervencion-search-screen'].forEach(id=>window.safeHide(id)); if(!currentUserData) return; if(p !== 'intervencion') { window.resetIntervencion(); window.detenerEscaner(); } if(['home', 'mantenimiento', 'observatorio', 'usuarios', 'gestion-albergues'].includes(p)) { currentAlbergueId = null; currentAlbergueData = null; } if(p==='home') window.safeShow('screen-home'); else if(p==='intervencion') { window.sysLog("Navegando a: Intervenciones", "nav"); var isFocusedMode = document.body.classList.contains('focused-mode'); if (isFocusedMode) { window.safeShow('screen-intervencion'); } else { window.safeShow('intervencion-search-screen'); window.cargarPersonasParaIntervencion(); } } else if(p==='gestion-albergues') { window.cargarAlberguesActivos(); window.safeShow('screen-gestion-albergues'); } else if(p==='mantenimiento') { window.sysLog("Navegando a: Mantenimiento", "nav"); window.safeShow('view-mantenimiento'); window.cargarAlberguesMantenimiento(); } else if(p==='operativa') { window.safeShow('screen-operativa'); const t = window.configurarTabsPorRol(); window.cambiarPestana(t); } else if(p==='observatorio') { window.cargarObservatorio(); window.safeShow('screen-observatorio'); } else if(p==='usuarios') { window.cargarUsuarios(); window.safeShow('screen-usuarios'); } document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); if(p.includes('albergue')) window.safeAddActive('nav-albergues'); else if(p.includes('obs')) window.safeAddActive('nav-obs'); else if(p.includes('mantenimiento')) window.safeAddActive('nav-mto'); else if(p === 'intervencion') window.safeAddActive('nav-intervencion'); else window.safeAddActive('nav-home'); };
+window.navegar = function(p) { window.sysLog(`Navegando: ${p}`, "nav"); if(unsubscribeUsers) unsubscribeUsers(); if(unsubscribeAlberguesActivos) unsubscribeAlberguesActivos(); ['screen-home','screen-usuarios','screen-gestion-albergues','view-mantenimiento','screen-operativa','screen-observatorio', 'screen-intervencion','intervencion-search-screen'].forEach(id=>window.safeHide(id)); if(!currentUserData) return; if(p !== 'intervencion') { window.resetIntervencion(); window.detenerEscaner(); } if(['home', 'mantenimiento', 'observatorio', 'usuarios', 'gestion-albergues'].includes(p)) { currentAlbergueId = null; currentAlbergueData = null; } if(p==='home') window.safeShow('screen-home'); else if(p==='intervencion') { window.sysLog("Navegando a: Intervenciones", "nav"); var isFocusedMode = document.body.classList.contains('focused-mode'); if (isFocusedMode) { window.safeShow('screen-intervencion'); } else { window.safeShow('intervencion-search-screen'); window.cargarPersonasParaIntervencion(); } } else if(p==='gestion-albergues') { window.cargarAlberguesActivos(); window.safeShow('screen-gestion-albergues'); } else if(p==='mantenimiento') { window.sysLog("Navegando a: Mantenimiento", "nav"); window.safeShow('view-mantenimiento'); window.cargarAlberguesMantenimiento(); } else if(p==='operativa') { window.safeShow('screen-operativa'); const t = window.configurarTabsPorRol(); window.cambiarPestana(t); } else if(p==='observatorio') { window.cargarObservatorio(); window.safeShow('screen-observatorio'); } else if(p==='usuarios') { window.cargarUsuarios(); window.safeShow('screen-usuarios'); } document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); if(p.includes('albergue')) window.safeAddActive('nav-albergues'); else if(p.includes('obs')) window.safeAddActive('nav-obs'); else if(p.includes('mantenimiento')) window.safeAddActive('nav-mto'); else if(p === 'intervencion') window.safeAddActive('nav-intervencion'); else window.safeAddActive('nav-home'); };
 window.configurarTabsPorRol = function() { const r = (currentUserData.rol || "").toLowerCase().trim(); ['btn-tab-pref', 'btn-tab-fil', 'btn-tab-san', 'btn-tab-psi', 'btn-tab-ent'].forEach(id => window.safeHide(id)); if(['super_admin', 'admin'].includes(r)) { ['btn-tab-pref', 'btn-tab-fil', 'btn-tab-san', 'btn-tab-psi', 'btn-tab-ent'].forEach(id => window.safeShow(id)); return 'filiacion'; } if(r === 'albergue') { window.safeShow('btn-tab-pref'); window.safeShow('btn-tab-fil'); window.safeShow('btn-tab-ent'); return 'filiacion'; } if(['sanitario', 'psicosocial'].includes(r)) { window.safeShow('btn-tab-san'); window.safeShow('btn-tab-psi'); return 'sanitaria'; } return 'filiacion'; };
 window.cambiarPestana = function(t) { window.sysLog(`Pestaña: ${t}`, "nav"); ['tab-prefiliacion', 'tab-filiacion', 'tab-sanitaria', 'tab-psicosocial', 'tab-entregas'].forEach(id => window.safeHide(id)); ['btn-tab-pref', 'btn-tab-fil', 'btn-tab-san', 'btn-tab-psi', 'btn-tab-ent'].forEach(id => window.safeRemoveActive(id)); window.safeAddActive(`btn-tab-${t.substring(0,3)}`); window.safeShow(`tab-${t}`); 
     if (t === 'prefiliacion') { window.limpiarFormulario('man'); adminFamiliaresTemp = []; if(window.actualizarListaFamiliaresAdminUI) window.actualizarListaFamiliaresAdminUI(); if(window.el('existing-family-list-ui')) window.el('existing-family-list-ui').innerHTML = ""; window.cancelarEdicionPref(); } 
@@ -1880,27 +1873,10 @@ if(window.el('app-title')) window.el('app-title').innerText = currentAlbergueDat
 window.conectarListenersBackground = function(id) { if(unsubscribeAlbergueDoc) unsubscribeAlbergueDoc(); unsubscribeAlbergueDoc = onSnapshot(doc(db,"albergues",id), d=>{ if(d.exists()){ currentAlbergueData=d.data(); totalCapacidad=parseInt(currentAlbergueData.capacidad||0); window.actualizarContadores(); } }); };
 
 window.setupAutoSave = function() {
-    // ⭐ ELIMINADO: Ya no guardamos automáticamente con blur
-    // Solo configuramos el formateador de fecha
     const inputsFil = ['edit-nombre','edit-ap1','edit-ap2','edit-doc-num','edit-tel','edit-fecha'];
-    inputsFil.forEach(id => { 
-        const el = window.el(id); 
-        if(el && id === 'edit-fecha') {
-            el.oninput = function() { window.formatearFecha(this); }; 
-        }
-    });
-    
+    inputsFil.forEach(id => { const el = window.el(id); if(el && !el.dataset.hasAutosave) { el.addEventListener('blur', () => window.guardarCambiosPersona(true)); el.dataset.hasAutosave = "true"; if(id === 'edit-fecha') el.oninput = function() { window.formatearFecha(this); }; } });
     const inputsPref = ['man-nombre','man-ap1','man-ap2','man-doc-num','man-tel','man-fecha'];
-    inputsPref.forEach(id => { 
-        const el = window.el(id); 
-        if(el && !el.dataset.hasAutosave) { 
-            el.addEventListener('blur', () => { 
-                if(prefiliacionEdicionId) window.adminPrefiliarManual(true); 
-            }); 
-            el.dataset.hasAutosave = "true"; 
-            if(id === 'man-fecha') el.oninput = function() { window.formatearFecha(this); }; 
-        } 
-    });
+    inputsPref.forEach(id => { const el = window.el(id); if(el && !el.dataset.hasAutosave) { el.addEventListener('blur', () => { if(prefiliacionEdicionId) window.adminPrefiliarManual(true); }); el.dataset.hasAutosave = "true"; if(id === 'man-fecha') el.oninput = function() { window.formatearFecha(this); }; } });
 };
 window.adminPrefiliarManual = async function(silent = false) {
     if (silent && !prefiliacionEdicionId) return;
@@ -2449,16 +2425,7 @@ window.guardarCama = async function(c) {
         savingLock = false;
         return alert("❌ No se puede asignar cama:\nLa persona debe tener fecha de nacimiento registrada");
     }
-    // ⭐ NUEVO: Guardar cambios pendientes antes de asignar cama
-    if (personaEnGestion && !personaEnGestionEsGlobal) {
-        try {
-            await window.guardarCambiosPersona(true);
-        } catch(e) {
-            console.error("Error guardando cambios:", e);
-            savingLock = false;
-            return alert("Error al guardar cambios previos");
-        }
-    }
+    
     // Calcular edad para verificar si es menor de 14
     const edad = calcularEdad(personaValidar.fechaNac);
     const esMenorDe14 = edad !== null && edad < 14;

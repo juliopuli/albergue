@@ -928,41 +928,97 @@ window.mostrarFormularioPublico = function() {
     }
 };
 window.publicoGuardarTodo = async function() {
-    const d = window.getDatosFormulario('pub'); if (!d.nombre) return alert("Falta nombre");
+    const d = window.getDatosFormulario('pub');
     
-    // Validar documento
-    if (!validarDocumento(d.tipoDoc, d.docNum)) {
-        return;
+    // ⭐ VALIDACIONES OBLIGATORIAS
+    if (!d.nombre || !d.nombre.trim()) {
+        return alert("El nombre es obligatorio");
     }
     
-    // Validar edad si es NODNI
-    if (!validarEdadNODNI(d.tipoDoc, d.fechaNac)) {
-        return;
+    if (!d.ap1 || !d.ap1.trim()) {
+        return alert("El primer apellido es obligatorio");
     }
     
-    if (!auth.currentUser) { try { await signInAnonymously(auth); } catch (e) {} }
+    // Validar que tenga al menos un documento (DNI, NIE o Pasaporte)
+    if (!d.tipoDoc || d.tipoDoc === "") {
+        return alert("Debe seleccionar un tipo de documento");
+    }
+    
+    if (d.tipoDoc !== 'MENOR' && (!d.docNum || !d.docNum.trim())) {
+        return alert("El número de documento es obligatorio");
+    }
+    
+    // Validar formato del documento
+    if (d.docNum && d.docNum.trim()) {
+        if (!validarDocumento(d.tipoDoc, d.docNum)) {
+            return;
+        }
+    }
+    
+    if (!auth.currentUser) { 
+        try { 
+            await signInAnonymously(auth); 
+        } catch (e) {} 
+    }
+    
     let nombreAlb = "Albergue (QR)";
     const hAlb = window.el('public-albergue-name');
     if(hAlb) nombreAlb = hAlb.innerText;
+    
     const b = writeBatch(db);
     const fid = new Date().getTime().toString();
     const tRef = doc(collection(db, "pool_prefiliacion"));
-    b.set(tRef, { ...d, familiaId: fid, rolFamilia: 'TITULAR', estado: 'espera', origenAlbergueId: currentAlbergueId, fechaRegistro: new Date() });
+    
+    b.set(tRef, { 
+        ...d, 
+        familiaId: fid, 
+        rolFamilia: 'TITULAR', 
+        estado: 'espera', 
+        origenAlbergueId: currentAlbergueId, 
+        fechaRegistro: new Date() 
+    });
+    
     const lRef = collection(db, "pool_prefiliacion", tRef.id, "historial");
-    b.set(doc(lRef), { fecha: new Date(), usuario: "Auto-QR", accion: "Alta en Pre-Filiación", detalle: `Desde QR ${nombreAlb}` });
-    listaFamiliaresTemp.forEach(async f => { const fRef = doc(collection(db, "pool_prefiliacion")); b.set(fRef, { ...f, familiaId: fid, rolFamilia: 'MIEMBRO', estado: 'espera', origenAlbergueId: currentAlbergueId, fechaRegistro: new Date() }); });
+    b.set(doc(lRef), { 
+        fecha: new Date(), 
+        usuario: "Auto-QR", 
+        accion: "Alta en Pre-Filiación", 
+        detalle: `Desde QR ${nombreAlb}` 
+    });
+    
+    listaFamiliaresTemp.forEach(async f => { 
+        const fRef = doc(collection(db, "pool_prefiliacion")); 
+        b.set(fRef, { 
+            ...f, 
+            familiaId: fid, 
+            rolFamilia: 'MIEMBRO', 
+            estado: 'espera', 
+            origenAlbergueId: currentAlbergueId, 
+            fechaRegistro: new Date() 
+        }); 
+    });
+    
     await b.commit();
-// Obtener el nombre para mostrarlo en el mensaje
-const nombrePersona = d.nombre + (d.ap1 ? ' ' + d.ap1 : '');
-const successNameEl = document.getElementById('public-success-name');
-if (successNameEl) {
-    successNameEl.innerText = nombrePersona;
-}
+    
+    const nombrePersona = d.nombre + (d.ap1 ? ' ' + d.ap1 : '');
+    const successNameEl = document.getElementById('public-success-name');
+    if (successNameEl) {
+        successNameEl.innerText = nombrePersona;
+    }
 
-window.safeHide('public-form-container');
-window.safeShow('public-success-container');
-}
-
+    window.safeHide('public-form-container');
+    window.safeShow('public-success-container');
+    
+    // Limpiar formulario y lista de familiares
+    listaFamiliaresTemp = [];
+    
+    // Resetear checkbox de consentimiento
+    const consentCheck = document.getElementById('public-consent-check');
+    if(consentCheck) consentCheck.checked = false;
+    
+    const btnContinuar = document.getElementById('btn-continuar-public');
+    if(btnContinuar) btnContinuar.disabled = true;
+};
 // --- LOADERS & NAV ---
 window.cargarAlberguesActivos = function() {
     const c = window.el('lista-albergues-activos');

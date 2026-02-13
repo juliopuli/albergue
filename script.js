@@ -1872,10 +1872,27 @@ if(window.el('app-title')) window.el('app-title').innerText = currentAlbergueDat
 window.conectarListenersBackground = function(id) { if(unsubscribeAlbergueDoc) unsubscribeAlbergueDoc(); unsubscribeAlbergueDoc = onSnapshot(doc(db,"albergues",id), d=>{ if(d.exists()){ currentAlbergueData=d.data(); totalCapacidad=parseInt(currentAlbergueData.capacidad||0); window.actualizarContadores(); } }); };
 
 window.setupAutoSave = function() {
+    // ⭐ ELIMINADO: Ya no guardamos automáticamente con blur
+    // Solo configuramos el formateador de fecha
     const inputsFil = ['edit-nombre','edit-ap1','edit-ap2','edit-doc-num','edit-tel','edit-fecha'];
-    inputsFil.forEach(id => { const el = window.el(id); if(el && !el.dataset.hasAutosave) { el.addEventListener('blur', () => window.guardarCambiosPersona(true)); el.dataset.hasAutosave = "true"; if(id === 'edit-fecha') el.oninput = function() { window.formatearFecha(this); }; } });
+    inputsFil.forEach(id => { 
+        const el = window.el(id); 
+        if(el && id === 'edit-fecha') {
+            el.oninput = function() { window.formatearFecha(this); }; 
+        }
+    });
+    
     const inputsPref = ['man-nombre','man-ap1','man-ap2','man-doc-num','man-tel','man-fecha'];
-    inputsPref.forEach(id => { const el = window.el(id); if(el && !el.dataset.hasAutosave) { el.addEventListener('blur', () => { if(prefiliacionEdicionId) window.adminPrefiliarManual(true); }); el.dataset.hasAutosave = "true"; if(id === 'man-fecha') el.oninput = function() { window.formatearFecha(this); }; } });
+    inputsPref.forEach(id => { 
+        const el = window.el(id); 
+        if(el && !el.dataset.hasAutosave) { 
+            el.addEventListener('blur', () => { 
+                if(prefiliacionEdicionId) window.adminPrefiliarManual(true); 
+            }); 
+            el.dataset.hasAutosave = "true"; 
+            if(id === 'man-fecha') el.oninput = function() { window.formatearFecha(this); }; 
+        } 
+    });
 };
 window.adminPrefiliarManual = async function(silent = false) {
     if (silent && !prefiliacionEdicionId) return;

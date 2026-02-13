@@ -702,8 +702,27 @@ let html5QrCode = null;
 
 // --- DOM HELPERS ---
 window.el = function(id) { return document.getElementById(id); };
-window.safeHide = function(id) { const e = window.el(id); if(e) e.classList.add('hidden'); };
-window.safeShow = function(id) { const e = window.el(id); if(e) e.classList.remove('hidden'); };
+window.safeHide = function(id) {
+    const e = window.el(id);
+    if (e) {
+        e.classList.add('hidden');
+        // Además de la clase, fuerza estilos
+        e.style.display = 'none';
+        e.style.visibility = 'hidden';
+        e.style.opacity = '0';
+    }
+};
+
+window.safeShow = function(id) {
+    const e = window.el(id);
+    if (e) {
+        e.classList.remove('hidden');
+        // Además de la clase, limpia los estilos que pueden ocultar el div
+        e.style.display = 'block';
+        e.style.visibility = 'visible';
+        e.style.opacity = '1';
+    }
+};
 window.safeRemoveActive = function(id) { const e = window.el(id); if(e) e.classList.remove('active'); };
 window.safeAddActive = function(id) { const e = window.el(id); if(e) e.classList.add('active'); };
 window.safeVal = function(id) { const e = window.el(id); return e ? e.value : ""; };

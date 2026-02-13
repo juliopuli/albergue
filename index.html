@@ -645,14 +645,30 @@
                 Nombre del Albergue
             </h2>
             
-            <div style="background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); border-radius: 16px; padding: 25px; margin-bottom: 30px; border: 1px solid rgba(255,255,255,0.2);">
+                      <div style="background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); border-radius: 16px; padding: 25px; margin-bottom: 30px; border: 1px solid rgba(255,255,255,0.2);">
                 <p style="color: white; font-size: 1.1rem; line-height: 1.7; margin: 0;">
                     Ha accedido al proceso de <strong>filiación</strong> donde dejará sus datos.<br><br>
                     También podrá incorporar los datos de sus <strong>familiares</strong> para acceder al interior del albergue.
                 </p>
             </div>
             
+            <!-- ⭐ NUEVO: Checkbox + Botón -->
+            <div style="background: rgba(255,255,255,0.95); border-radius: 16px; padding: 25px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+                <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; color: #334155; font-size: 1rem; line-height: 1.5;">
+                    <input 
+                        type="checkbox" 
+                        id="public-consent-check" 
+                        onchange="document.getElementById('btn-continuar-public').disabled = !this.checked"
+                        style="width: 24px; height: 24px; cursor: pointer; accent-color: #667eea;">
+                    <span style="font-weight: 600;">
+                        He leído y acepto que mis datos sean registrados para gestionar mi estancia en el albergue
+                    </span>
+                </label>
+            </div>
+            
             <button 
+                id="btn-continuar-public"
+                disabled
                 onclick="window.mostrarFormularioPublico()" 
                 style="
                     background: white; 
@@ -668,9 +684,9 @@
                     width: 100%;
                     max-width: 300px;
                 "
-                onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 15px 35px rgba(0,0,0,0.3)';"
+                onmouseover="if(!this.disabled) { this.style.transform='scale(1.05)'; this.style.boxShadow='0 15px 35px rgba(0,0,0,0.3)'; }"
                 onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 10px 25px rgba(0,0,0,0.2)';">
-                <i class="fa-solid fa-check-circle"></i> Estoy de Acuerdo
+                <i class="fa-solid fa-arrow-right"></i> Continuar
             </button>
             
             <p style="color: rgba(255,255,255,0.8); font-size: 0.85rem; margin-top: 20px;">

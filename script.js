@@ -908,24 +908,24 @@ window.abrirModalQR = function() { setTimeout(() => { window.safeShow('modal-qr'
 window.toggleStartButton = function() { window.el('btn-start-public').disabled = !window.el('check-consent').checked; };
 window.iniciarRegistro = function() { window.safeHide('public-welcome-screen'); window.safeShow('public-form-container'); };
 window.mostrarFormularioPublico = function() {
+    // Primero OCULTA BIENVENIDA y MUESTRA el formulario correctamente
     window.safeHide('public-welcome-screen');
     window.safeShow('public-form-container');
-    
-    // Añadir encabezado al formulario con el nombre del albergue
-    const nombreAlbergue = document.getElementById('public-albergue-name-welcome').innerText;
+
+    // Si quieres mostrar el nombre del albergue, actualiza solo el header fijo (si lo deseas)
+    // Ejemplo: 
+    // const nombreAlbergue = document.getElementById('public-albergue-name-welcome').innerText;
+    // const headerLabel = document.getElementById('public-form-nombre-albergue');
+    // if(headerLabel) headerLabel.innerText = nombreAlbergue;
+
+    // LIMPIA campos si quieres asegurar que el usuario ve todo vacío al entrar:
     const formContainer = document.getElementById('public-form-container');
-    
-    // Crear header si no existe
-    if (!document.getElementById('public-form-header')) {
-        const header = document.createElement('div');
-        header.id = 'public-form-header';
-        header.style.cssText = 'text-align: center; padding: 20px 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; margin-bottom: 20px;';
-        header.innerHTML = `
-            <i class="fa-solid fa-campground" style="font-size: 2rem; color: white; margin-bottom: 10px; display: block;"></i>
-            <h2 style="color: white; margin: 0 0 5px 0; font-size: 1.3rem;">${nombreAlbergue}</h2>
-            <p style="color: rgba(255,255,255,0.9); font-size: 0.9rem; margin: 0;">Pre-registro familiar</p>
-        `;
-        formContainer.insertBefore(header, formContainer.firstChild);
+    if (formContainer) {
+        const inputs = formContainer.querySelectorAll('input, select, textarea');
+        inputs.forEach(el => {
+            if (el.type === 'checkbox' || el.type === 'radio') el.checked = false;
+            else el.value = '';
+        });
     }
 };
 window.publicoGuardarTodo = async function() {

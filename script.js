@@ -2449,7 +2449,16 @@ window.guardarCama = async function(c) {
         savingLock = false;
         return alert("❌ No se puede asignar cama:\nLa persona debe tener fecha de nacimiento registrada");
     }
-    
+    // ⭐ NUEVO: Guardar cambios pendientes antes de asignar cama
+    if (personaEnGestion && !personaEnGestionEsGlobal) {
+        try {
+            await window.guardarCambiosPersona(true);
+        } catch(e) {
+            console.error("Error guardando cambios:", e);
+            savingLock = false;
+            return alert("Error al guardar cambios previos");
+        }
+    }
     // Calcular edad para verificar si es menor de 14
     const edad = calcularEdad(personaValidar.fechaNac);
     const esMenorDe14 = edad !== null && edad < 14;

@@ -757,22 +757,41 @@ function validarDocumento(tipo, numero) {
     return true;
 }
 
-// Validar edad para NODNI
+// --- FUNCIÓN AUXILIAR PARA CALCULAR EDAD ---
+function calcularEdad(fechaNacStr) {
+    if (!fechaNacStr || fechaNacStr.trim() === '') return null;
+    
+    // Parsear fecha DD/MM/AAAA
+    const partes = fechaNacStr.split('/');
+    if (partes.length !== 3) return null;
+    
+    const dia = parseInt(partes[0]);
+    const mes = parseInt(partes[1]) - 1; // Meses en JS son 0-11
+    const anio = parseInt(partes[2]);
+    
+    if (isNaN(dia) || isNaN(mes) || isNaN(anio)) return null;
+    
+    const fechaNacimiento = new Date(anio, mes, dia);
+    const hoy = new Date();
+    
+    let edad = hoy.getFullYear() - fechaNacimiento.getFullYear();
+    const m = hoy.getMonth() - fechaNacimiento.getMonth();
+    
+    if (m < 0 || (m === 0 && hoy.getDate() < fechaNacimiento.getDate())) {
+        edad--;
+    }
+    
+    return edad;
+}
+
+// Validar edad para NODNI (ya no se usa pero se mantiene por compatibilidad)
 function validarEdadNODNI(tipoDoc, fechaNac) {
     if (tipoDoc !== 'NODNI') return true;
     if (!fechaNac || fechaNac.trim() === '') return true;
     
-    // Parsear fecha DD/MM/AAAA
-    const partes = fechaNac.split('/');
-    if (partes.length !== 3) return true;
+    const edad = calcularEdad(fechaNac); // ⭐ Usar función auxiliar
     
-    const fechaNacimiento = new Date(partes[2], partes[1] - 1, partes[0]);
-    const hoy = new Date();
-    let edad = hoy.getFullYear() - fechaNacimiento.getFullYear();
-    const mes = hoy.getMonth() - fechaNacimiento.getMonth();
-    if (mes < 0 || (mes === 0 && hoy.getDate() < fechaNacimiento.getDate())) {
-        edad--;
-    }
+    if (edad === null) return true;
     
     if (edad >= 14) {
         alert('Error: Las personas mayores de 14 años deben tener DNI. Por favor, seleccione tipo de documento DNI o NIE.');

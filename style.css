@@ -422,6 +422,18 @@ button.dark { background: #334155; color: white; }
     overflow-y: scroll; 
     display: block; /* ⭐ Añadido */
 }
+/* Botón público deshabilitado */
+#btn-continuar-public:disabled {
+    background: #cbd5e1 !important;
+    color: #94a3b8 !important;
+    cursor: not-allowed !important;
+    opacity: 0.6;
+}
+
+#btn-continuar-public:disabled:hover {
+    transform: none !important;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2) !important;
+}
 
 /* Ocultar formulario hasta que se acepte - CON MAYOR ESPECIFICIDAD */
 #public-screen #public-form-container.hidden {

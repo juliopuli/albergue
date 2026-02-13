@@ -3122,25 +3122,21 @@ window.onload = async () => {
         
         // FORZAR VISIBILIDAD (por si acaso hay CSS que lo oculta)
         setTimeout(() => {
-            const screen = document.getElementById('public-screen');
-            const container = document.getElementById('public-form-container');
-            
-            if (screen) {
-                screen.classList.remove('hidden');
-                screen.style.display = 'block';
-                screen.style.visibility = 'visible';
-                screen.style.opacity = '1';
-                console.log('🔧 Forzado display en public-screen');
-            }
-            
-            if (container) {
-                container.classList.remove('hidden');
-                container.style.display = 'block';
-                container.style.visibility = 'visible';
-                container.style.opacity = '1';
-                console.log('🔧 Forzado display en public-form-container');
-            }
-        }, 500);
+    const screen = document.getElementById('public-screen');
+    const container = document.getElementById('public-form-container');
+    if (screen) {
+        screen.classList.remove('hidden');
+        screen.style.display = 'block';
+        screen.style.visibility = 'visible';
+        screen.style.opacity = '1';
+    }
+    if (container) {
+        container.classList.add('hidden');
+        container.style.display = 'none';
+        container.style.visibility = 'hidden';
+        container.style.opacity = '0';
+    }
+}, 500);
         
     } else {
         const passInput = document.getElementById('login-pass');

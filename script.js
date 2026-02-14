@@ -742,6 +742,13 @@ window.mostrarInformes = function () {
         seccion.appendChild(iframe);
     }
 };
+window.navegar = function(screen) {
+    // Oculta todas las pantallas principales de la app
+    document.querySelectorAll('.main-content > div').forEach(div => div.classList.add('hidden'));
+    // Muestra solo la pantalla indicada
+    const target = document.getElementById('screen-' + screen);
+    if (target) target.classList.remove('hidden');
+};
 window.safeAddActive = function(id) { const e = window.el(id); if(e) e.classList.add('active'); };
 window.safeVal = function(id) { const e = window.el(id); return e ? e.value : ""; };
 window.setVal = function(id, val) { const e = window.el(id); if (e) e.value = val; };

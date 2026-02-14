@@ -724,6 +724,24 @@ window.safeShow = function(id) {
     }
 };
 window.safeRemoveActive = function(id) { const e = window.el(id); if(e) e.classList.remove('active'); };
+window.mostrarInformes = function () {
+    // Oculta TODAS las secciones de la app
+    document.querySelectorAll('.main-content > div').forEach(div => div.classList.add('hidden'));
+
+    // Muestra la sección de informes
+    const seccion = document.getElementById('screen-informes');
+    seccion.classList.remove('hidden');
+
+    // Inserta el iframe la primera vez
+    if (!seccion.querySelector('iframe')) {
+        const iframe = document.createElement('iframe');
+        iframe.src = 'informes.html';
+        iframe.style.width = '100%';
+        iframe.style.height = '90vh';
+        iframe.style.border = 'none';
+        seccion.appendChild(iframe);
+    }
+};
 window.safeAddActive = function(id) { const e = window.el(id); if(e) e.classList.add('active'); };
 window.safeVal = function(id) { const e = window.el(id); return e ? e.value : ""; };
 window.setVal = function(id, val) { const e = window.el(id); if (e) e.value = val; };

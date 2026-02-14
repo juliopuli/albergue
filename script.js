@@ -1426,7 +1426,7 @@ window.navegar = function(p) {
         window.sysLog("Navegando a: Intervenciones", "nav");
         var isFocusedMode = document.body.classList.contains('focused-mode');
         if (isFocusedMode) {
-            window.navegar('intervencion');
+            window.safeShow('screen-intervencion');
         } else {
             window.safeShow('intervencion-search-screen');
             window.cargarPersonasParaIntervencion();
@@ -1434,7 +1434,7 @@ window.navegar = function(p) {
     }
     else if(p==='gestion-albergues') {
         window.cargarAlberguesActivos();
-        window.navegar('gestion-albergues');
+        window.safeShow('screen-gestion-albergues');
     }
     else if(p==='mantenimiento') {
         window.sysLog("Navegando a: Mantenimiento", "nav");
@@ -1442,17 +1442,17 @@ window.navegar = function(p) {
         window.cargarAlberguesMantenimiento();
     }
     else if(p==='operativa') {
-        window.navegar('operativa');
+        window.safeShow('screen-operativa');
         const t = window.configurarTabsPorRol();
         window.cambiarPestana(t);
     }
     else if(p==='observatorio') {
         window.cargarObservatorio();
-        window.navegar('observatorio');
+        window.safeShow('screen-observatorio');
     }
     else if(p==='usuarios') {
         window.cargarUsuarios();
-        window.navegar('usuarios');
+        window.safeShow('screen-usuarios');
     }
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     if(p.includes('albergue')) window.safeAddActive('nav-albergues');
@@ -1605,7 +1605,7 @@ function resetScannerUI() {
     window.sysLog("Botón 'Activar Cámara' visible y listo", "success");
 }
 window.onScanSuccess = function(decodedText, decodedResult) { if(html5QrCode) html5QrCode.stop().then(() => { window.sysLog(`QR Leído: ${decodedText}`, "success"); html5QrCode.clear(); resetScannerUI(); try { const url = new URL(decodedText); const aid = url.searchParams.get("aid"); const pid = url.searchParams.get("pid"); if(!aid || !pid) throw new Error("QR inválido"); if(currentAlbergueId && aid !== currentAlbergueId) { if(confirm(`Este QR es de otro albergue. ¿Quieres cambiar a ese albergue?`)) { window.cambiarAlberguePorQR(aid, pid); return; } else { return; } } if(!currentAlbergueId) { window.cambiarAlberguePorQR(aid, pid); return; } window.procesarLecturaPersona(pid); } catch (e) { alert("QR no válido o formato incorrecto."); } }); };
-window.cambiarAlberguePorQR = async function(aid, pid) { window.sysLog(`Cambiando albergue por QR a: ${aid}`, "warn"); currentAlbergueId = aid; window.safeShow('loading-overlay'); try { const dS = await getDoc(doc(db,"albergues",aid)); if(dS.exists()) { currentAlbergueData = dS.data(); totalCapacidad = parseInt(currentAlbergueData.capacidad||0); } else { alert("Albergue no existe"); window.safeHide('loading-overlay'); return; } if(unsubscribePersonas) unsubscribePersonas(); unsubscribePersonas = onSnapshot(collection(db,"albergues",aid,"personas"), s=>{ listaPersonasCache=[]; camasOcupadas={}; s.forEach(d=>{ const p=d.data(); p.id=d.id; listaPersonasCache.push(p); if(p.estado==='ingresado'){ if(p.cama) camasOcupadas[p.cama]=p.nombre; } }); const target = listaPersonasCache.find(p => p.id === pid); if(target) { window.safeHide('loading-overlay'); window.navegar('intervencion'); window.cargarInterfazIntervencion(target); } }); window.conectarListenersBackground(aid); } catch(e) { console.error(e); window.safeHide('loading-overlay'); } };
+window.cambiarAlberguePorQR = async function(aid, pid) { window.sysLog(`Cambiando albergue por QR a: ${aid}`, "warn"); currentAlbergueId = aid; window.safeShow('loading-overlay'); try { const dS = await getDoc(doc(db,"albergues",aid)); if(dS.exists()) { currentAlbergueData = dS.data(); totalCapacidad = parseInt(currentAlbergueData.capacidad||0); } else { alert("Albergue no existe"); window.safeHide('loading-overlay'); return; } if(unsubscribePersonas) unsubscribePersonas(); unsubscribePersonas = onSnapshot(collection(db,"albergues",aid,"personas"), s=>{ listaPersonasCache=[]; camasOcupadas={}; s.forEach(d=>{ const p=d.data(); p.id=d.id; listaPersonasCache.push(p); if(p.estado==='ingresado'){ if(p.cama) camasOcupadas[p.cama]=p.nombre; } }); const target = listaPersonasCache.find(p => p.id === pid); if(target) { window.safeHide('loading-overlay'); window.safeShow('screen-intervencion'); window.cargarInterfazIntervencion(target); } }); window.conectarListenersBackground(aid); } catch(e) { console.error(e); window.safeHide('loading-overlay'); } };
 window.procesarLecturaPersona = function(pid) { const targetPerson = listaPersonasCache.find(p => p.id === pid); if(targetPerson) { window.cargarInterfazIntervencion(targetPerson); } else { getDoc(doc(db, "albergues", currentAlbergueId, "personas", pid)).then(docSnap => { if(docSnap.exists()) { const pData = { id: docSnap.id, ...docSnap.data() }; window.cargarInterfazIntervencion(pData); } else { alert("Persona no encontrada en este albergue."); } }); } };
 window.cargarInterfazIntervencion = function(persona) { if(!persona) return; personaEnGestion = persona; window.safeHide('view-scan-ready'); window.safeHide('reader'); window.safeHide('btn-stop-camera'); window.safeShow('view-scan-result'); window.safeShow('btn-exit-focused'); window.el('interv-nombre').innerText = `${persona.nombre} ${persona.ap1 || ""}`; window.el('interv-doc').innerText = persona.docNum || "Sin Documento"; window.el('interv-estado').innerText = (persona.estado || "Desconocido").toUpperCase(); const presencia = persona.presencia || 'dentro'; const badgePresencia = window.el('interv-presencia'); badgePresencia.innerText = presencia.toUpperCase(); if(presencia === 'dentro') { badgePresencia.style.backgroundColor = '#dcfce7'; badgePresencia.style.color = '#166534'; } else { badgePresencia.style.backgroundColor = '#fee2e2'; badgePresencia.style.color = '#991b1b'; } if(currentAlbergueData) { const hName = window.el('interv-albergue-name'); if(hName) hName.innerText = currentAlbergueData.nombre || "ALBERGUE"; } };
 window.resetIntervencion = function() {
@@ -1627,7 +1627,7 @@ window.resetIntervencion = function() {
     
     window.sysLog("Interfaz de intervención reseteada - Botón visible", "success");
 };
-window.salirModoFocalizado = function() { document.body.classList.remove('focused-mode'); window.navegar('home'); window.history.pushState({}, document.title, window.location.pathname); };
+window.salirModoFocalizado = function() { document.body.classList.remove('focused-mode'); window.safeShow('screen-home'); window.history.pushState({}, document.title, window.location.pathname); };
 window.iniciarModoFocalizado = async function(aid, pid) { window.sysLog(`Iniciando MODO FOCALIZADO. Alb: ${aid}, Pers: ${pid}`, "warn"); document.body.classList.add('focused-mode'); window.cambiarAlberguePorQR(aid, pid); };
 window.registrarMovimiento = async function(tipo) { 
     if(!personaEnGestion || !currentAlbergueId) return; 
@@ -1971,7 +1971,7 @@ unsubscribePool = onSnapshot(
         window.sysLog(`Pre-Filiación: ${listaGlobalPrefiliacion.length} registros`, "info"); 
     }
 );
-window.navegar('operativa');
+window.safeShow('screen-operativa');
 if(window.el('app-title')) window.el('app-title').innerText = currentAlbergueData.nombre;
         window.configurarDashboard(); window.actualizarContadores(); window.safeHide('loading-overlay'); window.conectarListenersBackground(id); window.setupAutoSave();
     } catch(e) { window.sysLog(`Error Cargando: ${e.message}`, "error"); alert(e.message); window.safeHide('loading-overlay'); }
@@ -2830,7 +2830,7 @@ window.cargarResumenAlbergues = async function() {
 window.navegarAAlbergueConDerivaciones = async function(albergueId) {
     document.getElementById('modal-resumen-albergues').classList.add('hidden');
     await window.cargarDatosYEntrar(albergueId);
-    window.navegar('gestion-albergues');
+    window.safeShow('screen-gestion-albergues');
     // Wait for data to be loaded into cache before opening modal
     const maxWait = 5000; // 5 seconds max
     const startTime = Date.now();
@@ -3026,7 +3026,7 @@ window.navegarADerivacion = async function(personaId, tipoDerivacion) {
         
         if(!inOperativa) {
             // Navigate to operativa screen (maintains shelter context)
-            window.navegar('operativa');
+            window.safeShow('screen-operativa');
         }
         
         // Wait for navigation to complete before switching tab
@@ -3291,7 +3291,7 @@ onAuthStateChanged(auth, async (u) => {
             if(params.get('action') === 'scan' && params.get('aid') && params.get('pid')) { 
                 window.iniciarModoFocalizado(params.get('aid'), params.get('pid')); 
             } else { 
-                window.navegar('home'); 
+                window.safeShow('screen-home'); 
             }
         } else {
             window.sysLog("Usuario fantasma detectado. Restaurando INACTIVO...", "warn");

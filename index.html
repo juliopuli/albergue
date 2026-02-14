@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gestión Albergue - Ver.3.4.8</title>
+    <title>Gestión Albergue - Ver.3.5.0</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -14,7 +14,7 @@
 </head>
 <body>
 
-    <div class="version-tag">Ver.3.4.8</div>
+    <div class="version-tag">Ver.3.5.0</div>
     
     <div id="toast" style="visibility: hidden;">Guardado automático</div>
     <div id="loading-overlay" class="hidden"><div class="spinner"></div><h2 style="color:var(--primary);">Cargando Datos...</h2></div>
@@ -539,13 +539,14 @@
     </div>
     
     <!-- MODAL AÑADIR FAMILIAR (PÚBLICO - CON NUEVOS CAMPOS) -->
-    <div id="modal-add-familiar" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
-        <div class="modal-content">
-            <span class="close-modal" onclick="window.cerrarModalFamiliar()">&times;</span>
+   <div id="modal-add-familiar" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
+    <div class="modal-content">
+        <span class="close-modal" onclick="window.cerrarModalFamiliar()">&times;</span>
+        <div class="modal-scroll">
             <h3>Familiar (QR)</h3>
             <div class="row"><div class="col"><label>Nombre</label><input type="text" id="fam-nombre"></div></div>
             <div class="row"><div class="col"><label>Apellido 1</label><input type="text" id="fam-ap1"></div><div class="col"><label>Apellido 2</label><input type="text" id="fam-ap2"></div></div>
-            <div class="row"><div class="col"><label>Tipo Docuemnto</label><select id="fam-tipo-doc" onchange="window.verificarMenor('fam')"><option value="MENOR">MENOR</option><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option></select></div><div class="col"><label>Número</label><input type="text" id="fam-doc-num" disabled></div></div>
+            <div class="row"><div class="col"><label>Tipo Docuemnto</label><select id="fam-tipo-doc" onchange="window.verificarMenor('fam')"><option value="MENOR">MENOR</option><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option></select></div><div class="col"><label>Num</label><input type="text" id="fam-doc-num" disabled></div></div>
             <div class="row"><div class="col"><label>Fecha Nac. (DD/MM/AAAA)</label><input type="tel" id="fam-fecha" oninput="window.formatearFecha(this)" maxlength="10"></div></div>
             <div class="row">
                 <div class="col">
@@ -564,12 +565,12 @@
                 <input type="checkbox" id="fam-no-localizacion">
                 <label for="fam-no-localizacion">No deseo ser localizado/a por nadie</label>
             </div>
-            <div class="modal-footer">
-    <button class="primary" onclick="window.guardarFamiliarEnLista()">Añadir</button>
-</div>
+        </div>
+        <div class="modal-footer">
+            <button class="primary" onclick="window.guardarFamiliarEnLista()">Añadir</button>
         </div>
     </div>
-
+</div>
     <!-- MODAL AÑADIR FAMILIAR (ADMIN - CON NUEVOS CAMPOS) -->
     <div id="modal-admin-add-familiar" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
         <div class="modal-content">

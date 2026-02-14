@@ -3,11 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <title>Informes - Albergue</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="informes.css">
 </head>
 <body>
     <h1>Informes</h1>
-    <div id="mensaje-informe">Cargando módulo de informes...</div>
+    <div class="informes-grid">
+        <button class="btn-informe informe-albergues" onclick="abrirInforme('albergues')">
+            <i class="fa-solid fa-bed"></i> Albergues
+        </button>
+        <button class="btn-informe informe-entregas" onclick="abrirInforme('entregas')">
+            <i class="fa-solid fa-box"></i> Entregas
+        </button>
+        <button class="btn-informe informe-sanitario" onclick="abrirInforme('sanitario')">
+            <i class="fa-solid fa-briefcase-medical"></i> Sanitario
+        </button>
+        <button class="btn-informe informe-psicosocial" onclick="abrirInforme('psicosocial')">
+            <i class="fa-solid fa-heart"></i> Psicosocial
+        </button>
+    </div>
+    <div id="zona-opciones-informe"></div>
     <script src="informes.js"></script>
 </body>
 </html>

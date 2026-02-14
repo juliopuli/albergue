@@ -2250,10 +2250,7 @@ window.verHistorialObservatorio = function(pId, isGlobal, albId){window.verHisto
 window.buscarParaIntervencion = function(tipo) {
     const txt = window.safeVal(`search-${tipo}`).toLowerCase().trim();
     const res = window.el(`res-${tipo}`);
-    console.log('buscarParaIntervencion called for tipo:', tipo);
-    console.log('txt:', txt);
-    console.log('res element:', res);
-    if (txt.length < 2) { res.classList.add('hidden'); return; }
+    if (txt.length < 2) { window.safeHide(res); return; }
     const localHits = listaPersonasCache.filter(p => {
         const full = `${p.nombre} ${p.ap1 || ''} ${p.ap2 || ''}`.toLowerCase();
         return full.includes(txt) || (p.docNum || "").toLowerCase().includes(txt);
@@ -2263,8 +2260,6 @@ window.buscarParaIntervencion = function(tipo) {
         return full.includes(txt) || (p.docNum || "").toLowerCase().includes(txt);
     });
     const hits = localHits.concat(globalHits);
-    console.log('hits.length:', hits.length);
-    console.log('hits:', hits.slice(0, 3));
     res.innerHTML = "";
     if (hits.length === 0) { res.innerHTML = "<div class='search-item'>Sin resultados.</div>"; } 
     else { hits.forEach(p => { 
@@ -2274,9 +2269,8 @@ window.buscarParaIntervencion = function(tipo) {
         const buttonHtml = isPrefil ? '<button class="btn-icon-small" style="background:#ccc;color:#666;">No Disponible</button>' : '<button class="btn-icon-small" style="background:var(--primary);color:white;">Seleccionar</button>';
         res.innerHTML += ` <div class="search-item" ${onclickAttr}> <div> <strong>${p.nombre} ${p.ap1 || ''}</strong> <div style="font-size:0.8rem;color:#666;">${p.docNum || '-'} | ${hasBed}</div> </div> ${buttonHtml} </div>`; 
     }); }
-    res.classList.remove('hidden');
+    window.safeShow(res);
 };
-
 window.abrirFormularioIntervencion = async function(pid, tipo) {
     const p = listaPersonasCache.find(function(x) { return x.id === pid; });
     if(!p) return;

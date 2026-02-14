@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gestión Albergue - Ver.3.4.7</title>
+    <title>Gestión Albergue - Ver.3.4.8</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -14,7 +14,7 @@
 </head>
 <body>
 
-    <div class="version-tag">Ver.3.4.7</div>
+    <div class="version-tag">Ver.3.4.8</div>
     
     <div id="toast" style="visibility: hidden;">Guardado automático</div>
     <div id="loading-overlay" class="hidden"><div class="spinner"></div><h2 style="color:var(--primary);">Cargando Datos...</h2></div>
@@ -257,7 +257,7 @@
                                 <h3 id="gestion-nombre-titulo" style="color:var(--primary);">Nombre</h3>
                                 <p style="margin-bottom:15px;">Estado: <span id="gestion-estado" class="badge">...</span> <strong id="gestion-cama-info"></strong></p>
                                 <div class="row"><div class="col"><label>Nombre</label><input type="text" id="edit-nombre"></div><div class="col"><label>Apellido 1</label><input type="text" id="edit-ap1"></div><div class="col"><label>Apellido 2</label><input type="text" id="edit-ap2"></div></div>
-                                <div class="row"><div class="col"><label>Tipo Docuemnto</label><select id="edit-tipo-doc"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Num</label><input type="text" id="edit-doc-num"></div></div>
+                                <div class="row"><div class="col"><label>Tipo Docuemnto</label><select id="edit-tipo-doc"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Número</label><input type="text" id="edit-doc-num"></div></div>
                                 <div class="row"><div class="col"><label>Fecha Nac. (DD/MM/AAAA)</label><input type="tel" id="edit-fecha" oninput="window.formatearFecha(this)" maxlength="10"></div><div class="col"><label>Tel</label><input type="tel" id="edit-tel"></div></div>
                                 <div class="row">
                                     <div class="col">
@@ -545,7 +545,7 @@
             <h3>Familiar (QR)</h3>
             <div class="row"><div class="col"><label>Nombre</label><input type="text" id="fam-nombre"></div></div>
             <div class="row"><div class="col"><label>Apellido 1</label><input type="text" id="fam-ap1"></div><div class="col"><label>Apellido 2</label><input type="text" id="fam-ap2"></div></div>
-            <div class="row"><div class="col"><label>Tipo Docuemnto</label><select id="fam-tipo-doc" onchange="window.verificarMenor('fam')"><option value="MENOR">MENOR</option><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option></select></div><div class="col"><label>Num</label><input type="text" id="fam-doc-num" disabled></div></div>
+            <div class="row"><div class="col"><label>Tipo Docuemnto</label><select id="fam-tipo-doc" onchange="window.verificarMenor('fam')"><option value="MENOR">MENOR</option><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option></select></div><div class="col"><label>Número</label><input type="text" id="fam-doc-num" disabled></div></div>
             <div class="row"><div class="col"><label>Fecha Nac. (DD/MM/AAAA)</label><input type="tel" id="fam-fecha" oninput="window.formatearFecha(this)" maxlength="10"></div></div>
             <div class="row">
                 <div class="col">
@@ -574,7 +574,7 @@
             <span class="close-modal" onclick="window.cerrarModalFamiliarAdmin()">&times;</span>
             <h3>Miembro (Admin)</h3>
             <div class="row"><div class="col"><label>Nombre</label><input type="text" id="adm-fam-nombre"></div><div class="col"><label>Apellido 1</label><input type="text" id="adm-fam-ap1"></div><div class="col"><label>Apellido 2</label><input type="text" id="adm-fam-ap2"></div></div>
-            <div class="row"><div class="col"><label>Tipo Docuemnto</label><select id="adm-fam-tipo-doc" onchange="window.verificarMenor('adm-fam')"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Num</label><input type="text" id="adm-fam-doc-num"></div></div>
+            <div class="row"><div class="col"><label>Tipo Docuemnto</label><select id="adm-fam-tipo-doc" onchange="window.verificarMenor('adm-fam')"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Número</label><input type="text" id="adm-fam-doc-num"></div></div>
             <div class="row"><div class="col"><label>Fecha Nac. (DD/MM/AAAA)</label><input type="tel" id="adm-fam-fecha" oninput="window.formatearFecha(this)" maxlength="10"></div><div class="col"><label>Tel</label><input type="tel" id="adm-fam-tel"></div></div>
             <div class="row">
                 <div class="col">

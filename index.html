@@ -256,8 +256,8 @@
                                 <div class="banner-prefiliacion hidden" id="banner-prefiliacion"><i class="fa-solid fa-clipboard-list"></i> PERSONA EN PRE-FILIACIÓN (PENDIENTE DE INGRESO)</div>
                                 <h3 id="gestion-nombre-titulo" style="color:var(--primary);">Nombre</h3>
                                 <p style="margin-bottom:15px;">Estado: <span id="gestion-estado" class="badge">...</span> <strong id="gestion-cama-info"></strong></p>
-                                <div class="row"><div class="col"><label>Nombre</label><input type="text" id="edit-nombre"></div><div class="col"><label>Apellido 1</label><input type="text" id="edit-ap1"></div><div class="col"><label>Ap 2</label><input type="text" id="edit-ap2"></div></div>
-                                <div class="row"><div class="col"><label>Doc</label><select id="edit-tipo-doc"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Num</label><input type="text" id="edit-doc-num"></div></div>
+                                <div class="row"><div class="col"><label>Nombre</label><input type="text" id="edit-nombre"></div><div class="col"><label>Apellido 1</label><input type="text" id="edit-ap1"></div><div class="col"><label>Apellido 2</label><input type="text" id="edit-ap2"></div></div>
+                                <div class="row"><div class="col"><label>Tipo Docuemnto</label><select id="edit-tipo-doc"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Num</label><input type="text" id="edit-doc-num"></div></div>
                                 <div class="row"><div class="col"><label>F. Nac</label><input type="tel" id="edit-fecha" oninput="window.formatearFecha(this)" maxlength="10"></div><div class="col"><label>Tel</label><input type="tel" id="edit-tel"></div></div>
                                 <div class="row">
                                     <div class="col">
@@ -310,8 +310,8 @@
                                         <h4>Crear Nuevo Registro en Pre-Filiación</h4>
                                         <div><button id="btn-cancelar-edicion-pref" class="secondary hidden" style="font-size:0.7em; padding:4px 8px;" onclick="window.cancelarEdicionPref()">Cancelar Edición</button></div>
                                     </div>
-                                    <div class="row"><div class="col"><label>Nombre (*)</label><input type="text" id="man-nombre"></div><div class="col"><label>Apellido 1</label><input type="text" id="man-ap1"></div><div class="col"><label>Ap 2</label><input type="text" id="man-ap2"></div></div>
-                                    <div class="row"><div class="col"><label>Doc</label><select id="man-tipo-doc"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Número</label><input type="text" id="man-doc-num"></div></div>
+                                    <div class="row"><div class="col"><label>Nombre (*)</label><input type="text" id="man-nombre"></div><div class="col"><label>Apellido 1</label><input type="text" id="man-ap1"></div><div class="col"><label>Apellido 2</label><input type="text" id="man-ap2"></div></div>
+                                    <div class="row"><div class="col"><label>Tipo Docuemnto</label><select id="man-tipo-doc"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Número</label><input type="text" id="man-doc-num"></div></div>
                                     <div class="row"><div class="col"><label>F. Nac</label><input type="tel" id="man-fecha" maxlength="10" oninput="window.formatearFecha(this)"></div><div class="col"><label>Tel</label><input type="tel" id="man-tel"></div></div>
                                     <div class="row">
                                         <div class="col">
@@ -544,8 +544,8 @@
             <span class="close-modal" onclick="window.cerrarModalFamiliar()">&times;</span>
             <h3>Familiar (QR)</h3>
             <div class="row"><div class="col"><label>Nombre</label><input type="text" id="fam-nombre"></div></div>
-            <div class="row"><div class="col"><label>Apellido 1</label><input type="text" id="fam-ap1"></div><div class="col"><label>Ap 2</label><input type="text" id="fam-ap2"></div></div>
-            <div class="row"><div class="col"><label>Doc</label><select id="fam-tipo-doc" onchange="window.verificarMenor('fam')"><option value="MENOR">MENOR</option><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option></select></div><div class="col"><label>Num</label><input type="text" id="fam-doc-num" disabled></div></div>
+            <div class="row"><div class="col"><label>Apellido 1</label><input type="text" id="fam-ap1"></div><div class="col"><label>Apellido 2</label><input type="text" id="fam-ap2"></div></div>
+            <div class="row"><div class="col"><label>Tipo Docuemnto</label><select id="fam-tipo-doc" onchange="window.verificarMenor('fam')"><option value="MENOR">MENOR</option><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option></select></div><div class="col"><label>Num</label><input type="text" id="fam-doc-num" disabled></div></div>
             <div class="row"><div class="col"><label>F. Nac</label><input type="tel" id="fam-fecha" oninput="window.formatearFecha(this)" maxlength="10"></div></div>
             <div class="row">
                 <div class="col">
@@ -573,8 +573,8 @@
         <div class="modal-content">
             <span class="close-modal" onclick="window.cerrarModalFamiliarAdmin()">&times;</span>
             <h3>Miembro (Admin)</h3>
-            <div class="row"><div class="col"><label>Nombre</label><input type="text" id="adm-fam-nombre"></div><div class="col"><label>Apellido 1</label><input type="text" id="adm-fam-ap1"></div><div class="col"><label>Ap 2</label><input type="text" id="adm-fam-ap2"></div></div>
-            <div class="row"><div class="col"><label>Doc</label><select id="adm-fam-tipo-doc" onchange="window.verificarMenor('adm-fam')"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Num</label><input type="text" id="adm-fam-doc-num"></div></div>
+            <div class="row"><div class="col"><label>Nombre</label><input type="text" id="adm-fam-nombre"></div><div class="col"><label>Apellido 1</label><input type="text" id="adm-fam-ap1"></div><div class="col"><label>Apellido 2</label><input type="text" id="adm-fam-ap2"></div></div>
+            <div class="row"><div class="col"><label>Tipo Docuemnto</label><select id="adm-fam-tipo-doc" onchange="window.verificarMenor('adm-fam')"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Num</label><input type="text" id="adm-fam-doc-num"></div></div>
             <div class="row"><div class="col"><label>F. Nac</label><input type="tel" id="adm-fam-fecha" oninput="window.formatearFecha(this)" maxlength="10"></div><div class="col"><label>Tel</label><input type="tel" id="adm-fam-tel"></div></div>
             <div class="row">
                 <div class="col">
@@ -702,7 +702,7 @@
                 <h3 style="color:var(--primary);margin-bottom:10px;"><i class="fa-solid fa-user"></i> Tus Datos</h3>
                 <div class="row"><div class="col"><label>Nombre (*)</label><input type="text" id="pub-nombre"></div></div>
                 <div class="row"><div class="col"><label>Apellido 1</label><input type="text" id="pub-ap1"></div><div class="col"><label>Apellido 2</label><input type="text" id="pub-ap2"></div></div>
-                <div class="row"><div class="col"><label>Tipo Doc</label><select id="pub-tipo-doc" onchange="window.verificarMenor('pub')"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Número</label><input type="text" id="pub-doc-num"></div></div>
+                <div class="row"><div class="col"><label>Tipo Docuemnto</label><select id="pub-tipo-doc" onchange="window.verificarMenor('pub')"><option value="DNI">DNI</option><option value="NIE">NIE</option><option value="PASAPORTE">Pasaporte</option><option value="MENOR">MENOR</option></select></div><div class="col"><label>Número</label><input type="text" id="pub-doc-num"></div></div>
                 <div class="row"><div class="col"><label>Fecha Nac. (DD/MM/AAAA)</label><input type="tel" id="pub-fecha" oninput="window.formatearFecha(this)" maxlength="10"></div><div class="col"><label>Teléfono</label><input type="tel" id="pub-tel"></div></div>
                 <div class="row">
                     <div class="col">

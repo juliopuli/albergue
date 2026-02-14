@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gestión Albergue - Ver.4.0.3</title>
+    <title>Gestión Albergue - Ver.4.1.0</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -14,7 +14,7 @@
 </head>
 <body>
 
-    <div class="version-tag">Ver.4.0.3</div>
+    <div class="version-tag">Ver.4.1.0</div>
     
     <div id="toast" style="visibility: hidden;">Guardado automático</div>
     <div id="loading-overlay" class="hidden"><div class="spinner"></div><h2 style="color:var(--primary);">Cargando Datos...</h2></div>
@@ -62,14 +62,10 @@
             </div>
   <div class="nav-item" id="nav-home" onclick="window.navegar('home')"><i class="fa-solid fa-house"></i><span>Inicio</span></div>
 
-<div class="nav-item" id="nav-intervencion" onclick="window.navegar('intervencion');window.cargarPersonasParaIntervencion();"><i class="fa-solid fa-qrcode"></i><span>Intervención</span></div>
-
 <div class="nav-item" id="nav-albergues" onclick="window.navegar('gestion-albergues');window.cargarAlberguesActivos();"><i class="fa-solid fa-bed"></i><span>Gestión</span></div>
-
 <div class="nav-item" id="nav-mto" onclick="window.navegar('mantenimiento');window.cargarAlberguesMantenimiento();"><i class="fa-solid fa-screwdriver-wrench"></i><span>Mantenimiento</span></div>
-
 <div class="nav-item" id="nav-obs" onclick="window.navegar('observatorio');window.cargarObservatorio();"><i class="fa-solid fa-binoculars"></i><span>Observatorio</span></div>
-
+<div class="nav-item" id="nav-intervencion" onclick="window.navegar('intervencion');window.cargarPersonasParaIntervencion();"><i class="fa-solid fa-qrcode"></i><span>Intervención</span></div>
 <div class="nav-item" id="nav-informes" onclick="window.mostrarInformes()">
   <i class="fa-solid fa-chart-pie"></i><span>Informes</span>
 </div>

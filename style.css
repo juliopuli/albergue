@@ -394,7 +394,20 @@ button.dark { background: #334155; color: white; }
 
 /* MODALS */
 .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 8000; display: flex; justify-content: center; align-items: center; }
-.modal-content { background: white; width: 95%; max-width: 600px; padding: 30px; border-radius: 12px; max-height: 90vh; overflow-y: auto; position: relative; }
+.modal-content {
+    background: white;
+    width: 95%;
+    max-width: 600px;
+    padding: 30px;
+    border-radius: 12px;
+    max-height: 95vh;            /* Sube el máximo a casi toda la pantalla */
+    min-height: 320px;           /* Asegura altura incluso con poco contenido */
+    overflow-y: auto;
+    position: relative;
+    box-sizing: border-box;
+    /* Añade esto si no estaba ya */
+    overscroll-behavior: contain;
+}
 .modal-lg { max-width: 900px; }
 #modal-historial { z-index: 9500 !important; }
 #modal-bed-info, #modal-add-familiar, #modal-admin-add-familiar, #modal-carnet-qr { z-index: 8000 !important; }

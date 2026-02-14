@@ -2255,13 +2255,24 @@ window.buscarParaIntervencion = function(tipo) {
     const txt = window.safeVal(`search-${tipo}`).toLowerCase().trim();
     const res = window.el(`res-${tipo}`);
     if (txt.length < 2) { res.classList.add('hidden'); return; }
-    const hits = listaPersonasCache.filter(p => {
+    const localHits = listaPersonasCache.filter(p => {
         const full = `${p.nombre} ${p.ap1 || ''} ${p.ap2 || ''}`.toLowerCase();
         return full.includes(txt) || (p.docNum || "").toLowerCase().includes(txt);
     });
+    const globalHits = listaGlobalPrefiliacion.filter(p => {
+        const full = `${p.nombre} ${p.ap1 || ''} ${p.ap2 || ''}`.toLowerCase();
+        return full.includes(txt) || (p.docNum || "").toLowerCase().includes(txt);
+    });
+    const hits = localHits.concat(globalHits);
     res.innerHTML = "";
-    if (hits.length === 0) { res.innerHTML = "<div class='search-item'>Sin resultados locales.</div>"; } 
-    else { hits.forEach(p => { const hasBed = p.cama ? `Cama ${p.cama}` : "Sin Cama"; res.innerHTML += ` <div class="search-item" onclick="window.abrirFormularioIntervencion('${p.id}', '${tipo}')"> <div> <strong>${p.nombre} ${p.ap1 || ''}</strong> <div style="font-size:0.8rem;color:#666;">${p.docNum || '-'} | ${hasBed}</div> </div> <button class="btn-icon-small" style="background:var(--primary);color:white;">Selecionar</button> </div>`; }); }
+    if (hits.length === 0) { res.innerHTML = "<div class='search-item'>Sin resultados.</div>"; } 
+    else { hits.forEach(p => { 
+        const isPrefil = !p.estado || p.estado !== 'ingresado';
+        const hasBed = p.cama ? `Cama ${p.cama}` : (isPrefil ? "Pre-Filiada" : "Sin Cama");
+        const onclickAttr = isPrefil ? '' : `onclick="window.abrirFormularioIntervencion('${p.id}', '${tipo}')"`; 
+        const buttonHtml = isPrefil ? '<button class="btn-icon-small" style="background:#ccc;color:#666;">No Disponible</button>' : '<button class="btn-icon-small" style="background:var(--primary);color:white;">Seleccionar</button>';
+        res.innerHTML += ` <div class="search-item" ${onclickAttr}> <div> <strong>${p.nombre} ${p.ap1 || ''}</strong> <div style="font-size:0.8rem;color:#666;">${p.docNum || '-'} | ${hasBed}</div> </div> ${buttonHtml} </div>`; 
+    }); }
     res.classList.remove('hidden');
 };
 

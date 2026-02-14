@@ -2260,16 +2260,23 @@ window.buscarParaIntervencion = function(tipo) {
         return full.includes(txt) || (p.docNum || "").toLowerCase().includes(txt);
     });
     const hits = localHits.concat(globalHits);
-    res.innerHTML = "";
-    if (hits.length === 0) { res.innerHTML = "<div class='search-item'>Sin resultados.</div>"; } 
-    else { hits.forEach(p => { 
-        const isPrefil = !p.estado || p.estado !== 'ingresado';
-        const hasBed = p.cama ? `Cama ${p.cama}` : (isPrefil ? "Pre-Filiada" : "Sin Cama");
-        const onclickAttr = isPrefil ? '' : `onclick="window.abrirFormularioIntervencion('${p.id}', '${tipo}')"`; 
-        const buttonHtml = isPrefil ? '<button class="btn-icon-small" style="background:#ccc;color:#666;">No Disponible</button>' : '<button class="btn-icon-small" style="background:var(--primary);color:white;">Seleccionar</button>';
-        res.innerHTML += ` <div class="search-item" ${onclickAttr}> <div> <strong>${p.nombre} ${p.ap1 || ''}</strong> <div style="font-size:0.8rem;color:#666;">${p.docNum || '-'} | ${hasBed}</div> </div> ${buttonHtml} </div>`; 
-    }); }
+    if (hits.length === 0) { 
+        res.innerHTML = "<div class='search-item'>Sin resultados.</div>"; 
+    } else { 
+        let html = '';
+        hits.forEach(p => { 
+            const isPrefil = !p.estado || p.estado !== 'ingresado';
+            const hasBed = p.cama ? `Cama ${p.cama}` : (isPrefil ? "Pre-Filiada" : "Sin Cama");
+            const onclickAttr = isPrefil ? '' : `onclick="window.abrirFormularioIntervencion('${p.id}', '${tipo}')"`; 
+            const buttonHtml = isPrefil ? '<button class="btn-icon-small" style="background:#ccc;color:#666;">No Disponible</button>' : '<button class="btn-icon-small" style="background:var(--primary);color:white;">Seleccionar</button>';
+            html += `<div class="search-item" ${onclickAttr}><div><strong>${p.nombre} ${p.ap1 || ''}</strong><div style="font-size:0.8rem;color:#666;">${p.docNum || '-'} | ${hasBed}</div></div>${buttonHtml}</div>`;
+        });
+        res.innerHTML = html;
+    }
+    res.classList.remove('hidden'); // Por si acaso
     window.safeShow(res);
+    console.log('final res.innerHTML:', res.innerHTML);
+    console.log('res.style.display:', res.style.display);
 };
 window.abrirFormularioIntervencion = async function(pid, tipo) {
     const p = listaPersonasCache.find(function(x) { return x.id === pid; });

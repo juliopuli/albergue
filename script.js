@@ -746,18 +746,37 @@ window.mostrarInformes = function () {
 window.navegar = function(screen) {
     // Oculta todas las pantallas principales de la app
     document.querySelectorAll('.main-content > div').forEach(div => div.classList.add('hidden'));
+    
+    // Remover active de todos los nav-items
+    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+    
     // Muestra solo la pantalla indicada
     const target = document.getElementById('screen-' + screen);
     if (target) {
         target.classList.remove('hidden');
+        // Map screen to nav id
+        const screenToNav = {
+            'home': 'nav-home',
+            'intervencion': 'nav-intervencion',
+            'gestion-albergues': 'nav-albergues',
+            'mantenimiento': 'nav-mto',
+            'observatorio': 'nav-obs',
+            'informes': 'nav-informes'
+        };
+        const navId = screenToNav[screen];
+        if (navId) window.safeAddActive(navId);
+        
+        // Handle informes iframe
         if (screen === 'informes') {
-            // Inserta el iframe SOLO SI NO EXISTE YA (evita recrearlo y posibles conflictos)
+            // Inserta el iframe SOLO SI NO EXISTE YA
             if (!target.querySelector('iframe')) {
                 const iframe = document.createElement('iframe');
                 iframe.src = 'informes.html';
                 iframe.style.width = '100%';
                 iframe.style.height = '90vh';
                 iframe.style.border = 'none';
+                iframe.style.position = 'relative';
+                iframe.style.zIndex = '1';
                 target.appendChild(iframe);
             }
         }

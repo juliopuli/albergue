@@ -1,6 +1,3 @@
-
-
-
 /* --- 1. VARIABLES & RESET --- */
 :root {
     --primary: #4f46e5; --primary-dark: #4338ca; --bg-body: #f8fafc; --surface: #ffffff;
@@ -1005,4 +1002,27 @@ body.focused-mode .app-nav { display: none !important; }
     box-shadow: 0 -2px 8px rgba(0,0,0,0.07);
     text-align: center;
     z-index: 10;
+}
+/* Forzar centrado en modales */
+.modal-overlay {
+    justify-content: center !important;
+    align-items: center !important;
+}
+
+/* Forzar centrado en login */
+#login-screen {
+    justify-content: center !important;
+    align-items: center !important;
+}
+
+/* Para infografía de camas (si usa modal) */
+#modal-bed-info {
+    justify-content: center !important;
+    align-items: center !important;
+}
+
+/* Para otras pantallas flotantes si es necesario */
+#modal-historial, #modal-qr-filiacion, #modal-carnet-qr {
+    justify-content: center !important;
+    align-items: center !important;
 }

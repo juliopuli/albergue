@@ -2,62 +2,93 @@ body {
     font-family: Arial, sans-serif;
     background: #f6f7fb;
     color: #223;
+    margin: 0;
+    padding: 0;
 }
 
-h1 {
-    color: #4f46e5;
-    text-align: center;
-    margin-top: 50px;
-}
-
-.informes-grid {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 36px;
-    margin-top: 48px;
-}
-
-.btn-informe {
-    min-width: 210px;
-    min-height: 110px;
-    padding: 26px 30px;
-    font-size: 1.4em;
-    border: none;
-    border-radius: 18px;
-    color: #fff;
-    background: #857de6;
-    box-shadow: 0 5px 18px #0001;
+/* Cabecera de sección como en Mantenimiento */
+.section-header {
     display: flex;
     align-items: center;
     gap: 18px;
+    margin-top: 30px;
+    margin-left: 35px;
+}
+.section-icon {
+    color: #4f46e5;
+    font-size: 2.3em;
+}
+.section-title {
+    font-size: 2em;
+    color: #344;
+    font-weight: 600;
+    letter-spacing: 2px;
+}
+
+/* Grid de botones acorde, más pequeños */
+.informes-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 22px;
+    margin-top: 36px;
+    margin-left: 35px;
+}
+
+.btn-informe {
+    min-width: 145px;
+    min-height: 66px;
+    padding: 16px 17px;
+    font-size: 1.06em;
+    border: none;
+    border-radius: 14px;
+    color: #fff;
+    background: #d1d5db; /* gris por defecto */
+    box-shadow: 0 3px 14px #0001;
+    display: flex;
+    align-items: center;
+    gap: 12px;
     cursor: pointer;
-    transition: background 0.2s, transform 0.1s;
+    transition: background 0.18s, transform 0.09s;
 }
 .btn-informe i {
-    font-size: 2em;
+    font-size: 1.45em;
 }
 .btn-informe:active {
-    transform: scale(0.98);
+    transform: scale(0.97);
 }
 
-.informe-albergues { background: #4f46e5; }     /* Azul - Gestión */
-.informe-entregas { background: #2563eb; }      /* Azul oscuro - Entregas */
-.informe-sanitario { background: #059669; }     /* Verde - Sanitario */
-.informe-psicosocial { background: #ea4e79; }   /* Rosa - Psicosocial */
+/* Colores bien alineados a tus KPIs/secciones */
+.informe-albergues { background: #059669; }     /* Verde */
+.informe-entregas { background: #7c3aed; }      /* Morado */
+.informe-sanitario { background: #e11d48; }     /* Rojo */
+.informe-psicosocial { background: #2563eb; }   /* Azul */
 
+/* Para mostrar la selección/resultado debajo */
 #zona-opciones-informe {
+    margin-left: 35px;
+    margin-top: 28px;
     margin-bottom: 48px;
+    text-align: left;
+    font-size: 1.18em;
+    color: #444;
 }
 
 /* Responsive */
-@media (max-width: 600px) {
-  .informes-grid {
-    flex-direction: column;
-    gap: 18px;
-  }
-  .btn-informe {
-    width: 100%;
-    min-width: unset;
-  }
+@media (max-width: 700px) {
+    .section-header,
+    .informes-grid,
+    #zona-opciones-informe {
+        margin-left: 12px;
+        margin-right: 12px;
+    }
+    .informes-grid {
+        flex-direction: column;
+        gap: 14px;
+        margin-top: 22px;
+    }
+    .btn-informe {
+        width: 100%;
+        min-width: unset;
+    }
 }

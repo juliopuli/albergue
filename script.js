@@ -2250,6 +2250,9 @@ window.verHistorialObservatorio = function(pId, isGlobal, albId){window.verHisto
 window.buscarParaIntervencion = function(tipo) {
     const txt = window.safeVal(`search-${tipo}`).toLowerCase().trim();
     const res = window.el(`res-${tipo}`);
+    console.log('buscarParaIntervencion called for tipo:', tipo);
+    console.log('txt:', txt);
+    console.log('res element:', res);
     if (txt.length < 2) { res.classList.add('hidden'); return; }
     const localHits = listaPersonasCache.filter(p => {
         const full = `${p.nombre} ${p.ap1 || ''} ${p.ap2 || ''}`.toLowerCase();
@@ -2260,6 +2263,8 @@ window.buscarParaIntervencion = function(tipo) {
         return full.includes(txt) || (p.docNum || "").toLowerCase().includes(txt);
     });
     const hits = localHits.concat(globalHits);
+    console.log('hits.length:', hits.length);
+    console.log('hits:', hits.slice(0, 3));
     res.innerHTML = "";
     if (hits.length === 0) { res.innerHTML = "<div class='search-item'>Sin resultados.</div>"; } 
     else { hits.forEach(p => { 

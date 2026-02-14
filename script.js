@@ -748,7 +748,20 @@ window.navegar = function(screen) {
     document.querySelectorAll('.main-content > div').forEach(div => div.classList.add('hidden'));
     // Muestra solo la pantalla indicada
     const target = document.getElementById('screen-' + screen);
-    if (target) target.classList.remove('hidden');
+    if (target) {
+        target.classList.remove('hidden');
+        if (screen === 'informes') {
+            // Inserta el iframe SOLO SI NO EXISTE YA (evita recrearlo y posibles conflictos)
+            if (!target.querySelector('iframe')) {
+                const iframe = document.createElement('iframe');
+                iframe.src = 'informes.html';
+                iframe.style.width = '100%';
+                iframe.style.height = '90vh';
+                iframe.style.border = 'none';
+                target.appendChild(iframe);
+            }
+        }
+    }
 };
 window.safeAddActive = function(id) { const e = window.el(id); if(e) e.classList.add('active'); };
 window.safeVal = function(id) { const e = window.el(id); return e ? e.value : ""; };

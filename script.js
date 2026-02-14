@@ -1971,7 +1971,8 @@ unsubscribePool = onSnapshot(
         window.sysLog(`Pre-Filiación: ${listaGlobalPrefiliacion.length} registros`, "info"); 
     }
 );
-window.safeShow('screen-operativa');
+window.safeHide('lista-albergues-activos');
+        window.safeShow('screen-operativa');
 if(window.el('app-title')) window.el('app-title').innerText = currentAlbergueData.nombre;
         window.configurarDashboard(); window.actualizarContadores(); window.safeHide('loading-overlay'); window.conectarListenersBackground(id); window.setupAutoSave();
     } catch(e) { window.sysLog(`Error Cargando: ${e.message}`, "error"); alert(e.message); window.safeHide('loading-overlay'); }

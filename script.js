@@ -2273,10 +2273,12 @@ window.buscarParaIntervencion = function(tipo) {
         });
         res.innerHTML = html;
     }
-    res.classList.remove('hidden'); // Por si acaso
+    res.classList.remove('hidden');
     window.safeShow(res);
-    console.log('final res.innerHTML:', res.innerHTML);
-    console.log('res.style.display:', res.style.display);
+    // Forzar visibilidad manualmente
+    res.style.display = 'block';
+    res.style.visibility = 'visible';
+    res.style.opacity = '1';
 };
 window.abrirFormularioIntervencion = async function(pid, tipo) {
     const p = listaPersonasCache.find(function(x) { return x.id === pid; });

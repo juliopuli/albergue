@@ -733,16 +733,15 @@ window.mostrarInformes = function () {
     const seccion = document.getElementById('screen-informes');
     seccion.classList.remove('hidden');
 
-    // LIMPIA el contenido del div antes de insertar el iframe
-    seccion.innerHTML = '';
-
-    // Inserta el iframe SIEMPRE desde cero
-    const iframe = document.createElement('iframe');
-    iframe.src = 'informes.html';
-    iframe.style.width = '100%';
-    iframe.style.height = '90vh';
-    iframe.style.border = 'none';
-    seccion.appendChild(iframe);
+    // Inserta el iframe SOLO SI NO EXISTE YA (evita recrearlo y posibles conflictos)
+    if (!seccion.querySelector('iframe')) {
+        const iframe = document.createElement('iframe');
+        iframe.src = 'informes.html';
+        iframe.style.width = '100%';
+        iframe.style.height = '90vh';
+        iframe.style.border = 'none';
+        seccion.appendChild(iframe);
+    }
 };
 window.navegar = function(screen) {
     // Oculta todas las pantallas principales de la app

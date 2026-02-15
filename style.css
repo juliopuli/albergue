@@ -407,7 +407,11 @@ button.dark { background: #334155; color: white; }
     /* Añade esto si no estaba ya */
     overscroll-behavior: contain;
 }
-.modal-lg { max-width: 900px; }
+.modal-lg {
+    max-width: 900px !important;
+    border-radius: 12px !important;
+    border: 6px solid var(--primary) !important; /* Borde azul bonito */
+}
 #modal-historial { z-index: 9500 !important; }
 #modal-bed-info, #modal-add-familiar, #modal-admin-add-familiar, #modal-carnet-qr { z-index: 8000 !important; }
 #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(5px); }

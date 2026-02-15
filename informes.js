@@ -87,11 +87,36 @@ function abrirInforme(tipo) {
                 </div>
             </div>
         `;
+    } else if (tipo === 'entregas') {
+        zona.innerHTML = `
+            <div style="background:white; padding:30px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+                <h2 style="color:#4f46e5; margin-bottom:25px;">
+                    <i class="fa-solid fa-box"></i> Informes de Entregas
+                </h2>
+                
+                <div style="display:grid; gap:20px;">
+                    <button onclick="mostrarInformeEntregasAlbergue()" class="btn-informe-opcion">
+                        <i class="fa-solid fa-hospital"></i>
+                        <div>
+                            <strong>Informe por Albergue</strong>
+                            <small>Entregas realizadas filtradas por albergue y fechas</small>
+                        </div>
+                    </button>
+                    
+                    <button onclick="mostrarInformeEntregasPersona()" class="btn-informe-opcion">
+                        <i class="fa-solid fa-user"></i>
+                        <div>
+                            <strong>Informe por Persona</strong>
+                            <small>Historial completo de entregas de una persona</small>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        `;
     } else {
         zona.innerHTML = '<b>Has seleccionado:</b> ' + tipo.charAt(0).toUpperCase() + tipo.slice(1);
     }
 }
-
 async function mostrarInformeAlbergue() {
     console.log('📊 Abriendo informe por albergue...');
     

@@ -1322,15 +1322,12 @@ window.mostrarQRFiliacion = async function(albergueId) {
         if (container) {
             container.innerHTML = ""; // Limpiar QR anterior
             
-            // Generar nuevo QR
-            new QRCode(container, {
-                text: urlFiliacion,
-                width: QR_CONFIG.width,
-                height: QR_CONFIG.height,
-                colorDark: QR_CONFIG.colorDark,
-                colorLight: QR_CONFIG.colorLight,
-                correctLevel: QR_CONFIG.correctLevel
-            });
+         // Generar nuevo QR
+new QRCode(container, {
+    text: urlFiliacion,
+    width: 250,
+    height: 250
+});
             
             window.sysLog("QR generado correctamente", "success");
         } else {

@@ -16,8 +16,8 @@ const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db =
 
 // --- QR CODE CONFIG ---
 const QR_CONFIG = {
-    width: 200,
-    height: 200,
+    width: 250,
+    height: 250,
     colorDark: "#4f46e5",
     colorLight: "#ffffff",
     correctLevel: QRCode.CorrectLevel.H

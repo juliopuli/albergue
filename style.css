@@ -1032,12 +1032,9 @@ body.focused-mode .app-nav { display: none !important; }
 }
 /* QR Filiación: Espacio mínimo dentro del modal */
 #qrcode-filiacion-display {
-    width: 200px !important;
-    height: 200px !important;
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
-    overflow: hidden !important;
+    display: inline-block !important;
+    margin: 20px !important;
+    /* Sin width/height forzada, sin border, sin padding - igual al de Mantenimiento */
 }
 
 /* Carnet QR: Ya está bien, mantener */

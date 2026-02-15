@@ -1036,23 +1036,25 @@ body.focused-mode .app-nav { display: none !important; }
     margin: 10px auto !important;
     border-width: 2px !important;
 }
-
-/* Infografía de camas: Más padding y ancho para no estar justa */
+/* Infografía de camas: Más padding, borde bonito y espacio */
 #modal-bed-info .modal-content {
-    padding: 30px !important; /* Más espacio interno */
-    max-width: 1100px !important; /* Más ancho */
-    border-radius: 20px !important; /* Bordes más suaves */
-    box-shadow: 0 15px 40px rgba(0,0,0,0.25) !important; /* Sombra más elegante */
+    padding: 50px !important; /* Más espacio interno para no pegar */
+    max-width: 1100px !important;
+    border-radius: 20px !important;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.25) !important;
+    border: 6px solid var(--primary) !important; /* Borde azul bonito */
 }
-
-/* Título de infografía más grande */
+/* Título de infografía más grande y centrado */
 #modal-bed-info h3 {
     font-size: 1.8rem !important;
-    margin-bottom: 20px !important;
+    margin-bottom: 30px !important; /* Más margen abajo */
+    text-align: center !important; /* Centrado */
 }
-
-/* Botones en infografía con más margen */
+/* Botones en infografía con más margen y centrados */
 #modal-bed-info button {
-    margin-top: 15px !important;
-    padding: 12px 20px !important; /* Botones más grandes */
+    margin-top: 20px !important; /* Más margen arriba */
+    padding: 15px 25px !important; /* Botones más grandes */
+    display: block !important;
+    margin-left: auto !important;
+    margin-right: auto !important; /* Centrados */
 }

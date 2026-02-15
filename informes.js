@@ -233,13 +233,14 @@ async function generarInformeAlbergue() {
                 const subtipo = interv.subtipo || 'Sin especificar';
                 tipologias[subtipo] = (tipologias[subtipo] || 0) + 1;
                 
-                const personaData = personaDoc.data();
-                todasIntervenciones.push({
-                    ...interv,
-                    personaNombre: personaData.nombre + ' ' + (personaData.ap1 || ''),
-                    personaDoc: personaData.docNum || 'S/D',
-                    fecha: fechaInterv
-                });
+             const personaData = personaDoc.data();
+todasIntervenciones.push({
+    ...interv,
+    personaNombre: personaData.nombre + ' ' + (personaData.ap1 || ''),
+    personaDoc: personaData.docNum || 'S/D',
+    telefono: personaData.telefono || 'Sin teléfono',
+    fecha: fechaInterv
+});
             });
         }
         

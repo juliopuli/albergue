@@ -437,7 +437,7 @@
         </main>
     </div>
     
-    <div id="modal-qr" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content" style="text-align:center;"><span class="close-modal" onclick="document.getElementById('modal-qr').classList.add('hidden')">&times;</span><h3>Escanea para acceder</h3><div id="qrcode-display" style="display:inline-block; margin:20px;"></div><p style="color:#666;">Auto-registro móvil.</p></div></div>
+    <div id="modal-qr" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div class="modal-content" style="text-align:center;"><span class="close-modal" onclick="document.getElementById('modal-qr').classList.add('hidden')">&times;</span><h3 id="qr-modal-title">Escanea para acceder</h3><div id="qrcode-display" style="display:inline-block; margin:20px;"></div><p id="qr-modal-url" style="color:#666;"></p></div></div>
     
     <div id="modal-carnet-qr" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
         <div class="modal-content" style="text-align:center; max-width:400px;">

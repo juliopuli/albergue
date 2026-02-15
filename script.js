@@ -17,9 +17,14 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app); 
 const db = getFirestore(app);
 
-// ⭐ NUEVO: Exportar al window para que informes.js pueda acceder
+// ⭐ EXPORTAR para informes.js
 window.db = db;
-window.app = app;
+window.firebaseModules = {
+    collection: collection,
+    getDocs: getDocs,
+    doc: doc,
+    getDoc: getDoc
+};
 
 // --- QR CODE CONFIG ---
 const QR_CONFIG = {

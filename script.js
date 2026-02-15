@@ -714,8 +714,8 @@ window.safeShow = function(id) {
     const e = window.el(id);
     if (e) {
         e.classList.remove('hidden');
-        // Además de la clase, limpia los estilos que pueden ocultar el div
-        e.style.display = 'block';
+        // Quita el estilo inline de display para usar el CSS (flex para modales)
+        e.style.display = '';
         e.style.visibility = 'visible';
         e.style.opacity = '1';
     }

@@ -1,38 +1,55 @@
-// Obtener referencia a Firebase desde la ventana padre
-const db = window.parent.db;
-const currentAlbergueId = window.parent.currentAlbergueId;
-const listaPersonasCache = window.parent.listaPersonasCache;
-const collection = window.parent.firebase.firestore().collection;
-const getDocs = window.parent.firebase.firestore().getDocs;
-const query = window.parent.firebase.firestore().query;
-const where = window.parent.firebase.firestore().where;
-
-let personasGlobales = [];
+// Esperar a que la ventana padre esté lista
+let db, getDocs, collection, doc, getDoc, query, where;
 let alberguesGlobales = [];
 
-// Cargar datos iniciales
+async function inicializar() {
+    try {
+        // Obtener referencias de Firebase desde la ventana padre
+        db = window.parent.db;
+        
+        // Importar funciones necesarias
+        const firebase = await import("https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js");
+        getDocs = firebase.getDocs;
+        collection = firebase.collection;
+        doc = firebase.doc;
+        getDoc = firebase.getDoc;
+        query = firebase.query;
+        where = firebase.where;
+        
+        console.log('Firebase inicializado correctamente');
+        
+        // Cargar albergues
+        await cargarDatosIniciales();
+        
+    } catch(e) {
+        console.error('Error inicializando Firebase:', e);
+    }
+}
+
 async function cargarDatosIniciales() {
     try {
-        // Cargar todos los albergues
-        const alberguesSnap = await window.parent.getDocs(
-            window.parent.collection(window.parent.db, "albergues")
-        );
+        const alberguesSnap = await getDocs(collection(db, "albergues"));
         
         alberguesGlobales = [];
-        alberguesSnap.forEach(doc => {
+        alberguesSnap.forEach(docSnap => {
             alberguesGlobales.push({
-                id: doc.id,
-                ...doc.data()
+                id: docSnap.id,
+                ...docSnap.data()
             });
         });
         
         console.log('Albergues cargados:', alberguesGlobales.length);
     } catch(e) {
-        console.error('Error cargando datos iniciales:', e);
+        console.error('Error cargando albergues:', e);
     }
 }
 
-cargarDatosIniciales();
+// Inicializar cuando el DOM esté listo
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', inicializar);
+} else {
+    inicializar();
+}
 
 function abrirInforme(tipo) {
     const zona = document.getElementById('zona-opciones-informe');
@@ -69,7 +86,33 @@ function abrirInforme(tipo) {
 }
 
 async function mostrarInformeAlbergue() {
+    console.log('Abriendo informe por albergue...');
+    console.log('Albergues disponibles:', alberguesGlobales);
+    
     const zona = document.getElementById('zona-opciones-informe');
+    
+    if (alberguesGlobales.length === 0) {
+        zona.innerHTML = `
+            <div style="background:white; padding:30px; border-radius:12px;">
+                <button onclick="abrirInforme('sanitario')" style="background:none; border:none; color:#4f46e5; cursor:pointer; margin-bottom:20px;">
+                    <i class="fa-solid fa-arrow-left"></i> Volver
+                </button>
+                <p style="text-align:center; color:#999; padding:40px;">
+                    <i class="fa-solid fa-spinner fa-spin" style="font-size:2rem; display:block; margin-bottom:15px;"></i>
+                    Cargando albergues...
+                </p>
+            </div>
+        `;
+        
+        // Reintentar cargar
+        await cargarDatosIniciales();
+        
+        // Llamar de nuevo si ya se cargaron
+        if (alberguesGlobales.length > 0) {
+            mostrarInformeAlbergue();
+        }
+        return;
+    }
     
     let optionsHTML = '<option value="">-- Selecciona un albergue --</option>';
     alberguesGlobales.forEach(alb => {
@@ -116,7 +159,7 @@ async function mostrarInformeAlbergue() {
         </div>
     `;
     
-    // Establecer fecha de hoy como máximo
+    // Establecer fecha de hoy
     const hoy = new Date().toISOString().split('T')[0];
     document.getElementById('fecha-fin-albergue').value = hoy;
     document.getElementById('fecha-fin-albergue').max = hoy;
@@ -161,17 +204,15 @@ async function generarInformeAlbergue() {
         const albergue = alberguesGlobales.find(a => a.id === albergueId);
         
         // Obtener todas las personas del albergue
-        const personasSnap = await window.parent.getDocs(
-            window.parent.collection(window.parent.db, "albergues", albergueId, "personas")
-        );
+        const personasSnap = await getDocs(collection(db, "albergues", albergueId, "personas"));
         
         let todasIntervenciones = [];
         let personasAtendidas = new Set();
         let tipologias = {};
         
         for (const personaDoc of personasSnap.docs) {
-            const intervencionesSnap = await window.parent.getDocs(
-                window.parent.collection(window.parent.db, "albergues", albergueId, "personas", personaDoc.id, "intervenciones")
+            const intervencionesSnap = await getDocs(
+                collection(db, "albergues", albergueId, "personas", personaDoc.id, "intervenciones")
             );
             
             intervencionesSnap.forEach(intDoc => {
@@ -355,18 +396,18 @@ async function buscarPersonaParaInforme() {
         
         // Buscar en todos los albergues
         for (const albergue of alberguesGlobales) {
-            const personasSnap = await window.parent.getDocs(
-                window.parent.collection(window.parent.db, "albergues", albergue.id, "personas")
+            const personasSnap = await getDocs(
+                collection(db, "albergues", albergue.id, "personas")
             );
             
-            personasSnap.forEach(doc => {
-                const persona = doc.data();
+            personasSnap.forEach(docSnap => {
+                const persona = docSnap.data();
                 const nombreCompleto = `${persona.nombre} ${persona.ap1 || ''} ${persona.ap2 || ''}`.toLowerCase();
                 const docNum = (persona.docNum || '').toLowerCase();
                 
                 if (nombreCompleto.includes(busqueda) || docNum.includes(busqueda)) {
                     personasEncontradas.push({
-                        id: doc.id,
+                        id: docSnap.id,
                         albergueId: albergue.id,
                         albergueNombre: albergue.nombre,
                         ...persona
@@ -415,21 +456,19 @@ async function generarInformePersona(personaId, albergueId) {
     
     try {
         const albergue = alberguesGlobales.find(a => a.id === albergueId);
-        const personaDoc = await window.parent.getDoc(
-            window.parent.doc(window.parent.db, "albergues", albergueId, "personas", personaId)
-        );
+        const personaDoc = await getDoc(doc(db, "albergues", albergueId, "personas", personaId));
         
         const persona = personaDoc.data();
         
         // Obtener todas las intervenciones sanitarias
-        const intervencionesSnap = await window.parent.getDocs(
-            window.parent.collection(window.parent.db, "albergues", albergueId, "personas", personaId, "intervenciones")
+        const intervencionesSnap = await getDocs(
+            collection(db, "albergues", albergueId, "personas", personaId, "intervenciones")
         );
         
         let intervencionesSanitarias = [];
         
-        intervencionesSnap.forEach(doc => {
-            const interv = doc.data();
+        intervencionesSnap.forEach(docSnap => {
+            const interv = docSnap.data();
             if (interv.tipo === 'Sanitaria') {
                 intervencionesSanitarias.push({
                     ...interv,

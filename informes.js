@@ -26,15 +26,15 @@ async function cargarDatosIniciales() {
     try {
         console.log('Cargando albergues...');
         
-        // Usar las funciones directamente desde window.parent que ya están importadas
-        const parentCollection = window.parent.firebase.firestore().collection;
-        const parentGetDocs = window.parent.firebase.firestore().getDocs;
+        // Usar las funciones globales que ya están importadas en script.js
+        const { collection, getDocs } = await import("https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js");
         
-        // Obtener referencia a la colección
-        const alberguesRef = parentCollection(window.parent.db, "albergues");
+        // Usar db directamente desde el padre
+        const db = window.parent.db;
         
-        // Obtener los documentos
-        const alberguesSnap = await parentGetDocs(alberguesRef);
+        // Obtener albergues usando las funciones importadas
+        const alberguesRef = collection(db, "albergues");
+        const alberguesSnap = await getDocs(alberguesRef);
         
         alberguesGlobales = [];
         alberguesSnap.forEach(docSnap => {
@@ -52,36 +52,6 @@ async function cargarDatosIniciales() {
     } catch(e) {
         console.error('❌ Error cargando albergues:', e);
         console.error('Detalles:', e.message);
-        
-        // Fallback: intentar acceder directamente desde script.js
-        try {
-            console.log('Intentando método alternativo...');
-            
-            // Importar directamente
-            const { collection, getDocs } = await import("https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js");
-            const { getFirestore } = await import("https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js");
-            
-            // Obtener la app de Firebase desde el padre
-            const app = window.parent.app;
-            const db = getFirestore(app);
-            
-            const alberguesSnap = await getDocs(collection(db, "albergues"));
-            
-            alberguesGlobales = [];
-            alberguesSnap.forEach(docSnap => {
-                const data = docSnap.data();
-                alberguesGlobales.push({
-                    id: docSnap.id,
-                    nombre: data.nombre || 'Sin nombre',
-                    capacidad: data.capacidad || 0,
-                    activo: data.activo !== false
-                });
-            });
-            
-            console.log('✅ Albergues cargados (método alternativo):', alberguesGlobales.length);
-        } catch(e2) {
-            console.error('❌ También falló el método alternativo:', e2);
-        }
     }
 }
 
@@ -157,7 +127,7 @@ async function mostrarInformeAlbergue() {
                     </button>
                     <p style="text-align:center; color:#e74c3c; padding:40px;">
                         ⚠️ No se pudieron cargar los albergues.<br>
-                        <small>Por favor, recarga la página o contacta con soporte técnico.</small>
+                        <small>Por favor, recarga la página.</small>
                     </p>
                 </div>
             `;
@@ -251,11 +221,8 @@ async function generarInformeAlbergue() {
     resultado.innerHTML = '<div style="text-align:center; padding:40px;"><i class="fa-solid fa-spinner fa-spin" style="font-size:2rem; color:#4f46e5;"></i><p>Generando informe...</p></div>';
     
     try {
-        // Usar las funciones de Firestore desde el módulo importado
-        const { collection, getDocs, getFirestore } = await import("https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js");
-        
-        const app = window.parent.app;
-        const db = getFirestore(app);
+        const { collection, getDocs } = await import("https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js");
+        const db = window.parent.db;
         
         const albergue = alberguesGlobales.find(a => a.id === albergueId);
         
@@ -447,9 +414,8 @@ async function buscarPersonaParaInforme() {
     resultados.innerHTML = '<div style="text-align:center; padding:20px;"><i class="fa-solid fa-spinner fa-spin"></i> Buscando...</div>';
     
     try {
-        const { collection, getDocs, getFirestore } = await import("https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js");
-        const app = window.parent.app;
-        const db = getFirestore(app);
+        const { collection, getDocs } = await import("https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js");
+        const db = window.parent.db;
         
         let personasEncontradas = [];
         
@@ -512,9 +478,8 @@ async function generarInformePersona(personaId, albergueId) {
     resultado.innerHTML = '<div style="text-align:center; padding:40px;"><i class="fa-solid fa-spinner fa-spin" style="font-size:2rem; color:#4f46e5;"></i><p>Generando informe...</p></div>';
     
     try {
-        const { collection, getDocs, doc, getDoc, getFirestore } = await import("https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js");
-        const app = window.parent.app;
-        const db = getFirestore(app);
+        const { collection, getDocs, doc, getDoc } = await import("https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js");
+        const db = window.parent.db;
         
         const albergue = alberguesGlobales.find(a => a.id === albergueId);
         const personaDocRef = doc(db, "albergues", albergueId, "personas", personaId);

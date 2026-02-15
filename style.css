@@ -1029,3 +1029,35 @@ body.focused-mode .app-nav { display: none !important; }
 #login-screen {
     align-items: center !important;
 }
+/* QR Filiación: Reducir padding para contorno justo */
+#qrcode-filiacion-display {
+    padding: 10px !important;
+    margin: 10px auto !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+}
+
+/* Carnet QR: Menos padding para contorno más ajustado */
+#carnet-qrcode-display {
+    padding: 5px !important;
+    margin: 10px auto !important;
+    border-width: 2px !important; /* Bordes más finos */
+}
+
+/* Infografía de camas: Menos padding, más espacio, mejor estética */
+#modal-bed-info .modal-content {
+    padding: 20px !important;
+    max-width: 1000px !important; /* Un poco más ancho */
+    border-radius: 16px !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2) !important;
+}
+
+/* Mejorar el título de la infografía */
+#modal-bed-info h3 {
+    font-size: 1.5rem !important;
+    margin-bottom: 15px !important;
+}
+
+/* Ajustar botones en infografía */
+#modal-bed-info button {
+    margin-top: 10px !important;
+}

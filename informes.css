@@ -92,3 +92,82 @@ body {
         min-width: unset;
     }
 }
+.btn-informe-opcion {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 20px;
+    background: white;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-align: left;
+    width: 100%;
+}
+
+.btn-informe-opcion:hover {
+    border-color: #4f46e5;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+}
+
+.btn-informe-opcion i {
+    font-size: 2rem;
+    color: #4f46e5;
+}
+
+.btn-informe-opcion strong {
+    display: block;
+    color: #1f2937;
+    font-size: 1.1rem;
+    margin-bottom: 5px;
+}
+
+.btn-informe-opcion small {
+    display: block;
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+.btn-generar-informe {
+    background: #4f46e5;
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: background 0.3s;
+    width: 100%;
+}
+
+.btn-generar-informe:hover {
+    background: #4338ca;
+}
+
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    
+    #resultado-informe-albergue,
+    #resultado-informe-albergue *,
+    #resultado-informe-persona,
+    #resultado-informe-persona * {
+        visibility: visible;
+    }
+    
+    #resultado-informe-albergue,
+    #resultado-informe-persona {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+    
+    button {
+        display: none !important;
+    }
+}

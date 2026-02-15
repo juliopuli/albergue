@@ -1325,8 +1325,8 @@ window.mostrarQRFiliacion = async function(albergueId) {
           // Generar nuevo QR
 new QRCode(container, {
     text: urlFiliacion,
-    width: 250,
-    height: 250,
+    width: 230,
+    height: 230,
     margin: 0
 });
             

@@ -1029,13 +1029,19 @@ body.focused-mode .app-nav { display: none !important; }
 #login-screen {
     align-items: center !important;
 }
-/* QR Filiación: Padding casi 0 para contorno justo al QR */
+/* QR Filiación: Tamaño fijo para contorno justo sin espacio blanco */
 #qrcode-filiacion-display {
+    width: 300px !important;
+    height: 300px !important;
     padding: 0 !important;
     margin: 10px auto !important;
-    box-shadow: none !important; /* Quitar sombra para contorno limpio */
-    background: transparent !important; /* Fondo transparente */
-    border-radius: 0 !important; /* Sin bordes redondeados */
+    box-shadow: none !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    overflow: hidden !important;
 }
 
 /* Carnet QR: Ya está bien, mantener */

@@ -1,33 +1,35 @@
-// Esperar a que la ventana padre esté lista
-let db, getDocs, collection, doc, getDoc, query, where;
+// Variables globales
 let alberguesGlobales = [];
 
+// Esperar a que la ventana padre esté lista
 async function inicializar() {
     try {
-        // Obtener referencias de Firebase desde la ventana padre
-        db = window.parent.db;
+        console.log('Inicializando sistema de informes...');
         
-        // Importar funciones necesarias
-        const firebase = await import("https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js");
-        getDocs = firebase.getDocs;
-        collection = firebase.collection;
-        doc = firebase.doc;
-        getDoc = firebase.getDoc;
-        query = firebase.query;
-        where = firebase.where;
+        // Verificar que tenemos acceso a la ventana padre
+        if (!window.parent || !window.parent.db) {
+            console.error('No se puede acceder a Firebase desde la ventana padre');
+            return;
+        }
         
-        console.log('Firebase inicializado correctamente');
+        console.log('Firebase accesible desde ventana padre');
         
         // Cargar albergues
         await cargarDatosIniciales();
         
     } catch(e) {
-        console.error('Error inicializando Firebase:', e);
+        console.error('Error inicializando:', e);
     }
 }
 
 async function cargarDatosIniciales() {
     try {
+        console.log('Cargando albergues...');
+        
+        // Usar las funciones directamente desde window.parent
+        const db = window.parent.db;
+        const { collection, getDocs } = await import("https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js");
+        
         const alberguesSnap = await getDocs(collection(db, "albergues"));
         
         alberguesGlobales = [];
@@ -38,9 +40,9 @@ async function cargarDatosIniciales() {
             });
         });
         
-        console.log('Albergues cargados:', alberguesGlobales.length);
+        console.log('✅ Albergues cargados:', alberguesGlobales.length);
     } catch(e) {
-        console.error('Error cargando albergues:', e);
+        console.error('❌ Error cargando albergues:', e);
     }
 }
 
@@ -86,8 +88,8 @@ function abrirInforme(tipo) {
 }
 
 async function mostrarInformeAlbergue() {
-    console.log('Abriendo informe por albergue...');
-    console.log('Albergues disponibles:', alberguesGlobales);
+    console.log('📊 Abriendo informe por albergue...');
+    console.log('Albergues disponibles:', alberguesGlobales.length);
     
     const zona = document.getElementById('zona-opciones-informe');
     
@@ -104,12 +106,22 @@ async function mostrarInformeAlbergue() {
             </div>
         `;
         
-        // Reintentar cargar
         await cargarDatosIniciales();
         
-        // Llamar de nuevo si ya se cargaron
         if (alberguesGlobales.length > 0) {
             mostrarInformeAlbergue();
+        } else {
+            zona.innerHTML = `
+                <div style="background:white; padding:30px; border-radius:12px;">
+                    <button onclick="abrirInforme('sanitario')" style="background:none; border:none; color:#4f46e5; cursor:pointer; margin-bottom:20px;">
+                        <i class="fa-solid fa-arrow-left"></i> Volver
+                    </button>
+                    <p style="text-align:center; color:#e74c3c; padding:40px;">
+                        ⚠️ No se pudieron cargar los albergues.<br>
+                        Por favor, recarga la página.
+                    </p>
+                </div>
+            `;
         }
         return;
     }
@@ -159,7 +171,6 @@ async function mostrarInformeAlbergue() {
         </div>
     `;
     
-    // Establecer fecha de hoy
     const hoy = new Date().toISOString().split('T')[0];
     document.getElementById('fecha-fin-albergue').value = hoy;
     document.getElementById('fecha-fin-albergue').max = hoy;
@@ -201,9 +212,11 @@ async function generarInformeAlbergue() {
     resultado.innerHTML = '<div style="text-align:center; padding:40px;"><i class="fa-solid fa-spinner fa-spin" style="font-size:2rem; color:#4f46e5;"></i><p>Generando informe...</p></div>';
     
     try {
+        const db = window.parent.db;
+        const { collection, getDocs } = await import("https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js");
+        
         const albergue = alberguesGlobales.find(a => a.id === albergueId);
         
-        // Obtener todas las personas del albergue
         const personasSnap = await getDocs(collection(db, "albergues", albergueId, "personas"));
         
         let todasIntervenciones = [];
@@ -218,12 +231,10 @@ async function generarInformeAlbergue() {
             intervencionesSnap.forEach(intDoc => {
                 const interv = intDoc.data();
                 
-                // Filtrar solo sanitarias
                 if (interv.tipo !== 'Sanitaria') return;
                 
                 const fechaInterv = interv.fecha.toDate();
                 
-                // Filtrar por rango de fechas
                 if (!todasFechas) {
                     const inicio = new Date(fechaInicio);
                     const fin = new Date(fechaFin);
@@ -234,7 +245,6 @@ async function generarInformeAlbergue() {
                 
                 personasAtendidas.add(personaDoc.id);
                 
-                // Contar por tipología
                 const subtipo = interv.subtipo || 'Sin especificar';
                 tipologias[subtipo] = (tipologias[subtipo] || 0) + 1;
                 
@@ -247,10 +257,8 @@ async function generarInformeAlbergue() {
             });
         }
         
-        // Ordenar por fecha descendente
         todasIntervenciones.sort((a, b) => b.fecha - a.fecha);
         
-        // Generar HTML del informe
         let html = `
             <div style="background:#f8f9fa; padding:30px; border-radius:12px; border:2px solid #4f46e5;">
                 <div style="text-align:center; margin-bottom:30px;">
@@ -392,13 +400,13 @@ async function buscarPersonaParaInforme() {
     resultados.innerHTML = '<div style="text-align:center; padding:20px;"><i class="fa-solid fa-spinner fa-spin"></i> Buscando...</div>';
     
     try {
+        const db = window.parent.db;
+        const { collection, getDocs } = await import("https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js");
+        
         let personasEncontradas = [];
         
-        // Buscar en todos los albergues
         for (const albergue of alberguesGlobales) {
-            const personasSnap = await getDocs(
-                collection(db, "albergues", albergue.id, "personas")
-            );
+            const personasSnap = await getDocs(collection(db, "albergues", albergue.id, "personas"));
             
             personasSnap.forEach(docSnap => {
                 const persona = docSnap.data();
@@ -455,12 +463,14 @@ async function generarInformePersona(personaId, albergueId) {
     resultado.innerHTML = '<div style="text-align:center; padding:40px;"><i class="fa-solid fa-spinner fa-spin" style="font-size:2rem; color:#4f46e5;"></i><p>Generando informe...</p></div>';
     
     try {
+        const db = window.parent.db;
+        const { collection, getDocs, doc, getDoc } = await import("https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js");
+        
         const albergue = alberguesGlobales.find(a => a.id === albergueId);
         const personaDoc = await getDoc(doc(db, "albergues", albergueId, "personas", personaId));
         
         const persona = personaDoc.data();
         
-        // Obtener todas las intervenciones sanitarias
         const intervencionesSnap = await getDocs(
             collection(db, "albergues", albergueId, "personas", personaId, "intervenciones")
         );
@@ -477,17 +487,14 @@ async function generarInformePersona(personaId, albergueId) {
             }
         });
         
-        // Ordenar por fecha descendente
         intervencionesSanitarias.sort((a, b) => b.fecha - a.fecha);
         
-        // Contar por tipología
         let tipologias = {};
         intervencionesSanitarias.forEach(interv => {
             const subtipo = interv.subtipo || 'Sin especificar';
             tipologias[subtipo] = (tipologias[subtipo] || 0) + 1;
         });
         
-        // Generar HTML
         let html = `
             <div style="background:#f8f9fa; padding:30px; border-radius:12px; border:2px solid #4f46e5;">
                 <div style="text-align:center; margin-bottom:30px;">

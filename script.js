@@ -13,7 +13,13 @@ const firebaseConfig = {
     messagingSenderId: "489999184108", 
     appId: "1:489999184108:web:32b9b580727f83158075c9" 
 };
-const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db = getFirestore(app);
+const app = initializeApp(firebaseConfig); 
+const auth = getAuth(app); 
+const db = getFirestore(app);
+
+// ⭐ NUEVO: Exportar al window para que informes.js pueda acceder
+window.db = db;
+window.app = app;
 
 // --- QR CODE CONFIG ---
 const QR_CONFIG = {

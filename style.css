@@ -1031,13 +1031,18 @@ body.focused-mode .app-nav { display: none !important; }
 }
 /* QR Filiación: Espacio mínimo dentro del modal */
 #qrcode-filiacion-display {
- #qrcode-filiacion-display {
+    display: inline-block !important;
+    margin: 20px !important;
+    border: 4px solid var(--text-main) !important;
+    padding: 10px !important;
+    border-radius: 10px !important;
     width: 250px !important;
     height: 250px !important;
     display: flex !important;
     justify-content: center !important;
     align-items: center !important;
     overflow: hidden !important;
+    background: white !important;
 }
 
 /* Carnet QR: Ya está bien, mantener */

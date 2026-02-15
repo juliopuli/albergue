@@ -26,23 +26,34 @@ async function cargarDatosIniciales() {
     try {
         console.log('Cargando albergues...');
         
-        // Usar las funciones directamente desde window.parent
-        const db = window.parent.db;
+        // Importar las funciones de Firestore
         const { collection, getDocs } = await import("https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js");
         
-        const alberguesSnap = await getDocs(collection(db, "albergues"));
+        // Usar db desde la ventana padre
+        const db = window.parent.db;
+        
+        // Crear la referencia a la colección
+        const alberguesRef = collection(db, "albergues");
+        
+        // Obtener los documentos
+        const alberguesSnap = await getDocs(alberguesRef);
         
         alberguesGlobales = [];
         alberguesSnap.forEach(docSnap => {
+            const data = docSnap.data();
             alberguesGlobales.push({
                 id: docSnap.id,
-                ...docSnap.data()
+                nombre: data.nombre,
+                capacidad: data.capacidad,
+                activo: data.activo
             });
         });
         
         console.log('✅ Albergues cargados:', alberguesGlobales.length);
+        
     } catch(e) {
         console.error('❌ Error cargando albergues:', e);
+        console.error('Detalles:', e.message);
     }
 }
 
@@ -118,7 +129,7 @@ async function mostrarInformeAlbergue() {
                     </button>
                     <p style="text-align:center; color:#e74c3c; padding:40px;">
                         ⚠️ No se pudieron cargar los albergues.<br>
-                        Por favor, recarga la página.
+                        <small>Error: No se puede acceder a la base de datos</small>
                     </p>
                 </div>
             `;
@@ -212,21 +223,21 @@ async function generarInformeAlbergue() {
     resultado.innerHTML = '<div style="text-align:center; padding:40px;"><i class="fa-solid fa-spinner fa-spin" style="font-size:2rem; color:#4f46e5;"></i><p>Generando informe...</p></div>';
     
     try {
-        const db = window.parent.db;
         const { collection, getDocs } = await import("https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js");
+        const db = window.parent.db;
         
         const albergue = alberguesGlobales.find(a => a.id === albergueId);
         
-        const personasSnap = await getDocs(collection(db, "albergues", albergueId, "personas"));
+        const personasRef = collection(db, "albergues", albergueId, "personas");
+        const personasSnap = await getDocs(personasRef);
         
         let todasIntervenciones = [];
         let personasAtendidas = new Set();
         let tipologias = {};
         
         for (const personaDoc of personasSnap.docs) {
-            const intervencionesSnap = await getDocs(
-                collection(db, "albergues", albergueId, "personas", personaDoc.id, "intervenciones")
-            );
+            const intervencionesRef = collection(db, "albergues", albergueId, "personas", personaDoc.id, "intervenciones");
+            const intervencionesSnap = await getDocs(intervencionesRef);
             
             intervencionesSnap.forEach(intDoc => {
                 const interv = intDoc.data();
@@ -248,10 +259,11 @@ async function generarInformeAlbergue() {
                 const subtipo = interv.subtipo || 'Sin especificar';
                 tipologias[subtipo] = (tipologias[subtipo] || 0) + 1;
                 
+                const personaData = personaDoc.data();
                 todasIntervenciones.push({
                     ...interv,
-                    personaNombre: personaDoc.data().nombre + ' ' + (personaDoc.data().ap1 || ''),
-                    personaDoc: personaDoc.data().docNum || 'S/D',
+                    personaNombre: personaData.nombre + ' ' + (personaData.ap1 || ''),
+                    personaDoc: personaData.docNum || 'S/D',
                     fecha: fechaInterv
                 });
             });
@@ -287,20 +299,24 @@ async function generarInformeAlbergue() {
                     <div style="display:grid; gap:10px;">
         `;
         
-        Object.entries(tipologias).sort((a, b) => b[1] - a[1]).forEach(([tipo, count]) => {
-            const porcentaje = ((count / todasIntervenciones.length) * 100).toFixed(1);
-            html += `
-                <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:#f8f9fa; border-radius:6px;">
-                    <span style="font-weight:600;">${tipo}</span>
-                    <div style="display:flex; align-items:center; gap:15px;">
-                        <div style="flex:1; min-width:100px; height:8px; background:#e5e7eb; border-radius:4px; overflow:hidden;">
-                            <div style="height:100%; background:#4f46e5; width:${porcentaje}%;"></div>
+        if (Object.keys(tipologias).length > 0) {
+            Object.entries(tipologias).sort((a, b) => b[1] - a[1]).forEach(([tipo, count]) => {
+                const porcentaje = ((count / todasIntervenciones.length) * 100).toFixed(1);
+                html += `
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:#f8f9fa; border-radius:6px;">
+                        <span style="font-weight:600;">${tipo}</span>
+                        <div style="display:flex; align-items:center; gap:15px;">
+                            <div style="flex:1; min-width:100px; height:8px; background:#e5e7eb; border-radius:4px; overflow:hidden;">
+                                <div style="height:100%; background:#4f46e5; width:${porcentaje}%;"></div>
+                            </div>
+                            <span style="font-weight:bold; color:#4f46e5; min-width:80px; text-align:right;">${count} (${porcentaje}%)</span>
                         </div>
-                        <span style="font-weight:bold; color:#4f46e5; min-width:80px; text-align:right;">${count} (${porcentaje}%)</span>
                     </div>
-                </div>
-            `;
-        });
+                `;
+            });
+        } else {
+            html += '<p style="text-align:center; color:#999;">No hay datos de tipología</p>';
+        }
         
         html += `
                     </div>
@@ -357,7 +373,7 @@ async function generarInformeAlbergue() {
         
     } catch(e) {
         console.error('Error generando informe:', e);
-        resultado.innerHTML = `<div style="background:#fee; color:#c00; padding:20px; border-radius:8px;">Error: ${e.message}</div>`;
+        resultado.innerHTML = `<div style="background:#fee; color:#c00; padding:20px; border-radius:8px;"><strong>Error:</strong> ${e.message}</div>`;
     }
 }
 
@@ -400,13 +416,14 @@ async function buscarPersonaParaInforme() {
     resultados.innerHTML = '<div style="text-align:center; padding:20px;"><i class="fa-solid fa-spinner fa-spin"></i> Buscando...</div>';
     
     try {
-        const db = window.parent.db;
         const { collection, getDocs } = await import("https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js");
+        const db = window.parent.db;
         
         let personasEncontradas = [];
         
         for (const albergue of alberguesGlobales) {
-            const personasSnap = await getDocs(collection(db, "albergues", albergue.id, "personas"));
+            const personasRef = collection(db, "albergues", albergue.id, "personas");
+            const personasSnap = await getDocs(personasRef);
             
             personasSnap.forEach(docSnap => {
                 const persona = docSnap.data();
@@ -463,17 +480,17 @@ async function generarInformePersona(personaId, albergueId) {
     resultado.innerHTML = '<div style="text-align:center; padding:40px;"><i class="fa-solid fa-spinner fa-spin" style="font-size:2rem; color:#4f46e5;"></i><p>Generando informe...</p></div>';
     
     try {
-        const db = window.parent.db;
         const { collection, getDocs, doc, getDoc } = await import("https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js");
+        const db = window.parent.db;
         
         const albergue = alberguesGlobales.find(a => a.id === albergueId);
-        const personaDoc = await getDoc(doc(db, "albergues", albergueId, "personas", personaId));
+        const personaDocRef = doc(db, "albergues", albergueId, "personas", personaId);
+        const personaDocSnap = await getDoc(personaDocRef);
         
-        const persona = personaDoc.data();
+        const persona = personaDocSnap.data();
         
-        const intervencionesSnap = await getDocs(
-            collection(db, "albergues", albergueId, "personas", personaId, "intervenciones")
-        );
+        const intervencionesRef = collection(db, "albergues", albergueId, "personas", personaId, "intervenciones");
+        const intervencionesSnap = await getDocs(intervencionesRef);
         
         let intervencionesSanitarias = [];
         
@@ -581,7 +598,7 @@ async function generarInformePersona(personaId, albergueId) {
         
     } catch(e) {
         console.error('Error generando informe persona:', e);
-        resultado.innerHTML = `<div style="background:#fee; color:#c00; padding:20px; border-radius:8px;">Error: ${e.message}</div>`;
+        resultado.innerHTML = `<div style="background:#fee; color:#c00; padding:20px; border-radius:8px;"><strong>Error:</strong> ${e.message}</div>`;
     }
 }
 

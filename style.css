@@ -1031,8 +1031,9 @@ body.focused-mode .app-nav { display: none !important; }
 }
 /* QR Filiación: Espacio mínimo dentro del modal */
 #qrcode-filiacion-display {
-    width: 200px !important;
-    height: 200px !important;
+ #qrcode-filiacion-display {
+    width: 250px !important;
+    height: 250px !important;
     display: flex !important;
     justify-content: center !important;
     align-items: center !important;

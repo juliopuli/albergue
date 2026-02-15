@@ -1030,18 +1030,9 @@ body.focused-mode .app-nav { display: none !important; }
     align-items: center !important;
 }
 /* QR Filiación: Espacio mínimo dentro del modal */
-#modal-qr-filiacion .modal-content {
-    padding: 20px !important; /* Menos padding en la ventana para más espacio al QR */
-}
-
 #qrcode-filiacion-display {
-    width: 300px !important;
-    height: 300px !important;
-    padding: 10px !important; /* Un poco de padding interno para no estar pegado */
-    margin: 10px auto !important; /* Espacio arriba/abajo */
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important; /* Sombra sutil para contorno */
-    background: white !important;
-    border-radius: 8px !important; /* Bordes suaves */
+    width: 200px !important;
+    height: 200px !important;
     display: flex !important;
     justify-content: center !important;
     align-items: center !important;

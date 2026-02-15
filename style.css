@@ -1029,6 +1029,10 @@ body.focused-mode .app-nav { display: none !important; }
 #login-screen {
     align-items: center !important;
 }
+/* Copia el padding del modal del carnet */
+#modal-qr-filiacion .modal-content {
+    padding-top: 30px !important;
+}
 /* QR Filiación: Espacio mínimo dentro del modal */
 #qrcode-filiacion-display {
     display: inline-block !important;

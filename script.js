@@ -1322,11 +1322,12 @@ window.mostrarQRFiliacion = async function(albergueId) {
         if (container) {
             container.innerHTML = ""; // Limpiar QR anterior
             
-         // Generar nuevo QR
+          // Generar nuevo QR
 new QRCode(container, {
     text: urlFiliacion,
     width: 250,
-    height: 250
+    height: 250,
+    margin: 0
 });
             
             window.sysLog("QR generado correctamente", "success");

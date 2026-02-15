@@ -1188,7 +1188,7 @@ window.generarTarjetaAlbergue = function(albergue, esArchivado) {
     }
     
     // Botón QR (todos los admins)
-    html += '<button class="btn-icon" style="background:#06b6d4; color:white;" onclick="window.mostrarQRFiliacion(\'' + albergue.id + '\')" title="Ver QR Filiación">';
+    html += '<button class="btn-icon" style="background:#06b6d4; color:white;" onclick="window.abrirModalQR(\'' + albergue.id + '\')" title="Ver QR Filiación">';
     html += '<i class="fa-solid fa-qrcode"></i>';
     html += '</button>';
     

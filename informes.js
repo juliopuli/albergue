@@ -292,43 +292,73 @@ async function generarInformeAlbergue() {
             html += '<p style="text-align:center; color:#999;">No hay datos</p>';
         }
         
+       // Agrupar intervenciones por persona
+        let personasConAtenciones = {};
+        todasIntervenciones.forEach(interv => {
+            const key = interv.personaDoc + '_' + interv.personaNombre; // Clave única por persona
+            if (!personasConAtenciones[key]) {
+                personasConAtenciones[key] = {
+                    nombre: interv.personaNombre,
+                    dni: interv.personaDoc,
+                    telefono: interv.telefono || 'Sin teléfono',
+                    atenciones: []
+                };
+            }
+            personasConAtenciones[key].atenciones.push(interv);
+        });
+        
         html += `
-                    </div>
-                </div>
-                
                 <div style="background:white; padding:20px; border-radius:8px;">
-                    <h3 style="color:#4f46e5; margin-top:0;">Detalle de Atenciones</h3>
+                    <h3 style="color:#4f46e5; margin-top:0;">Detalle de Atenciones por Persona</h3>
                     <div style="max-height:500px; overflow-y:auto;">
         `;
         
-        if (todasIntervenciones.length === 0) {
+        if (Object.keys(personasConAtenciones).length === 0) {
             html += '<p style="text-align:center; color:#999; padding:40px;">No hay atenciones sanitarias registradas en este período</p>';
         } else {
-            todasIntervenciones.forEach(interv => {
+            // Convertir a array y ordenar por número de atenciones (descendente)
+            const personasArray = Object.values(personasConAtenciones);
+            personasArray.sort((a, b) => b.atenciones.length - a.atenciones.length);
+            
+            html += `
+                <table style="width:100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background:#f8f9fa; border-bottom:2px solid #4f46e5;">
+                            <th style="padding:12px; text-align:left; font-weight:600; color:#4f46e5;">Persona</th>
+                            <th style="padding:12px; text-align:left; font-weight:600; color:#4f46e5;">DNI</th>
+                            <th style="padding:12px; text-align:left; font-weight:600; color:#4f46e5;">Teléfono</th>
+                            <th style="padding:12px; text-align:center; font-weight:600; color:#4f46e5;">Nº Atenciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            personasArray.forEach((persona, index) => {
+                const bgColor = index % 2 === 0 ? '#ffffff' : '#f8f9fa';
                 html += `
-                    <div style="border-left:4px solid #4f46e5; padding:15px; margin-bottom:15px; background:#f8f9fa; border-radius:0 8px 8px 0;">
-                        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                            <strong style="color:#4f46e5;">${interv.personaNombre}</strong>
-                            <span style="color:#666; font-size:0.9rem;">${interv.fecha.toLocaleDateString('es-ES')} ${interv.fecha.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'})}</span>
-                        </div>
-                        <div style="color:#666; font-size:0.9rem; margin-bottom:8px;">
-                            <i class="fa-solid fa-id-card"></i> ${interv.personaDoc}
-                        </div>
-                        <div style="background:white; padding:10px; border-radius:6px; margin-bottom:8px;">
-                            <strong style="color:#059669;">Tipo:</strong> ${interv.subtipo}
-                        </div>
-                        <div style="background:white; padding:10px; border-radius:6px; margin-bottom:8px;">
-                            <strong style="color:#0284c7;">Motivo:</strong> ${interv.motivo}
-                        </div>
-                        <div style="background:white; padding:10px; border-radius:6px;">
-                            <strong style="color:#7c3aed;">Resolución:</strong> ${interv.detalle}
-                        </div>
-                        <div style="margin-top:8px; color:#999; font-size:0.85rem;">
-                            <i class="fa-solid fa-user-tag"></i> Atendido por: ${interv.usuario}
-                        </div>
-                    </div>
+                    <tr style="background:${bgColor}; border-bottom:1px solid #e5e7eb;">
+                        <td style="padding:12px;">
+                            <strong style="color:#1f2937;">${persona.nombre}</strong>
+                        </td>
+                        <td style="padding:12px; color:#666;">
+                            <i class="fa-solid fa-id-card" style="margin-right:5px;"></i>${persona.dni}
+                        </td>
+                        <td style="padding:12px; color:#666;">
+                            <i class="fa-solid fa-phone" style="margin-right:5px;"></i>${persona.telefono}
+                        </td>
+                        <td style="padding:12px; text-align:center;">
+                            <span style="background:#4f46e5; color:white; padding:6px 12px; border-radius:20px; font-weight:600; font-size:0.9rem;">
+                                ${persona.atenciones.length}
+                            </span>
+                        </td>
+                    </tr>
                 `;
             });
+            
+            html += `
+                    </tbody>
+                </table>
+            `;
         }
         
         html += `

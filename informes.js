@@ -6,13 +6,13 @@ async function inicializar() {
     try {
         console.log('Inicializando sistema de informes...');
         
-        // Verificar que tenemos acceso a la ventana padre
-        if (!window.parent || !window.parent.db) {
+        // Verificar acceso
+        if (!window.parent || !window.parent.db || !window.parent.firebaseModules) {
             console.error('No se puede acceder a Firebase desde la ventana padre');
             return;
         }
         
-        console.log('Firebase accesible desde ventana padre');
+        console.log('✅ Firebase accesible desde ventana padre');
         
         // Cargar albergues
         await cargarDatosIniciales();
@@ -26,13 +26,10 @@ async function cargarDatosIniciales() {
     try {
         console.log('Cargando albergues...');
         
-        // Usar las funciones globales que ya están importadas en script.js
-        const { collection, getDocs } = await import("https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js");
-        
-        // Usar db directamente desde el padre
+        // Usar las funciones exportadas desde el padre
+        const { collection, getDocs } = window.parent.firebaseModules;
         const db = window.parent.db;
         
-        // Obtener albergues usando las funciones importadas
         const alberguesRef = collection(db, "albergues");
         const alberguesSnap = await getDocs(alberguesRef);
         
@@ -51,7 +48,6 @@ async function cargarDatosIniciales() {
         
     } catch(e) {
         console.error('❌ Error cargando albergues:', e);
-        console.error('Detalles:', e.message);
     }
 }
 
@@ -98,7 +94,6 @@ function abrirInforme(tipo) {
 
 async function mostrarInformeAlbergue() {
     console.log('📊 Abriendo informe por albergue...');
-    console.log('Albergues disponibles:', alberguesGlobales.length);
     
     const zona = document.getElementById('zona-opciones-informe');
     
@@ -108,30 +103,11 @@ async function mostrarInformeAlbergue() {
                 <button onclick="abrirInforme('sanitario')" style="background:none; border:none; color:#4f46e5; cursor:pointer; margin-bottom:20px;">
                     <i class="fa-solid fa-arrow-left"></i> Volver
                 </button>
-                <p style="text-align:center; color:#999; padding:40px;">
-                    <i class="fa-solid fa-spinner fa-spin" style="font-size:2rem; display:block; margin-bottom:15px;"></i>
-                    Cargando albergues...
+                <p style="text-align:center; color:#e74c3c; padding:40px;">
+                    ⚠️ No hay albergues disponibles
                 </p>
             </div>
         `;
-        
-        await cargarDatosIniciales();
-        
-        if (alberguesGlobales.length > 0) {
-            mostrarInformeAlbergue();
-        } else {
-            zona.innerHTML = `
-                <div style="background:white; padding:30px; border-radius:12px;">
-                    <button onclick="abrirInforme('sanitario')" style="background:none; border:none; color:#4f46e5; cursor:pointer; margin-bottom:20px;">
-                        <i class="fa-solid fa-arrow-left"></i> Volver
-                    </button>
-                    <p style="text-align:center; color:#e74c3c; padding:40px;">
-                        ⚠️ No se pudieron cargar los albergues.<br>
-                        <small>Por favor, recarga la página.</small>
-                    </p>
-                </div>
-            `;
-        }
         return;
     }
     
@@ -221,7 +197,7 @@ async function generarInformeAlbergue() {
     resultado.innerHTML = '<div style="text-align:center; padding:40px;"><i class="fa-solid fa-spinner fa-spin" style="font-size:2rem; color:#4f46e5;"></i><p>Generando informe...</p></div>';
     
     try {
-        const { collection, getDocs } = await import("https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js");
+        const { collection, getDocs } = window.parent.firebaseModules;
         const db = window.parent.db;
         
         const albergue = alberguesGlobales.find(a => a.id === albergueId);
@@ -313,7 +289,7 @@ async function generarInformeAlbergue() {
                 `;
             });
         } else {
-            html += '<p style="text-align:center; color:#999;">No hay datos de tipología</p>';
+            html += '<p style="text-align:center; color:#999;">No hay datos</p>';
         }
         
         html += `
@@ -414,7 +390,7 @@ async function buscarPersonaParaInforme() {
     resultados.innerHTML = '<div style="text-align:center; padding:20px;"><i class="fa-solid fa-spinner fa-spin"></i> Buscando...</div>';
     
     try {
-        const { collection, getDocs } = await import("https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js");
+        const { collection, getDocs } = window.parent.firebaseModules;
         const db = window.parent.db;
         
         let personasEncontradas = [];
@@ -478,7 +454,7 @@ async function generarInformePersona(personaId, albergueId) {
     resultado.innerHTML = '<div style="text-align:center; padding:40px;"><i class="fa-solid fa-spinner fa-spin" style="font-size:2rem; color:#4f46e5;"></i><p>Generando informe...</p></div>';
     
     try {
-        const { collection, getDocs, doc, getDoc } = await import("https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js");
+        const { collection, getDocs, doc, getDoc } = window.parent.firebaseModules;
         const db = window.parent.db;
         
         const albergue = alberguesGlobales.find(a => a.id === albergueId);

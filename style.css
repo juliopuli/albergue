@@ -1026,3 +1026,6 @@ body.focused-mode .app-nav { display: none !important; }
     justify-content: center !important;
     align-items: center !important;
 }
+#login-screen {
+    align-items: center !important;
+}

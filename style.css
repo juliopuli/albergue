@@ -1030,6 +1030,26 @@ body.focused-mode .app-nav { display: none !important; }
 #login-screen {
     align-items: center !important;
 }
+/* Copia el padding del modal del carnet */
+#modal-qr-filiacion .modal-content {
+    padding-top: 30px !important;
+}
+/* QR Filiación: Espacio mínimo dentro del modal */
+#qrcode-filiacion-display {
+    display: inline-block !important;
+    margin: 20px !important;
+    border: 4px solid black !important;  /* Cambié var(--text-main) a black */
+    padding: 10px !important;
+    border-radius: 10px !important;
+    width: 230px !important;
+    height: 230px !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    overflow: hidden !important;
+    background: white !important;
+}
+
 /* Carnet QR: Ya está bien, mantener */
 #carnet-qrcode-display {
     padding: 5px !important;

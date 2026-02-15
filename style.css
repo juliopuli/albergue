@@ -1029,35 +1029,38 @@ body.focused-mode .app-nav { display: none !important; }
 #login-screen {
     align-items: center !important;
 }
-/* QR Filiación: Reducir padding para contorno justo */
+/* QR Filiación: Padding casi 0 para contorno justo al QR */
 #qrcode-filiacion-display {
-    padding: 10px !important;
+    padding: 0 !important;
     margin: 10px auto !important;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+    box-shadow: none !important; /* Quitar sombra para contorno limpio */
+    background: transparent !important; /* Fondo transparente */
+    border-radius: 0 !important; /* Sin bordes redondeados */
 }
 
-/* Carnet QR: Menos padding para contorno más ajustado */
+/* Carnet QR: Ya está bien, mantener */
 #carnet-qrcode-display {
     padding: 5px !important;
     margin: 10px auto !important;
-    border-width: 2px !important; /* Bordes más finos */
+    border-width: 2px !important;
 }
 
-/* Infografía de camas: Menos padding, más espacio, mejor estética */
+/* Infografía de camas: Más padding y ancho para no estar justa */
 #modal-bed-info .modal-content {
-    padding: 20px !important;
-    max-width: 1000px !important; /* Un poco más ancho */
-    border-radius: 16px !important;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2) !important;
+    padding: 30px !important; /* Más espacio interno */
+    max-width: 1100px !important; /* Más ancho */
+    border-radius: 20px !important; /* Bordes más suaves */
+    box-shadow: 0 15px 40px rgba(0,0,0,0.25) !important; /* Sombra más elegante */
 }
 
-/* Mejorar el título de la infografía */
+/* Título de infografía más grande */
 #modal-bed-info h3 {
-    font-size: 1.5rem !important;
-    margin-bottom: 15px !important;
+    font-size: 1.8rem !important;
+    margin-bottom: 20px !important;
 }
 
-/* Ajustar botones en infografía */
+/* Botones en infografía con más margen */
 #modal-bed-info button {
-    margin-top: 10px !important;
+    margin-top: 15px !important;
+    padding: 12px 20px !important; /* Botones más grandes */
 }

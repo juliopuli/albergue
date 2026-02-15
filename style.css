@@ -1040,8 +1040,8 @@ body.focused-mode .app-nav { display: none !important; }
     border: 4px solid black !important;  /* Cambié var(--text-main) a black */
     padding: 10px !important;
     border-radius: 10px !important;
-    width: 250px !important;
-    height: 250px !important;
+    width: 230px !important;
+    height: 230px !important;
     display: flex !important;
     justify-content: center !important;
     align-items: center !important;

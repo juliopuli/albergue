@@ -1,3 +1,4 @@
+
 import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signInAnonymously, signOut, onAuthStateChanged, createUserWithEmailAndPassword, sendPasswordResetEmail, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
 import { getFirestore, collection, addDoc, setDoc, query, where, getDocs, doc, updateDoc, onSnapshot, orderBy, deleteDoc, getDoc, writeBatch, increment } 
@@ -939,7 +940,7 @@ window.eliminarUsuario = async function() { if (userEditingId && confirm("Borrar
 window.desactivarUsuariosMasivo = async function() { if (currentUserData.rol !== 'super_admin' && currentUserData.rol !== 'admin') return alert("No tienes permisos."); if (!confirm("⚠️ ATENCIÓN ⚠️\n\nEsta acción desactivará a TODOS los usuarios operativos.")) return; window.safeShow('loading-overlay'); try { const q = query(collection(db, "usuarios")); const querySnapshot = await getDocs(q); const batch = writeBatch(db); let count = 0; querySnapshot.forEach((doc) => { const u = doc.data(); if (u.rol !== 'super_admin' && u.rol !== 'admin') { if (u.activo !== false) { batch.update(doc.ref, { activo: false }); count++; } } }); if (count > 0) { await batch.commit(); window.sysLog(`Desactivados: ${count}`, "warn"); alert(`Se han desactivado ${count} usuarios.`); } else { alert("No había usuarios para desactivar."); } } catch (e) { console.error(e); alert("Error: " + e.message); } finally { window.safeHide('loading-overlay'); } };
 
 // --- PUBLIC & QR ---
-window.abrirModalQR = function() { setTimeout(() => { window.safeShow('modal-qr'); const d = window.el("qrcode-display"); d.innerHTML = ""; new QRCode(d, { text: window.location.href.split('?')[0] + `?public_id=${currentAlbergueId}`, width: 250, height: 250 }); window.el('qr-modal-title').innerText = "Escanea para acceder"; window.el('qr-modal-url').innerText = "Auto-registro móvil."; }, 100); };
+window.abrirModalQR = function() { setTimeout(() => { window.safeShow('modal-qr'); const d = window.el("qrcode-display"); d.innerHTML = ""; new QRCode(d, { text: window.location.href.split('?')[0] + `?public_id=${currentAlbergueId}`, width: 250, height: 250 }); }, 100); };
 window.toggleStartButton = function() { window.el('btn-start-public').disabled = !window.el('check-consent').checked; };
 window.iniciarRegistro = function() { window.safeHide('public-welcome-screen'); window.safeShow('public-form-container'); };
 window.mostrarFormularioPublico = function() {
@@ -1292,39 +1293,59 @@ window.borrarAlberguePermanente = async function(albergueId, nombreAlbergue) {
 };
 
 window.mostrarQRFiliacion = async function(albergueId) {
-    // Obtener datos del albergue
-    var albergueDoc = await getDoc(doc(db, "albergues", albergueId));
-    if (!albergueDoc.exists()) {
-        alert("Albergue no encontrado");
-        return;
-    }
-    
-    var albergueData = albergueDoc.data();
-    var nombreAlbergue = albergueData.nombre || "Albergue";
-    
-    // Generar URL
-    var urlFiliacion = window.location.origin + window.location.pathname + '?public_id=' + albergueId;
-    
-    // Mostrar el modal público
-    window.safeShow('modal-qr');
-    
-    // Actualizar título
-    var tituloEl = window.el('qr-modal-title');
-    if (tituloEl) {
-        tituloEl.innerText = nombreAlbergue + " - QR de Filiación";
-    }
-    
-    // Limpiar y generar QR
-    var container = window.el('qrcode-display');
-    if (container) {
-        container.innerHTML = "";
-        new QRCode(container, { text: urlFiliacion, width: 250, height: 250 });
-    }
-    
-    // Mostrar URL
-    var urlEl = window.el('qr-modal-url');
-    if (urlEl) {
-        urlEl.innerText = urlFiliacion;
+    try {
+        // Obtener datos del albergue
+        var albergueDoc = await getDoc(doc(db, "albergues", albergueId));
+        if (!albergueDoc.exists()) {
+            alert("Albergue no encontrado");
+            return;
+        }
+        
+        var albergueData = albergueDoc.data();
+        var nombreAlbergue = albergueData.nombre || "Albergue";
+        
+        // Generar URL pública para filiación
+        var urlFiliacion = window.location.origin + window.location.pathname + '?public_id=' + albergueId;
+        
+        window.sysLog("Generando QR de filiación para: " + nombreAlbergue, "info");
+        
+        // Mostrar modal
+        window.safeShow('modal-qr-filiacion');
+        
+        // Actualizar título del modal
+        var tituloEl = window.el('qr-filiacion-titulo');
+        if (tituloEl) {
+            tituloEl.innerText = nombreAlbergue;
+        }
+        
+        // Limpiar contenedor y generar QR
+        var container = window.el('qrcode-filiacion-display');
+        if (container) {
+            container.innerHTML = ""; // Limpiar QR anterior
+            
+         // Generar nuevo QR
+new QRCode(container, {
+    text: urlFiliacion,
+    width: 250,
+    height: 250
+});
+            
+            window.sysLog("QR generado correctamente", "success");
+        } else {
+            window.sysLog("ERROR: Contenedor QR no encontrado", "error");
+            alert("Error: No se encuentra el contenedor del QR");
+        }
+        
+        // Mostrar URL en el modal
+        var urlEl = window.el('qr-filiacion-url');
+        if (urlEl) {
+            urlEl.innerText = urlFiliacion;
+        }
+        
+    } catch(e) {
+        console.error(e);
+        window.sysLog("Error generando QR: " + e.message, "error");
+        alert("Error al generar QR: " + e.message);
     }
 };
 window.cargarObservatorio = async function() { const list = window.el('obs-list-container'); if(!list) return; list.innerHTML = '<div style="text-align:center; padding:20px;"><div class="spinner"></div></div>'; window.el('kpi-espera').innerText = "-"; window.el('kpi-alojados').innerText = "-"; window.el('kpi-libres').innerText = "-"; window.el('kpi-percent').innerText = "-%"; try { let totalEspera = 0, totalAlojados = 0, totalCapacidadGlobal = 0, htmlList = ""; const alberguesSnap = await getDocs(query(collection(db, "albergues"), where("activo", "==", true))); const promesas = alberguesSnap.docs.map(async (docAlb) => { const dataAlb = docAlb.data(); const cap = parseInt(dataAlb.capacidad || 0); const esperaSnap = await getDocs(query(collection(db, "pool_prefiliacion"), where("origenAlbergueId", "==", docAlb.id), where("estado", "==", "espera"))); const w = esperaSnap.size; const alojadosSnap = await getDocs(query(collection(db, "albergues", docAlb.id, "personas"), where("estado", "==", "ingresado"))); const h = alojadosSnap.size; return { id: docAlb.id, nombre: dataAlb.nombre, capacidad: cap, espera: w, alojados: h }; }); const resultados = await Promise.all(promesas); resultados.forEach(res => { totalEspera += res.espera; totalAlojados += res.alojados; totalCapacidadGlobal += res.capacidad; const libres = Math.max(0, res.capacidad - res.alojados); const porcentaje = res.capacidad > 0 ? Math.round((res.alojados / res.capacidad) * 100) : 0; let barClass = "low"; if(porcentaje > 50) barClass = "med"; if(porcentaje > 85) barClass = "high"; htmlList += `<div class="obs-row"><div class="obs-row-title">${res.nombre}</div><div class="obs-stats-group"><div class="obs-mini-stat"><span>Espera</span><strong class="obs-clickable" onclick="window.verListaObservatorio('${res.id}', 'espera')">${res.espera}</strong></div><div class="obs-mini-stat"><span>Alojados</span><strong class="obs-clickable" onclick="window.verListaObservatorio('${res.id}', 'alojados')">${res.alojados}</strong></div><div class="obs-mini-stat"><span>Ocupación</span><strong>${res.alojados} / ${res.capacidad}</strong></div><div class="obs-mini-stat"><span>Libres</span><strong>${libres}</strong></div></div><div class="prog-container"><div class="prog-track"><div class="prog-fill ${barClass}" style="width: ${porcentaje}%"></div></div></div></div>`; }); const globalLibres = Math.max(0, totalCapacidadGlobal - totalAlojados); const globalPercent = totalCapacidadGlobal > 0 ? Math.round((totalAlojados / totalCapacidadGlobal) * 100) : 0; window.el('kpi-espera').innerText = totalEspera; window.el('kpi-alojados').innerText = totalAlojados; window.el('kpi-libres').innerText = globalLibres; window.el('kpi-percent').innerText = `${globalPercent}%`; list.innerHTML = htmlList; } catch(e) { window.sysLog("Error obs: " + e.message, "error"); list.innerHTML = "<p>Error cargando datos.</p>"; } };

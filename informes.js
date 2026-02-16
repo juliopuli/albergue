@@ -1976,5 +1976,401 @@ async function generarInformePsicosocialPersona(personaId, albergueId) {
 // ============================================
 // FIN DEL SISTEMA DE INFORMES v3.0
 // ============================================
+// ============================================
+// INFORME DE GESTIÓN DE ALBERGUE
+// ============================================
 
+function abrirInformeGestionAlbergue() {
+    const zona = document.getElementById('zona-opciones-informe');
+    
+    let alberguesOptions = '<option value="">-- Selecciona un albergue --</option>';
+    alberguesGlobales.forEach(alb => {
+        alberguesOptions += `<option value="${alb.id}">${alb.nombre}</option>`;
+    });
+    
+    zona.innerHTML = `
+        <div class="informe-detallado">
+            <button onclick="mostrarDashboard()" class="btn-back">
+                <i class="fa-solid fa-arrow-left"></i> Volver al Dashboard
+            </button>
+            
+            <h2><i class="fa-solid fa-building"></i> Informe de Gestión y Ocupación</h2>
+            
+            <div class="informe-filters">
+                <div class="filter-group">
+                    <label>Albergue:</label>
+                    <select id="gest-alb-select">${alberguesOptions}</select>
+                </div>
+                <div class="filter-group">
+                    <label>Fecha Inicio:</label>
+                    <input type="date" id="gest-alb-fecha-inicio">
+                </div>
+                <div class="filter-group">
+                    <label>Fecha Fin:</label>
+                    <input type="date" id="gest-alb-fecha-fin">
+                </div>
+                <label style="display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" id="gest-alb-todas-fechas" onchange="toggleFechasGestAlb(this)">
+                    Todas las fechas
+                </label>
+            </div>
+            
+            <button onclick="generarInformeGestionAlbergue()" class="btn-generar">
+                <i class="fa-solid fa-file-pdf"></i> Generar Informe
+            </button>
+            
+            <div id="resultado-gest-alb"></div>
+        </div>
+    `;
+    
+    const hoy = new Date().toISOString().split('T')[0];
+    document.getElementById('gest-alb-fecha-fin').value = hoy;
+    document.getElementById('gest-alb-fecha-fin').max = hoy;
+}
+
+function toggleFechasGestAlb(checkbox) {
+    const inicio = document.getElementById('gest-alb-fecha-inicio');
+    const fin = document.getElementById('gest-alb-fecha-fin');
+    
+    inicio.disabled = checkbox.checked;
+    fin.disabled = checkbox.checked;
+    
+    if (!checkbox.checked) {
+        fin.value = new Date().toISOString().split('T')[0];
+    }
+}
+
+async function generarInformeGestionAlbergue() {
+    const albergueId = document.getElementById('gest-alb-select').value;
+    const todasFechas = document.getElementById('gest-alb-todas-fechas').checked;
+    const fechaInicio = document.getElementById('gest-alb-fecha-inicio').value;
+    const fechaFin = document.getElementById('gest-alb-fecha-fin').value;
+    const resultado = document.getElementById('resultado-gest-alb');
+    
+    if (!albergueId) {
+        alert('Selecciona un albergue');
+        return;
+    }
+    
+    if (!todasFechas && (!fechaInicio || !fechaFin)) {
+        alert('Selecciona un rango de fechas');
+        return;
+    }
+    
+    resultado.innerHTML = '<div class="loading-spinner"><i class="fa-solid fa-spinner fa-spin"></i> Generando informe...</div>';
+    
+    try {
+        const { collection, getDocs } = window.parent.firebaseModules;
+        const db = window.parent.db;
+        
+        const albergue = alberguesGlobales.find(a => a.id === albergueId);
+        const personasSnap = await getDocs(collection(db, "albergues", albergueId, "personas"));
+        
+        let personasActivas = [];
+        let personasInactivas = [];
+        let totalPersonas = 0;
+        
+        // Estadísticas demográficas
+        let edades = {
+            bebes: 0,      // 0-2
+            ninos: 0,      // 3-12
+            adolescentes: 0, // 13-17
+            adultos: 0,    // 18-64
+            mayores: 0     // 65+
+        };
+        
+        let sumaEstancia = 0;
+        let contadorEstancia = 0;
+        let entradas = 0;
+        let salidas = 0;
+        
+        const hoy = new Date();
+        const inicioRango = todasFechas ? null : new Date(fechaInicio);
+        const finRango = todasFechas ? null : new Date(fechaFin);
+        if (finRango) finRango.setHours(23, 59, 59);
+        
+        personasSnap.forEach(docSnap => {
+            const persona = docSnap.data();
+            totalPersonas++;
+            
+            const fechaIngreso = persona.fechaIngreso?.toDate();
+            const fechaSalida = persona.fechaSalida?.toDate();
+            const estado = persona.estado || 'ingresado';
+            
+            // Calcular edad
+            let edad = null;
+            if (persona.fechaNac) {
+                const fechaNac = persona.fechaNac.toDate();
+                edad = Math.floor((hoy - fechaNac) / (365.25 * 24 * 60 * 60 * 1000));
+                
+                if (edad <= 2) edades.bebes++;
+                else if (edad <= 12) edades.ninos++;
+                else if (edad <= 17) edades.adolescentes++;
+                else if (edad <= 64) edades.adultos++;
+                else edades.mayores++;
+            }
+            
+            // Calcular estancia
+            let diasEstancia = 0;
+            if (fechaIngreso) {
+                const fechaFin = fechaSalida || hoy;
+                diasEstancia = Math.floor((fechaFin - fechaIngreso) / (24 * 60 * 60 * 1000));
+                sumaEstancia += diasEstancia;
+                contadorEstancia++;
+            }
+            
+            // Contar entradas y salidas en el período
+            if (!todasFechas) {
+                if (fechaIngreso && fechaIngreso >= inicioRango && fechaIngreso <= finRango) {
+                    entradas++;
+                }
+                if (fechaSalida && fechaSalida >= inicioRango && fechaSalida <= finRango) {
+                    salidas++;
+                }
+            }
+            
+            const personaData = {
+                nombre: `${persona.nombre} ${persona.ap1 || ''} ${persona.ap2 || ''}`.trim(),
+                dni: persona.docNum || 'S/D',
+                edad: edad !== null ? edad : 'N/D',
+                fechaIngreso: fechaIngreso,
+                fechaSalida: fechaSalida,
+                diasEstancia: diasEstancia,
+                cama: persona.cama || 'Sin asignar',
+                familia: persona.familia || 'Individual',
+                estado: estado
+            };
+            
+            if (estado === 'ingresado') {
+                personasActivas.push(personaData);
+            } else {
+                personasInactivas.push(personaData);
+            }
+        });
+        
+        // Ordenar por fecha de ingreso (más reciente primero)
+        personasActivas.sort((a, b) => b.fechaIngreso - a.fechaIngreso);
+        personasInactivas.sort((a, b) => (b.fechaSalida || 0) - (a.fechaSalida || 0));
+        
+        const estanciaMedia = contadorEstancia > 0 ? (sumaEstancia / contadorEstancia).toFixed(1) : 0;
+        const tasaOcupacion = albergue.capacidad > 0 ? ((personasActivas.length / albergue.capacidad) * 100).toFixed(1) : 0;
+        
+        // Generar HTML
+        let html = `
+            <div class="informe-resultado">
+                <div class="informe-header">
+                    <h2><i class="fa-solid fa-building"></i> ${albergue.nombre}</h2>
+                    <p class="informe-periodo">
+                        ${todasFechas ? 'Todo el histórico' : 
+                        `${inicioRango.toLocaleDateString('es-ES')} - ${finRango.toLocaleDateString('es-ES')}`}
+                    </p>
+                </div>
+                
+                <div class="informe-kpis">
+                    <div class="informe-kpi">
+                        <div class="kpi-value">${totalPersonas}</div>
+                        <div class="kpi-label">Total Personas</div>
+                    </div>
+                    <div class="informe-kpi">
+                        <div class="kpi-value">${personasActivas.length}</div>
+                        <div class="kpi-label">Actualmente Alojadas</div>
+                    </div>
+                    <div class="informe-kpi">
+                        <div class="kpi-value">${personasInactivas.length}</div>
+                        <div class="kpi-label">Han salido</div>
+                    </div>
+                </div>
+                
+                <div class="informe-kpis">
+                    <div class="informe-kpi">
+                        <div class="kpi-value">${estanciaMedia} días</div>
+                        <div class="kpi-label">Estancia Media</div>
+                    </div>
+                    <div class="informe-kpi">
+                        <div class="kpi-value">${personasActivas.length}/${albergue.capacidad || '?'}</div>
+                        <div class="kpi-label">Ocupación Actual</div>
+                    </div>
+                    <div class="informe-kpi">
+                        <div class="kpi-value">${tasaOcupacion}%</div>
+                        <div class="kpi-label">Tasa de Ocupación</div>
+                    </div>
+                </div>
+        `;
+        
+        // Demografía por edad
+        const totalConEdad = edades.bebes + edades.ninos + edades.adolescentes + edades.adultos + edades.mayores;
+        
+        if (totalConEdad > 0) {
+            html += `
+                <div class="informe-section">
+                    <h3><i class="fa-solid fa-users"></i> Demografía por Edad</h3>
+                    <div class="chart-bars">
+            `;
+            
+            const categorias = [
+                { label: 'Bebés (0-2 años)', count: edades.bebes },
+                { label: 'Niños (3-12 años)', count: edades.ninos },
+                { label: 'Adolescentes (13-17)', count: edades.adolescentes },
+                { label: 'Adultos (18-64)', count: edades.adultos },
+                { label: 'Mayores (65+)', count: edades.mayores }
+            ];
+            
+            categorias.forEach(cat => {
+                const porcentaje = ((cat.count / totalConEdad) * 100).toFixed(1);
+                html += `
+                    <div class="chart-bar-item">
+                        <div class="chart-bar-label">${cat.label}</div>
+                        <div class="chart-bar-container">
+                            <div class="chart-bar-fill" style="width: ${porcentaje}%; background: #43e97b;"></div>
+                            <div class="chart-bar-value">${cat.count} (${porcentaje}%)</div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += `
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Movimientos en el período
+        if (!todasFechas) {
+            const balance = entradas - salidas;
+            const balanceClass = balance > 0 ? 'positivo' : balance < 0 ? 'negativo' : 'neutro';
+            
+            html += `
+                <div class="informe-section">
+                    <h3><i class="fa-solid fa-right-left"></i> Movimientos en el Período</h3>
+                    <div class="movimientos-grid">
+                        <div class="movimiento-item">
+                            <i class="fa-solid fa-arrow-right-to-bracket" style="color: #10b981;"></i>
+                            <div>
+                                <strong>${entradas}</strong>
+                                <span>Entradas</span>
+                            </div>
+                        </div>
+                        <div class="movimiento-item">
+                            <i class="fa-solid fa-arrow-right-from-bracket" style="color: #ef4444;"></i>
+                            <div>
+                                <strong>${salidas}</strong>
+                                <span>Salidas</span>
+                            </div>
+                        </div>
+                        <div class="movimiento-item">
+                            <i class="fa-solid fa-scale-balanced" style="color: #6366f1;"></i>
+                            <div>
+                                <strong class="${balanceClass}">${balance > 0 ? '+' : ''}${balance}</strong>
+                                <span>Balance Neto</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Listado de personas activas
+        html += `
+            <div class="informe-section">
+                <h3><i class="fa-solid fa-circle" style="color: #10b981;"></i> Actualmente Alojadas (${personasActivas.length})</h3>
+                <table class="informe-table">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>DNI</th>
+                            <th>Edad</th>
+                            <th>Fecha Entrada</th>
+                            <th>Estancia</th>
+                            <th>Cama</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+        
+        if (personasActivas.length === 0) {
+            html += `
+                <tr>
+                    <td colspan="6" style="text-align: center; color: #9ca3af;">No hay personas alojadas actualmente</td>
+                </tr>
+            `;
+        } else {
+            personasActivas.forEach(persona => {
+                html += `
+                    <tr>
+                        <td><strong>${persona.nombre}</strong></td>
+                        <td>${persona.dni}</td>
+                        <td>${persona.edad}</td>
+                        <td>${persona.fechaIngreso ? persona.fechaIngreso.toLocaleDateString('es-ES') : 'N/D'}</td>
+                        <td>${persona.diasEstancia} días</td>
+                        <td>${persona.cama}</td>
+                    </tr>
+                `;
+            });
+        }
+        
+        html += `
+                    </tbody>
+                </table>
+            </div>
+        `;
+        
+        // Listado de personas que han salido
+        html += `
+            <div class="informe-section">
+                <h3><i class="fa-solid fa-circle" style="color: #ef4444;"></i> Han Salido (${personasInactivas.length})</h3>
+                <table class="informe-table">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>DNI</th>
+                            <th>Edad</th>
+                            <th>Fecha Entrada</th>
+                            <th>Fecha Salida</th>
+                            <th>Estancia</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+        
+        if (personasInactivas.length === 0) {
+            html += `
+                <tr>
+                    <td colspan="6" style="text-align: center; color: #9ca3af;">No hay registros de personas que hayan salido</td>
+                </tr>
+            `;
+        } else {
+            personasInactivas.forEach(persona => {
+                html += `
+                    <tr>
+                        <td><strong>${persona.nombre}</strong></td>
+                        <td>${persona.dni}</td>
+                        <td>${persona.edad}</td>
+                        <td>${persona.fechaIngreso ? persona.fechaIngreso.toLocaleDateString('es-ES') : 'N/D'}</td>
+                        <td>${persona.fechaSalida ? persona.fechaSalida.toLocaleDateString('es-ES') : 'N/D'}</td>
+                        <td>${persona.diasEstancia} días</td>
+                    </tr>
+                `;
+            });
+        }
+        
+        html += `
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="informe-actions">
+                <button onclick="window.print()" class="btn-action">
+                    <i class="fa-solid fa-print"></i> Imprimir
+                </button>
+            </div>
+        </div>
+        `;
+        
+        resultado.innerHTML = html;
+        
+    } catch(e) {
+        console.error('Error:', e);
+        resultado.innerHTML = `<div class="error-message"><i class="fa-solid fa-circle-exclamation"></i> Error: ${e.message}</div>`;
+    }
+}
 console.log('✅ Sistema de Informes v3.0 cargado correctamente');

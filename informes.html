@@ -2,30 +2,15 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Informes - Albergue</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Informes - Sistema de Albergues</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="informes.css">
 </head>
 <body>
-    <div class="section-header">
-        <i class="fa-solid fa-chart-pie section-icon"></i>
-        <span class="section-title">Informes</span>
-    </div>
-    <div class="informes-grid">
-        <button class="btn-informe informe-albergues" onclick="abrirInforme('albergues')">
-            <i class="fa-solid fa-bed"></i> Albergues
-        </button>
-        <button class="btn-informe informe-entregas" onclick="abrirInforme('entregas')">
-            <i class="fa-solid fa-box"></i> Entregas
-        </button>
-        <button class="btn-informe informe-sanitario" onclick="abrirInforme('sanitario')">
-            <i class="fa-solid fa-briefcase-medical"></i> Sanitario
-        </button>
-        <button class="btn-informe informe-psicosocial" onclick="abrirInforme('psicosocial')">
-            <i class="fa-solid fa-heart"></i> Psicosocial
-        </button>
-    </div>
+    <!-- El dashboard se cargará dinámicamente aquí -->
     <div id="zona-opciones-informe"></div>
+    
     <script src="informes.js"></script>
 </body>
 </html>

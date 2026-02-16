@@ -1,21 +1,32 @@
-// Variables globales
-let alberguesGlobales = [];
+// ============================================
+// SISTEMA DE INFORMES v3.0
+// PARTE 1 de 4: Inicialización y Dashboard
+// ============================================
 
-// Esperar a que la ventana padre esté lista
+let alberguesGlobales = [];
+let datosCache = {
+    sanitario: null,
+    entregas: null,
+    psicosocial: null,
+    lastUpdate: null
+};
+
+// ============================================
+// INICIALIZACIÓN
+// ============================================
+
 async function inicializar() {
     try {
-        console.log('Inicializando sistema de informes...');
+        console.log('🚀 Inicializando sistema de informes v3.0...');
         
-        // Verificar acceso
         if (!window.parent || !window.parent.db || !window.parent.firebaseModules) {
-            console.error('No se puede acceder a Firebase desde la ventana padre');
+            console.error('❌ No se puede acceder a Firebase desde la ventana padre');
             return;
         }
         
-        console.log('✅ Firebase accesible desde ventana padre');
-        
-        // Cargar albergues
+        console.log('✅ Firebase accesible');
         await cargarDatosIniciales();
+        mostrarDashboard();
         
     } catch(e) {
         console.error('Error inicializando:', e);
@@ -24,14 +35,10 @@ async function inicializar() {
 
 async function cargarDatosIniciales() {
     try {
-        console.log('Cargando albergues...');
-        
-        // Usar las funciones exportadas desde el padre
         const { collection, getDocs } = window.parent.firebaseModules;
         const db = window.parent.db;
         
-        const alberguesRef = collection(db, "albergues");
-        const alberguesSnap = await getDocs(alberguesRef);
+        const alberguesSnap = await getDocs(collection(db, "albergues"));
         
         alberguesGlobales = [];
         alberguesSnap.forEach(docSnap => {
@@ -51,192 +58,532 @@ async function cargarDatosIniciales() {
     }
 }
 
-// Inicializar cuando el DOM esté listo
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', inicializar);
 } else {
     inicializar();
 }
 
-function abrirInforme(tipo) {
+// ============================================
+// DASHBOARD PRINCIPAL
+// ============================================
+
+function mostrarDashboard() {
     const zona = document.getElementById('zona-opciones-informe');
     
-    if (tipo === 'sanitario') {
-        zona.innerHTML = `
-            <div style="background:white; padding:30px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.1);">
-                <h2 style="color:#4f46e5; margin-bottom:25px;">
-                    <i class="fa-solid fa-briefcase-medical"></i> Informes Sanitarios
-                </h2>
-                
-                <div style="display:grid; gap:20px;">
-                    <button onclick="mostrarInformeAlbergue()" class="btn-informe-opcion">
-                        <i class="fa-solid fa-hospital"></i>
-                        <div>
-                            <strong>Informe por Albergue</strong>
-                            <small>Atenciones sanitarias filtradas por albergue y fechas</small>
-                        </div>
-                    </button>
-                    
-                    <button onclick="mostrarInformePersona()" class="btn-informe-opcion">
-                        <i class="fa-solid fa-user-doctor"></i>
-                        <div>
-                            <strong>Informe por Persona</strong>
-                            <small>Historial completo de atenciones de una persona</small>
-                        </div>
-                    </button>
-                </div>
-            </div>
-        `;
-    } else if (tipo === 'entregas') {
-        zona.innerHTML = `
-            <div style="background:white; padding:30px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.1);">
-                <h2 style="color:#4f46e5; margin-bottom:25px;">
-                    <i class="fa-solid fa-box"></i> Informes de Entregas
-                </h2>
-                
-                <div style="display:grid; gap:20px;">
-                    <button onclick="mostrarInformeEntregasAlbergue()" class="btn-informe-opcion">
-                        <i class="fa-solid fa-hospital"></i>
-                        <div>
-                            <strong>Informe por Albergue</strong>
-                            <small>Entregas realizadas filtradas por albergue y fechas</small>
-                        </div>
-                    </button>
-                    
-                    <button onclick="mostrarInformeEntregasPersona()" class="btn-informe-opcion">
-                        <i class="fa-solid fa-user"></i>
-                        <div>
-                            <strong>Informe por Persona</strong>
-                            <small>Historial completo de entregas de una persona</small>
-                        </div>
-                    </button>
-                </div>
-            </div>
-        `;
-    } else {
-        zona.innerHTML = '<b>Has seleccionado:</b> ' + tipo.charAt(0).toUpperCase() + tipo.slice(1);
-    }
-}
-async function mostrarInformeAlbergue() {
-    console.log('📊 Abriendo informe por albergue...');
-    
-    const zona = document.getElementById('zona-opciones-informe');
-    
-    if (alberguesGlobales.length === 0) {
-        zona.innerHTML = `
-            <div style="background:white; padding:30px; border-radius:12px;">
-                <button onclick="abrirInforme('sanitario')" style="background:none; border:none; color:#4f46e5; cursor:pointer; margin-bottom:20px;">
-                    <i class="fa-solid fa-arrow-left"></i> Volver
-                </button>
-                <p style="text-align:center; color:#e74c3c; padding:40px;">
-                    ⚠️ No hay albergues disponibles
-                </p>
-            </div>
-        `;
-        return;
-    }
-    
-    let optionsHTML = '<option value="">-- Selecciona un albergue --</option>';
+    let alberguesOptions = '<option value="">📊 Todos los albergues</option>';
     alberguesGlobales.forEach(alb => {
-        optionsHTML += `<option value="${alb.id}">${alb.nombre}</option>`;
+        alberguesOptions += `<option value="${alb.id}">${alb.nombre}</option>`;
     });
     
     zona.innerHTML = `
-        <div style="background:white; padding:30px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.1);">
-            <button onclick="abrirInforme('sanitario')" style="background:none; border:none; color:#4f46e5; cursor:pointer; margin-bottom:20px;">
-                <i class="fa-solid fa-arrow-left"></i> Volver
-            </button>
+        <div class="dashboard-container">
+            <div class="dashboard-header">
+                <h1><i class="fa-solid fa-chart-line"></i> Panel de Informes y Estadísticas</h1>
+            </div>
             
-            <h3 style="color:#4f46e5; margin-bottom:25px;">
-                <i class="fa-solid fa-hospital"></i> Informe de Atenciones por Albergue
-            </h3>
-            
-            <div style="display:grid; gap:20px; max-width:600px;">
-                <div>
-                    <label style="display:block; margin-bottom:8px; font-weight:600;">Albergue:</label>
-                    <select id="select-albergue-informe" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
-                        ${optionsHTML}
+            <div class="dashboard-filters">
+                <div class="filter-group">
+                    <label><i class="fa-solid fa-building"></i> Albergue:</label>
+                    <select id="filter-albergue" onchange="actualizarDashboard()">
+                        ${alberguesOptions}
                     </select>
                 </div>
-                
-                <div>
-                    <label style="display:block; margin-bottom:8px; font-weight:600;">Rango de Fechas:</label>
-                    <div style="display:flex; gap:10px; align-items:center;">
-                        <input type="date" id="fecha-inicio-albergue" style="flex:1; padding:10px; border:1px solid #ddd; border-radius:8px;">
-                        <span>hasta</span>
-                        <input type="date" id="fecha-fin-albergue" style="flex:1; padding:10px; border:1px solid #ddd; border-radius:8px;">
-                    </div>
-                    <label style="display:block; margin-top:10px;">
-                        <input type="checkbox" id="check-todas-fechas" onchange="toggleFechas(this)"> 
-                        Todas las fechas (desde que abrió el albergue)
-                    </label>
+                <div class="filter-group">
+                    <label><i class="fa-solid fa-calendar"></i> Período:</label>
+                    <select id="filter-periodo" onchange="actualizarDashboard()">
+                        <option value="7">Última semana</option>
+                        <option value="30" selected>Último mes</option>
+                        <option value="90">Últimos 3 meses</option>
+                        <option value="365">Último año</option>
+                        <option value="all">Todo el histórico</option>
+                    </select>
                 </div>
-                
-                <button onclick="generarInformeAlbergue()" class="btn-generar-informe">
-                    <i class="fa-solid fa-file-pdf"></i> Generar Informe
+                <button onclick="actualizarDashboard()" class="btn-refresh">
+                    <i class="fa-solid fa-rotate"></i> Actualizar
                 </button>
             </div>
             
-            <div id="resultado-informe-albergue" style="margin-top:30px;"></div>
+            <div id="dashboard-kpis" class="dashboard-kpis">
+                <div class="kpi-card kpi-loading">
+                    <i class="fa-solid fa-spinner fa-spin"></i>
+                    <p>Cargando datos...</p>
+                </div>
+            </div>
+            
+            <div id="dashboard-charts" class="dashboard-charts"></div>
+            
+            <div class="informes-menu">
+                <h2><i class="fa-solid fa-folder-open"></i> Informes Detallados</h2>
+                
+                <div class="informe-category">
+                    <div class="category-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <i class="fa-solid fa-briefcase-medical"></i>
+                        <span>SANITARIO</span>
+                    </div>
+                    <div class="category-options">
+                        <button onclick="abrirInformeSanitarioAlbergue()" class="btn-informe-option">
+                            <i class="fa-solid fa-hospital"></i>
+                            <div>
+                                <strong>Por Albergue</strong>
+                                <small>Estadísticas y listados de atenciones</small>
+                            </div>
+                        </button>
+                        <button onclick="abrirInformeSanitarioPersona()" class="btn-informe-option">
+                            <i class="fa-solid fa-user-doctor"></i>
+                            <div>
+                                <strong>Por Persona</strong>
+                                <small>Historial médico individual</small>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="informe-category">
+                    <div class="category-header" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                        <i class="fa-solid fa-box"></i>
+                        <span>ENTREGAS</span>
+                    </div>
+                    <div class="category-options">
+                        <button onclick="abrirInformeEntregasAlbergue()" class="btn-informe-option">
+                            <i class="fa-solid fa-warehouse"></i>
+                            <div>
+                                <strong>Por Albergue</strong>
+                                <small>Inventario y distribución</small>
+                            </div>
+                        </button>
+                        <button onclick="abrirInformeEntregasPersona()" class="btn-informe-option">
+                            <i class="fa-solid fa-user-tag"></i>
+                            <div>
+                                <strong>Por Persona</strong>
+                                <small>Historial de entregas recibidas</small>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="informe-category">
+                    <div class="category-header" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                        <i class="fa-solid fa-heart"></i>
+                        <span>PSICOSOCIAL</span>
+                    </div>
+                    <div class="category-options">
+                        <button onclick="abrirInformePsicosocialAlbergue()" class="btn-informe-option">
+                            <i class="fa-solid fa-users"></i>
+                            <div>
+                                <strong>Por Albergue</strong>
+                                <small>Intervenciones y seguimientos</small>
+                            </div>
+                        </button>
+                        <button onclick="abrirInformePsicosocialPersona()" class="btn-informe-option">
+                            <i class="fa-solid fa-user-check"></i>
+                            <div>
+                                <strong>Por Persona</strong>
+                                <small>Historial de atención psicosocial</small>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    setTimeout(() => actualizarDashboard(), 500);
+}
+
+// ============================================
+// ACTUALIZACIÓN DEL DASHBOARD
+// ============================================
+
+async function actualizarDashboard() {
+    const albergueId = document.getElementById('filter-albergue')?.value || '';
+    const periodo = parseInt(document.getElementById('filter-periodo')?.value || '30');
+    
+    mostrarLoadingKPIs();
+    
+    try {
+        const datos = await cargarDatosGenerales(albergueId, periodo);
+        mostrarKPIs(datos);
+        mostrarGraficos(datos);
+    } catch(e) {
+        console.error('Error actualizando dashboard:', e);
+        mostrarErrorKPIs();
+    }
+}
+
+function mostrarLoadingKPIs() {
+    const kpisContainer = document.getElementById('dashboard-kpis');
+    kpisContainer.innerHTML = `
+        <div class="kpi-card kpi-loading">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            <p>Cargando datos...</p>
+        </div>
+    `;
+}
+
+function mostrarErrorKPIs() {
+    const kpisContainer = document.getElementById('dashboard-kpis');
+    kpisContainer.innerHTML = `
+        <div class="kpi-card kpi-error">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            <p>Error al cargar datos</p>
+        </div>
+    `;
+}
+
+async function cargarDatosGenerales(albergueId, periodo) {
+    const { collection, getDocs } = window.parent.firebaseModules;
+    const db = window.parent.db;
+    
+    let alberguesACargar = albergueId ? [albergueId] : alberguesGlobales.map(a => a.id);
+    
+    let fechaLimite = null;
+    if (periodo !== 'all') {
+        fechaLimite = new Date();
+        fechaLimite.setDate(fechaLimite.getDate() - periodo);
+    }
+    
+    let personasAtendidas = new Set();
+    let totalSanitarias = 0;
+    let totalPsicosociales = 0;
+    let totalEntregas = 0;
+    let totalArticulos = 0;
+    
+    let tiposSanitarios = {};
+    let tiposPsicosociales = {};
+    let tiposEntregas = {};
+    let materialesEntregados = {};
+    
+    for (const albId of alberguesACargar) {
+        const personasSnap = await getDocs(collection(db, "albergues", albId, "personas"));
+        
+        for (const personaDoc of personasSnap.docs) {
+            const intervencionesSnap = await getDocs(
+                collection(db, "albergues", albId, "personas", personaDoc.id, "intervenciones")
+            );
+            
+            intervencionesSnap.forEach(intDoc => {
+                const interv = intDoc.data();
+                const fechaInterv = interv.fecha.toDate();
+                
+                if (fechaLimite && fechaInterv < fechaLimite) return;
+                
+                personasAtendidas.add(personaDoc.id);
+                
+                if (interv.tipo === 'Sanitaria') {
+                    totalSanitarias++;
+                    const subtipo = interv.subtipo || 'Sin especificar';
+                    tiposSanitarios[subtipo] = (tiposSanitarios[subtipo] || 0) + 1;
+                }
+                
+                if (interv.tipo === 'Psicosocial') {
+                    totalPsicosociales++;
+                    const subtipo = interv.subtipo || 'Sin especificar';
+                    tiposPsicosociales[subtipo] = (tiposPsicosociales[subtipo] || 0) + 1;
+                }
+                
+                if (interv.tipo === 'Entregas') {
+                    totalEntregas++;
+                    const subtipo = interv.subtipo || 'Sin especificar';
+                    tiposEntregas[subtipo] = (tiposEntregas[subtipo] || 0) + 1;
+                    
+                    if (interv.datosEstructurados) {
+                        const datos = interv.datosEstructurados;
+                        
+                        if (datos.contenido_kit) {
+                            const items = datos.contenido_kit.split(',').map(item => item.trim());
+                            items.forEach(item => {
+                                materialesEntregados[item] = (materialesEntregados[item] || 0) + 1;
+                                totalArticulos++;
+                            });
+                        }
+                        
+                        if (datos.tipo_ropa) {
+                            const items = datos.tipo_ropa.split(',').map(item => item.trim());
+                            items.forEach(item => {
+                                materialesEntregados[item] = (materialesEntregados[item] || 0) + 1;
+                                totalArticulos++;
+                            });
+                        }
+                        
+                        if (datos.tipo_manta) {
+                            const cantidad = parseInt(datos.cantidad_manta) || 1;
+                            materialesEntregados[datos.tipo_manta] = (materialesEntregados[datos.tipo_manta] || 0) + cantidad;
+                            totalArticulos += cantidad;
+                        }
+                    }
+                }
+            });
+        }
+    }
+    
+    return {
+        personasAtendidas: personasAtendidas.size,
+        totalSanitarias,
+        totalPsicosociales,
+        totalEntregas,
+        totalArticulos,
+        tiposSanitarios,
+        tiposPsicosociales,
+        tiposEntregas,
+        materialesEntregados
+    };
+}
+
+function mostrarKPIs(datos) {
+    const kpisContainer = document.getElementById('dashboard-kpis');
+    
+    kpisContainer.innerHTML = `
+        <div class="kpi-card kpi-primary">
+            <div class="kpi-icon">
+                <i class="fa-solid fa-users"></i>
+            </div>
+            <div class="kpi-data">
+                <div class="kpi-value">${datos.personasAtendidas}</div>
+                <div class="kpi-label">Personas Atendidas</div>
+            </div>
+        </div>
+        
+        <div class="kpi-card kpi-sanitario">
+            <div class="kpi-icon">
+                <i class="fa-solid fa-briefcase-medical"></i>
+            </div>
+            <div class="kpi-data">
+                <div class="kpi-value">${datos.totalSanitarias}</div>
+                <div class="kpi-label">Atenciones Sanitarias</div>
+            </div>
+        </div>
+        
+        <div class="kpi-card kpi-psicosocial">
+            <div class="kpi-icon">
+                <i class="fa-solid fa-heart"></i>
+            </div>
+            <div class="kpi-data">
+                <div class="kpi-value">${datos.totalPsicosociales}</div>
+                <div class="kpi-label">Atenciones Psicosociales</div>
+            </div>
+        </div>
+        
+        <div class="kpi-card kpi-entregas">
+            <div class="kpi-icon">
+                <i class="fa-solid fa-box"></i>
+            </div>
+            <div class="kpi-data">
+                <div class="kpi-value">${datos.totalEntregas}</div>
+                <div class="kpi-label">Entregas Realizadas</div>
+            </div>
+        </div>
+        
+        <div class="kpi-card kpi-articulos">
+            <div class="kpi-icon">
+                <i class="fa-solid fa-cubes"></i>
+            </div>
+            <div class="kpi-data">
+                <div class="kpi-value">${datos.totalArticulos}</div>
+                <div class="kpi-label">Artículos Distribuidos</div>
+            </div>
+        </div>
+    `;
+}
+
+function mostrarGraficos(datos) {
+    const chartsContainer = document.getElementById('dashboard-charts');
+    
+    const topSanitarias = Object.entries(datos.tiposSanitarios)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5);
+    
+    const topEntregas = Object.entries(datos.tiposEntregas)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5);
+    
+    const topMateriales = Object.entries(datos.materialesEntregados)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10);
+    
+    let htmlCharts = '<div class="charts-grid">';
+    
+    if (topSanitarias.length > 0) {
+        htmlCharts += `
+            <div class="chart-card">
+                <h3><i class="fa-solid fa-chart-bar"></i> Top 5 Atenciones Sanitarias</h3>
+                <div class="chart-bars">
+        `;
+        
+        const maxSan = topSanitarias[0][1];
+        topSanitarias.forEach(([tipo, count]) => {
+            const porcentaje = (count / maxSan * 100).toFixed(0);
+            htmlCharts += `
+                <div class="chart-bar-item">
+                    <div class="chart-bar-label">${tipo}</div>
+                    <div class="chart-bar-container">
+                        <div class="chart-bar-fill" style="width: ${porcentaje}%; background: #667eea;"></div>
+                        <div class="chart-bar-value">${count}</div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        htmlCharts += `</div></div>`;
+    }
+    
+    if (topEntregas.length > 0) {
+        htmlCharts += `
+            <div class="chart-card">
+                <h3><i class="fa-solid fa-chart-bar"></i> Top 5 Categorías de Entregas</h3>
+                <div class="chart-bars">
+        `;
+        
+        const maxEnt = topEntregas[0][1];
+        topEntregas.forEach(([tipo, count]) => {
+            const porcentaje = (count / maxEnt * 100).toFixed(0);
+            htmlCharts += `
+                <div class="chart-bar-item">
+                    <div class="chart-bar-label">${tipo}</div>
+                    <div class="chart-bar-container">
+                        <div class="chart-bar-fill" style="width: ${porcentaje}%; background: #f5576c;"></div>
+                        <div class="chart-bar-value">${count}</div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        htmlCharts += `</div></div>`;
+    }
+    
+    if (topMateriales.length > 0) {
+        htmlCharts += `
+            <div class="chart-card chart-wide">
+                <h3><i class="fa-solid fa-box-open"></i> Top 10 Materiales Distribuidos</h3>
+                <div class="chart-bars">
+        `;
+        
+        const maxMat = topMateriales[0][1];
+        topMateriales.forEach(([material, count]) => {
+            const porcentaje = (count / maxMat * 100).toFixed(0);
+            htmlCharts += `
+                <div class="chart-bar-item">
+                    <div class="chart-bar-label">${material}</div>
+                    <div class="chart-bar-container">
+                        <div class="chart-bar-fill" style="width: ${porcentaje}%; background: #f093fb;"></div>
+                        <div class="chart-bar-value">${count}</div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        htmlCharts += `</div></div>`;
+    }
+    
+    htmlCharts += '</div>';
+    chartsContainer.innerHTML = htmlCharts;
+}
+
+// ============================================
+// FIN DE LA PARTE 1 de 4
+// Continúa en la PARTE 2...
+// ============================================
+// ============================================
+// PARTE 2 de 4: INFORMES SANITARIOS
+// ============================================
+
+function abrirInformeSanitarioAlbergue() {
+    const zona = document.getElementById('zona-opciones-informe');
+    
+    let alberguesOptions = '<option value="">-- Selecciona un albergue --</option>';
+    alberguesGlobales.forEach(alb => {
+        alberguesOptions += `<option value="${alb.id}">${alb.nombre}</option>`;
+    });
+    
+    zona.innerHTML = `
+        <div class="informe-detallado">
+            <button onclick="mostrarDashboard()" class="btn-back">
+                <i class="fa-solid fa-arrow-left"></i> Volver al Dashboard
+            </button>
+            
+            <h2><i class="fa-solid fa-hospital"></i> Informe Sanitario por Albergue</h2>
+            
+            <div class="informe-filters">
+                <div class="filter-group">
+                    <label>Albergue:</label>
+                    <select id="san-alb-select">${alberguesOptions}</select>
+                </div>
+                <div class="filter-group">
+                    <label>Fecha Inicio:</label>
+                    <input type="date" id="san-alb-fecha-inicio">
+                </div>
+                <div class="filter-group">
+                    <label>Fecha Fin:</label>
+                    <input type="date" id="san-alb-fecha-fin">
+                </div>
+                <label style="display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" id="san-alb-todas-fechas" onchange="toggleFechasSanAlb(this)">
+                    Todas las fechas
+                </label>
+            </div>
+            
+            <button onclick="generarInformeSanitarioAlbergue()" class="btn-generar">
+                <i class="fa-solid fa-file-pdf"></i> Generar Informe
+            </button>
+            
+            <div id="resultado-san-alb"></div>
         </div>
     `;
     
     const hoy = new Date().toISOString().split('T')[0];
-    document.getElementById('fecha-fin-albergue').value = hoy;
-    document.getElementById('fecha-fin-albergue').max = hoy;
+    document.getElementById('san-alb-fecha-fin').value = hoy;
+    document.getElementById('san-alb-fecha-fin').max = hoy;
 }
 
-function toggleFechas(checkbox) {
-    const fechaInicio = document.getElementById('fecha-inicio-albergue');
-    const fechaFin = document.getElementById('fecha-fin-albergue');
+function toggleFechasSanAlb(checkbox) {
+    const inicio = document.getElementById('san-alb-fecha-inicio');
+    const fin = document.getElementById('san-alb-fecha-fin');
     
-    if (checkbox.checked) {
-        fechaInicio.disabled = true;
-        fechaFin.disabled = true;
-        fechaInicio.value = '';
-        fechaFin.value = '';
-    } else {
-        fechaInicio.disabled = false;
-        fechaFin.disabled = false;
-        fechaFin.value = new Date().toISOString().split('T')[0];
+    inicio.disabled = checkbox.checked;
+    fin.disabled = checkbox.checked;
+    
+    if (!checkbox.checked) {
+        fin.value = new Date().toISOString().split('T')[0];
     }
 }
 
-async function generarInformeAlbergue() {
-    const albergueId = document.getElementById('select-albergue-informe').value;
-    const todasFechas = document.getElementById('check-todas-fechas').checked;
-    const fechaInicio = document.getElementById('fecha-inicio-albergue').value;
-    const fechaFin = document.getElementById('fecha-fin-albergue').value;
-    const resultado = document.getElementById('resultado-informe-albergue');
+async function generarInformeSanitarioAlbergue() {
+    const albergueId = document.getElementById('san-alb-select').value;
+    const todasFechas = document.getElementById('san-alb-todas-fechas').checked;
+    const fechaInicio = document.getElementById('san-alb-fecha-inicio').value;
+    const fechaFin = document.getElementById('san-alb-fecha-fin').value;
+    const resultado = document.getElementById('resultado-san-alb');
     
     if (!albergueId) {
-        alert('Por favor selecciona un albergue');
+        alert('Selecciona un albergue');
         return;
     }
     
     if (!todasFechas && (!fechaInicio || !fechaFin)) {
-        alert('Por favor selecciona un rango de fechas o marca "Todas las fechas"');
+        alert('Selecciona un rango de fechas');
         return;
     }
     
-    resultado.innerHTML = '<div style="text-align:center; padding:40px;"><i class="fa-solid fa-spinner fa-spin" style="font-size:2rem; color:#4f46e5;"></i><p>Generando informe...</p></div>';
+    resultado.innerHTML = '<div class="loading-spinner"><i class="fa-solid fa-spinner fa-spin"></i> Generando informe...</div>';
     
     try {
         const { collection, getDocs } = window.parent.firebaseModules;
         const db = window.parent.db;
         
         const albergue = alberguesGlobales.find(a => a.id === albergueId);
+        const personasSnap = await getDocs(collection(db, "albergues", albergueId, "personas"));
         
-        const personasRef = collection(db, "albergues", albergueId, "personas");
-        const personasSnap = await getDocs(personasRef);
-        
-        let todasIntervenciones = [];
+        let intervenciones = [];
         let personasAtendidas = new Set();
         let tipologias = {};
+        let urgencias = 0;
+        let derivaciones = 0;
         
         for (const personaDoc of personasSnap.docs) {
-            const intervencionesRef = collection(db, "albergues", albergueId, "personas", personaDoc.id, "intervenciones");
-            const intervencionesSnap = await getDocs(intervencionesRef);
+            const personaData = personaDoc.data();
+            const intervencionesSnap = await getDocs(
+                collection(db, "albergues", albergueId, "personas", personaDoc.id, "intervenciones")
+            );
             
             intervencionesSnap.forEach(intDoc => {
                 const interv = intDoc.data();
@@ -258,142 +605,144 @@ async function generarInformeAlbergue() {
                 const subtipo = interv.subtipo || 'Sin especificar';
                 tipologias[subtipo] = (tipologias[subtipo] || 0) + 1;
                 
-             const personaData = personaDoc.data();
-todasIntervenciones.push({
-    ...interv,
-    personaNombre: personaData.nombre + ' ' + (personaData.ap1 || ''),
-    personaDoc: personaData.docNum || 'S/D',
-    telefono: personaData.telefono || 'Sin teléfono',
-    fecha: fechaInterv
-});
+                if (subtipo.includes('Urgente') || subtipo.includes('Primeros Auxilios')) {
+                    urgencias++;
+                }
+                
+                if (subtipo.includes('Derivación')) {
+                    derivaciones++;
+                }
+                
+                intervenciones.push({
+                    personaNombre: personaData.nombre + ' ' + (personaData.ap1 || ''),
+                    personaDni: personaData.docNum || 'S/D',
+                    personaTel: personaData.telefono || 'S/T',
+                    subtipo: subtipo,
+                    fecha: fechaInterv,
+                    count: 1
+                });
             });
         }
         
-        todasIntervenciones.sort((a, b) => b.fecha - a.fecha);
-        
-        let html = `
-            <div style="background:#f8f9fa; padding:30px; border-radius:12px; border:2px solid #4f46e5;">
-                <div style="text-align:center; margin-bottom:30px;">
-                    <h2 style="color:#4f46e5; margin:0;">
-                        <i class="fa-solid fa-hospital"></i> ${albergue.nombre}
-                    </h2>
-                    <p style="color:#666; margin:10px 0 0 0;">
-                        Informe de Atenciones Sanitarias
-                        ${todasFechas ? '' : `<br>Del ${new Date(fechaInicio).toLocaleDateString('es-ES')} al ${new Date(fechaFin).toLocaleDateString('es-ES')}`}
-                    </p>
-                </div>
-                
-                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:15px; margin-bottom:30px;">
-                    <div style="background:white; padding:20px; border-radius:8px; text-align:center;">
-                        <div style="font-size:2.5rem; color:#10b981; font-weight:bold;">${personasAtendidas.size}</div>
-                        <div style="color:#666; margin-top:5px;">Personas Atendidas</div>
-                    </div>
-                    <div style="background:white; padding:20px; border-radius:8px; text-align:center;">
-                        <div style="font-size:2.5rem; color:#4f46e5; font-weight:bold;">${todasIntervenciones.length}</div>
-                        <div style="color:#666; margin-top:5px;">Total Atenciones</div>
-                    </div>
-                </div>
-                
-                <div style="background:white; padding:20px; border-radius:8px; margin-bottom:20px;">
-                    <h3 style="color:#4f46e5; margin-top:0;">Atenciones por Tipología</h3>
-                    <div style="display:grid; gap:10px;">
-        `;
-        
-        if (Object.keys(tipologias).length > 0) {
-            Object.entries(tipologias).sort((a, b) => b[1] - a[1]).forEach(([tipo, count]) => {
-                const porcentaje = ((count / todasIntervenciones.length) * 100).toFixed(1);
-                html += `
-                    <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:#f8f9fa; border-radius:6px;">
-                        <span style="font-weight:600;">${tipo}</span>
-                        <div style="display:flex; align-items:center; gap:15px;">
-                            <div style="flex:1; min-width:100px; height:8px; background:#e5e7eb; border-radius:4px; overflow:hidden;">
-                                <div style="height:100%; background:#4f46e5; width:${porcentaje}%;"></div>
-                            </div>
-                            <span style="font-weight:bold; color:#4f46e5; min-width:80px; text-align:right;">${count} (${porcentaje}%)</span>
-                        </div>
-                    </div>
-                `;
-            });
-        } else {
-            html += '<p style="text-align:center; color:#999;">No hay datos</p>';
-        }
-        
-       // Agrupar intervenciones por persona
         let personasConAtenciones = {};
-        todasIntervenciones.forEach(interv => {
-            const key = interv.personaDoc + '_' + interv.personaNombre; // Clave única por persona
+        intervenciones.forEach(interv => {
+            const key = interv.personaDni;
             if (!personasConAtenciones[key]) {
                 personasConAtenciones[key] = {
                     nombre: interv.personaNombre,
-                    dni: interv.personaDoc,
-                    telefono: interv.telefono || 'Sin teléfono',
-                    atenciones: []
+                    dni: interv.personaDni,
+                    telefono: interv.personaTel,
+                    count: 0
                 };
             }
-            personasConAtenciones[key].atenciones.push(interv);
+            personasConAtenciones[key].count++;
         });
         
-        html += `
-                <div style="background:white; padding:20px; border-radius:8px;">
-                    <h3 style="color:#4f46e5; margin-top:0;">Detalle de Atenciones por Persona</h3>
-                    <div style="max-height:500px; overflow-y:auto;">
+        const personasArray = Object.values(personasConAtenciones).sort((a, b) => b.count - a.count);
+        const promedio = personasAtendidas.size > 0 ? (intervenciones.length / personasAtendidas.size).toFixed(2) : 0;
+        
+        let html = `
+            <div class="informe-resultado">
+                <div class="informe-header">
+                    <h2><i class="fa-solid fa-hospital"></i> ${albergue.nombre}</h2>
+                    <p class="informe-periodo">
+                        ${todasFechas ? 'Todo el histórico' : 
+                        `${new Date(fechaInicio).toLocaleDateString('es-ES')} - ${new Date(fechaFin).toLocaleDateString('es-ES')}`}
+                    </p>
+                </div>
+                
+                <div class="informe-kpis">
+                    <div class="informe-kpi">
+                        <div class="kpi-value">${personasAtendidas.size}</div>
+                        <div class="kpi-label">Personas Atendidas</div>
+                    </div>
+                    <div class="informe-kpi">
+                        <div class="kpi-value">${intervenciones.length}</div>
+                        <div class="kpi-label">Atenciones Totales</div>
+                    </div>
+                    <div class="informe-kpi">
+                        <div class="kpi-value">${promedio}</div>
+                        <div class="kpi-label">Promedio por Persona</div>
+                    </div>
+                </div>
+                
+                <div class="informe-section">
+                    <h3><i class="fa-solid fa-chart-pie"></i> Distribución por Tipo</h3>
+                    <div class="chart-bars">
         `;
         
-        if (Object.keys(personasConAtenciones).length === 0) {
-            html += '<p style="text-align:center; color:#999; padding:40px;">No hay atenciones sanitarias registradas en este período</p>';
-        } else {
-            // Convertir a array y ordenar por número de atenciones (descendente)
-            const personasArray = Object.values(personasConAtenciones);
-            personasArray.sort((a, b) => b.atenciones.length - a.atenciones.length);
-            
+        const tiposOrdenados = Object.entries(tipologias).sort((a, b) => b[1] - a[1]);
+        tiposOrdenados.forEach(([tipo, count]) => {
+            const porcentaje = ((count / intervenciones.length) * 100).toFixed(1);
+            const width = porcentaje;
             html += `
-                <table style="width:100%; border-collapse: collapse;">
-                    <thead>
-                        <tr style="background:#f8f9fa; border-bottom:2px solid #4f46e5;">
-                            <th style="padding:12px; text-align:left; font-weight:600; color:#4f46e5;">Persona</th>
-                            <th style="padding:12px; text-align:left; font-weight:600; color:#4f46e5;">DNI</th>
-                            <th style="padding:12px; text-align:left; font-weight:600; color:#4f46e5;">Teléfono</th>
-                            <th style="padding:12px; text-align:center; font-weight:600; color:#4f46e5;">Nº Atenciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+                <div class="chart-bar-item">
+                    <div class="chart-bar-label">${tipo}</div>
+                    <div class="chart-bar-container">
+                        <div class="chart-bar-fill" style="width: ${width}%; background: #667eea;"></div>
+                        <div class="chart-bar-value">${count} (${porcentaje}%)</div>
+                    </div>
+                </div>
             `;
-            
-            personasArray.forEach((persona, index) => {
-                const bgColor = index % 2 === 0 ? '#ffffff' : '#f8f9fa';
-                html += `
-                    <tr style="background:${bgColor}; border-bottom:1px solid #e5e7eb;">
-                        <td style="padding:12px;">
-                            <strong style="color:#1f2937;">${persona.nombre}</strong>
-                        </td>
-                        <td style="padding:12px; color:#666;">
-                            <i class="fa-solid fa-id-card" style="margin-right:5px;"></i>${persona.dni}
-                        </td>
-                        <td style="padding:12px; color:#666;">
-                            <i class="fa-solid fa-phone" style="margin-right:5px;"></i>${persona.telefono}
-                        </td>
-                        <td style="padding:12px; text-align:center;">
-                            <span style="background:#4f46e5; color:white; padding:6px 12px; border-radius:20px; font-weight:600; font-size:0.9rem;">
-                                ${persona.atenciones.length}
-                            </span>
-                        </td>
-                    </tr>
-                `;
-            });
-            
-            html += `
-                    </tbody>
-                </table>
-            `;
-        }
+        });
         
         html += `
                     </div>
                 </div>
                 
-                <div style="text-align:center; margin-top:30px;">
-                    <button onclick="imprimirInforme()" style="background:#4f46e5; color:white; border:none; padding:12px 30px; border-radius:8px; cursor:pointer; font-size:1rem;">
-                        <i class="fa-solid fa-print"></i> Imprimir Informe
+                <div class="informe-section">
+                    <h3><i class="fa-solid fa-ranking-star"></i> Top 10 Personas Más Atendidas</h3>
+                    <table class="informe-table">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>DNI</th>
+                                <th>Teléfono</th>
+                                <th>Atenciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+        `;
+        
+        personasArray.slice(0, 10).forEach((persona) => {
+            html += `
+                <tr>
+                    <td><strong>${persona.nombre}</strong></td>
+                    <td>${persona.dni}</td>
+                    <td>${persona.telefono}</td>
+                    <td><span class="badge-count">${persona.count}</span></td>
+                </tr>
+            `;
+        });
+        
+        html += `
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="informe-section">
+                    <h3><i class="fa-solid fa-chart-line"></i> Indicadores de Salud</h3>
+                    <div class="indicadores-grid">
+                        <div class="indicador-item">
+                            <i class="fa-solid fa-exclamation-triangle"></i>
+                            <div>
+                                <strong>${urgencias}</strong>
+                                <span>Urgencias Atendidas</span>
+                            </div>
+                        </div>
+                        <div class="indicador-item">
+                            <i class="fa-solid fa-hospital"></i>
+                            <div>
+                                <strong>${derivaciones}</strong>
+                                <span>Derivaciones Hospitalarias</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="informe-actions">
+                    <button onclick="window.print()" class="btn-action">
+                        <i class="fa-solid fa-print"></i> Imprimir
                     </button>
                 </div>
             </div>
@@ -402,48 +751,45 @@ todasIntervenciones.push({
         resultado.innerHTML = html;
         
     } catch(e) {
-        console.error('Error generando informe:', e);
-        resultado.innerHTML = `<div style="background:#fee; color:#c00; padding:20px; border-radius:8px;"><strong>Error:</strong> ${e.message}</div>`;
+        console.error('Error:', e);
+        resultado.innerHTML = `<div class="error-message"><i class="fa-solid fa-circle-exclamation"></i> Error: ${e.message}</div>`;
     }
 }
 
-async function mostrarInformePersona() {
+function abrirInformeSanitarioPersona() {
     const zona = document.getElementById('zona-opciones-informe');
     
     zona.innerHTML = `
-        <div style="background:white; padding:30px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.1);">
-            <button onclick="abrirInforme('sanitario')" style="background:none; border:none; color:#4f46e5; cursor:pointer; margin-bottom:20px;">
-                <i class="fa-solid fa-arrow-left"></i> Volver
+        <div class="informe-detallado">
+            <button onclick="mostrarDashboard()" class="btn-back">
+                <i class="fa-solid fa-arrow-left"></i> Volver al Dashboard
             </button>
             
-            <h3 style="color:#4f46e5; margin-bottom:25px;">
-                <i class="fa-solid fa-user-doctor"></i> Informe de Atenciones por Persona
-            </h3>
+            <h2><i class="fa-solid fa-user-doctor"></i> Informe Sanitario por Persona</h2>
             
-            <div style="max-width:600px;">
-                <label style="display:block; margin-bottom:8px; font-weight:600;">Buscar persona:</label>
-                <input type="text" id="buscar-persona-informe" placeholder="Escribe nombre o DNI..." 
-                    oninput="buscarPersonaParaInforme()" 
-                    style="width:100%; padding:12px; border:1px solid #ddd; border-radius:8px; font-size:1rem;">
-                
-                <div id="resultados-busqueda-persona" style="margin-top:10px; max-height:300px; overflow-y:auto;"></div>
+            <div class="search-container">
+                <label>Buscar persona:</label>
+                <input type="text" id="search-san-persona" placeholder="Nombre o DNI..." oninput="buscarPersonaSanitario()">
+                <div id="results-san-persona"></div>
             </div>
             
-            <div id="resultado-informe-persona" style="margin-top:30px;"></div>
+            <div id="resultado-san-persona"></div>
         </div>
     `;
 }
 
-async function buscarPersonaParaInforme() {
-    const busqueda = document.getElementById('buscar-persona-informe').value.toLowerCase().trim();
-    const resultados = document.getElementById('resultados-busqueda-persona');
+async function buscarPersonaSanitario() {
+    const busqueda = document.getElementById('search-san-persona').value.toLowerCase().trim();
+    const resultados = document.getElementById('results-san-persona');
     
     if (busqueda.length < 2) {
         resultados.innerHTML = '';
+        resultados.style.display = 'none';
         return;
     }
     
-    resultados.innerHTML = '<div style="text-align:center; padding:20px;"><i class="fa-solid fa-spinner fa-spin"></i> Buscando...</div>';
+    resultados.innerHTML = '<div class="loading-spinner"><i class="fa-solid fa-spinner fa-spin"></i></div>';
+    resultados.style.display = 'block';
     
     try {
         const { collection, getDocs } = window.parent.firebaseModules;
@@ -452,8 +798,7 @@ async function buscarPersonaParaInforme() {
         let personasEncontradas = [];
         
         for (const albergue of alberguesGlobales) {
-            const personasRef = collection(db, "albergues", albergue.id, "personas");
-            const personasSnap = await getDocs(personasRef);
+            const personasSnap = await getDocs(collection(db, "albergues", albergue.id, "personas"));
             
             personasSnap.forEach(docSnap => {
                 const persona = docSnap.data();
@@ -472,23 +817,22 @@ async function buscarPersonaParaInforme() {
         }
         
         if (personasEncontradas.length === 0) {
-            resultados.innerHTML = '<p style="text-align:center; color:#999; padding:20px;">No se encontraron personas</p>';
+            resultados.innerHTML = '<div class="search-no-results">No se encontraron personas</div>';
             return;
         }
         
-        let html = '<div style="border:1px solid #ddd; border-radius:8px; overflow:hidden;">';
+        let html = '<div class="search-results">';
         personasEncontradas.forEach(persona => {
             html += `
-                <div onclick="generarInformePersona('${persona.id}', '${persona.albergueId}')" 
-                    style="padding:15px; border-bottom:1px solid #eee; cursor:pointer; transition:background 0.2s;"
-                    onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
-                    <strong>${persona.nombre} ${persona.ap1 || ''} ${persona.ap2 || ''}</strong>
-                    <div style="color:#666; font-size:0.9rem; margin-top:5px;">
-                        <i class="fa-solid fa-id-card"></i> ${persona.docNum || 'Sin documento'}
+                <div class="search-result-item" onclick="generarInformeSanitarioPersona('${persona.id}', '${persona.albergueId}')">
+                    <div>
+                        <strong>${persona.nombre} ${persona.ap1 || ''} ${persona.ap2 || ''}</strong>
+                        <div class="search-result-meta">
+                            <span><i class="fa-solid fa-id-card"></i> ${persona.docNum || 'Sin documento'}</span>
+                            <span><i class="fa-solid fa-building"></i> ${persona.albergueNombre}</span>
+                        </div>
                     </div>
-                    <div style="color:#9333ea; font-size:0.85rem; margin-top:3px;">
-                        <i class="fa-solid fa-building"></i> ${persona.albergueNombre}
-                    </div>
+                    <i class="fa-solid fa-chevron-right"></i>
                 </div>
             `;
         });
@@ -497,81 +841,82 @@ async function buscarPersonaParaInforme() {
         resultados.innerHTML = html;
         
     } catch(e) {
-        console.error('Error buscando personas:', e);
-        resultados.innerHTML = `<div style="color:red; padding:20px;">Error: ${e.message}</div>`;
+        console.error('Error:', e);
+        resultados.innerHTML = `<div class="error-message">Error: ${e.message}</div>`;
     }
 }
 
-async function generarInformePersona(personaId, albergueId) {
-    const resultado = document.getElementById('resultado-informe-persona');
-    document.getElementById('resultados-busqueda-persona').innerHTML = '';
-    document.getElementById('buscar-persona-informe').value = '';
+async function generarInformeSanitarioPersona(personaId, albergueId) {
+    const resultado = document.getElementById('resultado-san-persona');
+    document.getElementById('results-san-persona').innerHTML = '';
+    document.getElementById('results-san-persona').style.display = 'none';
     
-    resultado.innerHTML = '<div style="text-align:center; padding:40px;"><i class="fa-solid fa-spinner fa-spin" style="font-size:2rem; color:#4f46e5;"></i><p>Generando informe...</p></div>';
+    resultado.innerHTML = '<div class="loading-spinner"><i class="fa-solid fa-spinner fa-spin"></i> Cargando historial...</div>';
     
     try {
         const { collection, getDocs, doc, getDoc } = window.parent.firebaseModules;
         const db = window.parent.db;
         
         const albergue = alberguesGlobales.find(a => a.id === albergueId);
-        const personaDocRef = doc(db, "albergues", albergueId, "personas", personaId);
-        const personaDocSnap = await getDoc(personaDocRef);
+        const personaSnap = await getDoc(doc(db, "albergues", albergueId, "personas", personaId));
+        const persona = personaSnap.data();
         
-        const persona = personaDocSnap.data();
+        const intervencionesSnap = await getDocs(
+            collection(db, "albergues", albergueId, "personas", personaId, "intervenciones")
+        );
         
-        const intervencionesRef = collection(db, "albergues", albergueId, "personas", personaId, "intervenciones");
-        const intervencionesSnap = await getDocs(intervencionesRef);
-        
-        let intervencionesSanitarias = [];
+        let intervenciones = [];
+        let tipologias = {};
         
         intervencionesSnap.forEach(docSnap => {
             const interv = docSnap.data();
             if (interv.tipo === 'Sanitaria') {
-                intervencionesSanitarias.push({
+                intervenciones.push({
                     ...interv,
                     fecha: interv.fecha.toDate()
                 });
+                
+                const subtipo = interv.subtipo || 'Sin especificar';
+                tipologias[subtipo] = (tipologias[subtipo] || 0) + 1;
             }
         });
         
-        intervencionesSanitarias.sort((a, b) => b.fecha - a.fecha);
-        
-        let tipologias = {};
-        intervencionesSanitarias.forEach(interv => {
-            const subtipo = interv.subtipo || 'Sin especificar';
-            tipologias[subtipo] = (tipologias[subtipo] || 0) + 1;
-        });
+        intervenciones.sort((a, b) => b.fecha - a.fecha);
         
         let html = `
-            <div style="background:#f8f9fa; padding:30px; border-radius:12px; border:2px solid #4f46e5;">
-                <div style="text-align:center; margin-bottom:30px;">
-                    <h2 style="color:#4f46e5; margin:0;">
-                        <i class="fa-solid fa-user-doctor"></i> ${persona.nombre} ${persona.ap1 || ''} ${persona.ap2 || ''}
-                    </h2>
-                    <p style="color:#666; margin:10px 0 0 0;">
-                        <i class="fa-solid fa-id-card"></i> ${persona.docNum || 'Sin documento'} | 
-                        <i class="fa-solid fa-building"></i> ${albergue.nombre}
+            <div class="informe-resultado">
+                <div class="informe-header">
+                    <h2><i class="fa-solid fa-user-doctor"></i> ${persona.nombre} ${persona.ap1 || ''} ${persona.ap2 || ''}</h2>
+                    <p class="informe-meta">
+                        <span><i class="fa-solid fa-id-card"></i> ${persona.docNum || 'Sin documento'}</span>
+                        <span><i class="fa-solid fa-building"></i> ${albergue.nombre}</span>
                     </p>
                 </div>
                 
-                <div style="background:white; padding:20px; border-radius:8px; text-align:center; margin-bottom:20px;">
-                    <div style="font-size:2.5rem; color:#4f46e5; font-weight:bold;">${intervencionesSanitarias.length}</div>
-                    <div style="color:#666; margin-top:5px;">Atenciones Sanitarias Registradas</div>
+                <div class="informe-kpis" style="justify-content: center;">
+                    <div class="informe-kpi">
+                        <div class="kpi-value">${intervenciones.length}</div>
+                        <div class="kpi-label">Atenciones Registradas</div>
+                    </div>
                 </div>
         `;
         
         if (Object.keys(tipologias).length > 0) {
             html += `
-                <div style="background:white; padding:20px; border-radius:8px; margin-bottom:20px;">
-                    <h3 style="color:#4f46e5; margin-top:0;">Atenciones por Tipo</h3>
-                    <div style="display:grid; gap:10px;">
+                <div class="informe-section">
+                    <h3><i class="fa-solid fa-chart-pie"></i> Atenciones por Tipo</h3>
+                    <div class="chart-bars">
             `;
             
-            Object.entries(tipologias).sort((a, b) => b[1] - a[1]).forEach(([tipo, count]) => {
+            const tiposOrdenados = Object.entries(tipologias).sort((a, b) => b[1] - a[1]);
+            tiposOrdenados.forEach(([tipo, count]) => {
                 html += `
-                    <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:#f8f9fa; border-radius:6px;">
-                        <span style="font-weight:600;">${tipo}</span>
-                        <span style="font-weight:bold; color:#4f46e5;">${count}</span>
+                    <div class="chart-bar-item">
+                        <div class="chart-bar-label">${tipo}</div>
+                        <div class="chart-bar-container">
+                            <div class="chart-bar-fill" style="width: 100%; background: #667eea;"></div>
+                            <div class="chart-bar-value">${count}</div>
+                        </div>
                     </div>
                 `;
             });
@@ -583,29 +928,25 @@ async function generarInformePersona(personaId, albergueId) {
         }
         
         html += `
-                <div style="background:white; padding:20px; border-radius:8px;">
-                    <h3 style="color:#4f46e5; margin-top:0;">Historial Completo de Atenciones</h3>
-                    <div style="max-height:500px; overflow-y:auto;">
+                <div class="informe-section">
+                    <h3><i class="fa-solid fa-clock-rotate-left"></i> Historial Completo</h3>
+                    <div class="historial-timeline">
         `;
         
-        if (intervencionesSanitarias.length === 0) {
-            html += '<p style="text-align:center; color:#999; padding:40px;">Esta persona no tiene atenciones sanitarias registradas</p>';
+        if (intervenciones.length === 0) {
+            html += '<p class="no-data">No hay atenciones sanitarias registradas</p>';
         } else {
-            intervencionesSanitarias.forEach(interv => {
+            intervenciones.forEach(interv => {
                 html += `
-                    <div style="border-left:4px solid #4f46e5; padding:15px; margin-bottom:15px; background:#f8f9fa; border-radius:0 8px 8px 0;">
-                        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                            <strong style="color:#4f46e5;">${interv.subtipo}</strong>
-                            <span style="color:#666; font-size:0.9rem;">${interv.fecha.toLocaleDateString('es-ES')} ${interv.fecha.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'})}</span>
+                    <div class="historial-item">
+                        <div class="historial-header">
+                            <strong>${interv.subtipo}</strong>
+                            <span>${interv.fecha.toLocaleDateString('es-ES')} ${interv.fecha.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'})}</span>
                         </div>
-                        <div style="background:white; padding:10px; border-radius:6px; margin-bottom:8px;">
-                            <strong style="color:#0284c7;">Motivo:</strong> ${interv.motivo}
-                        </div>
-                        <div style="background:white; padding:10px; border-radius:6px;">
-                            <strong style="color:#7c3aed;">Resolución:</strong> ${interv.detalle}
-                        </div>
-                        <div style="margin-top:8px; color:#999; font-size:0.85rem;">
-                            <i class="fa-solid fa-user-tag"></i> Atendido por: ${interv.usuario}
+                        <div class="historial-content">
+                            <p><strong>Motivo:</strong> ${interv.motivo}</p>
+                            <p><strong>Resolución:</strong> ${interv.detalle}</p>
+                            <p class="historial-meta"><i class="fa-solid fa-user-tag"></i> ${interv.usuario}</p>
                         </div>
                     </div>
                 `;
@@ -616,9 +957,9 @@ async function generarInformePersona(personaId, albergueId) {
                     </div>
                 </div>
                 
-                <div style="text-align:center; margin-top:30px;">
-                    <button onclick="imprimirInforme()" style="background:#4f46e5; color:white; border:none; padding:12px 30px; border-radius:8px; cursor:pointer; font-size:1rem;">
-                        <i class="fa-solid fa-print"></i> Imprimir Informe
+                <div class="informe-actions">
+                    <button onclick="window.print()" class="btn-action">
+                        <i class="fa-solid fa-print"></i> Imprimir
                     </button>
                 </div>
             </div>
@@ -627,372 +968,292 @@ async function generarInformePersona(personaId, albergueId) {
         resultado.innerHTML = html;
         
     } catch(e) {
-        console.error('Error generando informe persona:', e);
-        resultado.innerHTML = `<div style="background:#fee; color:#c00; padding:20px; border-radius:8px;"><strong>Error:</strong> ${e.message}</div>`;
+        console.error('Error:', e);
+        resultado.innerHTML = `<div class="error-message">Error: ${e.message}</div>`;
     }
 }
+
 // ============================================
-// INFORMES DE ENTREGAS
+// FIN DE LA PARTE 2 de 4
+// Continúa en la PARTE 3...
+// ============================================
+// ============================================
+// PARTE 3 de 4: INFORMES DE ENTREGAS
 // ============================================
 
-async function mostrarInformeEntregasAlbergue() {
-    console.log('📦 Abriendo informe de entregas por albergue...');
-    
+function abrirInformeEntregasAlbergue() {
     const zona = document.getElementById('zona-opciones-informe');
     
-    if (alberguesGlobales.length === 0) {
-        zona.innerHTML = `
-            <div style="background:white; padding:30px; border-radius:12px;">
-                <button onclick="abrirInforme('entregas')" style="background:none; border:none; color:#4f46e5; cursor:pointer; margin-bottom:20px;">
-                    <i class="fa-solid fa-arrow-left"></i> Volver
-                </button>
-                <p style="text-align:center; color:#e74c3c; padding:40px;">
-                    ⚠️ No hay albergues disponibles
-                </p>
-            </div>
-        `;
-        return;
-    }
-    
-    let optionsHTML = '<option value="">-- Selecciona un albergue --</option>';
+    let alberguesOptions = '<option value="">-- Selecciona un albergue --</option>';
     alberguesGlobales.forEach(alb => {
-        optionsHTML += `<option value="${alb.id}">${alb.nombre}</option>`;
+        alberguesOptions += `<option value="${alb.id}">${alb.nombre}</option>`;
     });
     
     zona.innerHTML = `
-        <div style="background:white; padding:30px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.1);">
-            <button onclick="abrirInforme('entregas')" style="background:none; border:none; color:#4f46e5; cursor:pointer; margin-bottom:20px;">
-                <i class="fa-solid fa-arrow-left"></i> Volver
+        <div class="informe-detallado">
+            <button onclick="mostrarDashboard()" class="btn-back">
+                <i class="fa-solid fa-arrow-left"></i> Volver al Dashboard
             </button>
             
-            <h3 style="color:#4f46e5; margin-bottom:25px;">
-                <i class="fa-solid fa-box"></i> Informe de Entregas por Albergue
-            </h3>
+            <h2><i class="fa-solid fa-box"></i> Informe de Entregas por Albergue</h2>
             
-            <div style="display:grid; gap:20px; max-width:600px;">
-                <div>
-                    <label style="display:block; margin-bottom:8px; font-weight:600;">Albergue:</label>
-                    <select id="select-albergue-informe-entregas" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
-                        ${optionsHTML}
-                    </select>
+            <div class="informe-filters">
+                <div class="filter-group">
+                    <label>Albergue:</label>
+                    <select id="ent-alb-select">${alberguesOptions}</select>
                 </div>
-                
-                <div>
-                    <label style="display:block; margin-bottom:8px; font-weight:600;">Rango de Fechas:</label>
-                    <div style="display:flex; gap:10px; align-items:center;">
-                        <input type="date" id="fecha-inicio-albergue-entregas" style="flex:1; padding:10px; border:1px solid #ddd; border-radius:8px;">
-                        <span>hasta</span>
-                        <input type="date" id="fecha-fin-albergue-entregas" style="flex:1; padding:10px; border:1px solid #ddd; border-radius:8px;">
-                    </div>
-                    <label style="display:block; margin-top:10px;">
-                        <input type="checkbox" id="check-todas-fechas-entregas" onchange="toggleFechasEntregas(this)"> 
-                        Todas las fechas (desde que abrió el albergue)
-                    </label>
+                <div class="filter-group">
+                    <label>Fecha Inicio:</label>
+                    <input type="date" id="ent-alb-fecha-inicio">
                 </div>
-                
-                <button onclick="generarInformeEntregasAlbergue()" class="btn-generar-informe">
-                    <i class="fa-solid fa-file-pdf"></i> Generar Informe
-                </button>
+                <div class="filter-group">
+                    <label>Fecha Fin:</label>
+                    <input type="date" id="ent-alb-fecha-fin">
+                </div>
+                <label style="display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" id="ent-alb-todas-fechas" onchange="toggleFechasEntAlb(this)">
+                    Todas las fechas
+                </label>
             </div>
             
-            <div id="resultado-informe-entregas-albergue" style="margin-top:30px;"></div>
+            <button onclick="generarInformeEntregasAlbergue()" class="btn-generar">
+                <i class="fa-solid fa-file-pdf"></i> Generar Informe
+            </button>
+            
+            <div id="resultado-ent-alb"></div>
         </div>
     `;
     
     const hoy = new Date().toISOString().split('T')[0];
-    document.getElementById('fecha-fin-albergue-entregas').value = hoy;
-    document.getElementById('fecha-fin-albergue-entregas').max = hoy;
+    document.getElementById('ent-alb-fecha-fin').value = hoy;
+    document.getElementById('ent-alb-fecha-fin').max = hoy;
 }
 
-function toggleFechasEntregas(checkbox) {
-    const fechaInicio = document.getElementById('fecha-inicio-albergue-entregas');
-    const fechaFin = document.getElementById('fecha-fin-albergue-entregas');
+function toggleFechasEntAlb(checkbox) {
+    const inicio = document.getElementById('ent-alb-fecha-inicio');
+    const fin = document.getElementById('ent-alb-fecha-fin');
     
-    if (checkbox.checked) {
-        fechaInicio.disabled = true;
-        fechaFin.disabled = true;
-        fechaInicio.value = '';
-        fechaFin.value = '';
-    } else {
-        fechaInicio.disabled = false;
-        fechaFin.disabled = false;
-        fechaFin.value = new Date().toISOString().split('T')[0];
+    inicio.disabled = checkbox.checked;
+    fin.disabled = checkbox.checked;
+    
+    if (!checkbox.checked) {
+        fin.value = new Date().toISOString().split('T')[0];
     }
 }
 
 async function generarInformeEntregasAlbergue() {
-    const albergueId = document.getElementById('select-albergue-informe-entregas').value;
-    const todasFechas = document.getElementById('check-todas-fechas-entregas').checked;
-    const fechaInicio = document.getElementById('fecha-inicio-albergue-entregas').value;
-    const fechaFin = document.getElementById('fecha-fin-albergue-entregas').value;
-    const resultado = document.getElementById('resultado-informe-entregas-albergue');
+    const albergueId = document.getElementById('ent-alb-select').value;
+    const todasFechas = document.getElementById('ent-alb-todas-fechas').checked;
+    const fechaInicio = document.getElementById('ent-alb-fecha-inicio').value;
+    const fechaFin = document.getElementById('ent-alb-fecha-fin').value;
+    const resultado = document.getElementById('resultado-ent-alb');
     
     if (!albergueId) {
-        alert('Por favor selecciona un albergue');
+        alert('Selecciona un albergue');
         return;
     }
     
     if (!todasFechas && (!fechaInicio || !fechaFin)) {
-        alert('Por favor selecciona un rango de fechas o marca "Todas las fechas"');
+        alert('Selecciona un rango de fechas');
         return;
     }
     
-    resultado.innerHTML = '<div style="text-align:center; padding:40px;"><i class="fa-solid fa-spinner fa-spin" style="font-size:2rem; color:#4f46e5;"></i><p>Generando informe...</p></div>';
+    resultado.innerHTML = '<div class="loading-spinner"><i class="fa-solid fa-spinner fa-spin"></i> Generando informe...</div>';
     
     try {
         const { collection, getDocs } = window.parent.firebaseModules;
         const db = window.parent.db;
         
         const albergue = alberguesGlobales.find(a => a.id === albergueId);
+        const personasSnap = await getDocs(collection(db, "albergues", albergueId, "personas"));
         
-        const personasRef = collection(db, "albergues", albergueId, "personas");
-        const personasSnap = await getDocs(personasRef);
+        let entregas = [];
+        let personasBeneficiadas = new Set();
+        let categorias = {};
+        let materialesEntregados = {};
+        let totalArticulos = 0;
         
-        let todasEntregas = [];
-let personasAtendidas = new Set();
-let tiposEntrega = {};
-let materialesEntregados = {}; // ⭐ NUEVO: Contador de materiales específicos
-
-for (const personaDoc of personasSnap.docs) {
-    const intervencionesRef = collection(db, "albergues", albergueId, "personas", personaDoc.id, "intervenciones");
-    const intervencionesSnap = await getDocs(intervencionesRef);
-    
-    intervencionesSnap.forEach(intDoc => {
-        const interv = intDoc.data();
-        
-        if (interv.tipo !== 'Entregas') return;
-        
-        const fechaInterv = interv.fecha.toDate();
-        
-        if (!todasFechas) {
-            const inicio = new Date(fechaInicio);
-            const fin = new Date(fechaFin);
-            fin.setHours(23, 59, 59);
+        for (const personaDoc of personasSnap.docs) {
+            const personaData = personaDoc.data();
+            const intervencionesSnap = await getDocs(
+                collection(db, "albergues", albergueId, "personas", personaDoc.id, "intervenciones")
+            );
             
-            if (fechaInterv < inicio || fechaInterv > fin) return;
+            intervencionesSnap.forEach(intDoc => {
+                const interv = intDoc.data();
+                
+                if (interv.tipo !== 'Entregas') return;
+                
+                const fechaInterv = interv.fecha.toDate();
+                
+                if (!todasFechas) {
+                    const inicio = new Date(fechaInicio);
+                    const fin = new Date(fechaFin);
+                    fin.setHours(23, 59, 59);
+                    
+                    if (fechaInterv < inicio || fechaInterv > fin) return;
+                }
+                
+                personasBeneficiadas.add(personaDoc.id);
+                
+                const subtipo = interv.subtipo || 'Sin especificar';
+                categorias[subtipo] = (categorias[subtipo] || 0) + 1;
+                
+                if (interv.datosEstructurados) {
+                    const datos = interv.datosEstructurados;
+                    
+                    if (datos.contenido_kit) {
+                        const items = datos.contenido_kit.split(',').map(item => item.trim());
+                        items.forEach(item => {
+                            materialesEntregados[item] = (materialesEntregados[item] || 0) + 1;
+                            totalArticulos++;
+                        });
+                    }
+                    
+                    if (datos.tipo_ropa) {
+                        const items = datos.tipo_ropa.split(',').map(item => item.trim());
+                        items.forEach(item => {
+                            materialesEntregados[item] = (materialesEntregados[item] || 0) + 1;
+                            totalArticulos++;
+                        });
+                    }
+                    
+                    if (datos.tipo_manta) {
+                        const cantidad = parseInt(datos.cantidad_manta) || 1;
+                        materialesEntregados[datos.tipo_manta] = (materialesEntregados[datos.tipo_manta] || 0) + cantidad;
+                        totalArticulos += cantidad;
+                    }
+                }
+                
+                entregas.push({
+                    personaNombre: personaData.nombre + ' ' + (personaData.ap1 || ''),
+                    personaDni: personaData.docNum || 'S/D',
+                    personaTel: personaData.telefono || 'S/T',
+                    subtipo: subtipo,
+                    fecha: fechaInterv
+                });
+            });
         }
         
-        personasAtendidas.add(personaDoc.id);
-        
-        const subtipo = interv.subtipo || 'Sin especificar';
-        tiposEntrega[subtipo] = (tiposEntrega[subtipo] || 0) + 1;
-        
-        // ⭐ NUEVO: Extraer y contar materiales específicos del campo datosEstructurados
-        if (interv.datosEstructurados) {
-            const datos = interv.datosEstructurados;
-            
-            // Analizar según el tipo de entrega
-            if (subtipo === 'Entrega de Kit de Higiene') {
-                if (datos.contenido_kit) {
-                    // contenido_kit es una cadena separada por comas
-                    const items = datos.contenido_kit.split(',').map(item => item.trim());
-                    items.forEach(item => {
-                        materialesEntregados[item] = (materialesEntregados[item] || 0) + 1;
-                    });
-                }
-                if (datos.cantidad_kit) {
-                    const cantidad = parseInt(datos.cantidad_kit) || 1;
-                    materialesEntregados['Kit de Higiene (unidades)'] = (materialesEntregados['Kit de Higiene (unidades)'] || 0) + cantidad;
-                }
-            } else if (subtipo === 'Entrega de Ropa / Calzado') {
-                if (datos.tipo_ropa) {
-                    const items = datos.tipo_ropa.split(',').map(item => item.trim());
-                    items.forEach(item => {
-                        materialesEntregados[item] = (materialesEntregados[item] || 0) + 1;
-                    });
-                }
-            } else if (subtipo === 'Entrega de Manta / Abrigo') {
-                if (datos.tipo_manta) {
-                    const cantidad = parseInt(datos.cantidad_manta) || 1;
-                    materialesEntregados[datos.tipo_manta] = (materialesEntregados[datos.tipo_manta] || 0) + cantidad;
-                }
-            } else if (subtipo === 'Entrega de Alimentos (Biberones, específicos...)') {
-                if (datos.tipo_alimento) {
-                    const items = datos.tipo_alimento.split(',').map(item => item.trim());
-                    items.forEach(item => {
-                        materialesEntregados[item] = (materialesEntregados[item] || 0) + 1;
-                    });
-                }
-            } else if (subtipo === 'Entrega de Juguetes / Material Infantil') {
-                if (datos.tipo_juguete) {
-                    const cantidad = parseInt(datos.cantidad_juguetes) || 1;
-                    materialesEntregados[datos.tipo_juguete] = (materialesEntregados[datos.tipo_juguete] || 0) + cantidad;
-                }
-            } else if (subtipo === 'Otros') {
-                if (datos.descripcion_otros_ent) {
-                    const cantidad = parseInt(datos.cantidad_otros_ent) || 1;
-                    materialesEntregados[datos.descripcion_otros_ent] = (materialesEntregados[datos.descripcion_otros_ent] || 0) + cantidad;
-                }
-            }
-        }
-        
-        const personaData = personaDoc.data();
-        todasEntregas.push({
-            ...interv,
-            personaNombre: personaData.nombre + ' ' + (personaData.ap1 || ''),
-            personaDoc: personaData.docNum || 'S/D',
-            telefono: personaData.telefono || 'Sin teléfono',
-            fecha: fechaInterv
-        });
-    });
-}
-
-todasEntregas.sort((a, b) => b.fecha - a.fecha);
-        
-        // Agrupar entregas por persona
         let personasConEntregas = {};
-        todasEntregas.forEach(entrega => {
-            const key = entrega.personaDoc + '_' + entrega.personaNombre;
+        entregas.forEach(entrega => {
+            const key = entrega.personaDni;
             if (!personasConEntregas[key]) {
                 personasConEntregas[key] = {
                     nombre: entrega.personaNombre,
-                    dni: entrega.personaDoc,
-                    telefono: entrega.telefono,
-                    entregas: []
+                    dni: entrega.personaDni,
+                    telefono: entrega.personaTel,
+                    count: 0
                 };
             }
-            personasConEntregas[key].entregas.push(entrega);
+            personasConEntregas[key].count++;
         });
         
+        const personasArray = Object.values(personasConEntregas).sort((a, b) => b.count - a.count);
+        
         let html = `
-            <div style="background:#f8f9fa; padding:30px; border-radius:12px; border:2px solid #4f46e5;">
-                <div style="text-align:center; margin-bottom:30px;">
-                    <h2 style="color:#4f46e5; margin:0;">
-                        <i class="fa-solid fa-box"></i> ${albergue.nombre}
-                    </h2>
-                    <p style="color:#666; margin:10px 0 0 0;">
-                        Informe de Entregas
-                        ${todasFechas ? '' : `<br>Del ${new Date(fechaInicio).toLocaleDateString('es-ES')} al ${new Date(fechaFin).toLocaleDateString('es-ES')}`}
+            <div class="informe-resultado">
+                <div class="informe-header">
+                    <h2><i class="fa-solid fa-box"></i> ${albergue.nombre}</h2>
+                    <p class="informe-periodo">
+                        ${todasFechas ? 'Todo el histórico' : 
+                        `${new Date(fechaInicio).toLocaleDateString('es-ES')} - ${new Date(fechaFin).toLocaleDateString('es-ES')}`}
                     </p>
                 </div>
                 
-                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:15px; margin-bottom:30px;">
-                    <div style="background:white; padding:20px; border-radius:8px; text-align:center;">
-                        <div style="font-size:2.5rem; color:#10b981; font-weight:bold;">${personasAtendidas.size}</div>
-                        <div style="color:#666; margin-top:5px;">Personas Beneficiadas</div>
+                <div class="informe-kpis">
+                    <div class="informe-kpi">
+                        <div class="kpi-value">${personasBeneficiadas.size}</div>
+                        <div class="kpi-label">Personas Beneficiadas</div>
                     </div>
-                    <div style="background:white; padding:20px; border-radius:8px; text-align:center;">
-                        <div style="font-size:2.5rem; color:#4f46e5; font-weight:bold;">${todasEntregas.length}</div>
-                        <div style="color:#666; margin-top:5px;">Total Entregas</div>
+                    <div class="informe-kpi">
+                        <div class="kpi-value">${entregas.length}</div>
+                        <div class="kpi-label">Entregas Realizadas</div>
+                    </div>
+                    <div class="informe-kpi">
+                        <div class="kpi-value">${totalArticulos}</div>
+                        <div class="kpi-label">Artículos Distribuidos</div>
                     </div>
                 </div>
                 
-                <div style="background:white; padding:20px; border-radius:8px; margin-bottom:20px;">
-                    <h3 style="color:#4f46e5; margin-top:0;">Entregas por Tipo</h3>
-                    <div style="display:grid; gap:10px;">
+                <div class="informe-section">
+                    <h3><i class="fa-solid fa-chart-pie"></i> Entregas por Categoría</h3>
+                    <div class="chart-bars">
         `;
         
-        if (Object.keys(tiposEntrega).length > 0) {
-            Object.entries(tiposEntrega).sort((a, b) => b[1] - a[1]).forEach(([tipo, count]) => {
-                const porcentaje = ((count / todasEntregas.length) * 100).toFixed(1);
-                html += `
-                    <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:#f8f9fa; border-radius:6px;">
-                        <span style="font-weight:600;">${tipo}</span>
-                        <div style="display:flex; align-items:center; gap:15px;">
-                            <div style="flex:1; min-width:100px; height:8px; background:#e5e7eb; border-radius:4px; overflow:hidden;">
-                                <div style="height:100%; background:#10b981; width:${porcentaje}%;"></div>
-                            </div>
-                            <span style="font-weight:bold; color:#10b981; min-width:80px; text-align:right;">${count} (${porcentaje}%)</span>
-                        </div>
-                    </div>
-                `;
-            });
-        } else {
-            html += '<p style="text-align:center; color:#999;">No hay datos</p>';
-        }
-        
-        html += `
+        const categoriasOrdenadas = Object.entries(categorias).sort((a, b) => b[1] - a[1]);
+        categoriasOrdenadas.forEach(([cat, count]) => {
+            const porcentaje = ((count / entregas.length) * 100).toFixed(1);
+            html += `
+                <div class="chart-bar-item">
+                    <div class="chart-bar-label">${cat}</div>
+                    <div class="chart-bar-container">
+                        <div class="chart-bar-fill" style="width: ${porcentaje}%; background: #f5576c;"></div>
+                        <div class="chart-bar-value">${count} (${porcentaje}%)</div>
                     </div>
                 </div>
-                <div style="background:white; padding:20px; border-radius:8px; margin-bottom:20px;">
-                    <h3 style="color:#10b981; margin-top:0;">
-                        <i class="fa-solid fa-box-open"></i> Materiales Entregados (Detalle)
-                    </h3>
-                    <div style="display:grid; gap:10px;">
-        `;
-        
-        if (Object.keys(materialesEntregados).length > 0) {
-            const materialesOrdenados = Object.entries(materialesEntregados).sort((a, b) => b[1] - a[1]);
-            
-            materialesOrdenados.forEach(([material, cantidad]) => {
-                html += `
-                    <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:#f0fdf4; border-radius:6px; border-left:4px solid #10b981;">
-                        <span style="font-weight:500; color:#166534;">
-                            <i class="fa-solid fa-check-circle" style="margin-right:8px; color:#10b981;"></i>${material}
-                        </span>
-                        <span style="background:#10b981; color:white; padding:4px 12px; border-radius:20px; font-weight:600; min-width:50px; text-align:center;">
-                            ${cantidad}
-                        </span>
-                    </div>
-                `;
-            });
-        } else {
-            html += '<p style="text-align:center; color:#999;">No hay datos detallados de materiales</p>';
-        }
-        
-        html += `
-                    </div>
-                </div>
-
-                <div style="background:white; padding:20px; border-radius:8px;">
-                    <h3 style="color:#4f46e5; margin-top:0;">Detalle de Entregas por Persona</h3>
-                    <div style="max-height:500px; overflow-y:auto;">
-        `;
-        
-        if (Object.keys(personasConEntregas).length === 0) {
-            html += '<p style="text-align:center; color:#999; padding:40px;">No hay entregas registradas en este período</p>';
-        } else {
-            const personasArray = Object.values(personasConEntregas);
-            personasArray.sort((a, b) => b.entregas.length - a.entregas.length);
-            
-            html += `
-                <table style="width:100%; border-collapse: collapse;">
-                    <thead>
-                        <tr style="background:#f8f9fa; border-bottom:2px solid #10b981;">
-                            <th style="padding:12px; text-align:left; font-weight:600; color:#10b981;">Persona</th>
-                            <th style="padding:12px; text-align:left; font-weight:600; color:#10b981;">DNI</th>
-                            <th style="padding:12px; text-align:left; font-weight:600; color:#10b981;">Teléfono</th>
-                            <th style="padding:12px; text-align:center; font-weight:600; color:#10b981;">Nº Entregas</th>
-                        </tr>
-                    </thead>
-                    <tbody>
             `;
-            
-            personasArray.forEach((persona, index) => {
-                const bgColor = index % 2 === 0 ? '#ffffff' : '#f8f9fa';
-                html += `
-                    <tr style="background:${bgColor}; border-bottom:1px solid #e5e7eb;">
-                        <td style="padding:12px;">
-                            <strong style="color:#1f2937;">${persona.nombre}</strong>
-                        </td>
-                        <td style="padding:12px; color:#666;">
-                            <i class="fa-solid fa-id-card" style="margin-right:5px;"></i>${persona.dni}
-                        </td>
-                        <td style="padding:12px; color:#666;">
-                            <i class="fa-solid fa-phone" style="margin-right:5px;"></i>${persona.telefono}
-                        </td>
-                        <td style="padding:12px; text-align:center;">
-                            <span style="background:#10b981; color:white; padding:6px 12px; border-radius:20px; font-weight:600; font-size:0.9rem;">
-                                ${persona.entregas.length}
-                            </span>
-                        </td>
-                    </tr>
-                `;
-            });
-            
-            html += `
-                    </tbody>
-                </table>
-            `;
-        }
+        });
         
         html += `
                     </div>
                 </div>
                 
-                <div style="text-align:center; margin-top:30px;">
-                    <button onclick="imprimirInforme()" style="background:#10b981; color:white; border:none; padding:12px 30px; border-radius:8px; cursor:pointer; font-size:1rem;">
-                        <i class="fa-solid fa-print"></i> Imprimir Informe
+                <div class="informe-section">
+                    <h3><i class="fa-solid fa-box-open"></i> Inventario de Materiales</h3>
+                    <div class="materiales-grid">
+        `;
+        
+        const materialesOrdenados = Object.entries(materialesEntregados).sort((a, b) => b[1] - a[1]);
+        materialesOrdenados.forEach(([material, cantidad]) => {
+            html += `
+                <div class="material-item">
+                    <i class="fa-solid fa-check-circle"></i>
+                    <div>
+                        <strong>${material}</strong>
+                        <span class="badge-count">${cantidad}</span>
+                    </div>
+                </div>
+            `;
+        });
+        
+        html += `
+                    </div>
+                </div>
+                
+                <div class="informe-section">
+                    <h3><i class="fa-solid fa-ranking-star"></i> Top 10 Beneficiarios</h3>
+                    <table class="informe-table">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>DNI</th>
+                                <th>Teléfono</th>
+                                <th>Entregas</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+        `;
+        
+        personasArray.slice(0, 10).forEach(persona => {
+            html += `
+                <tr>
+                    <td><strong>${persona.nombre}</strong></td>
+                    <td>${persona.dni}</td>
+                    <td>${persona.telefono}</td>
+                    <td><span class="badge-count">${persona.count}</span></td>
+                </tr>
+            `;
+        });
+        
+        html += `
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="informe-actions">
+                    <button onclick="window.print()" class="btn-action">
+                        <i class="fa-solid fa-print"></i> Imprimir
                     </button>
                 </div>
             </div>
@@ -1001,48 +1262,45 @@ todasEntregas.sort((a, b) => b.fecha - a.fecha);
         resultado.innerHTML = html;
         
     } catch(e) {
-        console.error('Error generando informe entregas:', e);
-        resultado.innerHTML = `<div style="background:#fee; color:#c00; padding:20px; border-radius:8px;"><strong>Error:</strong> ${e.message}</div>`;
+        console.error('Error:', e);
+        resultado.innerHTML = `<div class="error-message">Error: ${e.message}</div>`;
     }
 }
 
-async function mostrarInformeEntregasPersona() {
+function abrirInformeEntregasPersona() {
     const zona = document.getElementById('zona-opciones-informe');
     
     zona.innerHTML = `
-        <div style="background:white; padding:30px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.1);">
-            <button onclick="abrirInforme('entregas')" style="background:none; border:none; color:#4f46e5; cursor:pointer; margin-bottom:20px;">
-                <i class="fa-solid fa-arrow-left"></i> Volver
+        <div class="informe-detallado">
+            <button onclick="mostrarDashboard()" class="btn-back">
+                <i class="fa-solid fa-arrow-left"></i> Volver al Dashboard
             </button>
             
-            <h3 style="color:#4f46e5; margin-bottom:25px;">
-                <i class="fa-solid fa-box"></i> Informe de Entregas por Persona
-            </h3>
+            <h2><i class="fa-solid fa-user-tag"></i> Informe de Entregas por Persona</h2>
             
-            <div style="max-width:600px;">
-                <label style="display:block; margin-bottom:8px; font-weight:600;">Buscar persona:</label>
-                <input type="text" id="buscar-persona-informe-entregas" placeholder="Escribe nombre o DNI..." 
-                    oninput="buscarPersonaParaInformeEntregas()" 
-                    style="width:100%; padding:12px; border:1px solid #ddd; border-radius:8px; font-size:1rem;">
-                
-                <div id="resultados-busqueda-persona-entregas" style="margin-top:10px; max-height:300px; overflow-y:auto;"></div>
+            <div class="search-container">
+                <label>Buscar persona:</label>
+                <input type="text" id="search-ent-persona" placeholder="Nombre o DNI..." oninput="buscarPersonaEntregas()">
+                <div id="results-ent-persona"></div>
             </div>
             
-            <div id="resultado-informe-persona-entregas" style="margin-top:30px;"></div>
+            <div id="resultado-ent-persona"></div>
         </div>
     `;
 }
 
-async function buscarPersonaParaInformeEntregas() {
-    const busqueda = document.getElementById('buscar-persona-informe-entregas').value.toLowerCase().trim();
-    const resultados = document.getElementById('resultados-busqueda-persona-entregas');
+async function buscarPersonaEntregas() {
+    const busqueda = document.getElementById('search-ent-persona').value.toLowerCase().trim();
+    const resultados = document.getElementById('results-ent-persona');
     
     if (busqueda.length < 2) {
         resultados.innerHTML = '';
+        resultados.style.display = 'none';
         return;
     }
     
-    resultados.innerHTML = '<div style="text-align:center; padding:20px;"><i class="fa-solid fa-spinner fa-spin"></i> Buscando...</div>';
+    resultados.innerHTML = '<div class="loading-spinner"><i class="fa-solid fa-spinner fa-spin"></i></div>';
+    resultados.style.display = 'block';
     
     try {
         const { collection, getDocs } = window.parent.firebaseModules;
@@ -1051,8 +1309,7 @@ async function buscarPersonaParaInformeEntregas() {
         let personasEncontradas = [];
         
         for (const albergue of alberguesGlobales) {
-            const personasRef = collection(db, "albergues", albergue.id, "personas");
-            const personasSnap = await getDocs(personasRef);
+            const personasSnap = await getDocs(collection(db, "albergues", albergue.id, "personas"));
             
             personasSnap.forEach(docSnap => {
                 const persona = docSnap.data();
@@ -1071,23 +1328,22 @@ async function buscarPersonaParaInformeEntregas() {
         }
         
         if (personasEncontradas.length === 0) {
-            resultados.innerHTML = '<p style="text-align:center; color:#999; padding:20px;">No se encontraron personas</p>';
+            resultados.innerHTML = '<div class="search-no-results">No se encontraron personas</div>';
             return;
         }
         
-        let html = '<div style="border:1px solid #ddd; border-radius:8px; overflow:hidden;">';
+        let html = '<div class="search-results">';
         personasEncontradas.forEach(persona => {
             html += `
-                <div onclick="generarInformePersonaEntregas('${persona.id}', '${persona.albergueId}')" 
-                    style="padding:15px; border-bottom:1px solid #eee; cursor:pointer; transition:background 0.2s;"
-                    onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
-                    <strong>${persona.nombre} ${persona.ap1 || ''} ${persona.ap2 || ''}</strong>
-                    <div style="color:#666; font-size:0.9rem; margin-top:5px;">
-                        <i class="fa-solid fa-id-card"></i> ${persona.docNum || 'Sin documento'}
+                <div class="search-result-item" onclick="generarInformeEntregasPersona('${persona.id}', '${persona.albergueId}')">
+                    <div>
+                        <strong>${persona.nombre} ${persona.ap1 || ''} ${persona.ap2 || ''}</strong>
+                        <div class="search-result-meta">
+                            <span><i class="fa-solid fa-id-card"></i> ${persona.docNum || 'Sin documento'}</span>
+                            <span><i class="fa-solid fa-building"></i> ${persona.albergueNombre}</span>
+                        </div>
                     </div>
-                    <div style="color:#9333ea; font-size:0.85rem; margin-top:3px;">
-                        <i class="fa-solid fa-building"></i> ${persona.albergueNombre}
-                    </div>
+                    <i class="fa-solid fa-chevron-right"></i>
                 </div>
             `;
         });
@@ -1096,81 +1352,82 @@ async function buscarPersonaParaInformeEntregas() {
         resultados.innerHTML = html;
         
     } catch(e) {
-        console.error('Error buscando personas:', e);
-        resultados.innerHTML = `<div style="color:red; padding:20px;">Error: ${e.message}</div>`;
+        console.error('Error:', e);
+        resultados.innerHTML = `<div class="error-message">Error: ${e.message}</div>`;
     }
 }
 
-async function generarInformePersonaEntregas(personaId, albergueId) {
-    const resultado = document.getElementById('resultado-informe-persona-entregas');
-    document.getElementById('resultados-busqueda-persona-entregas').innerHTML = '';
-    document.getElementById('buscar-persona-informe-entregas').value = '';
+async function generarInformeEntregasPersona(personaId, albergueId) {
+    const resultado = document.getElementById('resultado-ent-persona');
+    document.getElementById('results-ent-persona').innerHTML = '';
+    document.getElementById('results-ent-persona').style.display = 'none';
     
-    resultado.innerHTML = '<div style="text-align:center; padding:40px;"><i class="fa-solid fa-spinner fa-spin" style="font-size:2rem; color:#4f46e5;"></i><p>Generando informe...</p></div>';
+    resultado.innerHTML = '<div class="loading-spinner"><i class="fa-solid fa-spinner fa-spin"></i> Cargando historial...</div>';
     
     try {
         const { collection, getDocs, doc, getDoc } = window.parent.firebaseModules;
         const db = window.parent.db;
         
         const albergue = alberguesGlobales.find(a => a.id === albergueId);
-        const personaDocRef = doc(db, "albergues", albergueId, "personas", personaId);
-        const personaDocSnap = await getDoc(personaDocRef);
+        const personaSnap = await getDoc(doc(db, "albergues", albergueId, "personas", personaId));
+        const persona = personaSnap.data();
         
-        const persona = personaDocSnap.data();
+        const intervencionesSnap = await getDocs(
+            collection(db, "albergues", albergueId, "personas", personaId, "intervenciones")
+        );
         
-        const intervencionesRef = collection(db, "albergues", albergueId, "personas", personaId, "intervenciones");
-        const intervencionesSnap = await getDocs(intervencionesRef);
-        
-        let entregasRealizadas = [];
+        let entregas = [];
+        let categorias = {};
         
         intervencionesSnap.forEach(docSnap => {
             const interv = docSnap.data();
             if (interv.tipo === 'Entregas') {
-                entregasRealizadas.push({
+                entregas.push({
                     ...interv,
                     fecha: interv.fecha.toDate()
                 });
+                
+                const subtipo = interv.subtipo || 'Sin especificar';
+                categorias[subtipo] = (categorias[subtipo] || 0) + 1;
             }
         });
         
-        entregasRealizadas.sort((a, b) => b.fecha - a.fecha);
-        
-        let tiposEntrega = {};
-        entregasRealizadas.forEach(entrega => {
-            const subtipo = entrega.subtipo || 'Sin especificar';
-            tiposEntrega[subtipo] = (tiposEntrega[subtipo] || 0) + 1;
-        });
+        entregas.sort((a, b) => b.fecha - a.fecha);
         
         let html = `
-            <div style="background:#f8f9fa; padding:30px; border-radius:12px; border:2px solid #10b981;">
-                <div style="text-align:center; margin-bottom:30px;">
-                    <h2 style="color:#10b981; margin:0;">
-                        <i class="fa-solid fa-box"></i> ${persona.nombre} ${persona.ap1 || ''} ${persona.ap2 || ''}
-                    </h2>
-                    <p style="color:#666; margin:10px 0 0 0;">
-                        <i class="fa-solid fa-id-card"></i> ${persona.docNum || 'Sin documento'} | 
-                        <i class="fa-solid fa-building"></i> ${albergue.nombre}
+            <div class="informe-resultado">
+                <div class="informe-header">
+                    <h2><i class="fa-solid fa-user-tag"></i> ${persona.nombre} ${persona.ap1 || ''} ${persona.ap2 || ''}</h2>
+                    <p class="informe-meta">
+                        <span><i class="fa-solid fa-id-card"></i> ${persona.docNum || 'Sin documento'}</span>
+                        <span><i class="fa-solid fa-building"></i> ${albergue.nombre}</span>
                     </p>
                 </div>
                 
-                <div style="background:white; padding:20px; border-radius:8px; text-align:center; margin-bottom:20px;">
-                    <div style="font-size:2.5rem; color:#10b981; font-weight:bold;">${entregasRealizadas.length}</div>
-                    <div style="color:#666; margin-top:5px;">Entregas Registradas</div>
+                <div class="informe-kpis" style="justify-content: center;">
+                    <div class="informe-kpi">
+                        <div class="kpi-value">${entregas.length}</div>
+                        <div class="kpi-label">Entregas Recibidas</div>
+                    </div>
                 </div>
         `;
         
-        if (Object.keys(tiposEntrega).length > 0) {
+        if (Object.keys(categorias).length > 0) {
             html += `
-                <div style="background:white; padding:20px; border-radius:8px; margin-bottom:20px;">
-                    <h3 style="color:#10b981; margin-top:0;">Entregas por Tipo</h3>
-                    <div style="display:grid; gap:10px;">
+                <div class="informe-section">
+                    <h3><i class="fa-solid fa-chart-pie"></i> Entregas por Tipo</h3>
+                    <div class="chart-bars">
             `;
             
-            Object.entries(tiposEntrega).sort((a, b) => b[1] - a[1]).forEach(([tipo, count]) => {
+            const tiposOrdenados = Object.entries(categorias).sort((a, b) => b[1] - a[1]);
+            tiposOrdenados.forEach(([tipo, count]) => {
                 html += `
-                    <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:#f8f9fa; border-radius:6px;">
-                        <span style="font-weight:600;">${tipo}</span>
-                        <span style="font-weight:bold; color:#10b981;">${count}</span>
+                    <div class="chart-bar-item">
+                        <div class="chart-bar-label">${tipo}</div>
+                        <div class="chart-bar-container">
+                            <div class="chart-bar-fill" style="width: 100%; background: #f5576c;"></div>
+                            <div class="chart-bar-value">${count}</div>
+                        </div>
                     </div>
                 `;
             });
@@ -1182,29 +1439,25 @@ async function generarInformePersonaEntregas(personaId, albergueId) {
         }
         
         html += `
-                <div style="background:white; padding:20px; border-radius:8px;">
-                    <h3 style="color:#10b981; margin-top:0;">Historial Completo de Entregas</h3>
-                    <div style="max-height:500px; overflow-y:auto;">
+                <div class="informe-section">
+                    <h3><i class="fa-solid fa-clock-rotate-left"></i> Historial Completo</h3>
+                    <div class="historial-timeline">
         `;
         
-        if (entregasRealizadas.length === 0) {
-            html += '<p style="text-align:center; color:#999; padding:40px;">Esta persona no tiene entregas registradas</p>';
+        if (entregas.length === 0) {
+            html += '<p class="no-data">No hay entregas registradas</p>';
         } else {
-            entregasRealizadas.forEach(entrega => {
+            entregas.forEach(entrega => {
                 html += `
-                    <div style="border-left:4px solid #10b981; padding:15px; margin-bottom:15px; background:#f8f9fa; border-radius:0 8px 8px 0;">
-                        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                            <strong style="color:#10b981;">${entrega.subtipo}</strong>
-                            <span style="color:#666; font-size:0.9rem;">${entrega.fecha.toLocaleDateString('es-ES')} ${entrega.fecha.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'})}</span>
+                    <div class="historial-item">
+                        <div class="historial-header">
+                            <strong>${entrega.subtipo}</strong>
+                            <span>${entrega.fecha.toLocaleDateString('es-ES')} ${entrega.fecha.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'})}</span>
                         </div>
-                        <div style="background:white; padding:10px; border-radius:6px; margin-bottom:8px;">
-                            <strong style="color:#0284c7;">Motivo:</strong> ${entrega.motivo}
-                        </div>
-                        <div style="background:white; padding:10px; border-radius:6px;">
-                            <strong style="color:#7c3aed;">Detalles:</strong> ${entrega.detalle}
-                        </div>
-                        <div style="margin-top:8px; color:#999; font-size:0.85rem;">
-                            <i class="fa-solid fa-user-tag"></i> Entregado por: ${entrega.usuario}
+                        <div class="historial-content">
+                            <p><strong>Motivo:</strong> ${entrega.motivo}</p>
+                            <p><strong>Detalles:</strong> ${entrega.detalle}</p>
+                            <p class="historial-meta"><i class="fa-solid fa-user-tag"></i> ${entrega.usuario}</p>
                         </div>
                     </div>
                 `;
@@ -1215,9 +1468,9 @@ async function generarInformePersonaEntregas(personaId, albergueId) {
                     </div>
                 </div>
                 
-                <div style="text-align:center; margin-top:30px;">
-                    <button onclick="imprimirInforme()" style="background:#10b981; color:white; border:none; padding:12px 30px; border-radius:8px; cursor:pointer; font-size:1rem;">
-                        <i class="fa-solid fa-print"></i> Imprimir Informe
+                <div class="informe-actions">
+                    <button onclick="window.print()" class="btn-action">
+                        <i class="fa-solid fa-print"></i> Imprimir
                     </button>
                 </div>
             </div>
@@ -1226,10 +1479,475 @@ async function generarInformePersonaEntregas(personaId, albergueId) {
         resultado.innerHTML = html;
         
     } catch(e) {
-        console.error('Error generando informe persona entregas:', e);
-        resultado.innerHTML = `<div style="background:#fee; color:#c00; padding:20px; border-radius:8px;"><strong>Error:</strong> ${e.message}</div>`;
+        console.error('Error:', e);
+        resultado.innerHTML = `<div class="error-message">Error: ${e.message}</div>`;
     }
 }
-function imprimirInforme() {
-    window.print();
+
+// ============================================
+// FIN DE LA PARTE 3 de 4
+// Continúa en la PARTE 4 (última)...
+// ============================================
+// ============================================
+// PARTE 4 de 4: INFORMES PSICOSOCIALES (FINAL)
+// ============================================
+
+function abrirInformePsicosocialAlbergue() {
+    const zona = document.getElementById('zona-opciones-informe');
+    
+    let alberguesOptions = '<option value="">-- Selecciona un albergue --</option>';
+    alberguesGlobales.forEach(alb => {
+        alberguesOptions += `<option value="${alb.id}">${alb.nombre}</option>`;
+    });
+    
+    zona.innerHTML = `
+        <div class="informe-detallado">
+            <button onclick="mostrarDashboard()" class="btn-back">
+                <i class="fa-solid fa-arrow-left"></i> Volver al Dashboard
+            </button>
+            
+            <h2><i class="fa-solid fa-heart"></i> Informe Psicosocial por Albergue</h2>
+            
+            <div class="informe-filters">
+                <div class="filter-group">
+                    <label>Albergue:</label>
+                    <select id="psi-alb-select">${alberguesOptions}</select>
+                </div>
+                <div class="filter-group">
+                    <label>Fecha Inicio:</label>
+                    <input type="date" id="psi-alb-fecha-inicio">
+                </div>
+                <div class="filter-group">
+                    <label>Fecha Fin:</label>
+                    <input type="date" id="psi-alb-fecha-fin">
+                </div>
+                <label style="display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" id="psi-alb-todas-fechas" onchange="toggleFechasPsiAlb(this)">
+                    Todas las fechas
+                </label>
+            </div>
+            
+            <button onclick="generarInformePsicosocialAlbergue()" class="btn-generar">
+                <i class="fa-solid fa-file-pdf"></i> Generar Informe
+            </button>
+            
+            <div id="resultado-psi-alb"></div>
+        </div>
+    `;
+    
+    const hoy = new Date().toISOString().split('T')[0];
+    document.getElementById('psi-alb-fecha-fin').value = hoy;
+    document.getElementById('psi-alb-fecha-fin').max = hoy;
 }
+
+function toggleFechasPsiAlb(checkbox) {
+    const inicio = document.getElementById('psi-alb-fecha-inicio');
+    const fin = document.getElementById('psi-alb-fecha-fin');
+    
+    inicio.disabled = checkbox.checked;
+    fin.disabled = checkbox.checked;
+    
+    if (!checkbox.checked) {
+        fin.value = new Date().toISOString().split('T')[0];
+    }
+}
+
+async function generarInformePsicosocialAlbergue() {
+    const albergueId = document.getElementById('psi-alb-select').value;
+    const todasFechas = document.getElementById('psi-alb-todas-fechas').checked;
+    const fechaInicio = document.getElementById('psi-alb-fecha-inicio').value;
+    const fechaFin = document.getElementById('psi-alb-fecha-fin').value;
+    const resultado = document.getElementById('resultado-psi-alb');
+    
+    if (!albergueId) {
+        alert('Selecciona un albergue');
+        return;
+    }
+    
+    if (!todasFechas && (!fechaInicio || !fechaFin)) {
+        alert('Selecciona un rango de fechas');
+        return;
+    }
+    
+    resultado.innerHTML = '<div class="loading-spinner"><i class="fa-solid fa-spinner fa-spin"></i> Generando informe...</div>';
+    
+    try {
+        const { collection, getDocs } = window.parent.firebaseModules;
+        const db = window.parent.db;
+        
+        const albergue = alberguesGlobales.find(a => a.id === albergueId);
+        const personasSnap = await getDocs(collection(db, "albergues", albergueId, "personas"));
+        
+        let intervenciones = [];
+        let personasAtendidas = new Set();
+        let tipologias = {};
+        
+        for (const personaDoc of personasSnap.docs) {
+            const personaData = personaDoc.data();
+            const intervencionesSnap = await getDocs(
+                collection(db, "albergues", albergueId, "personas", personaDoc.id, "intervenciones")
+            );
+            
+            intervencionesSnap.forEach(intDoc => {
+                const interv = intDoc.data();
+                
+                if (interv.tipo !== 'Psicosocial') return;
+                
+                const fechaInterv = interv.fecha.toDate();
+                
+                if (!todasFechas) {
+                    const inicio = new Date(fechaInicio);
+                    const fin = new Date(fechaFin);
+                    fin.setHours(23, 59, 59);
+                    
+                    if (fechaInterv < inicio || fechaInterv > fin) return;
+                }
+                
+                personasAtendidas.add(personaDoc.id);
+                
+                const subtipo = interv.subtipo || 'Sin especificar';
+                tipologias[subtipo] = (tipologias[subtipo] || 0) + 1;
+                
+                intervenciones.push({
+                    personaNombre: personaData.nombre + ' ' + (personaData.ap1 || ''),
+                    personaDni: personaData.docNum || 'S/D',
+                    personaTel: personaData.telefono || 'S/T',
+                    subtipo: subtipo,
+                    fecha: fechaInterv
+                });
+            });
+        }
+        
+        let personasConAtenciones = {};
+        intervenciones.forEach(interv => {
+            const key = interv.personaDni;
+            if (!personasConAtenciones[key]) {
+                personasConAtenciones[key] = {
+                    nombre: interv.personaNombre,
+                    dni: interv.personaDni,
+                    telefono: interv.personaTel,
+                    count: 0
+                };
+            }
+            personasConAtenciones[key].count++;
+        });
+        
+        const personasArray = Object.values(personasConAtenciones).sort((a, b) => b.count - a.count);
+        const promedio = personasAtendidas.size > 0 ? (intervenciones.length / personasAtendidas.size).toFixed(2) : 0;
+        
+        let html = `
+            <div class="informe-resultado">
+                <div class="informe-header">
+                    <h2><i class="fa-solid fa-heart"></i> ${albergue.nombre}</h2>
+                    <p class="informe-periodo">
+                        ${todasFechas ? 'Todo el histórico' : 
+                        `${new Date(fechaInicio).toLocaleDateString('es-ES')} - ${new Date(fechaFin).toLocaleDateString('es-ES')}`}
+                    </p>
+                </div>
+                
+                <div class="informe-kpis">
+                    <div class="informe-kpi">
+                        <div class="kpi-value">${personasAtendidas.size}</div>
+                        <div class="kpi-label">Personas Atendidas</div>
+                    </div>
+                    <div class="informe-kpi">
+                        <div class="kpi-value">${intervenciones.length}</div>
+                        <div class="kpi-label">Atenciones Totales</div>
+                    </div>
+                    <div class="informe-kpi">
+                        <div class="kpi-value">${promedio}</div>
+                        <div class="kpi-label">Promedio por Persona</div>
+                    </div>
+                </div>
+                
+                <div class="informe-section">
+                    <h3><i class="fa-solid fa-chart-pie"></i> Distribución por Tipo</h3>
+                    <div class="chart-bars">
+        `;
+        
+        const tiposOrdenados = Object.entries(tipologias).sort((a, b) => b[1] - a[1]);
+        tiposOrdenados.forEach(([tipo, count]) => {
+            const porcentaje = ((count / intervenciones.length) * 100).toFixed(1);
+            html += `
+                <div class="chart-bar-item">
+                    <div class="chart-bar-label">${tipo}</div>
+                    <div class="chart-bar-container">
+                        <div class="chart-bar-fill" style="width: ${porcentaje}%; background: #4facfe;"></div>
+                        <div class="chart-bar-value">${count} (${porcentaje}%)</div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        html += `
+                    </div>
+                </div>
+                
+                <div class="informe-section">
+                    <h3><i class="fa-solid fa-ranking-star"></i> Top 10 Personas Más Atendidas</h3>
+                    <table class="informe-table">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>DNI</th>
+                                <th>Teléfono</th>
+                                <th>Atenciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+        `;
+        
+        personasArray.slice(0, 10).forEach(persona => {
+            html += `
+                <tr>
+                    <td><strong>${persona.nombre}</strong></td>
+                    <td>${persona.dni}</td>
+                    <td>${persona.telefono}</td>
+                    <td><span class="badge-count">${persona.count}</span></td>
+                </tr>
+            `;
+        });
+        
+        html += `
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="informe-actions">
+                    <button onclick="window.print()" class="btn-action">
+                        <i class="fa-solid fa-print"></i> Imprimir
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        resultado.innerHTML = html;
+        
+    } catch(e) {
+        console.error('Error:', e);
+        resultado.innerHTML = `<div class="error-message">Error: ${e.message}</div>`;
+    }
+}
+
+function abrirInformePsicosocialPersona() {
+    const zona = document.getElementById('zona-opciones-informe');
+    
+    zona.innerHTML = `
+        <div class="informe-detallado">
+            <button onclick="mostrarDashboard()" class="btn-back">
+                <i class="fa-solid fa-arrow-left"></i> Volver al Dashboard
+            </button>
+            
+            <h2><i class="fa-solid fa-user-check"></i> Informe Psicosocial por Persona</h2>
+            
+            <div class="search-container">
+                <label>Buscar persona:</label>
+                <input type="text" id="search-psi-persona" placeholder="Nombre o DNI..." oninput="buscarPersonaPsicosocial()">
+                <div id="results-psi-persona"></div>
+            </div>
+            
+            <div id="resultado-psi-persona"></div>
+        </div>
+    `;
+}
+
+async function buscarPersonaPsicosocial() {
+    const busqueda = document.getElementById('search-psi-persona').value.toLowerCase().trim();
+    const resultados = document.getElementById('results-psi-persona');
+    
+    if (busqueda.length < 2) {
+        resultados.innerHTML = '';
+        resultados.style.display = 'none';
+        return;
+    }
+    
+    resultados.innerHTML = '<div class="loading-spinner"><i class="fa-solid fa-spinner fa-spin"></i></div>';
+    resultados.style.display = 'block';
+    
+    try {
+        const { collection, getDocs } = window.parent.firebaseModules;
+        const db = window.parent.db;
+        
+        let personasEncontradas = [];
+        
+        for (const albergue of alberguesGlobales) {
+            const personasSnap = await getDocs(collection(db, "albergues", albergue.id, "personas"));
+            
+            personasSnap.forEach(docSnap => {
+                const persona = docSnap.data();
+                const nombreCompleto = `${persona.nombre} ${persona.ap1 || ''} ${persona.ap2 || ''}`.toLowerCase();
+                const docNum = (persona.docNum || '').toLowerCase();
+                
+                if (nombreCompleto.includes(busqueda) || docNum.includes(busqueda)) {
+                    personasEncontradas.push({
+                        id: docSnap.id,
+                        albergueId: albergue.id,
+                        albergueNombre: albergue.nombre,
+                        ...persona
+                    });
+                }
+            });
+        }
+        
+        if (personasEncontradas.length === 0) {
+            resultados.innerHTML = '<div class="search-no-results">No se encontraron personas</div>';
+            return;
+        }
+        
+        let html = '<div class="search-results">';
+        personasEncontradas.forEach(persona => {
+            html += `
+                <div class="search-result-item" onclick="generarInformePsicosocialPersona('${persona.id}', '${persona.albergueId}')">
+                    <div>
+                        <strong>${persona.nombre} ${persona.ap1 || ''} ${persona.ap2 || ''}</strong>
+                        <div class="search-result-meta">
+                            <span><i class="fa-solid fa-id-card"></i> ${persona.docNum || 'Sin documento'}</span>
+                            <span><i class="fa-solid fa-building"></i> ${persona.albergueNombre}</span>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right"></i>
+                </div>
+            `;
+        });
+        html += '</div>';
+        
+        resultados.innerHTML = html;
+        
+    } catch(e) {
+        console.error('Error:', e);
+        resultados.innerHTML = `<div class="error-message">Error: ${e.message}</div>`;
+    }
+}
+
+async function generarInformePsicosocialPersona(personaId, albergueId) {
+    const resultado = document.getElementById('resultado-psi-persona');
+    document.getElementById('results-psi-persona').innerHTML = '';
+    document.getElementById('results-psi-persona').style.display = 'none';
+    
+    resultado.innerHTML = '<div class="loading-spinner"><i class="fa-solid fa-spinner fa-spin"></i> Cargando historial...</div>';
+    
+    try {
+        const { collection, getDocs, doc, getDoc } = window.parent.firebaseModules;
+        const db = window.parent.db;
+        
+        const albergue = alberguesGlobales.find(a => a.id === albergueId);
+        const personaSnap = await getDoc(doc(db, "albergues", albergueId, "personas", personaId));
+        const persona = personaSnap.data();
+        
+        const intervencionesSnap = await getDocs(
+            collection(db, "albergues", albergueId, "personas", personaId, "intervenciones")
+        );
+        
+        let intervenciones = [];
+        let tipologias = {};
+        
+        intervencionesSnap.forEach(docSnap => {
+            const interv = docSnap.data();
+            if (interv.tipo === 'Psicosocial') {
+                intervenciones.push({
+                    ...interv,
+                    fecha: interv.fecha.toDate()
+                });
+                
+                const subtipo = interv.subtipo || 'Sin especificar';
+                tipologias[subtipo] = (tipologias[subtipo] || 0) + 1;
+            }
+        });
+        
+        intervenciones.sort((a, b) => b.fecha - a.fecha);
+        
+        let html = `
+            <div class="informe-resultado">
+                <div class="informe-header">
+                    <h2><i class="fa-solid fa-user-check"></i> ${persona.nombre} ${persona.ap1 || ''} ${persona.ap2 || ''}</h2>
+                    <p class="informe-meta">
+                        <span><i class="fa-solid fa-id-card"></i> ${persona.docNum || 'Sin documento'}</span>
+                        <span><i class="fa-solid fa-building"></i> ${albergue.nombre}</span>
+                    </p>
+                </div>
+                
+                <div class="informe-kpis" style="justify-content: center;">
+                    <div class="informe-kpi">
+                        <div class="kpi-value">${intervenciones.length}</div>
+                        <div class="kpi-label">Atenciones Registradas</div>
+                    </div>
+                </div>
+        `;
+        
+        if (Object.keys(tipologias).length > 0) {
+            html += `
+                <div class="informe-section">
+                    <h3><i class="fa-solid fa-chart-pie"></i> Atenciones por Tipo</h3>
+                    <div class="chart-bars">
+            `;
+            
+            const tiposOrdenados = Object.entries(tipologias).sort((a, b) => b[1] - a[1]);
+            tiposOrdenados.forEach(([tipo, count]) => {
+                html += `
+                    <div class="chart-bar-item">
+                        <div class="chart-bar-label">${tipo}</div>
+                        <div class="chart-bar-container">
+                            <div class="chart-bar-fill" style="width: 100%; background: #4facfe;"></div>
+                            <div class="chart-bar-value">${count}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += `
+                    </div>
+                </div>
+            `;
+        }
+        
+        html += `
+                <div class="informe-section">
+                    <h3><i class="fa-solid fa-clock-rotate-left"></i> Historial Completo</h3>
+                    <div class="historial-timeline">
+        `;
+        
+        if (intervenciones.length === 0) {
+            html += '<p class="no-data">No hay atenciones psicosociales registradas</p>';
+        } else {
+            intervenciones.forEach(interv => {
+                html += `
+                    <div class="historial-item">
+                        <div class="historial-header">
+                            <strong>${interv.subtipo}</strong>
+                            <span>${interv.fecha.toLocaleDateString('es-ES')} ${interv.fecha.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'})}</span>
+                        </div>
+                        <div class="historial-content">
+                            <p><strong>Motivo:</strong> ${interv.motivo}</p>
+                            <p><strong>Resolución:</strong> ${interv.detalle}</p>
+                            <p class="historial-meta"><i class="fa-solid fa-user-tag"></i> ${interv.usuario}</p>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+        
+        html += `
+                    </div>
+                </div>
+                
+                <div class="informe-actions">
+                    <button onclick="window.print()" class="btn-action">
+                        <i class="fa-solid fa-print"></i> Imprimir
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        resultado.innerHTML = html;
+        
+    } catch(e) {
+        console.error('Error:', e);
+        resultado.innerHTML = `<div class="error-message">Error: ${e.message}</div>`;
+    }
+}
+
+// ============================================
+// FIN DEL SISTEMA DE INFORMES v3.0
+// ============================================
+
+console.log('✅ Sistema de Informes v3.0 cargado correctamente');

@@ -902,7 +902,7 @@ window.mostrarModalResetPass = function() {
     window.el('btn-reset-pass').disabled = false;
 };
 
-// Enviar email de recuperación
+// Enviar email  de recuperación
 window.enviarResetPasswordEmail = async function() {
     const email = window.safeVal('reset-pass-email').trim();
     const feedback = window.el('reset-pass-feedback');

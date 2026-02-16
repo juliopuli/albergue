@@ -244,6 +244,7 @@ async function cargarDatosGenerales(albergueId, periodo) {
     }
     
     let personasAtendidas = new Set();
+    let totalPersonasHistorico = new Set(); // NUEVO
     let totalSanitarias = 0;
     let totalPsicosociales = 0;
     let totalEntregas = 0;
@@ -258,6 +259,8 @@ async function cargarDatosGenerales(albergueId, periodo) {
         const personasSnap = await getDocs(collection(db, "albergues", albId, "personas"));
         
         for (const personaDoc of personasSnap.docs) {
+            totalPersonasHistorico.add(personaDoc.id); // NUEVO - Contar todas las personas
+            
             const intervencionesSnap = await getDocs(
                 collection(db, "albergues", albId, "personas", personaDoc.id, "intervenciones")
             );
@@ -319,6 +322,7 @@ async function cargarDatosGenerales(albergueId, periodo) {
     
     return {
         personasAtendidas: personasAtendidas.size,
+        totalPersonasHistorico: totalPersonasHistorico.size, // NUEVO
         totalSanitarias,
         totalPsicosociales,
         totalEntregas,
@@ -334,9 +338,19 @@ function mostrarKPIs(datos) {
     const kpisContainer = document.getElementById('dashboard-kpis');
     
     kpisContainer.innerHTML = `
-        <div class="kpi-card kpi-primary">
+        <div class="kpi-card kpi-historico">
             <div class="kpi-icon">
                 <i class="fa-solid fa-users"></i>
+            </div>
+            <div class="kpi-data">
+                <div class="kpi-value">${datos.totalPersonasHistorico}</div>
+                <div class="kpi-label">Total Personas (Histórico)</div>
+            </div>
+        </div>
+        
+        <div class="kpi-card kpi-primary">
+            <div class="kpi-icon">
+                <i class="fa-solid fa-user-check"></i>
             </div>
             <div class="kpi-data">
                 <div class="kpi-value">${datos.personasAtendidas}</div>
@@ -385,7 +399,6 @@ function mostrarKPIs(datos) {
         </div>
     `;
 }
-
 function mostrarGraficos(datos) {
     const chartsContainer = document.getElementById('dashboard-charts');
     

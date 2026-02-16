@@ -749,45 +749,95 @@ async function generarInformeEntregasAlbergue() {
         const personasSnap = await getDocs(personasRef);
         
         let todasEntregas = [];
-        let personasAtendidas = new Set();
-        let tiposEntrega = {};
+let personasAtendidas = new Set();
+let tiposEntrega = {};
+let materialesEntregados = {}; // ⭐ NUEVO: Contador de materiales específicos
+
+for (const personaDoc of personasSnap.docs) {
+    const intervencionesRef = collection(db, "albergues", albergueId, "personas", personaDoc.id, "intervenciones");
+    const intervencionesSnap = await getDocs(intervencionesRef);
+    
+    intervencionesSnap.forEach(intDoc => {
+        const interv = intDoc.data();
         
-        for (const personaDoc of personasSnap.docs) {
-            const intervencionesRef = collection(db, "albergues", albergueId, "personas", personaDoc.id, "intervenciones");
-            const intervencionesSnap = await getDocs(intervencionesRef);
+        if (interv.tipo !== 'Entregas') return;
+        
+        const fechaInterv = interv.fecha.toDate();
+        
+        if (!todasFechas) {
+            const inicio = new Date(fechaInicio);
+            const fin = new Date(fechaFin);
+            fin.setHours(23, 59, 59);
             
-            intervencionesSnap.forEach(intDoc => {
-                const interv = intDoc.data();
-                
-                if (interv.tipo !== 'Entregas') return;
-                
-                const fechaInterv = interv.fecha.toDate();
-                
-                if (!todasFechas) {
-                    const inicio = new Date(fechaInicio);
-                    const fin = new Date(fechaFin);
-                    fin.setHours(23, 59, 59);
-                    
-                    if (fechaInterv < inicio || fechaInterv > fin) return;
-                }
-                
-                personasAtendidas.add(personaDoc.id);
-                
-                const subtipo = interv.subtipo || 'Sin especificar';
-                tiposEntrega[subtipo] = (tiposEntrega[subtipo] || 0) + 1;
-                
-                const personaData = personaDoc.data();
-                todasEntregas.push({
-                    ...interv,
-                    personaNombre: personaData.nombre + ' ' + (personaData.ap1 || ''),
-                    personaDoc: personaData.docNum || 'S/D',
-                    telefono: personaData.telefono || 'Sin teléfono',
-                    fecha: fechaInterv
-                });
-            });
+            if (fechaInterv < inicio || fechaInterv > fin) return;
         }
         
-        todasEntregas.sort((a, b) => b.fecha - a.fecha);
+        personasAtendidas.add(personaDoc.id);
+        
+        const subtipo = interv.subtipo || 'Sin especificar';
+        tiposEntrega[subtipo] = (tiposEntrega[subtipo] || 0) + 1;
+        
+        // ⭐ NUEVO: Extraer y contar materiales específicos del campo datosEstructurados
+        if (interv.datosEstructurados) {
+            const datos = interv.datosEstructurados;
+            
+            // Analizar según el tipo de entrega
+            if (subtipo === 'Entrega de Kit de Higiene') {
+                if (datos.contenido_kit) {
+                    // contenido_kit es una cadena separada por comas
+                    const items = datos.contenido_kit.split(',').map(item => item.trim());
+                    items.forEach(item => {
+                        materialesEntregados[item] = (materialesEntregados[item] || 0) + 1;
+                    });
+                }
+                if (datos.cantidad_kit) {
+                    const cantidad = parseInt(datos.cantidad_kit) || 1;
+                    materialesEntregados['Kit de Higiene (unidades)'] = (materialesEntregados['Kit de Higiene (unidades)'] || 0) + cantidad;
+                }
+            } else if (subtipo === 'Entrega de Ropa / Calzado') {
+                if (datos.tipo_ropa) {
+                    const items = datos.tipo_ropa.split(',').map(item => item.trim());
+                    items.forEach(item => {
+                        materialesEntregados[item] = (materialesEntregados[item] || 0) + 1;
+                    });
+                }
+            } else if (subtipo === 'Entrega de Manta / Abrigo') {
+                if (datos.tipo_manta) {
+                    const cantidad = parseInt(datos.cantidad_manta) || 1;
+                    materialesEntregados[datos.tipo_manta] = (materialesEntregados[datos.tipo_manta] || 0) + cantidad;
+                }
+            } else if (subtipo === 'Entrega de Alimentos (Biberones, específicos...)') {
+                if (datos.tipo_alimento) {
+                    const items = datos.tipo_alimento.split(',').map(item => item.trim());
+                    items.forEach(item => {
+                        materialesEntregados[item] = (materialesEntregados[item] || 0) + 1;
+                    });
+                }
+            } else if (subtipo === 'Entrega de Juguetes / Material Infantil') {
+                if (datos.tipo_juguete) {
+                    const cantidad = parseInt(datos.cantidad_juguetes) || 1;
+                    materialesEntregados[datos.tipo_juguete] = (materialesEntregados[datos.tipo_juguete] || 0) + cantidad;
+                }
+            } else if (subtipo === 'Otros') {
+                if (datos.descripcion_otros_ent) {
+                    const cantidad = parseInt(datos.cantidad_otros_ent) || 1;
+                    materialesEntregados[datos.descripcion_otros_ent] = (materialesEntregados[datos.descripcion_otros_ent] || 0) + cantidad;
+                }
+            }
+        }
+        
+        const personaData = personaDoc.data();
+        todasEntregas.push({
+            ...interv,
+            personaNombre: personaData.nombre + ' ' + (personaData.ap1 || ''),
+            personaDoc: personaData.docNum || 'S/D',
+            telefono: personaData.telefono || 'Sin teléfono',
+            fecha: fechaInterv
+        });
+    });
+}
+
+todasEntregas.sort((a, b) => b.fecha - a.fecha);
         
         // Agrupar entregas por persona
         let personasConEntregas = {};

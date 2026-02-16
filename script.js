@@ -1076,24 +1076,71 @@ window.cargarAlberguesActivos = function() {
         c.innerHTML="";
         s.forEach(async d=>{
             const alb = d.data();
-            // NUEVO: Filtrar archivados
+            // Filtrar archivados
             if (alb.archivado === true) {
-                return; // Saltar este albergue
+                return;
             }
+            
             const div = document.createElement('div');
             div.className="mto-card";
-            div.innerHTML=`<h3>${alb.nombre}</h3><p id="counter-${d.id}" style="font-weight:bold;color:var(--primary);margin:10px 0;">Cargando...</p><div class="mto-info">Entrar</div>`;
+            div.innerHTML=`
+                <h3>${alb.nombre}</h3>
+                <div id="counter-${d.id}" style="margin:10px 0;">
+                    <p style="font-weight:bold;color:var(--primary);margin:5px 0;">Cargando...</p>
+                </div>
+                <div class="mto-info">Entrar</div>
+            `;
             div.onclick=()=>window.cargarDatosYEntrar(d.id);
             c.appendChild(div);
-            const qCount = query(collection(db, "albergues", d.id, "personas"), where("estado", "==", "ingresado"));
-            const snap = await getDocs(qCount);
-            const count = snap.size;
+            
+            // Obtener TODAS las personas del albergue
+            const personasSnap = await getDocs(collection(db, "albergues", d.id, "personas"));
+            
+            let totalIngresados = 0;
+            let personasDentro = 0;
+            let personasFuera = 0;
+            
+            personasSnap.forEach(personaDoc => {
+                const persona = personaDoc.data();
+                
+                // Solo contar personas ingresadas
+                if (persona.estado === 'ingresado') {
+                    totalIngresados++;
+                    
+                    // Verificar presencia (dentro/fuera)
+                    const presencia = persona.presencia || 'dentro';
+                    if (presencia === 'fuera') {
+                        personasFuera++;
+                    } else {
+                        personasDentro++;
+                    }
+                }
+            });
+            
             const cap = alb.capacidad || 0;
             const elCounter = document.getElementById(`counter-${d.id}`);
-            if(elCounter) elCounter.innerText = `Ocupación: ${count} / ${cap}`;
+            
+            if(elCounter) {
+                elCounter.innerHTML = `
+                    <p style="font-weight:bold;color:var(--primary);margin:5px 0;">
+                        Total albergadas: ${totalIngresados} / ${cap}
+                    </p>
+                    <div style="display:flex; gap:15px; justify-content:center; font-size:0.9rem; margin-top:8px;">
+                        <div style="display:flex; align-items:center; gap:5px;">
+                            <i class="fa-solid fa-circle" style="color:#10b981; font-size:0.7rem;"></i>
+                            <span style="color:#10b981; font-weight:600;">Dentro: ${personasDentro}</span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:5px;">
+                            <i class="fa-solid fa-circle" style="color:#ef4444; font-size:0.7rem;"></i>
+                            <span style="color:#ef4444; font-weight:600;">Fuera: ${personasFuera}</span>
+                        </div>
+                    </div>
+                `;
+            }
         });
     });
 };
+
 window.cargarAlberguesMantenimiento = async function() {
     window.sysLog("Cargando albergues para mantenimiento", "info");
     

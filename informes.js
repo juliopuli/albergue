@@ -115,7 +115,21 @@ function mostrarDashboard() {
             
             <div class="informes-menu">
                 <h2><i class="fa-solid fa-folder-open"></i> Informes Detallados</h2>
-                
+             <div class="informe-category">
+                    <div class="category-header" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                        <i class="fa-solid fa-building"></i>
+                        <span>GESTIÓN DE ALBERGUE</span>
+                    </div>
+                    <div class="category-options">
+                        <button onclick="abrirInformeGestionAlbergue()" class="btn-informe-option">
+                            <i class="fa-solid fa-chart-line"></i>
+                            <div>
+                                <strong>Informe de Gestión</strong>
+                                <small>Ocupación, demografía y listado completo</small>
+                            </div>
+                        </button>
+                    </div>
+                </div>   
                 <div class="informe-category">
                     <div class="category-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                         <i class="fa-solid fa-briefcase-medical"></i>

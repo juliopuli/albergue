@@ -904,7 +904,75 @@ todasEntregas.sort((a, b) => b.fecha - a.fecha);
         html += `
                     </div>
                 </div>
-                
+                <div style="background:white; padding:20px; border-radius:8px; margin-bottom:20px;">
+                    <h3 style="color:#10b981; margin-top:0;">
+                        <i class="fa-solid fa-box-open"></i> Materiales Entregados (Detalle)
+                    </h3>
+                    <div style="display:grid; gap:10px;">
+        `;
+        
+        if (Object.keys(materialesEntregados).length > 0) {
+            const materialesOrdenados = Object.entries(materialesEntregados).sort((a, b) => b[1] - a[1]);
+            
+            materialesOrdenados.forEach(([material, cantidad]) => {
+                html += `
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:#f0fdf4; border-radius:6px; border-left:4px solid #10b981;">
+                        <span style="font-weight:500; color:#166534;">
+                            <i class="fa-solid fa-check-circle" style="margin-right:8px; color:#10b981;"></i>${material}
+                        </span>
+                        <span style="background:#10b981; color:white; padding:4px 12px; border-radius:20px; font-weight:600; min-width:50px; text-align:center;">
+                            ${cantidad}
+                        </span>
+                    </div>
+                `;
+            });
+        } else {
+            html += '<p style="text-align:center; color:#999;">No hay datos detallados de materiales</p>';
+        }
+        
+        html += `
+                    </div>
+                </div>
+```
+
+---
+
+## **Resultado visual:**
+
+Antes tenías:
+```
+┌─────────────────────────────┐
+│  Entregas por Tipo          │
+│  - Kit Higiene: 45          │
+│  - Manta: 23                │
+└─────────────────────────────┘
+
+┌─────────────────────────────┐
+│  Detalle por Persona        │
+│  Tabla con personas...      │
+└─────────────────────────────┘
+```
+
+Después tendrás:
+```
+┌─────────────────────────────┐
+│  Entregas por Tipo          │
+│  - Kit Higiene: 45          │
+│  - Manta: 23                │
+└─────────────────────────────┘
+
+┌─────────────────────────────┐  👈 NUEVO
+│  Materiales Entregados      │
+│  ✓ Jabón: 120               │
+│  ✓ Champú: 85               │
+│  ✓ Manta: 23                │
+│  ✓ Pasta dientes: 95        │
+└─────────────────────────────┘
+
+┌─────────────────────────────┐
+│  Detalle por Persona        │
+│  Tabla con personas...      │
+└─────────────────────────────┘
                 <div style="background:white; padding:20px; border-radius:8px;">
                     <h3 style="color:#4f46e5; margin-top:0;">Detalle de Entregas por Persona</h3>
                     <div style="max-height:500px; overflow-y:auto;">

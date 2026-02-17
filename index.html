@@ -5,9 +5,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gestión Albergue - V.5.0.10</title>
+    <title>Gestión Albergue - V.5.1.0</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css?v=5.0.10">
+    <link rel="stylesheet" href="style.css?v=5.1.0">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -15,7 +15,7 @@
 
 <body>
 
-    <div class="version-tag">V.5.0.10</div>
+    <div class="version-tag">V.5.1.0</div>
 
     <div id="toast" style="visibility: hidden;">Guardado automático</div>
     <div id="loading-overlay" class="hidden">
@@ -1229,6 +1229,71 @@
     </script>
 
     <script type="module" src="script.js?v=5.0.5"></script>
+
+    <!-- Modal Duplicados -->
+    <div id="modal-duplicados" class="modal-overlay hidden"
+        onclick="if(event.target===this)this.classList.add('hidden')">
+        <div class="modal-content modern-modal" style="max-width: 600px;">
+            <span class="close-modal"
+                onclick="document.getElementById('modal-duplicados').classList.add('hidden')">&times;</span>
+
+            <div class="modal-header-fixed">
+                <h3 style="color: var(--warning); display: flex; align-items: center; gap: 10px;">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    ⚠️ Duplicado Detectado
+                </h3>
+            </div>
+
+            <div class="modal-scroll-wrapper">
+                <div class="alert-warning"
+                    style="margin-bottom: 20px; padding: 15px; background: #fff3cd; border-left: 4px solid var(--warning); border-radius: 8px;">
+                    <p style="margin: 0; color: #856404;">
+                        <strong>Ya existe una persona con este número de documento en el albergue.</strong>
+                    </p>
+                </div>
+
+                <div id="duplicados-info" style="margin-bottom: 20px;">
+                    <!-- Se llenará dinámicamente -->
+                </div>
+
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <h4 style="margin-top: 0;">¿Qué deseas hacer?</h4>
+
+                    <button onclick="window.corregirDocumentoDuplicado()" class="btn-option"
+                        style="width: 100%; margin-bottom: 10px; padding: 15px; text-align: left; background: white; border: 2px solid #dee2e6; border-radius: 8px; cursor: pointer;">
+                        <i class="fa-solid fa-pen-to-square" style="color: var(--primary);"></i>
+                        <strong>Corregir Documento</strong>
+                        <br>
+                        <small style="color: #666;">El documento de la persona en pre-filiación es incorrecto.
+                            Corregirlo antes de ingresar.</small>
+                    </button>
+
+                    <button onclick="window.verPersonaDuplicada()" class="btn-option"
+                        style="width: 100%; margin-bottom: 10px; padding: 15px; text-align: left; background: white; border: 2px solid #dee2e6; border-radius: 8px; cursor: pointer;">
+                        <i class="fa-solid fa-eye" style="color: var(--info);"></i>
+                        <strong>Ver Persona Existente</strong>
+                        <br>
+                        <small style="color: #666;">Es la misma persona. Ver su ficha actual en el albergue.</small>
+                    </button>
+
+                    <button onclick="window.ingresarIgnorandoDuplicado()" class="btn-option"
+                        style="width: 100%; padding: 15px; text-align: left; background: white; border: 2px solid #dee2e6; border-radius: 8px; cursor: pointer;">
+                        <i class="fa-solid fa-user-plus" style="color: var(--success);"></i>
+                        <strong>Ingresar de Todas Formas</strong>
+                        <br>
+                        <small style="color: #666;">Son personas diferentes con el mismo documento (caso
+                            excepcional).</small>
+                    </button>
+                </div>
+
+                <button onclick="document.getElementById('modal-duplicados').classList.add('hidden')"
+                    class="btn-secondary" style="width: 100%;">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+
 </body>
 
 </html>

@@ -1,5 +1,5 @@
 // ============================================
-// SISTEMA DE INFORMES V.5.0.2
+// SISTEMA DE INFORMES V.5.0.3
 // PARTE 1 de 4: Inicialización y Dashboard
 // ============================================
 
@@ -12,12 +12,24 @@ let datosCache = {
 };
 
 // ============================================
+// UTILIADES
+// ============================================
+
+function safeDate(timestamp) {
+    if (!timestamp) return null;
+    if (timestamp.toDate) return timestamp.toDate(); // Firebase Timestamp
+    if (timestamp instanceof Date) return timestamp;
+    if (typeof timestamp === 'string' || typeof timestamp === 'number') return new Date(timestamp);
+    return null;
+}
+
+// ============================================
 // INICIALIZACIÓN
 // ============================================
 
 async function inicializar() {
     try {
-        console.log('🚀 Inicializando sistema de informes V.5.0.2...');
+        console.log('🚀 Inicializando sistema de informes V.5.0.3...');
 
         if (!window.parent || !window.parent.db || !window.parent.firebaseModules) {
             console.error('❌ No se puede acceder a Firebase desde la ventana padre');
@@ -2384,4 +2396,4 @@ async function generarInformeGestionAlbergue() {
         resultado.innerHTML = `<div class="error-message"><i class="fa-solid fa-circle-exclamation"></i> Error: ${e.message}</div>`;
     }
 }
-console.log('✅ Sistema de Informes V.5.0.2 cargado correctamente');
+console.log('✅ Sistema de Informes V.5.0.3 cargado correctamente');

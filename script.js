@@ -660,7 +660,7 @@ window.toggleCajaNegra = function () {
 };
 window.limpiarCajaNegra = function () { const c = document.getElementById('black-box-content'); if (c) c.innerHTML = ""; };
 
-window.sysLog("Sistema Iniciado. V.5.0.2 (Nomenclatura Pre-Filiación)", "info");
+window.sysLog("Sistema Iniciado. V.5.0.3 (Nomenclatura Pre-Filiación)", "info");
 
 // ============================================
 // VARIABLES GLOBALES

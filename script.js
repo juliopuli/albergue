@@ -1909,7 +1909,19 @@ window.conectarListenersBackground = function (id) { if (unsubscribeAlbergueDoc)
 
 window.setupAutoSave = function () {
     const inputsFil = ['edit-nombre', 'edit-ap1', 'edit-ap2', 'edit-doc-num', 'edit-tel', 'edit-fecha'];
-    inputsFil.forEach(id => { const el = window.el(id); if (el && !el.dataset.hasAutosave) { el.addEventListener('blur', () => window.guardarCambiosPersona(true)); el.dataset.hasAutosave = "true"; if (id === 'edit-fecha') el.oninput = function () { window.formatearFecha(this); }; } });
+    inputsFil.forEach(id => {
+        const el = window.el(id);
+        if (el && !el.dataset.hasAutosave) {
+            el.addEventListener('blur', () => {
+                // Solo autoguardar si NO es pre-filiación
+                if (!personaEnGestionEsGlobal) {
+                    window.guardarCambiosPersona(true);
+                }
+            });
+            el.dataset.hasAutosave = "true";
+            if (id === 'edit-fecha') el.oninput = function () { window.formatearFecha(this); };
+        }
+    });
     const inputsPref = ['man-nombre', 'man-ap1', 'man-ap2', 'man-doc-num', 'man-tel', 'man-fecha'];
     inputsPref.forEach(id => { const el = window.el(id); if (el && !el.dataset.hasAutosave) { el.addEventListener('blur', () => { if (prefiliacionEdicionId) window.adminPrefiliarManual(true); }); el.dataset.hasAutosave = "true"; if (id === 'man-fecha') el.oninput = function () { window.formatearFecha(this); }; } });
 };

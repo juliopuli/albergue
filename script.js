@@ -2623,23 +2623,30 @@ window.rescatarDeGlobalDirecto = async function () {
     Object.assign(personaEnGestion, p);
 
     // VALIDAR DOCUMENTO: Si tiene tipo de documento, debe tener número
-    if (p.tipoDoc && p.tipoDoc !== 'NODNI') {
+    if (p.tipoDoc && p.tipoDoc !== 'MENOR') {
         if (!p.docNum || p.docNum.trim() === '') {
-            alert('❌ Debe ingresar el número de documento.\n\nSi la persona no tiene documento, selecciona "NODNI" como tipo de documento.');
+            alert('❌ Debe ingresar el número de documento.\n\nSi la persona es menor de 14 años y no tiene documento, selecciona "MENOR" como tipo de documento.');
             return;
         }
     }
 
-    // VALIDAR EDAD si es NODNI: Debe ser menor de 14 años
-    if (p.tipoDoc === 'NODNI') {
+    // VALIDAR EDAD si es MENOR: Debe ser menor de 14 años
+    if (p.tipoDoc === 'MENOR') {
         if (!p.fechaNac || p.fechaNac.trim() === '') {
-            alert('❌ Debe ingresar la fecha de nacimiento.');
+            alert('❌ Debe ingresar la fecha de nacimiento para validar la edad.');
             return;
         }
 
-        // Calcular edad
+        // Calcular edad (formato DD/MM/YYYY)
+        const parts = p.fechaNac.split('/');
+        if (parts.length !== 3) {
+            alert('❌ Formato de fecha inválido. Use DD/MM/AAAA');
+            return;
+        }
+
         const hoy = new Date();
-        const nacimiento = new Date(p.fechaNac);
+        const nacimiento = new Date(parts[2], parts[1] - 1, parts[0]); // año, mes (0-index), día
+
         let edad = hoy.getFullYear() - nacimiento.getFullYear();
         const mes = hoy.getMonth() - nacimiento.getMonth();
         if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
@@ -2647,7 +2654,7 @@ window.rescatarDeGlobalDirecto = async function () {
         }
 
         if (edad >= 14) {
-            alert('❌ Solo personas menores de 14 años pueden no tener documento.\n\nEsta persona tiene ' + edad + ' años y debe tener DNI/NIE/Pasaporte.');
+            alert('❌ La opción "MENOR" es solo para menores de 14 años.\n\nEsta persona tiene ' + edad + ' años. Debe tener DNI, NIE o Pasaporte.');
             return;
         }
     }

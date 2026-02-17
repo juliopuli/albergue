@@ -2168,10 +2168,107 @@ window.guardarCambiosPersona = async function (silent = false) {
     window.sysLog(`Actualizada persona local: ${personaEnGestion.nombre}`, "info");
 };
 window.abrirMapaGeneral = function () { modoMapaGeneral = true; window.mostrarGridCamas(); };
+
+window.validarDatosPersonaParaIngreso = function (p) {
+    if (!p) return false;
+
+    // 1. VALIDAR DOCUMENTO
+    if (p.tipoDoc && p.tipoDoc !== 'MENOR') {
+        if (!p.docNum || p.docNum.trim() === '') {
+            alert('❌ Debe ingresar el número de documento.\n\nSi la persona es menor de 14 años y no tiene documento, selecciona "MENOR" como tipo de documento.');
+            return false;
+        }
+    }
+
+    // 2. VALIDAR EDAD (MENOR)
+    if (p.tipoDoc === 'MENOR') {
+        if (!p.fechaNac || p.fechaNac.trim() === '') {
+            alert('❌ Debe ingresar la fecha de nacimiento para validar la edad.');
+            return false;
+        }
+
+        // Calcular edad (formato DD/MM/YYYY)
+        const parts = p.fechaNac.split('/');
+        if (parts.length !== 3) {
+            alert('❌ Formato de fecha inválido. Use DD/MM/AAAA');
+            return false;
+        }
+
+        const hoy = new Date();
+        const nacimiento = new Date(parts[2], parts[1] - 1, parts[0]);
+
+        let edad = hoy.getFullYear() - nacimiento.getFullYear();
+        const mes = hoy.getMonth() - nacimiento.getMonth();
+        if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
+            edad--;
+        }
+
+        if (edad >= 14) {
+            alert('❌ La opción "MENOR" es solo para menores de 14 años.\n\nEsta persona tiene ' + edad + ' años. Debe tener DNI, NIE o Pasaporte.');
+            return false;
+        }
+    }
+
+    return true;
+};
+
+
+window.validarDatosPersonaParaIngreso = function (p) {
+    if (!p) return false;
+
+    // 1. VALIDAR DOCUMENTO
+    if (p.tipoDoc && p.tipoDoc !== 'MENOR') {
+        if (!p.docNum || p.docNum.trim() === '') {
+            alert('❌ Debe ingresar el número de documento.\n\nSi la persona es menor de 14 años y no tiene documento, selecciona "MENOR" como tipo de documento.');
+            return false;
+        }
+    }
+
+    // 2. VALIDAR EDAD (MENOR)
+    if (p.tipoDoc === 'MENOR') {
+        if (!p.fechaNac || p.fechaNac.trim() === '') {
+            alert('❌ Debe ingresar la fecha de nacimiento para validar la edad.');
+            return false;
+        }
+
+        // Calcular edad (formato DD/MM/YYYY)
+        const parts = p.fechaNac.split('/');
+        if (parts.length !== 3) {
+            alert('❌ Formato de fecha inválido. Use DD/MM/AAAA');
+            return false;
+        }
+
+        const hoy = new Date();
+        const nacimiento = new Date(parts[2], parts[1] - 1, parts[0]);
+
+        let edad = hoy.getFullYear() - nacimiento.getFullYear();
+        const mes = hoy.getMonth() - nacimiento.getMonth();
+        if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
+            edad--;
+        }
+
+        if (edad >= 14) {
+            alert('❌ La opción "MENOR" es solo para menores de 14 años.\n\nEsta persona tiene ' + edad + ' años. Debe tener DNI, NIE o Pasaporte.');
+            return false;
+        }
+    }
+
+    return true;
+};
+
 window.abrirSeleccionCama = async function () {
     // Autoguardar cambios SIEMPRE antes de cualquier validación
     if (personaEnGestion) {
+        // Actualizar objeto en memoria con datos del formulario antes de guardar/validar
+        const p = window.getDatosFormulario('edit');
+        Object.assign(personaEnGestion, p);
+
         await window.guardarCambiosPersona(true); // silent = true
+    }
+
+    // VALIDAR DATOS ANTES DE ABRIR MAPA (Centralizada)
+    if (!window.validarDatosPersonaParaIngreso(personaEnGestion)) {
+        return;
     }
 
     // Si es de pre-filiación, REVALIDAR duplicados DESPUÉS de guardar
@@ -3776,4 +3873,86 @@ window.ingresarIgnorandoDuplicado = function () {
     ignorarDuplicadoUnaVez = true;
     window.seleccionarPersona(personaPrefiliacionPendiente.id, true);
     window.showToast('⚠️ Ingresando con documento duplicado', 'warning');
+};
+
+window.rescatarDeGlobalDirecto = async function () {
+    if (!personaEnGestion || !personaEnGestionEsGlobal) return;
+
+    // ACTUALIZAR datos en memoria antes de validar
+    const p = window.getDatosFormulario('edit');
+    Object.assign(personaEnGestion, p);
+
+    // VALIDAR DATOS (Centralizada)
+    if (!window.validarDatosPersonaParaIngreso(p)) {
+        return;
+    }
+
+    // VALIDAR DUPLICADOS
+    if (p.docNum && !ignorarDuplicadoUnaVez) {
+        const duplicados = window.detectarDuplicados(p.docNum);
+        if (duplicados.length > 0) {
+            // Verificar si el usuario es admin o super_admin
+            if (!currentUserData || (currentUserData.rol !== 'admin' && currentUserData.rol !== 'super_admin')) {
+                alert('⚠️ Esta persona tiene un documento duplicado.\n\nSolo los administradores pueden ingresar personas con documentos duplicados.\n\nPor favor, corrige el número de documento antes de continuar.');
+                return;
+            }
+
+            // Si es admin, mostrar alerta pero permitir continuar
+            window.mostrarAlertaDuplicados(personaEnGestion, duplicados);
+            return;
+        }
+    }
+    ignorarDuplicadoUnaVez = false;
+
+    if (!confirm(`¿Ingresar a ${personaEnGestion.nombre} (y familia) en este albergue?`)) return;
+
+    try {
+        const familia = listaGlobalPrefiliacion.filter(x => x.familiaId === personaEnGestion.familiaId);
+        const batch = writeBatch(db);
+
+        familia.forEach(m => {
+            const nuevoId = m.id; // Mantener mismo ID
+            const memberData = { ...m };
+            delete memberData.id;
+
+            memberData.estado = 'ingresado';
+            memberData.fechaIngreso = new Date();
+            memberData.albergueId = currentAlbergueId;
+            memberData.cama = null; // Se asignará después
+
+            // Añadir a albergue
+            batch.set(doc(db, "albergues", currentAlbergueId, "personas", nuevoId), memberData);
+
+            // Eliminar de pool
+            batch.delete(doc(db, "pool_prefiliacion", m.id));
+
+            // Historial
+            const logRef = collection(db, "albergues", currentAlbergueId, "personas", nuevoId, "historial");
+            batch.set(doc(logRef), {
+                fecha: new Date(),
+                usuario: currentUserData.nombre,
+                accion: "Ingreso desde Pre-Filiación",
+                detalle: `Ingreso realizado por ${currentUserData.nombre}`
+            });
+        });
+
+        await batch.commit();
+
+        window.sysLog(`Ingreso de familia ${personaEnGestion.familiaId} realizado`, "success");
+        window.showToast("Ingreso realizado. Asignando camas...");
+
+        // Actualizar UI
+        await window.cargarPersonas();
+
+        // Seleccionar la persona ingresada (ahora local)
+        window.seleccionarPersona(personaEnGestion.id, false);
+
+        // Abrir mapa de camas automáticamente
+        window.mostrarGridCamas();
+
+    } catch (e) {
+        console.error(e);
+        window.sysLog("Error ingreso pre-filiacion: " + e.message, "error");
+        alert("Error al ingresar: " + e.message);
+    }
 };

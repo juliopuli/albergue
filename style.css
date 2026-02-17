@@ -1279,6 +1279,7 @@ button.dark {
     max-height: 85vh !important;
     /* Fix "pegado" issue */
     border-radius: 20px !important;
+    padding: 35px !important;
 }
 
 .modal-header-fixed {

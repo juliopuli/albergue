@@ -660,7 +660,7 @@ window.toggleCajaNegra = function () {
 };
 window.limpiarCajaNegra = function () { const c = document.getElementById('black-box-content'); if (c) c.innerHTML = ""; };
 
-window.sysLog("Sistema Iniciado. V.5.0.1 (Nomenclatura Pre-Filiación)", "info");
+window.sysLog("Sistema Iniciado. V.5.0.2 (Nomenclatura Pre-Filiación)", "info");
 
 // ============================================
 // VARIABLES GLOBALES
@@ -2618,16 +2618,15 @@ window.limpiarDerivaciones = async function () {
 
     window.sysLog("Iniciando limpieza de derivaciones...", "warn");
     let count = 0;
+    let countRoot = 0;
 
     try {
+        // 1. Clean Subcollections (History)
         const alberguesSnap = await getDocs(collection(db, "albergues"));
-
         for (const albDoc of alberguesSnap.docs) {
             const personasSnap = await getDocs(collection(db, "albergues", albDoc.id, "personas"));
-
             for (const persDoc of personasSnap.docs) {
                 const historialSnap = await getDocs(collection(db, "albergues", albDoc.id, "personas", persDoc.id, "historial"));
-
                 for (const histDoc of historialSnap.docs) {
                     const log = histDoc.data();
                     if (log.estado === 'pendiente') {
@@ -2637,15 +2636,27 @@ window.limpiarDerivaciones = async function () {
                             fechaResolucion: new Date()
                         });
                         count++;
-                        window.sysLog(`Corregido: ${persDoc.data().nombre} (${log.accion})`, "success");
                     }
                 }
             }
         }
 
-        window.sysLog(`Limpieza finalizada. ${count} derivaciones corregidas.`, "success");
+        // 2. Clean Root Collection ( The source of the Ghost Badge!)
+        const rootDerivs = await getDocs(query(collection(db, "derivaciones"), where("estado", "==", "pendiente")));
+        const batch = writeBatch(db);
+        rootDerivs.forEach(d => {
+            batch.update(doc(db, "derivaciones", d.id), {
+                estado: 'resuelta',
+                fechaResolucion: new Date(),
+                usuarioResolucion: 'SYSTEM_CLEANER'
+            });
+            countRoot++;
+        });
+        if (countRoot > 0) await batch.commit();
+
+        window.sysLog(`Limpieza: ${count} en historial, ${countRoot} en colección raíz (GHOSTS).`, "success");
         await window.actualizarBadgeDerivaciones();
-        alert(`Se han corregido ${count} derivaciones.`);
+        alert(`Se han corregido:\n\n- ${count} en expedientes\n- ${countRoot} fantasmas de sistema`);
 
     } catch (e) {
         console.error(e);
@@ -2656,37 +2667,44 @@ window.limpiarDerivaciones = async function () {
 
 // Diagnostic Scan
 window.escanearDerivaciones = async function () {
-    window.sysLog("🔍 Iniciando escaneo profundo...", "info");
+    window.sysLog("🔍 Iniciando escaneo profundo (Historial + Raíz)...", "info");
     const permitidas = window.getDerivacionesPermitidas();
-    window.sysLog(`Rol: ${currentUserData?.rol}, Permitidas: ${JSON.stringify(permitidas)}`, "info");
 
-    let totalEncontradas = 0;
+    let totalHistorial = 0;
+    let totalRaiz = 0;
 
     try {
-        const alberguesSnap = await getDocs(collection(db, "albergues"));
+        // 1. Scan Root Collection
+        window.sysLog("--- Escaneando Colección Raíz (Fuente del Badge) ---", "info");
+        const rootDerivs = await getDocs(query(collection(db, "derivaciones"), where("estado", "==", "pendiente")));
+        rootDerivs.forEach(d => {
+            const data = d.data();
+            if (permitidas.includes(data.tipo)) {
+                window.sysLog(`👻 GHOST ROOT: ${data.nombrePaciente} (${data.tipo})`, "error");
+                totalRaiz++;
+            }
+        });
 
+        // 2. Scan Subcollections
+        const alberguesSnap = await getDocs(collection(db, "albergues"));
         for (const albDoc of alberguesSnap.docs) {
             const personasSnap = await getDocs(collection(db, "albergues", albDoc.id, "personas"));
-
             for (const persDoc of personasSnap.docs) {
                 const historialSnap = await getDocs(collection(db, "albergues", albDoc.id, "personas", persDoc.id, "historial"));
-
                 historialSnap.forEach(histDoc => {
                     const log = histDoc.data();
-                    if (log.estado === 'pendiente') {
-                        const esVisible = permitidas.includes(log.accion);
-                        window.sysLog(
-                            `[DETECTADO] Alb: ${albDoc.data().nombre} | Pers: ${persDoc.data().nombre} | ID: ${histDoc.id} | Acción: "${log.accion}" | Visible: ${esVisible}`,
-                            esVisible ? "error" : "warn"
-                        );
-                        if (esVisible) totalEncontradas++;
+                    if (log.estado === 'pendiente' && permitidas.includes(log.accion)) {
+                        totalHistorial++;
                     }
                 });
             }
         }
-        window.sysLog(`🏁 Escaneo completado. Total visibles para ti: ${totalEncontradas}`, "success");
-        if (totalEncontradas > 0) {
-            window.sysLog("💡 Usa el botón FIX DERIV. para eliminar estas entradas si son erróneas.", "info");
+
+        window.sysLog(`🏁 Escaneo completado.\nHistorial: ${totalHistorial}\nRaíz (Fantasmas): ${totalRaiz}`, "success");
+
+        if (totalRaiz > 0) {
+            window.sysLog("💡 ¡ENCONTRADO! Usa el botón FIX DERIV. para eliminar los fantasmas de la raíz.", "info");
+            alert(`¡Detectados ${totalRaiz} fantasmas en la colección raíz!\n\nUsa el botón FIX DERIV. para eliminarlos.`);
         }
     } catch (e) {
         window.sysLog("Error escaneo: " + e.message, "error");

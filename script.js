@@ -3566,6 +3566,17 @@ window.mostrarAlertaDuplicados = function (personaPrefiliacion, duplicados) {
     });
 
     infoDiv.innerHTML = html;
+
+    // Ocultar botón "Ingresar de Todas Formas" si no es admin o super_admin
+    const btnIngresar = document.getElementById('btn-ingresar-duplicado');
+    if (btnIngresar) {
+        if (currentUserData && (currentUserData.rol === 'admin' || currentUserData.rol === 'super_admin')) {
+            btnIngresar.style.display = 'block';
+        } else {
+            btnIngresar.style.display = 'none';
+        }
+    }
+
     window.safeShow('modal-duplicados');
 };
 
@@ -3588,14 +3599,19 @@ window.corregirDocumentoDuplicado = function () {
 window.verPersonaDuplicada = function () {
     window.safeHide('modal-duplicados');
 
-    if (personasDuplicadasEncontradas.length > 0) {
-        ignorarDuplicadoUnaVez = false;
-        window.seleccionarPersonaSinValidacion(personasDuplicadasEncontradas[0].id, false);
-        window.showToast('Mostrando persona existente en el albergue');
-    }
+    // Mostrar la persona de PRE-FILIACIÓN (la que estamos buscando), no la duplicada
+    ignorarDuplicadoUnaVez = false;
+    window.seleccionarPersonaSinValidacion(personaPrefiliacionPendiente.id, true);
+    window.showToast('Mostrando ficha de la persona de pre-filiación');
 };
 
 window.ingresarIgnorandoDuplicado = function () {
+    // Validar que solo admin o super_admin puedan usar esta opción
+    if (!currentUserData || (currentUserData.rol !== 'admin' && currentUserData.rol !== 'super_admin')) {
+        alert('⚠️ Solo los administradores pueden ingresar personas con documentos duplicados.\n\nPor favor, corrige el número de documento antes de continuar.');
+        return;
+    }
+
     if (!confirm('⚠️ ATENCIÓN: Vas a ingresar una persona con un documento duplicado.\n\nEsto solo debe hacerse en casos excepcionales (ej: error en el documento, personas diferentes con mismo número).\n\n¿Estás seguro?')) {
         return;
     }

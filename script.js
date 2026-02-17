@@ -2291,6 +2291,78 @@ window.abrirSeleccionCama = async function () {
     modoMapaGeneral = false;
     window.mostrarGridCamas();
 };
+window.guardarCama = async function (n) {
+    if (!personaEnGestion) return;
+
+    // 1. Detectar si es un cambio de cama
+    const camaAnterior = personaEnGestion.cama;
+    const esCambio = camaAnterior && camaAnterior !== n;
+
+    // 2. Confirmación
+    let confirmarMsg = `¿Asignar cama ${n} a ${personaEnGestion.nombre}?`;
+
+    if (esCambio) {
+        confirmarMsg = `⚠️ CAMBIO DE CAMA\n\n¿Mover a ${personaEnGestion.nombre}\nde la Cama ${camaAnterior} a la Cama ${n}?`;
+    }
+
+    if (!confirm(confirmarMsg)) return;
+
+    try {
+        const batch = writeBatch(db);
+        const albRef = doc(db, "albergues", currentAlbergueId, "personas", personaEnGestion.id);
+
+        // Datos a actualizar
+        const updateData = {
+            cama: n,
+            estado: 'ingresado',
+            fechaIngreso: personaEnGestion.fechaIngreso || new Date()
+        };
+
+        batch.update(albRef, updateData);
+
+        // Log
+        const logRef = collection(db, "albergues", currentAlbergueId, "personas", personaEnGestion.id, "historial");
+        const accion = esCambio ? "Cambio de Cama" : "Ingreso / Asignación Cama";
+        const detalle = esCambio ? `De cama ${camaAnterior} a ${n}` : `Asignada cama ${n}`;
+
+        batch.set(doc(logRef), {
+            fecha: new Date(),
+            usuario: currentUserData.nombre,
+            accion: accion,
+            detalle: detalle
+        });
+
+        await batch.commit();
+
+        // Actualizar UI local
+        personaEnGestion.cama = n;
+        personaEnGestion.estado = 'ingresado';
+
+        // Actualizar array local para reflejar cambio inmediato
+        const pIndex = listaPersonasCache.findIndex(p => p.id === personaEnGestion.id);
+        if (pIndex >= 0) {
+            listaPersonasCache[pIndex].cama = n;
+            listaPersonasCache[pIndex].estado = 'ingresado';
+        }
+
+        // Registrar en mapa de ocupación
+        if (esCambio) delete camasOcupadas[camaAnterior];
+        camasOcupadas[n] = personaEnGestion.nombre;
+
+        window.showToast("Cama asignada correctamente");
+        window.sysLog(detalle, "success");
+
+        window.cerrarMapaCamas();
+
+        // Actualizar panel de gestión
+        window.seleccionarPersona(personaEnGestion.id, false);
+
+    } catch (e) {
+        console.error(e);
+        alert("Error al guardar cama: " + e.message);
+    }
+};
+
 window.cerrarMapaCamas = function () { highlightedFamilyId = null; window.safeHide('modal-cama'); };
 window.mostrarGridCamas = function () {
     const g = window.el('grid-camas');

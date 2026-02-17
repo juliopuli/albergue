@@ -5,9 +5,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gestión Albergue - V.5.2.4</title>
+    <title>Albergues Temporales V.5.2.5</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css?v=5.2.4">
+    <link rel="stylesheet" href="style.css?v=5.2.5">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -381,7 +381,8 @@
                                 <div class="btn-group-horizontal" id="btns-local-actions">
                                     <button class="dark" onclick="window.verCarnetQR()"><i
                                             class="fa-solid fa-id-card"></i> Carnet QR</button>
-                                    <button class="primary" onclick="window.abrirSeleccionCama()">Asignar Cama</button>
+                                    <button class="primary" id="btn-asignar-cama-local"
+                                        onclick="window.abrirSeleccionCama()">Asignar Cama</button>
                                     <button class="secondary" onclick="window.guardarCambiosPersona()">Guardar
                                         Datos</button>
                                     <button class="warning" onclick="window.liberarCamaMantener()">Liberar Cama</button>

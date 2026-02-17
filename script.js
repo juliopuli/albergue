@@ -2103,6 +2103,23 @@ window.abrirSeleccionCama = async function () {
         await window.guardarCambiosPersona(true); // silent = true
     }
 
+    // Si es de pre-filiación, REVALIDAR duplicados antes de permitir asignar cama
+    if (personaEnGestion && personaEnGestionEsGlobal && personaEnGestion.docNum) {
+        const duplicados = window.detectarDuplicados(personaEnGestion.docNum);
+        if (duplicados.length > 0) {
+            // Verificar si el usuario es admin o super_admin
+            if (!currentUserData || (currentUserData.rol !== 'admin' && currentUserData.rol !== 'super_admin')) {
+                alert('⚠️ Esta persona tiene un documento duplicado.\n\nSolo los administradores pueden ingresar personas con documentos duplicados.\n\nPor favor, corrige el número de documento antes de asignar cama.');
+                return;
+            }
+
+            // Si es admin, pedir confirmación
+            if (!confirm(`⚠️ ATENCIÓN: Esta persona tiene un documento duplicado.\n\nDocumento: ${personaEnGestion.docNum}\n\n¿Deseas continuar con el ingreso de todas formas?`)) {
+                return;
+            }
+        }
+    }
+
     modoMapaGeneral = false;
     window.mostrarGridCamas();
 };

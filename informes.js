@@ -1,5 +1,5 @@
 // ============================================
-// SISTEMA DE INFORMES v3.0
+// SISTEMA DE INFORMES V.5.0.1
 // PARTE 1 de 4: Inicialización y Dashboard
 // ============================================
 
@@ -17,7 +17,7 @@ let datosCache = {
 
 async function inicializar() {
     try {
-        console.log('🚀 Inicializando sistema de informes v3.0...');
+        console.log('🚀 Inicializando sistema de informes V.5.0.1...');
 
         if (!window.parent || !window.parent.db || !window.parent.firebaseModules) {
             console.error('❌ No se puede acceder a Firebase desde la ventana padre');
@@ -2384,4 +2384,4 @@ async function generarInformeGestionAlbergue() {
         resultado.innerHTML = `<div class="error-message"><i class="fa-solid fa-circle-exclamation"></i> Error: ${e.message}</div>`;
     }
 }
-console.log('✅ Sistema de Informes v3.0 cargado correctamente');
+console.log('✅ Sistema de Informes V.5.0.1 cargado correctamente');

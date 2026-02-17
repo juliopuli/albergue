@@ -2716,6 +2716,8 @@ window.contarDerivacionesPendientes = async function () {
                     const log = histDoc.data();
                     if (log.estado === 'pendiente' && permitidas.includes(log.accion)) {
                         totalPendientes++;
+                        console.log("👻 GHOST FOUND:", albDoc.data().nombre, persDoc.data().nombre, log.accion, histDoc.id);
+                        window.sysLog(`👻 GHOST: ${persDoc.data().nombre} (${log.accion})`, "error");
                     }
                 });
             }

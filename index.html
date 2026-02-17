@@ -5,9 +5,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gestión Albergue - V.5.2.1</title>
+    <title>Gestión Albergue - V.5.2.2</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css?v=5.2.1">
+    <link rel="stylesheet" href="style.css?v=5.2.2">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -15,7 +15,7 @@
 
 <body>
 
-    <div class="version-tag">V.5.2.1</div>
+    <div class="version-tag">V.5.2.2</div>
 
     <div id="toast" style="visibility: hidden;">Guardado automático</div>
     <div id="loading-overlay" class="hidden">
@@ -396,6 +396,9 @@
                                             class="fa-solid fa-file-import"></i> IMPORTAR DESDE PRE-FILIACIÓN</button>
                                     <button class="primary" onclick="window.abrirSeleccionCama()">🛏 ASIGNAR CAMA
                                         (INGRESO AUTOMÁTICO)</button>
+                                    <button id="btn-eliminar-global" class="danger hidden"
+                                        onclick="window.eliminarPersonaGlobal()"><i class="fa-solid fa-trash"></i>
+                                        Eliminar de Base de Datos</button>
                                 </div>
                                 <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
                                 <h4>Familia</h4>

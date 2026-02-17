@@ -5,9 +5,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gestión Albergue - V.5.2.3</title>
+    <title>Gestión Albergue - V.5.2.4</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css?v=5.2.3">
+    <link rel="stylesheet" href="style.css?v=5.2.4">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -15,7 +15,7 @@
 
 <body>
 
-    <div class="version-tag">V.5.2.3</div>
+    <div class="version-tag">V.5.2.4</div>
 
     <div id="toast" style="visibility: hidden;">Guardado automático</div>
     <div id="loading-overlay" class="hidden">
@@ -390,13 +390,14 @@
                                     <button id="btn-historial-ficha" class="dark hidden"
                                         onclick="window.verHistorial()">📜 Historial</button>
                                 </div>
-                                <div class="btn-group-horizontal hidden" id="btns-cloud-actions">
-                                    <button class="success" style="width:100%; justify-content:center;"
-                                        onclick="window.rescatarDeGlobalDirecto()"><i
-                                            class="fa-solid fa-file-import"></i> IMPORTAR DESDE PRE-FILIACIÓN</button>
-                                    <button class="primary" onclick="window.abrirSeleccionCama()">🛏 ASIGNAR CAMA
-                                        (INGRESO AUTOMÁTICO)</button>
-                                    <button id="btn-eliminar-global" class="danger hidden"
+                                <div class="btn-group-horizontal hidden" id="btns-cloud-actions"
+                                    style="display:flex; gap:10px; flex-wrap:wrap;">
+                                    <button class="primary" style="flex:1;" onclick="window.abrirSeleccionCama()"><i
+                                            class="fa-solid fa-bed"></i> Incluir en Albergue y Asignar Cama</button>
+                                    <button class="success" style="flex:1;"
+                                        onclick="window.rescatarDeGlobalDirecto()"><i class="fa-solid fa-clock"></i>
+                                        Incluir en Albergue a la espera de cama</button>
+                                    <button id="btn-eliminar-global" class="danger hidden" style="flex:0 0 auto;"
                                         onclick="window.eliminarPersonaGlobal()"><i class="fa-solid fa-trash"></i>
                                         Eliminar de Base de Datos</button>
                                 </div>

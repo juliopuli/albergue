@@ -2514,6 +2514,9 @@ window.mostrarGridCamas = function () {
         }
     });
 
+    // Pre-calcular cama actual como string para comparación segura
+    const camaActual = (window.personaEnGestion && window.personaEnGestion.cama) ? window.personaEnGestion.cama.toString() : null;
+
     // 2. Generar TARJETAS de cama
     for (let i = 1; i <= totalCapacidad; i++) {
         const n = i.toString();
@@ -2531,12 +2534,13 @@ window.mostrarGridCamas = function () {
             cls += " bed-family-highlight";
         }
 
-        if (!window.modoMapaGeneral && window.personaEnGestion && window.personaEnGestion.cama === n) {
+        // FIX: Comparación segura usando camaActual (string) vs n (string)
+        if (!window.modoMapaGeneral && camaActual === n) {
             // Caso: Asignando cama (tu cama actual o destino)
             cls += " bed-current";
             statusClass = "Tu selección";
             iconHtml = '<i class="fa-solid fa-check-circle"></i>';
-            bodyHtml = `<div class="bed-occupant-name">Asignar aquí</div>`;
+            bodyHtml = `<div class="bed-occupant-name">TU CAMA</div>`; // Feedback más claro
         } else if (occName) {
             // Caso: Ocupada
             cls += " bed-busy";
@@ -2596,6 +2600,7 @@ window.mostrarGridCamas = function () {
 
         // Eventos
         d.onclick = () => {
+            console.log("Click Cama:", n, "Ocupada:", !!occ, "ModoGeneral:", window.modoMapaGeneral);
             if (occ) {
                 // Si está ocupada, toggle highlight de familia
                 if (highlightedFamilyId === occ.familiaId) highlightedFamilyId = null;
@@ -2603,6 +2608,7 @@ window.mostrarGridCamas = function () {
                 window.mostrarGridCamas();
             } else if (!window.modoMapaGeneral) {
                 // Si está libre y estamos asignando, guardar
+                console.log("Llamando a guardarCama(" + n + ")");
                 window.guardarCama(n);
             }
         };

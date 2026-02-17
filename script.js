@@ -2098,12 +2098,12 @@ window.guardarCambiosPersona = async function (silent = false) {
 };
 window.abrirMapaGeneral = function () { modoMapaGeneral = true; window.mostrarGridCamas(); };
 window.abrirSeleccionCama = async function () {
-    // Autoguardar cambios antes de asignar cama
-    if (personaEnGestion && !personaEnGestionEsGlobal) {
+    // Autoguardar cambios SIEMPRE antes de cualquier validación
+    if (personaEnGestion) {
         await window.guardarCambiosPersona(true); // silent = true
     }
 
-    // Si es de pre-filiación, REVALIDAR duplicados antes de permitir asignar cama
+    // Si es de pre-filiación, REVALIDAR duplicados DESPUÉS de guardar
     if (personaEnGestion && personaEnGestionEsGlobal && personaEnGestion.docNum) {
         const duplicados = window.detectarDuplicados(personaEnGestion.docNum);
         if (duplicados.length > 0) {
@@ -2592,6 +2592,24 @@ window.verHistorialIntervencion = function (tipo) {
 
 window.rescatarDeGlobalDirecto = async function () {
     if (!personaEnGestion || !personaEnGestionEsGlobal) return;
+
+    // VALIDAR DUPLICADOS ANTES DE IMPORTAR
+    if (personaEnGestion.docNum) {
+        const duplicados = window.detectarDuplicados(personaEnGestion.docNum);
+        if (duplicados.length > 0) {
+            // Verificar si el usuario es admin o super_admin
+            if (!currentUserData || (currentUserData.rol !== 'admin' && currentUserData.rol !== 'super_admin')) {
+                alert('⚠️ Esta persona tiene un documento duplicado.\n\nSolo los administradores pueden ingresar personas con documentos duplicados.\n\nPor favor, corrige el número de documento antes de importar.');
+                return;
+            }
+
+            // Si es admin, pedir confirmación
+            if (!confirm(`⚠️ ATENCIÓN: Esta persona tiene un documento duplicado.\n\nDocumento: ${personaEnGestion.docNum}\n\n¿Deseas continuar con el ingreso de todas formas?`)) {
+                return;
+            }
+        }
+    }
+
     if (!confirm(`¿Ingresar a ${personaEnGestion.nombre} (y familia) en este albergue?`)) return;
     try {
         const familia = listaGlobalPrefiliacion.filter(x => x.familiaId === personaEnGestion.familiaId);

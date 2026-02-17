@@ -2515,7 +2515,11 @@ window.mostrarGridCamas = function () {
     });
 
     // Pre-calcular cama actual como string para comparación segura
-    const camaActual = (window.personaEnGestion && window.personaEnGestion.cama) ? window.personaEnGestion.cama.toString() : null;
+    let camaActual = null;
+    if (window.personaEnGestion && window.personaEnGestion.cama) {
+        camaActual = window.personaEnGestion.cama.toString();
+    }
+    console.log("DEBUG: Renderizando CAMAS. Cama Actual Usuario:", camaActual);
 
     // 2. Generar TARJETAS de cama
     for (let i = 1; i <= totalCapacidad; i++) {
@@ -4010,6 +4014,6 @@ window.rescatarDeGlobalDirecto = async function () {
 
 // DEBUG: Confirmación de carga
 setTimeout(() => {
-    if (window.showToast) window.showToast("DEBUG: V.5.2.7 LOADED OK");
+    if (window.showToast) window.showToast("DEBUG: V.5.2.8 LOADED OK");
     console.log("DEBUG: V.5.2.6 LOADED OK");
 }, 2000);

@@ -1268,6 +1268,56 @@ button.dark {
     z-index: 9500 !important;
 }
 
+
+
+/* BED MODAL SPECIFIC LAYOUT */
+.video-modal-layout {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden !important;
+    /* Override global auto */
+    max-height: 85vh !important;
+    /* Fix "pegado" issue */
+    border-radius: 20px !important;
+}
+
+.modal-header-fixed {
+    flex-shrink: 0;
+    margin-bottom: 10px;
+}
+
+.modal-scroll-wrapper {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 5px;
+    margin-right: -5px;
+    /* Pull scrollbar to edge if needed, or keep inside */
+}
+
+/* Custom Scrollbar for the bed modal */
+.modal-scroll-wrapper::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modal-scroll-wrapper::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.modal-scroll-wrapper::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+}
+
+.modal-scroll-wrapper::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(0, 0, 0, 0.4);
+}
+
+#modal-historial {
+    z-index: 9500 !important;
+}
+
 #modal-historial .modal-content {
     border: 6px solid var(--primary) !important;
 }

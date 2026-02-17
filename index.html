@@ -5,9 +5,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gestión Albergue - V.5.0.5</title>
+    <title>Gestión Albergue - V.5.0.6</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css?v=5.0.5">
+    <link rel="stylesheet" href="style.css?v=5.0.6">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -15,7 +15,7 @@
 
 <body>
 
-    <div class="version-tag">V.5.0.5</div>
+    <div class="version-tag">V.5.0.6</div>
 
     <div id="toast" style="visibility: hidden;">Guardado automático</div>
     <div id="loading-overlay" class="hidden">
@@ -654,10 +654,15 @@
     </div>
 
     <div id="modal-cama" class="modal-overlay hidden" onclick="if(event.target===this)window.cerrarMapaCamas()">
-        <div class="modal-content modal-lg"><span class="close-modal" onclick="window.cerrarMapaCamas()">&times;</span>
-            <h3>Seleccionar Cama</h3>
-            <p style="font-size:0.8rem;color:#666;">Verde Borde=Sugerencia | Naranja=Reserva Familia</p>
-            <div id="grid-camas" class="bed-grid"></div>
+        <div class="modal-content modal-lg video-modal-layout">
+            <span class="close-modal" onclick="window.cerrarMapaCamas()">&times;</span>
+            <div class="modal-header-fixed">
+                <h3>Seleccionar Cama</h3>
+                <p style="font-size:0.8rem;color:#666;">Verde Borde=Sugerencia | Naranja=Reserva Familia</p>
+            </div>
+            <div class="modal-scroll-wrapper">
+                <div id="grid-camas" class="bed-grid"></div>
+            </div>
         </div>
     </div>
 

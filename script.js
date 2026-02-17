@@ -2622,7 +2622,17 @@ window.rescatarDeGlobalDirecto = async function () {
     const p = window.getDatosFormulario('edit');
     Object.assign(personaEnGestion, p);
 
-    // VALIDAR DUPLICADOS DESPUÉS de actualizar
+    // VALIDAR DOCUMENTO (igual que en guardarCambiosPersona)
+    if (!validarDocumento(p.tipoDoc, p.docNum)) {
+        return;
+    }
+
+    // VALIDAR EDAD si es NODNI (igual que en guardarCambiosPersona)
+    if (!validarEdadNODNI(p.tipoDoc, p.fechaNac)) {
+        return;
+    }
+
+    // VALIDAR DUPLICADOS DESPUÉS de actualizar y validar documento
     if (personaEnGestion.docNum) {
         const duplicados = window.detectarDuplicados(personaEnGestion.docNum);
         if (duplicados.length > 0) {

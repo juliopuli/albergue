@@ -2097,7 +2097,15 @@ window.guardarCambiosPersona = async function (silent = false) {
     window.sysLog(`Actualizada persona local: ${personaEnGestion.nombre}`, "info");
 };
 window.abrirMapaGeneral = function () { modoMapaGeneral = true; window.mostrarGridCamas(); };
-window.abrirSeleccionCama = function () { modoMapaGeneral = false; window.mostrarGridCamas(); };
+window.abrirSeleccionCama = async function () {
+    // Autoguardar cambios antes de asignar cama
+    if (personaEnGestion && !personaEnGestionEsGlobal) {
+        await window.guardarCambiosPersona(true); // silent = true
+    }
+
+    modoMapaGeneral = false;
+    window.mostrarGridCamas();
+};
 window.cerrarMapaCamas = function () { highlightedFamilyId = null; window.safeHide('modal-cama'); };
 window.mostrarGridCamas = function () {
     const g = window.el('grid-camas');
@@ -3583,8 +3591,9 @@ window.mostrarAlertaDuplicados = function (personaPrefiliacion, duplicados) {
 window.corregirDocumentoDuplicado = function () {
     window.safeHide('modal-duplicados');
 
-    ignorarDuplicadoUnaVez = false;
-    window.seleccionarPersonaSinValidacion(personaPrefiliacionPendiente.id, true);
+    // Activar flag ANTES de llamar a seleccionarPersona
+    ignorarDuplicadoUnaVez = true;
+    window.seleccionarPersona(personaPrefiliacionPendiente.id, true);
 
     setTimeout(() => {
         const docInput = document.getElementById('edit-doc-num');
@@ -3599,9 +3608,9 @@ window.corregirDocumentoDuplicado = function () {
 window.verPersonaDuplicada = function () {
     window.safeHide('modal-duplicados');
 
-    // Mostrar la persona de PRE-FILIACIÓN (la que estamos buscando), no la duplicada
-    ignorarDuplicadoUnaVez = false;
-    window.seleccionarPersonaSinValidacion(personaPrefiliacionPendiente.id, true);
+    // Activar flag ANTES de llamar a seleccionarPersona
+    ignorarDuplicadoUnaVez = true;
+    window.seleccionarPersona(personaPrefiliacionPendiente.id, true);
     window.showToast('Mostrando ficha de la persona de pre-filiación');
 };
 
@@ -3618,11 +3627,6 @@ window.ingresarIgnorandoDuplicado = function () {
 
     window.safeHide('modal-duplicados');
     ignorarDuplicadoUnaVez = true;
-    window.seleccionarPersonaSinValidacion(personaPrefiliacionPendiente.id, true);
+    window.seleccionarPersona(personaPrefiliacionPendiente.id, true);
     window.showToast('⚠️ Ingresando con documento duplicado', 'warning');
-};
-
-window.seleccionarPersonaSinValidacion = function (pid, isGlobal) {
-    const originalFunc = window.seleccionarPersona;
-    window.seleccionarPersona(pid, isGlobal);
 };

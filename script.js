@@ -2088,6 +2088,19 @@ window.guardarCambiosPersona = async function (silent = false) {
         }
     }
 
+    // Si es de PRE-FILIACIÓN, solo actualizar el objeto en memoria
+    if (personaEnGestionEsGlobal) {
+        // Actualizar el objeto en la lista global
+        Object.assign(personaEnGestion, p);
+
+        if (!silent) alert("Guardado en memoria (Pre-Filiación)");
+        else window.showToast("Datos actualizados");
+
+        window.sysLog(`Actualizada persona de pre-filiación en memoria: ${personaEnGestion.nombre}`, "info");
+        return;
+    }
+
+    // Si es persona LOCAL del albergue, guardar en Firestore
     await updateDoc(doc(db, "albergues", currentAlbergueId, "personas", personaEnGestion.id), p);
     window.registrarLog(personaEnGestion.id, "Edición Datos", "Manual");
 

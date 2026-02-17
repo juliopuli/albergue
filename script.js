@@ -4146,6 +4146,6 @@ window.rescatarDeGlobalDirecto = async function () {
 
 // DEBUG: Confirmación de carga
 setTimeout(() => {
-    if (window.showToast) window.showToast("DEBUG: V.5.2.5 LOADED OK");
-    console.log("DEBUG: V.5.2.5 LOADED OK");
+    if (window.showToast) window.showToast("DEBUG: V.5.2.6 LOADED OK");
+    console.log("DEBUG: V.5.2.6 LOADED OK");
 }, 2000);

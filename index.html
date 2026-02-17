@@ -597,7 +597,7 @@
     </div>
 
     <div id="modal-qr" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
-        <div class="modal-content modern-modal" style="text-align:center; max-width: 315px;">
+        <div class="modal-content modern-modal" style="text-align:center; max-width: 400px;">
             <span class="close-modal"
                 onclick="document.getElementById('modal-qr').classList.add('hidden')">&times;</span>
             <div class="modal-header-fixed">
@@ -607,7 +607,8 @@
                 <div id="qrcode-display"
                     style="display:inline-block; margin:20px; border:4px solid var(--text-main); padding:10px; border-radius:10px;">
                 </div>
-                <p id="qr-modal-url" style="color:#666;">Auto-registro móvil.</p>
+                <p id="qr-modal-url" style="color:#666; word-break: break-all; padding: 0 10px;">Auto-registro móvil.
+                </p>
             </div>
         </div>
     </div>

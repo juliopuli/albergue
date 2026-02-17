@@ -2618,7 +2618,11 @@ window.verHistorialIntervencion = function (tipo) {
 window.rescatarDeGlobalDirecto = async function () {
     if (!personaEnGestion || !personaEnGestionEsGlobal) return;
 
-    // VALIDAR DUPLICADOS ANTES DE IMPORTAR
+    // ACTUALIZAR datos en memoria antes de validar
+    const p = window.getDatosFormulario('edit');
+    Object.assign(personaEnGestion, p);
+
+    // VALIDAR DUPLICADOS DESPUÉS de actualizar
     if (personaEnGestion.docNum) {
         const duplicados = window.detectarDuplicados(personaEnGestion.docNum);
         if (duplicados.length > 0) {

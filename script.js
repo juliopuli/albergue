@@ -2622,14 +2622,34 @@ window.rescatarDeGlobalDirecto = async function () {
     const p = window.getDatosFormulario('edit');
     Object.assign(personaEnGestion, p);
 
-    // VALIDAR DOCUMENTO (igual que en guardarCambiosPersona)
-    if (!validarDocumento(p.tipoDoc, p.docNum)) {
-        return;
+    // VALIDAR DOCUMENTO: Si tiene tipo de documento, debe tener número
+    if (p.tipoDoc && p.tipoDoc !== 'NODNI') {
+        if (!p.docNum || p.docNum.trim() === '') {
+            alert('❌ Debe ingresar el número de documento.\n\nSi la persona no tiene documento, selecciona "NODNI" como tipo de documento.');
+            return;
+        }
     }
 
-    // VALIDAR EDAD si es NODNI (igual que en guardarCambiosPersona)
-    if (!validarEdadNODNI(p.tipoDoc, p.fechaNac)) {
-        return;
+    // VALIDAR EDAD si es NODNI: Debe ser menor de 14 años
+    if (p.tipoDoc === 'NODNI') {
+        if (!p.fechaNac || p.fechaNac.trim() === '') {
+            alert('❌ Debe ingresar la fecha de nacimiento.');
+            return;
+        }
+
+        // Calcular edad
+        const hoy = new Date();
+        const nacimiento = new Date(p.fechaNac);
+        let edad = hoy.getFullYear() - nacimiento.getFullYear();
+        const mes = hoy.getMonth() - nacimiento.getMonth();
+        if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
+            edad--;
+        }
+
+        if (edad >= 14) {
+            alert('❌ Solo personas menores de 14 años pueden no tener documento.\n\nEsta persona tiene ' + edad + ' años y debe tener DNI/NIE/Pasaporte.');
+            return;
+        }
     }
 
     // VALIDAR DUPLICADOS DESPUÉS de actualizar y validar documento

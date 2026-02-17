@@ -2127,7 +2127,115 @@ window.eliminarPersonaGlobal = async function () {
 };
 
 window.buscarPersonaEnAlbergue = function () { const txt = window.safeVal('buscador-persona').toLowerCase().trim(); const res = window.el('resultados-busqueda'); if (txt.length < 2) { window.safeHide('resultados-busqueda'); return; } const localHits = listaPersonasCache.filter(p => { if (p.estado === 'salida') return false; const full = `${p.nombre} ${p.ap1 || ''} ${p.ap2 || ''}`.toLowerCase(); return full.includes(txt) || (p.docNum || "").toLowerCase().includes(txt); }); const globalHits = listaGlobalPrefiliacion.filter(p => { const full = `${p.nombre} ${p.ap1 || ''} ${p.ap2 || ''}`.toLowerCase(); return full.includes(txt) || (p.docNum || "").toLowerCase().includes(txt); }); res.innerHTML = ""; if (localHits.length === 0 && globalHits.length === 0) { res.innerHTML = `<div class="search-item" style="color:#666">No encontrado</div>`; } else { localHits.forEach(p => { const dc = p.estado === 'ingresado' ? 'dot-green' : 'dot-red'; res.innerHTML += `<div class="search-item" onclick="window.seleccionarPersona('${p.id}', false)"><div style="display:flex;justify-content:space-between;width:100%;align-items:center;"><div><strong>${p.nombre} ${p.ap1 || ''}</strong> (Local)<div style="font-size:0.8rem;color:#666;">📄 ${p.docNum || '-'}</div></div><div class="status-dot ${dc}" title="${p.estado.toUpperCase()}"></div></div></div>`; }); globalHits.forEach(p => { res.innerHTML += `<div class="search-item" onclick="window.seleccionarPersona('${p.id}', true)"><div style="display:flex;justify-content:space-between;width:100%;align-items:center;"><div><strong>${p.nombre} ${p.ap1 || ''}</strong> (Pre-Filiación)<div style="font-size:0.8rem;color:#666;">📋 ${p.docNum || '-'}</div></div><div class="status-dot dot-cloud" title="EN PRE-FILIACIÓN"></div></div></div>`; }); } window.safeShow('resultados-busqueda'); };
-window.seleccionarPersona = function (pid, isGlobal) { if (typeof pid !== 'string') pid = pid.id; let p; if (isGlobal) { p = listaGlobalPrefiliacion.find(x => x.id === pid); personaEnGestionEsGlobal = true; window.safeShow('banner-prefiliacion'); window.safeHide('btns-local-actions'); window.safeShow('btns-cloud-actions'); if (currentUserData && (currentUserData.rol === 'admin' || currentUserData.rol === 'super_admin')) { window.safeShow('btn-eliminar-global'); } else { window.safeHide('btn-eliminar-global'); } } else { p = listaPersonasCache.find(x => x.id === pid); personaEnGestionEsGlobal = false; window.safeHide('banner-prefiliacion'); window.safeShow('btns-local-actions'); window.safeHide('btns-cloud-actions'); } if (!p) return; if (isGlobal && p.docNum && !ignorarDuplicadoUnaVez) { const duplicados = window.detectarDuplicados(p.docNum); if (duplicados.length > 0) { window.mostrarAlertaDuplicados(p, duplicados); return; } } ignorarDuplicadoUnaVez = false; personaEnGestion = p; prefiliacionEdicionId = p.id; isGlobalEdit = isGlobal; window.safeHide('resultados-busqueda'); window.safeShow('panel-gestion-persona'); if (window.el('gestion-nombre-titulo')) window.el('gestion-nombre-titulo').innerText = p.nombre; if (window.el('gestion-estado')) window.el('gestion-estado').innerText = isGlobal ? "EN PRE-FILIACIÓN" : p.estado.toUpperCase(); if (window.el('gestion-cama-info')) window.el('gestion-cama-info').innerText = (p.cama && !isGlobal) ? `Cama: ${p.cama}` : ""; window.setVal('edit-nombre', p.nombre); window.setVal('edit-ap1', p.ap1); window.setVal('edit-ap2', p.ap2); window.setVal('edit-tipo-doc', p.tipoDoc); window.setVal('edit-doc-num', p.docNum); window.setVal('edit-fecha', p.fechaNac); window.setVal('edit-tel', p.telefono); const intolSelectEdit = document.getElementById('edit-tiene-intolerancia'); if (intolSelectEdit) { intolSelectEdit.value = p.tieneIntolerancia ? 'si' : 'no'; intolSelectEdit.dispatchEvent(new Event('change')); } const intolDetalleEdit = document.getElementById('edit-intolerancia-detalle'); if (intolDetalleEdit && p.tieneIntolerancia) { intolDetalleEdit.value = p.intoleranciaDetalle || ''; } const noLocCheckboxEdit = document.getElementById('edit-no-localizacion'); if (noLocCheckboxEdit) { noLocCheckboxEdit.checked = p.noLocalizacion || false; } const flist = window.el('info-familia-lista'); flist.innerHTML = ""; let fam = []; if (isGlobal) { fam = listaGlobalPrefiliacion.filter(x => x.familiaId === p.familiaId); } else { fam = listaPersonasCache.filter(x => x.familiaId === p.familiaId); } if (window.el('info-familia-resumen')) window.el('info-familia-resumen').innerText = fam.length > 1 ? `Familia (${fam.length})` : "Individual"; fam.forEach(f => { if (f.id !== p.id) { const hasBed = f.estado === 'ingresado' && f.cama; const st = hasBed ? 'color:var(--success);' : 'color:var(--warning);'; const ic = hasBed ? 'fa-solid fa-bed' : 'fa-solid fa-clock'; flist.innerHTML += `<div style="padding:10px;border-border:1px solid #eee;cursor:pointer;display:flex;justify-content:space-between;align-items:center;" onclick="window.seleccionarPersona('${f.id}', ${isGlobal})"><div><div style="font-weight:bold;font-size:0.95rem;">${f.nombre} ${f.ap1 || ''}</div><div style="font-size:0.85rem;color:#666;"><i class="fa-regular fa-id-card"></i> ${f.docNum || '-'}</div></div><div style="font-size:1.2rem;${st}"><i class="${ic}"></i></div></div>`; } }); if (!isGlobal) window.setupAutoSave(); };
+window.seleccionarPersona = function (pid, isGlobal) {
+    if (typeof pid !== 'string') pid = pid.id;
+    console.log("DEBUG: seleccionarPersona called", pid, isGlobal);
+    let p;
+    if (isGlobal) {
+        p = listaGlobalPrefiliacion.find(x => x.id === pid);
+        personaEnGestionEsGlobal = true;
+        window.safeShow('banner-prefiliacion');
+        window.safeHide('btns-local-actions');
+        window.safeShow('btns-cloud-actions');
+        if (currentUserData && (currentUserData.rol === 'admin' || currentUserData.rol === 'super_admin')) {
+            window.safeShow('btn-eliminar-global');
+        } else {
+            window.safeHide('btn-eliminar-global');
+        }
+    } else {
+        p = listaPersonasCache.find(x => x.id === pid);
+        personaEnGestionEsGlobal = false;
+        window.safeHide('banner-prefiliacion');
+        window.safeShow('btns-local-actions');
+        window.safeHide('btns-cloud-actions');
+
+        // DEBUG: Force button update check
+        if (p) console.log("DEBUG: Person selected (Local):", p.nombre, "Cama:", p.cama);
+    }
+
+    if (!p) {
+        console.error("DEBUG: Persona not found", pid);
+        return;
+    }
+
+    if (isGlobal && p.docNum && !ignorarDuplicadoUnaVez) {
+        const duplicados = window.detectarDuplicados(p.docNum);
+        if (duplicados.length > 0) {
+            window.mostrarAlertaDuplicados(p, duplicados);
+            return;
+        }
+    }
+    ignorarDuplicadoUnaVez = false;
+    personaEnGestion = p;
+    prefiliacionEdicionId = p.id;
+    isGlobalEdit = isGlobal;
+    window.safeHide('resultados-busqueda');
+    window.safeShow('panel-gestion-persona');
+
+    if (window.el('gestion-nombre-titulo')) window.el('gestion-nombre-titulo').innerText = p.nombre;
+    if (window.el('gestion-estado')) window.el('gestion-estado').innerText = isGlobal ? "EN PRE-FILIACIÓN" : p.estado.toUpperCase();
+    if (window.el('gestion-cama-info')) window.el('gestion-cama-info').innerText = (p.cama && !isGlobal) ? `Cama: ${p.cama}` : "";
+
+    window.setVal('edit-nombre', p.nombre);
+    window.setVal('edit-ap1', p.ap1);
+    window.setVal('edit-ap2', p.ap2);
+    window.setVal('edit-tipo-doc', p.tipoDoc);
+    window.setVal('edit-doc-num', p.docNum);
+    window.setVal('edit-fecha', p.fechaNac);
+    window.setVal('edit-tel', p.telefono);
+
+    const intolSelectEdit = document.getElementById('edit-tiene-intolerancia');
+    if (intolSelectEdit) {
+        intolSelectEdit.value = p.tieneIntolerancia ? 'si' : 'no';
+        intolSelectEdit.dispatchEvent(new Event('change'));
+    }
+    const intolDetalleEdit = document.getElementById('edit-intolerancia-detalle');
+    if (intolDetalleEdit && p.tieneIntolerancia) {
+        intolDetalleEdit.value = p.intoleranciaDetalle || '';
+    }
+    const noLocCheckboxEdit = document.getElementById('edit-no-localizacion');
+    if (noLocCheckboxEdit) {
+        noLocCheckboxEdit.checked = p.noLocalizacion || false;
+    }
+
+    const flist = window.el('info-familia-lista');
+    flist.innerHTML = "";
+    let fam = [];
+    if (isGlobal) {
+        fam = listaGlobalPrefiliacion.filter(x => x.familiaId === p.familiaId);
+    } else {
+        fam = listaPersonasCache.filter(x => x.familiaId === p.familiaId);
+    }
+    if (window.el('info-familia-resumen')) window.el('info-familia-resumen').innerText = fam.length > 1 ? `Familia (${fam.length})` : "Individual";
+
+    fam.forEach(f => {
+        if (f.id !== p.id) {
+            const hasBed = f.estado === 'ingresado' && f.cama;
+            const st = hasBed ? 'color:var(--success);' : 'color:var(--warning);';
+            const ic = hasBed ? 'fa-solid fa-bed' : 'fa-solid fa-clock';
+            flist.innerHTML += `<div style="padding:10px;border-border:1px solid #eee;cursor:pointer;display:flex;justify-content:space-between;align-items:center;" onclick="window.seleccionarPersona('${f.id}', ${isGlobal})"><div><div style="font-weight:bold;font-size:0.95rem;">${f.nombre} ${f.ap1 || ''}</div><div style="font-size:0.85rem;color:#666;"><i class="fa-regular fa-id-card"></i> ${f.docNum || '-'}</div></div><div style="font-size:1.2rem;${st}"><i class="${ic}"></i></div></div>`;
+        }
+    });
+
+    if (window.el('btn-asignar-cama-local')) {
+        // LOGIC FIX: Check p.cama strictly
+        const tieneCama = p.cama && p.cama !== "" && p.cama !== "0";
+        console.log("DEBUG: Updating button. Has Bed?", tieneCama, "Value:", p.cama);
+
+        window.el('btn-asignar-cama-local').innerHTML = (tieneCama) ? '<i class=\"fa-solid fa-bed\"></i> Modificar Cama' : 'Asignar Cama';
+
+        // Also update the class for visual feedback if needed
+        if (tieneCama) {
+            window.el('btn-asignar-cama-local').style.backgroundColor = '#8b5cf6'; // Violet for modify
+            window.el('btn-asignar-cama-local').style.borderColor = '#7c3aed';
+        } else {
+            window.el('btn-asignar-cama-local').style.backgroundColor = ''; // Restore default
+            window.el('btn-asignar-cama-local').style.borderColor = '';
+        }
+    }
+
+    if (!isGlobal) window.setupAutoSave();
+};
 window.guardarCambiosPersona = async function (silent = false) {
     if (!personaEnGestion) return;
 

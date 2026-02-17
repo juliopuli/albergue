@@ -2538,17 +2538,22 @@ window.mostrarGridCamas = function () {
             cls += " bed-family-highlight";
         }
 
-        // FIX: Comparación segura usando camaActual (string) vs n (string)
-        if (!window.modoMapaGeneral && camaActual === n) {
-            // Caso: Asignando cama (tu cama actual o destino)
+        // FIX: Comparación segura e incondicional (si es tu cama, se marca SIEMPRE)
+        // Log para debuggear la cama específica
+        if (n === camaActual) {
+            console.log(`DEBUG: Renderizando TU CAMA ${n}. Coincide!`);
+        }
+
+        if (camaActual === n) {
+            // Caso: TU CAMA (Prioridad máxima)
             cls += " bed-current";
             statusClass = "Tu selección";
             iconHtml = '<i class="fa-solid fa-check-circle"></i>';
-            bodyHtml = `<div class="bed-occupant-name">TU CAMA</div>`; // Feedback más claro
+            bodyHtml = `<div class="bed-occupant-name">TU CAMA</div>`;
         } else if (occName) {
-            // Caso: Ocupada
+            // Caso: Ocupada por otro (o por ti si falló el if anterior, pero no debería)
             cls += " bed-busy";
-
+            // ... resto del bloque ocupada ...
             if (occ) {
                 // Icono según presencia
                 const presencia = occ.presencia || 'dentro';
@@ -2568,11 +2573,9 @@ window.mostrarGridCamas = function () {
                     </div>
                 `;
             } else {
-                // Ocupada pero sin datos completos (raro, pero posible por consistencia)
                 bodyHtml = `<div class="bed-occupant-name">Ocupada</div>`;
                 iconHtml = '<i class="fa-solid fa-lock"></i>';
             }
-
         } else {
             // Caso: Libre
             cls += " bed-free";
@@ -4014,6 +4017,6 @@ window.rescatarDeGlobalDirecto = async function () {
 
 // DEBUG: Confirmación de carga
 setTimeout(() => {
-    if (window.showToast) window.showToast("DEBUG: V.5.2.8 LOADED OK");
+    if (window.showToast) window.showToast("DEBUG: V.5.2.9 LOADED OK");
     console.log("DEBUG: V.5.2.6 LOADED OK");
 }, 2000);

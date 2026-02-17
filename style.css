@@ -1270,8 +1270,8 @@ button.dark {
 
 
 
-/* BED MODAL SPECIFIC LAYOUT */
-.video-modal-layout {
+/* MODERN MODAL LAYOUT (Global) */
+.modern-modal {
     display: flex;
     flex-direction: column;
     overflow: hidden !important;

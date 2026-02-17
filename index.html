@@ -5,9 +5,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gestión Albergue - V.5.0.7</title>
+    <title>Gestión Albergue - V.5.0.8</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css?v=5.0.7">
+    <link rel="stylesheet" href="style.css?v=5.0.8">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -15,7 +15,7 @@
 
 <body>
 
-    <div class="version-tag">V.5.0.7</div>
+    <div class="version-tag">V.5.0.8</div>
 
     <div id="toast" style="visibility: hidden;">Guardado automático</div>
     <div id="loading-overlay" class="hidden">
@@ -597,64 +597,80 @@
     </div>
 
     <div id="modal-qr" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
-        <div class="modal-content" style="text-align:center; max-width: 315px;">
+        <div class="modal-content modern-modal" style="text-align:center; max-width: 315px;">
             <span class="close-modal"
                 onclick="document.getElementById('modal-qr').classList.add('hidden')">&times;</span>
-            <h3 id="qr-modal-title">Escanea para acceder</h3>
-            <div id="qrcode-display"
-                style="display:inline-block; margin:20px; border:4px solid var(--text-main); padding:10px; border-radius:10px;">
+            <div class="modal-header-fixed">
+                <h3 id="qr-modal-title">Escanea para acceder</h3>
             </div>
-            <p id="qr-modal-url" style="color:#666;">Auto-registro móvil.</p>
+            <div class="modal-scroll-wrapper">
+                <div id="qrcode-display"
+                    style="display:inline-block; margin:20px; border:4px solid var(--text-main); padding:10px; border-radius:10px;">
+                </div>
+                <p id="qr-modal-url" style="color:#666;">Auto-registro móvil.</p>
+            </div>
         </div>
     </div>
 
     <div id="modal-carnet-qr" class="modal-overlay hidden"
         onclick="if(event.target===this)this.classList.add('hidden')">
-        <div class="modal-content" style="text-align:center; max-width:400px;">
+        <div class="modal-content modern-modal" style="text-align:center; max-width:400px;">
             <span class="close-modal"
                 onclick="document.getElementById('modal-carnet-qr').classList.add('hidden')">&times;</span>
-            <h3 style="color:var(--primary); margin-bottom:5px;">Carnet Digital</h3>
-            <div id="carnet-qrcode-display"
-                style="display:inline-block; margin:20px; border:4px solid var(--text-main); padding:10px; border-radius:10px;">
+            <div class="modal-header-fixed">
+                <h3 style="color:var(--primary); margin-bottom:5px;">Carnet Digital</h3>
             </div>
-            <h2 id="carnet-nombre" style="font-size:1.4rem; margin-bottom:5px;"></h2>
-            <p id="carnet-id" style="font-size:1rem; color:#666; font-family:monospace; font-weight:bold;"></p>
+            <div class="modal-scroll-wrapper">
+                <div id="carnet-qrcode-display"
+                    style="display:inline-block; margin:20px; border:4px solid var(--text-main); padding:10px; border-radius:10px;">
+                </div>
+                <h2 id="carnet-nombre" style="font-size:1.4rem; margin-bottom:5px;"></h2>
+                <p id="carnet-id" style="font-size:1rem; color:#666; font-family:monospace; font-weight:bold;"></p>
+            </div>
         </div>
     </div>
     <!-- Modal Reset Password -->
     <div id="modal-reset-pass" class="modal-overlay hidden"
         onclick="if(event.target===this)this.classList.add('hidden')">
-        <div class="modal-content" style="max-width:350px;text-align:center;">
+        <div class="modal-content modern-modal" style="max-width:350px;text-align:center;">
             <span class="close-modal" onclick="window.safeHide('modal-reset-pass')">&times;</span>
-            <h2 style="color:var(--primary);margin-bottom:10px;">Recuperar Contraseña</h2>
-            <p style="color:#666;margin-bottom:18px;">Introduce tu email registrado. Si es válido, recibirás un enlace
-                para restablecer tu contraseña.</p>
-            <input type="email" id="reset-pass-email" placeholder="Email"
-                style="width:100%;padding:10px;font-size:1em;margin-bottom:15px;">
-            <button class="primary" id="btn-reset-pass" onclick="window.enviarResetPasswordEmail()"
-                style="width:100%;padding:12px 0;">Enviar Email de Recuperación</button>
-            <div id="reset-pass-feedback" style="margin-top:10px;font-size:0.95em;color:#09f;"></div>
+            <div class="modal-header-fixed">
+                <h2 style="color:var(--primary);margin-bottom:10px;">Recuperar Contraseña</h2>
+                <p style="color:#666;margin-bottom:18px;">Introduce tu email registrado. Si es válido, recibirás un
+                    enlace para restablecer tu contraseña.</p>
+            </div>
+            <div class="modal-scroll-wrapper">
+                <input type="email" id="reset-pass-email" placeholder="Email"
+                    style="width:100%;padding:10px;font-size:1em;margin-bottom:15px;">
+                <button class="primary" id="btn-reset-pass" onclick="window.enviarResetPasswordEmail()"
+                    style="width:100%;padding:12px 0;">Enviar Email de Recuperación</button>
+                <div id="reset-pass-feedback" style="margin-top:10px;font-size:0.95em;color:#09f;"></div>
+            </div>
         </div>
     </div>
 
     <div id="modal-derivacion" class="modal-overlay hidden"
         onclick="if(event.target===this)this.classList.add('hidden')">
-        <div class="modal-content">
+        <div class="modal-content modern-modal">
             <span class="close-modal"
                 onclick="document.getElementById('modal-derivacion').classList.add('hidden')">&times;</span>
-            <h3 id="derivacion-titulo">Derivar a...</h3>
-            <p>Por favor, indica el motivo o comentario para el equipo:</p>
-            <textarea id="derivacion-motivo" rows="4"
-                style="width:100%; border:1px solid #cbd5e1; border-radius:8px; padding:10px; font-family:inherit; resize:none;"
-                placeholder="Escribe aquí..."></textarea>
-            <div class="btn-row" style="margin-top:15px;">
-                <button class="primary" onclick="window.confirmarDerivacion()">Enviar Derivación</button>
+            <div class="modal-header-fixed">
+                <h3 id="derivacion-titulo">Derivar a...</h3>
+                <p>Por favor, indica el motivo o comentario para el equipo:</p>
+            </div>
+            <div class="modal-scroll-wrapper">
+                <textarea id="derivacion-motivo" rows="4"
+                    style="width:100%; border:1px solid #cbd5e1; border-radius:8px; padding:10px; font-family:inherit; resize:none;"
+                    placeholder="Escribe aquí..."></textarea>
+                <div class="btn-row" style="margin-top:15px;">
+                    <button class="primary" onclick="window.confirmarDerivacion()">Enviar Derivación</button>
+                </div>
             </div>
         </div>
     </div>
 
     <div id="modal-cama" class="modal-overlay hidden" onclick="if(event.target===this)window.cerrarMapaCamas()">
-        <div class="modal-content modal-lg video-modal-layout">
+        <div class="modal-content modal-lg modern-modal">
             <span class="close-modal" onclick="window.cerrarMapaCamas()">&times;</span>
             <div class="modal-header-fixed">
                 <h3>Seleccionar Cama</h3>
@@ -667,96 +683,131 @@
     </div>
 
     <div id="modal-bed-info" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
-        <div class="modal-content modal-lg" style="text-align:center; padding:50px; border:6px solid var(--primary);">
+        <div class="modal-content modal-lg modern-modal" style="text-align:center; border:6px solid var(--primary);">
             <span class="close-modal"
                 onclick="document.getElementById('modal-bed-info').classList.add('hidden')">&times;</span>
-            <div style="font-size:3rem; color:var(--primary); margin-bottom:10px;"><i
-                    class="fa-solid fa-user-check"></i></div>
-            <h3 style="color:var(--text-light);">Cama <span id="info-cama-num"></span></h3>
-            <h2 id="info-nombre-completo" style="color:var(--primary);"></h2>
-            <p><span id="info-telefono"></span></p><br><button id="btn-historial-cama" class="dark hidden"
-                style="margin-bottom:15px;">📜 Ver Historial</button>
-            <div style="margin-top:20px; text-align:left;">
-                <h4 style="border-bottom:1px solid #eee; padding-bottom:5px;">Unidad Familiar</h4>
-                <div id="info-familia-detalle"></div>
+            <div class="modal-header-fixed">
+                <div style="font-size:3rem; color:var(--primary); margin-bottom:10px;"><i
+                        class="fa-solid fa-user-check"></i></div>
+                <h3 style="color:var(--text-light);">Cama <span id="info-cama-num"></span></h3>
+                <h2 id="info-nombre-completo" style="color:var(--primary);"></h2>
+            </div>
+            <div class="modal-scroll-wrapper">
+                <p><span id="info-telefono"></span></p>
+                <button id="btn-historial-cama" class="dark hidden" style="margin-bottom:15px;">📜 Ver
+                    Historial</button>
+                <div style="margin-top:20px; text-align:left;">
+                    <h4 style="border-bottom:1px solid #eee; padding-bottom:5px;">Unidad Familiar</h4>
+                    <div id="info-familia-detalle"></div>
+                </div>
             </div>
         </div>
     </div>
 
     <div id="modal-vincular-familia" class="modal-overlay hidden" style="z-index: 2000;"
         onclick="if(event.target===this)this.classList.add('hidden')">
-        <div class="modal-content"><span class="close-modal"
+        <div class="modal-content modern-modal">
+            <span class="close-modal"
                 onclick="document.getElementById('modal-vincular-familia').classList.add('hidden')">&times;</span>
-            <h3>Unir a Familia</h3><input type="text" id="search-vincular" placeholder="Buscar..."
-                onkeyup="window.buscarParaVincular()" autocomplete="off">
-            <div id="resultados-vincular" class="search-results hidden"></div>
+            <div class="modal-header-fixed">
+                <h3>Unir a Familia</h3>
+            </div>
+            <div class="modal-scroll-wrapper">
+                <input type="text" id="search-vincular" placeholder="Buscar..." onkeyup="window.buscarParaVincular()"
+                    autocomplete="off">
+                <div id="resultados-vincular" class="search-results hidden"></div>
+            </div>
         </div>
     </div>
 
     <div id="modal-albergue" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
-        <div class="modal-content"><span class="close-modal"
+        <div class="modal-content modern-modal">
+            <span class="close-modal"
                 onclick="document.getElementById('modal-albergue').classList.add('hidden')">&times;</span>
-            <h3 id="mto-modal-title">Nuevo</h3><label>Nombre</label><input type="text" id="mto-nombre">
-            <div class="row">
-                <div class="col"><label>Cap</label><input type="number" id="mto-capacidad"></div>
-                <div class="col"><label>Cols</label><input type="number" id="mto-columnas" value="8"></div>
+            <div class="modal-header-fixed">
+                <h3 id="mto-modal-title">Nuevo</h3>
             </div>
-            <div class="btn-row"><button class="primary" onclick="window.guardarAlbergue()">Guardar</button></div>
-            <br><button id="btn-delete-albergue" class="danger hidden" style="width:100%"
-                onclick="window.eliminarAlbergueActual()">Eliminar Albergue</button>
+            <div class="modal-scroll-wrapper">
+                <label>Nombre</label><input type="text" id="mto-nombre">
+                <div class="row">
+                    <div class="col"><label>Cap</label><input type="number" id="mto-capacidad"></div>
+                    <div class="col"><label>Cols</label><input type="number" id="mto-columnas" value="8"></div>
+                </div>
+                <div class="btn-row"><button class="primary" onclick="window.guardarAlbergue()">Guardar</button></div>
+                <br><button id="btn-delete-albergue" class="danger hidden" style="width:100%"
+                    onclick="window.eliminarAlbergueActual()">Eliminar Albergue</button>
+            </div>
         </div>
     </div>
 
     <div id="modal-crear-usuario" class="modal-overlay hidden"
         onclick="if(event.target===this)this.classList.add('hidden')">
-        <div class="modal-content">
+        <div class="modal-content modern-modal">
             <span class="close-modal"
                 onclick="document.getElementById('modal-crear-usuario').classList.add('hidden')">&times;</span>
-            <h3 id="user-modal-title">Usuario</h3>
-            <label>Nombre</label><input type="text" id="new-user-name">
-            <label>Rol</label><select id="new-user-role"></select>
-            <label>Email</label><input type="email" id="new-user-email">
-            <label>Contraseña</label><input type="password" id="new-user-pass">
-            <p id="edit-pass-warning" style="display:none;color:orange;font-size:0.8em;">Use reset email.</p>
-            <div style="margin: 15px 0; padding: 10px; background: #f8fafc; border-radius: 8px;">
-                <label class="toggle-switch"><input type="checkbox" class="toggle-input" id="new-user-active"
-                        checked><span class="toggle-slider"></span><span
-                        style="font-size:0.9rem; font-weight:600; margin-left:10px;">Usuario Activo</span></label>
+            <div class="modal-header-fixed">
+                <h3 id="user-modal-title">Usuario</h3>
             </div>
-            <div class="btn-row"><button id="btn-save-user" class="primary"
-                    onclick="window.guardarUsuario()">Guardar</button></div><br><button id="btn-delete-user"
-                class="danger hidden" style="width:100%" onclick="window.eliminarUsuario()">Eliminar Usuario</button>
+            <div class="modal-scroll-wrapper">
+                <label>Nombre</label><input type="text" id="new-user-name">
+                <label>Rol</label><select id="new-user-role"></select>
+                <label>Email</label><input type="email" id="new-user-email">
+                <label>Contraseña</label><input type="password" id="new-user-pass">
+                <p id="edit-pass-warning" style="display:none;color:orange;font-size:0.8em;">Use reset email.</p>
+                <div style="margin: 15px 0; padding: 10px; background: #f8fafc; border-radius: 8px;">
+                    <label class="toggle-switch"><input type="checkbox" class="toggle-input" id="new-user-active"
+                            checked><span class="toggle-slider"></span><span
+                            style="font-size:0.9rem; font-weight:600; margin-left:10px;">Usuario Activo</span></label>
+                </div>
+                <div class="btn-row"><button id="btn-save-user" class="primary"
+                        onclick="window.guardarUsuario()">Guardar</button></div><br><button id="btn-delete-user"
+                    class="danger hidden" style="width:100%" onclick="window.eliminarUsuario()">Eliminar
+                    Usuario</button>
+            </div>
         </div>
     </div>
 
     <div id="modal-change-pass" class="modal-overlay hidden"
         onclick="if(event.target===this)this.classList.add('hidden')">
-        <div class="modal-content"><span class="close-modal"
+        <div class="modal-content modern-modal">
+            <span class="close-modal"
                 onclick="document.getElementById('modal-change-pass').classList.add('hidden')">&times;</span>
-            <h3>Cambiar Contraseña</h3><label>Contraseña Actual</label><input type="password"
-                id="chg-old-pass"><label>Nueva Contraseña</label><input type="password"
-                id="chg-new-pass"><label>Confirmar Nueva</label><input type="password" id="chg-confirm-pass">
-            <div class="btn-row"><button class="primary" onclick="window.ejecutarCambioPass()">Actualizar</button></div>
+            <div class="modal-header-fixed">
+                <h3>Cambiar Contraseña</h3>
+            </div>
+            <div class="modal-scroll-wrapper">
+                <label>Contraseña Actual</label><input type="password" id="chg-old-pass"><label>Nueva
+                    Contraseña</label><input type="password" id="chg-new-pass"><label>Confirmar Nueva</label><input
+                    type="password" id="chg-confirm-pass">
+                <div class="btn-row"><button class="primary" onclick="window.ejecutarCambioPass()">Actualizar</button>
+                </div>
+            </div>
         </div>
     </div>
 
     <div id="modal-historial" class="modal-overlay hidden"
         onclick="if(event.target===this)this.classList.add('hidden')">
-        <div class="modal-content">
+        <div class="modal-content modern-modal">
             <span class="close-modal"
                 onclick="document.getElementById('modal-historial').classList.add('hidden')">&times;</span>
-            <h3 id="hist-modal-header">Historial de Movimientos</h3>
-            <div id="historial-content" style="max-height:60vh; overflow-y:auto; margin-top:15px;"></div>
+            <div class="modal-header-fixed">
+                <h3 id="hist-modal-header">Historial de Movimientos</h3>
+            </div>
+            <div class="modal-scroll-wrapper">
+                <div id="historial-content" style="margin-top:15px;"></div>
+            </div>
         </div>
     </div>
 
     <!-- MODAL AÑADIR FAMILIAR (PÚBLICO - CON NUEVOS CAMPOS) -->
     <div id="modal-add-familiar" class="modal-overlay hidden"
         onclick="if(event.target===this)this.classList.add('hidden')">
-        <div class="modal-content">
+        <div class="modal-content modern-modal">
             <span class="close-modal" onclick="window.cerrarModalFamiliar()">&times;</span>
-            <div class="modal-scroll">
+            <div class="modal-header-fixed">
                 <h3>Familiar (QR)</h3>
+            </div>
+            <div class="modal-scroll-wrapper">
                 <div class="row">
                     <div class="col"><label>Nombre</label><input type="text" id="fam-nombre"></div>
                 </div>
@@ -805,93 +856,116 @@
     <!-- MODAL AÑADIR FAMILIAR (ADMIN - CON NUEVOS CAMPOS) -->
     <div id="modal-admin-add-familiar" class="modal-overlay hidden"
         onclick="if(event.target===this)this.classList.add('hidden')">
-        <div class="modal-content">
+        <div class="modal-content modern-modal">
             <span class="close-modal" onclick="window.cerrarModalFamiliarAdmin()">&times;</span>
-            <h3>Miembro (Admin)</h3>
-            <div class="row">
-                <div class="col"><label>Nombre</label><input type="text" id="adm-fam-nombre"></div>
-                <div class="col"><label>Apellido 1</label><input type="text" id="adm-fam-ap1"></div>
-                <div class="col"><label>Apellido 2</label><input type="text" id="adm-fam-ap2"></div>
+            <div class="modal-header-fixed">
+                <h3>Miembro (Admin)</h3>
             </div>
-            <div class="row">
-                <div class="col"><label>Tipo Docuemnto</label><select id="adm-fam-tipo-doc"
-                        onchange="window.verificarMenor('adm-fam')">
-                        <option value="DNI">DNI</option>
-                        <option value="NIE">NIE</option>
-                        <option value="PASAPORTE">Pasaporte</option>
-                        <option value="MENOR">MENOR</option>
-                    </select></div>
-                <div class="col"><label>Número</label><input type="text" id="adm-fam-doc-num"></div>
-            </div>
-            <div class="row">
-                <div class="col"><label>Fecha Nac. (DD/MM/AAAA)</label><input type="tel" id="adm-fam-fecha"
-                        oninput="window.formatearFecha(this)" maxlength="10"></div>
-                <div class="col"><label>Tel</label><input type="tel" id="adm-fam-tel"></div>
-            </div>
-            <div class="row">
-                <div class="col">
-                    <label>¿Tiene alguna intolerancia?</label>
-                    <select id="adm-fam-tiene-intolerancia">
-                        <option value="no">No</option>
-                        <option value="si">Sí</option>
-                    </select>
+            <div class="modal-scroll-wrapper">
+                <div class="row">
+                    <div class="col"><label>Nombre</label><input type="text" id="adm-fam-nombre"></div>
+                    <div class="col"><label>Apellido 1</label><input type="text" id="adm-fam-ap1"></div>
+                    <div class="col"><label>Apellido 2</label><input type="text" id="adm-fam-ap2"></div>
+                </div>
+                <div class="row">
+                    <div class="col"><label>Tipo Docuemnto</label><select id="adm-fam-tipo-doc"
+                            onchange="window.verificarMenor('adm-fam')">
+                            <option value="DNI">DNI</option>
+                            <option value="NIE">NIE</option>
+                            <option value="PASAPORTE">Pasaporte</option>
+                            <option value="MENOR">MENOR</option>
+                        </select></div>
+                    <div class="col"><label>Número</label><input type="text" id="adm-fam-doc-num"></div>
+                </div>
+                <div class="row">
+                    <div class="col"><label>Fecha Nac. (DD/MM/AAAA)</label><input type="tel" id="adm-fam-fecha"
+                            oninput="window.formatearFecha(this)" maxlength="10"></div>
+                    <div class="col"><label>Tel</label><input type="tel" id="adm-fam-tel"></div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <label>¿Tiene alguna intolerancia?</label>
+                        <select id="adm-fam-tiene-intolerancia">
+                            <option value="no">No</option>
+                            <option value="si">Sí</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="adm-fam-intolerancia-detalle-container" class="intolerancia-detalle-container hidden">
+                    <label>Indique Intolerancia:</label>
+                    <textarea id="adm-fam-intolerancia-detalle" rows="3"
+                        placeholder="Describa la intolerancia..."></textarea>
+                </div>
+                <div class="campo-no-localizacion">
+                    <input type="checkbox" id="adm-fam-no-localizacion">
+                    <label for="adm-fam-no-localizacion">No deseo ser localizado/a por nadie</label>
+                </div>
+                <div class="btn-row"><button class="primary" onclick="window.guardarFamiliarAdmin()">Añadir</button>
                 </div>
             </div>
-            <div id="adm-fam-intolerancia-detalle-container" class="intolerancia-detalle-container hidden">
-                <label>Indique Intolerancia:</label>
-                <textarea id="adm-fam-intolerancia-detalle" rows="3"
-                    placeholder="Describa la intolerancia..."></textarea>
-            </div>
-            <div class="campo-no-localizacion">
-                <input type="checkbox" id="adm-fam-no-localizacion">
-                <label for="adm-fam-no-localizacion">No deseo ser localizado/a por nadie</label>
-            </div>
-            <div class="btn-row"><button class="primary" onclick="window.guardarFamiliarAdmin()">Añadir</button></div>
         </div>
     </div>
 
     <div id="modal-obs-detalle" class="modal-overlay hidden"
         onclick="if(event.target===this)this.classList.add('hidden')">
-        <div class="modal-content modal-lg"><span class="close-modal"
+        <div class="modal-content modal-lg modern-modal">
+            <span class="close-modal"
                 onclick="document.getElementById('modal-obs-detalle').classList.add('hidden')">&times;</span>
-            <h3 id="obs-modal-title">Listado</h3>
-            <div id="obs-modal-content" style="margin-top:20px;"></div>
+            <div class="modal-header-fixed">
+                <h3 id="obs-modal-title">Listado</h3>
+            </div>
+            <div class="modal-scroll-wrapper">
+                <div id="obs-modal-content" style="margin-top:20px;"></div>
+            </div>
         </div>
     </div>
 
     <!-- Modal: Resumen de Albergues con Derivaciones -->
     <div id="modal-resumen-albergues" class="modal-overlay hidden"
         onclick="if(event.target===this)this.classList.add('hidden')">
-        <div class="modal-content modal-lg">
+        <div class="modal-content modal-lg modern-modal">
             <span class="close-modal"
                 onclick="document.getElementById('modal-resumen-albergues').classList.add('hidden')">&times;</span>
-            <h3><i class="fa-solid fa-bell"></i> Derivaciones Pendientes por Albergue</h3>
-            <div id="resumen-albergues-content" style="margin-top:20px;"></div>
+            <div class="modal-header-fixed">
+                <h3><i class="fa-solid fa-bell"></i> Derivaciones Pendientes por Albergue</h3>
+            </div>
+            <div class="modal-scroll-wrapper">
+                <div id="resumen-albergues-content" style="margin-top:20px;"></div>
+            </div>
         </div>
     </div>
 
     <!-- Modal Cambio de Contraseña por Link -->
     <div id="modal-custom-resetpass" class="modal-overlay hidden"
         onclick="if(event.target===this)this.classList.add('hidden')">
-        <div class="modal-content" style="max-width:350px;text-align:center;">
+        <div class="modal-content modern-modal" style="max-width:350px;text-align:center;">
             <span class="close-modal" onclick="window.safeHide('modal-custom-resetpass')">&times;</span>
-            <h2 style="color:var(--primary);margin-bottom:10px;">Establecer nueva contraseña</h2>
-            <input type="password" id="reset-pass-new-pw" placeholder="Nueva contraseña"
-                style="width:100%;padding:10px;font-size:1em;margin-bottom:10px;" minlength="6">
-            <button class="primary" id="btn-set-newpass" style="width:100%;padding:12px 0;">Guardar contraseña</button>
-            <div id="resetpass-custom-feedback" style="margin-top:10px;font-size:0.95em;"></div>
+            <div class="modal-header-fixed">
+                <h2 style="color:var(--primary);margin-bottom:10px;">Establecer nueva contraseña</h2>
+            </div>
+            <div class="modal-scroll-wrapper">
+                <input type="password" id="reset-pass-new-pw" placeholder="Nueva contraseña"
+                    style="width:100%;padding:10px;font-size:1em;margin-bottom:10px;" minlength="6">
+                <button class="primary" id="btn-set-newpass" style="width:100%;padding:12px 0;">Guardar
+                    contraseña</button>
+                <div id="resetpass-custom-feedback" style="margin-top:10px;font-size:0.95em;"></div>
+            </div>
         </div>
     </div>
 
     <!-- Modal: Personas con Derivaciones en Albergue Activo -->
     <div id="modal-derivaciones-albergue" class="modal-overlay hidden"
         onclick="if(event.target===this)this.classList.add('hidden')">
-        <div class="modal-content modal-lg">
+        <div class="modal-content modal-lg modern-modal">
             <span class="close-modal"
                 onclick="document.getElementById('modal-derivaciones-albergue').classList.add('hidden')">&times;</span>
-            <h3><i class="fa-solid fa-bell"></i> Derivaciones Pendientes en <span
-                    id="derivaciones-albergue-nombre"></span></h3>
-            <div id="derivaciones-albergue-content" style="margin-top:20px;"></div>
+            <div class="modal-header-fixed">
+                <h3><i class="fa-solid fa-bell"></i> Derivaciones Pendientes en <span
+                        id="derivaciones-albergue-nombre"></span></h3>
+            </div>
+            <div class="modal-scroll-wrapper">
+                <div id="derivaciones-albergue-content" style="margin-top:20px;"></div>
+            </div>
         </div>
     </div>
 
@@ -1067,40 +1141,44 @@
     <!-- MODAL: MAPA GENERAL DE CAMAS (sin asignar) -->
     <div id="modal-mapa-general" class="modal-overlay hidden"
         onclick="if(event.target===this)this.classList.add('hidden')">
-        <div class="modal-content modal-lg">
+        <div class="modal-content modal-lg modern-modal">
             <span class="close-modal"
                 onclick="document.getElementById('modal-mapa-general').classList.add('hidden')">&times;</span>
 
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h3 style="margin: 0;"><i class="fa-solid fa-bed"></i> Mapa General de Camas</h3>
-                <div style="display: flex; gap: 10px;">
-                    <button class="secondary" onclick="window.exportarDatosAlbergue()">
-                        <i class="fa-solid fa-download"></i> Exportar Excel
-                    </button>
-                    <button class="danger" onclick="window.confirmarSalidaMasiva()">
-                        <i class="fa-solid fa-door-open"></i> Salida Masiva
-                    </button>
-                </div>
-            </div>
-
-            <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                <div style="display: flex; gap: 20px; flex-wrap: wrap; font-size: 0.9rem;">
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <div style="width: 20px; height: 20px; background: #10b981; border-radius: 4px;"></div>
-                        <span>Disponible</span>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <div style="width: 20px; height: 20px; background: #ef4444; border-radius: 4px;"></div>
-                        <span>Ocupada</span>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <div style="width: 20px; height: 20px; background: #f97316; border-radius: 4px;"></div>
-                        <span>Familia</span>
+            <div class="modal-header-fixed">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3 style="margin: 0;"><i class="fa-solid fa-bed"></i> Mapa General de Camas</h3>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="secondary" onclick="window.exportarDatosAlbergue()">
+                            <i class="fa-solid fa-download"></i> Exportar Excel
+                        </button>
+                        <button class="danger" onclick="window.confirmarSalidaMasiva()">
+                            <i class="fa-solid fa-door-open"></i> Salida Masiva
+                        </button>
                     </div>
                 </div>
             </div>
 
-            <div id="grid-camas-general" class="bed-grid"></div>
+            <div class="modal-scroll-wrapper">
+                <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <div style="display: flex; gap: 20px; flex-wrap: wrap; font-size: 0.9rem;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div style="width: 20px; height: 20px; background: #10b981; border-radius: 4px;"></div>
+                            <span>Disponible</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div style="width: 20px; height: 20px; background: #ef4444; border-radius: 4px;"></div>
+                            <span>Ocupada</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div style="width: 20px; height: 20px; background: #f97316; border-radius: 4px;"></div>
+                            <span>Familia</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="grid-camas-general" class="bed-grid"></div>
+            </div>
         </div>
     </div>
 

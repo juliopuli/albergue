@@ -237,18 +237,140 @@ button.dark { background: #334155; color: white; }
 }
 
 /* CAMAS */
-.bed-grid { display: grid; gap: 10px; margin-top: 20px; }
-.bed-box { min-height: 80px; border-radius: 8px; font-weight: 700; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; border: 3px solid transparent; background: #f1f5f9; transition: 0.1s; user-select: none; }
-.bed-box span { font-size: 0.7em; font-weight: normal; margin-top: 2px; }
-.bed-free { background: #dcfce7; color: #166534; border-color: #86efac; }
-.bed-busy { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
-.bed-current { background: #e0e7ff; color: #3730a3; border-color: #818cf8; }
-.bed-shadow { background: #ffedd5 !important; border: 2px dashed #f97316 !important; color: #c2410c; opacity: 0.8; }
-.bed-family-highlight { border-color: #f97316 !important; background-color: #ffedd5 !important; transform: scale(1.05); z-index: 10; box-shadow: 0 0 10px rgba(249, 115, 22, 0.5); }
+/* CAMAS (Rediseño Moderno v2) */
+.bed-grid { 
+    display: grid; 
+    gap: 15px; 
+    margin-top: 20px; 
+    /* Responsive grid is handled by inline style in JS or media queries if needed */
+}
+
+.bed-item { 
+    min-height: 100px; 
+    border-radius: 16px; 
+    position: relative; 
+    cursor: pointer; 
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+    user-select: none; 
+    overflow: hidden;
+    background: white;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+}
+
+.bed-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    z-index: 10;
+}
+
+/* Header de la tarjeta (Número y Estado) */
+.bed-header {
+    padding: 8px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: rgba(0,0,0,0.6);
+    background: rgba(255,255,255,0.3);
+    backdrop-filter: blur(4px);
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+/* Cuerpo de la tarjeta (Información ocupante) */
+.bed-body {
+    padding: 10px 12px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.bed-occupant-name {
+    font-weight: 700;
+    font-size: 0.95rem;
+    line-height: 1.2;
+    margin-bottom: 4px;
+    color: inherit;
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.bed-occupant-detail {
+    font-size: 0.75rem;
+    opacity: 0.8;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* ESTADOS (Gradientes) */
+
+/* LIBRE: Esmeralda Suave */
+.bed-free {
+    background: linear-gradient(145deg, #ecfdf5 0%, #d1fae5 100%);
+    color: #065f46;
+    border-color: #a7f3d0;
+}
+.bed-free .bed-header { color: #047857; }
+.bed-free:hover { border-color: #34d399; }
+
+/* OCUPADA: Rosa/Rojo Suave */
+.bed-busy {
+    background: linear-gradient(145deg, #fff1f2 0%, #ffe4e6 100%);
+    color: #9f1239;
+    border-color: #fecdd3;
+}
+.bed-busy .bed-header { color: #be123c; }
+
+/* TU CAMA: Índigo Suave */
+.bed-current {
+    background: linear-gradient(145deg, #e0e7ff 0%, #c7d2fe 100%) !important;
+    color: #3730a3 !important;
+    border: 2px solid #6366f1 !important;
+    transform: scale(1.02);
+}
+.bed-current .bed-header { 
+    background: rgba(99, 102, 241, 0.1); 
+    color: #312e81;
+}
+
+/* FAMILIA SELECCIONADA: Naranja Suave */
+.bed-family-highlight {
+    background: linear-gradient(145deg, #fff7ed 0%, #ffedd5 100%) !important;
+    border: 2px solid #f97316 !important;
+    color: #9a3412 !important;
+    transform: scale(1.05);
+    z-index: 20;
+    box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.2), 0 10px 15px -3px rgba(0,0,0,0.1);
+}
+
+/* ESTADOS ESPECIALES */
+.bed-status-in {
+    border-right: 6px solid #10b981 !important; /* Indicador lateral verde */
+}
+.bed-status-out {
+    border-right: 6px solid #ef4444 !important; /* Indicador lateral rojo */
+}
+.bed-shadow {
+    opacity: 0.6;
+    background: #f1f5f9;
+    border: 2px dashed #94a3b8;
+    color: #64748b;
+}
+
+/* TABLA FAMILIAR (Modal) */
 .fam-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9rem; }
-.fam-table th { text-align: left; padding: 8px; border-bottom: 2px solid #e2e8f0; color: var(--text-light); font-size: 0.8rem; text-transform: uppercase; }
-.fam-table td { padding: 8px; border-bottom: 1px solid #f1f5f9; }
-.fam-row-current { background-color: #e0e7ff; font-weight: bold; color: var(--primary); }
+.fam-table th { text-align: left; padding: 10px; border-bottom: 2px solid #e2e8f0; color: var(--text-light); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; }
+.fam-table td { padding: 10px; border-bottom: 1px solid #f1f5f9; }
+.fam-row-current { background-color: #e0e7ff; font-weight: bold; color: var(--primary); border-radius: 6px; }
 
 /* ============================================ */
 /* NUEVOS CAMPOS: INTOLERANCIA + NO LOCALIZACIÓN */

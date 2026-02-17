@@ -18,17 +18,17 @@ let datosCache = {
 async function inicializar() {
     try {
         console.log('🚀 Inicializando sistema de informes v3.0...');
-        
+
         if (!window.parent || !window.parent.db || !window.parent.firebaseModules) {
             console.error('❌ No se puede acceder a Firebase desde la ventana padre');
             return;
         }
-        
+
         console.log('✅ Firebase accesible');
         await cargarDatosIniciales();
         mostrarDashboard();
-        
-    } catch(e) {
+
+    } catch (e) {
         console.error('Error inicializando:', e);
     }
 }
@@ -37,9 +37,9 @@ async function cargarDatosIniciales() {
     try {
         const { collection, getDocs } = window.parent.firebaseModules;
         const db = window.parent.db;
-        
+
         const alberguesSnap = await getDocs(collection(db, "albergues"));
-        
+
         alberguesGlobales = [];
         alberguesSnap.forEach(docSnap => {
             const data = docSnap.data();
@@ -50,10 +50,10 @@ async function cargarDatosIniciales() {
                 activo: data.activo !== false
             });
         });
-        
+
         console.log('✅ Albergues cargados:', alberguesGlobales.length);
-        
-    } catch(e) {
+
+    } catch (e) {
         console.error('❌ Error cargando albergues:', e);
     }
 }
@@ -70,12 +70,12 @@ if (document.readyState === 'loading') {
 
 function mostrarDashboard() {
     const zona = document.getElementById('zona-opciones-informe');
-    
+
     let alberguesOptions = '<option value="">📊 Todos los albergues</option>';
     alberguesGlobales.forEach(alb => {
         alberguesOptions += `<option value="${alb.id}">${alb.nombre}</option>`;
     });
-    
+
     zona.innerHTML = `
         <div class="dashboard-container">
             <div class="dashboard-header">
@@ -201,7 +201,7 @@ function mostrarDashboard() {
             </div>
         </div>
     `;
-    
+
     setTimeout(() => actualizarDashboard(), 500);
 }
 
@@ -212,14 +212,14 @@ function mostrarDashboard() {
 async function actualizarDashboard() {
     const albergueId = document.getElementById('filter-albergue')?.value || '';
     const periodo = parseInt(document.getElementById('filter-periodo')?.value || '30');
-    
+
     mostrarLoadingKPIs();
-    
+
     try {
         const datos = await cargarDatosGenerales(albergueId, periodo);
         mostrarKPIs(datos);
         mostrarGraficos(datos);
-    } catch(e) {
+    } catch (e) {
         console.error('Error actualizando dashboard:', e);
         mostrarErrorKPIs();
     }
@@ -248,92 +248,101 @@ function mostrarErrorKPIs() {
 async function cargarDatosGenerales(albergueId, periodo) {
     const { collection, getDocs } = window.parent.firebaseModules;
     const db = window.parent.db;
-    
+
     let alberguesACargar = albergueId ? [albergueId] : alberguesGlobales.map(a => a.id);
-    
+
     let fechaLimite = null;
     if (periodo !== 'all') {
         fechaLimite = new Date();
         fechaLimite.setDate(fechaLimite.getDate() - periodo);
     }
-    
+
     let personasAtendidas = new Set();
     let totalPersonasHistorico = new Set(); // NUEVO
     let totalSanitarias = 0;
     let totalPsicosociales = 0;
     let totalEntregas = 0;
     let totalArticulos = 0;
-    
+
     let tiposSanitarios = {};
     let tiposPsicosociales = {};
     let tiposEntregas = {};
     let materialesEntregados = {};
-    
-    for (const albId of alberguesACargar) {
+
+    // Optimización: Cargar intervenciones en paralelo
+    const promises = alberguesACargar.map(async albId => {
         const personasSnap = await getDocs(collection(db, "albergues", albId, "personas"));
-        
+
+        const intervPromises = [];
         for (const personaDoc of personasSnap.docs) {
-            totalPersonasHistorico.add(personaDoc.id); // NUEVO - Contar todas las personas
-            
-            const intervencionesSnap = await getDocs(
-                collection(db, "albergues", albId, "personas", personaDoc.id, "intervenciones")
+            totalPersonasHistorico.add(personaDoc.id);
+            intervPromises.push(
+                getDocs(collection(db, "albergues", albId, "personas", personaDoc.id, "intervenciones"))
+                    .then(snap => ({ pid: personaDoc.id, snap }))
             );
-            
-            intervencionesSnap.forEach(intDoc => {
-                const interv = intDoc.data();
-                const fechaInterv = interv.fecha.toDate();
-                
-                if (fechaLimite && fechaInterv < fechaLimite) return;
-                
-                personasAtendidas.add(personaDoc.id);
-                
-                if (interv.tipo === 'Sanitaria') {
-                    totalSanitarias++;
-                    const subtipo = interv.subtipo || 'Sin especificar';
-                    tiposSanitarios[subtipo] = (tiposSanitarios[subtipo] || 0) + 1;
-                }
-                
-                if (interv.tipo === 'Psicosocial') {
-                    totalPsicosociales++;
-                    const subtipo = interv.subtipo || 'Sin especificar';
-                    tiposPsicosociales[subtipo] = (tiposPsicosociales[subtipo] || 0) + 1;
-                }
-                
-                if (interv.tipo === 'Entregas') {
-                    totalEntregas++;
-                    const subtipo = interv.subtipo || 'Sin especificar';
-                    tiposEntregas[subtipo] = (tiposEntregas[subtipo] || 0) + 1;
-                    
-                    if (interv.datosEstructurados) {
-                        const datos = interv.datosEstructurados;
-                        
-                        if (datos.contenido_kit) {
-                            const items = datos.contenido_kit.split(',').map(item => item.trim());
-                            items.forEach(item => {
-                                materialesEntregados[item] = (materialesEntregados[item] || 0) + 1;
-                                totalArticulos++;
-                            });
-                        }
-                        
-                        if (datos.tipo_ropa) {
-                            const items = datos.tipo_ropa.split(',').map(item => item.trim());
-                            items.forEach(item => {
-                                materialesEntregados[item] = (materialesEntregados[item] || 0) + 1;
-                                totalArticulos++;
-                            });
-                        }
-                        
-                        if (datos.tipo_manta) {
-                            const cantidad = parseInt(datos.cantidad_manta) || 1;
-                            materialesEntregados[datos.tipo_manta] = (materialesEntregados[datos.tipo_manta] || 0) + cantidad;
-                            totalArticulos += cantidad;
-                        }
+        }
+        return Promise.all(intervPromises);
+    });
+
+    const results = await Promise.all(promises);
+    const flatResults = results.flat();
+
+    for (const { pid, snap } of flatResults) {
+        snap.forEach(intDoc => {
+            const interv = intDoc.data();
+            const fechaInterv = safeDate(interv.fecha);
+
+            if (!fechaInterv) return;
+            if (fechaLimite && fechaInterv < fechaLimite) return;
+
+            personasAtendidas.add(pid);
+
+            if (interv.tipo === 'Sanitaria') {
+                totalSanitarias++;
+                const subtipo = interv.subtipo || 'Sin especificar';
+                tiposSanitarios[subtipo] = (tiposSanitarios[subtipo] || 0) + 1;
+            }
+
+            if (interv.tipo === 'Psicosocial') {
+                totalPsicosociales++;
+                const subtipo = interv.subtipo || 'Sin especificar';
+                tiposPsicosociales[subtipo] = (tiposPsicosociales[subtipo] || 0) + 1;
+            }
+
+            if (interv.tipo === 'Entregas') {
+                totalEntregas++;
+                const subtipo = interv.subtipo || 'Sin especificar';
+                tiposEntregas[subtipo] = (tiposEntregas[subtipo] || 0) + 1;
+
+                if (interv.datosEstructurados) {
+                    const datos = interv.datosEstructurados;
+
+                    if (datos.contenido_kit) {
+                        const items = datos.contenido_kit.split(',').map(item => item.trim());
+                        items.forEach(item => {
+                            materialesEntregados[item] = (materialesEntregados[item] || 0) + 1;
+                            totalArticulos++;
+                        });
+                    }
+
+                    if (datos.tipo_ropa) {
+                        const items = datos.tipo_ropa.split(',').map(item => item.trim());
+                        items.forEach(item => {
+                            materialesEntregados[item] = (materialesEntregados[item] || 0) + 1;
+                            totalArticulos++;
+                        });
+                    }
+
+                    if (datos.tipo_manta) {
+                        const cantidad = parseInt(datos.cantidad_manta) || 1;
+                        materialesEntregados[datos.tipo_manta] = (materialesEntregados[datos.tipo_manta] || 0) + cantidad;
+                        totalArticulos += cantidad;
                     }
                 }
-            });
-        }
+            }
+        });
     }
-    
+
     return {
         personasAtendidas: personasAtendidas.size,
         totalPersonasHistorico: totalPersonasHistorico.size, // NUEVO
@@ -350,7 +359,7 @@ async function cargarDatosGenerales(albergueId, periodo) {
 
 function mostrarKPIs(datos) {
     const kpisContainer = document.getElementById('dashboard-kpis');
-    
+
     kpisContainer.innerHTML = `
         <div class="kpi-card kpi-historico">
             <div class="kpi-icon">
@@ -415,28 +424,28 @@ function mostrarKPIs(datos) {
 }
 function mostrarGraficos(datos) {
     const chartsContainer = document.getElementById('dashboard-charts');
-    
+
     const topSanitarias = Object.entries(datos.tiposSanitarios)
         .sort((a, b) => b[1] - a[1])
         .slice(0, 5);
-    
+
     const topEntregas = Object.entries(datos.tiposEntregas)
         .sort((a, b) => b[1] - a[1])
         .slice(0, 5);
-    
+
     const topMateriales = Object.entries(datos.materialesEntregados)
         .sort((a, b) => b[1] - a[1])
         .slice(0, 10);
-    
+
     let htmlCharts = '<div class="charts-grid">';
-    
+
     if (topSanitarias.length > 0) {
         htmlCharts += `
             <div class="chart-card">
                 <h3><i class="fa-solid fa-chart-bar"></i> Top 5 Atenciones Sanitarias</h3>
                 <div class="chart-bars">
         `;
-        
+
         const maxSan = topSanitarias[0][1];
         topSanitarias.forEach(([tipo, count]) => {
             const porcentaje = (count / maxSan * 100).toFixed(0);
@@ -450,17 +459,17 @@ function mostrarGraficos(datos) {
                 </div>
             `;
         });
-        
+
         htmlCharts += `</div></div>`;
     }
-    
+
     if (topEntregas.length > 0) {
         htmlCharts += `
             <div class="chart-card">
                 <h3><i class="fa-solid fa-chart-bar"></i> Top 5 Categorías de Entregas</h3>
                 <div class="chart-bars">
         `;
-        
+
         const maxEnt = topEntregas[0][1];
         topEntregas.forEach(([tipo, count]) => {
             const porcentaje = (count / maxEnt * 100).toFixed(0);
@@ -474,17 +483,17 @@ function mostrarGraficos(datos) {
                 </div>
             `;
         });
-        
+
         htmlCharts += `</div></div>`;
     }
-    
+
     if (topMateriales.length > 0) {
         htmlCharts += `
             <div class="chart-card chart-wide">
                 <h3><i class="fa-solid fa-box-open"></i> Top 10 Materiales Distribuidos</h3>
                 <div class="chart-bars">
         `;
-        
+
         const maxMat = topMateriales[0][1];
         topMateriales.forEach(([material, count]) => {
             const porcentaje = (count / maxMat * 100).toFixed(0);
@@ -498,10 +507,10 @@ function mostrarGraficos(datos) {
                 </div>
             `;
         });
-        
+
         htmlCharts += `</div></div>`;
     }
-    
+
     htmlCharts += '</div>';
     chartsContainer.innerHTML = htmlCharts;
 }
@@ -516,12 +525,12 @@ function mostrarGraficos(datos) {
 
 function abrirInformeSanitarioAlbergue() {
     const zona = document.getElementById('zona-opciones-informe');
-    
+
     let alberguesOptions = '<option value="">-- Selecciona un albergue --</option>';
     alberguesGlobales.forEach(alb => {
         alberguesOptions += `<option value="${alb.id}">${alb.nombre}</option>`;
     });
-    
+
     zona.innerHTML = `
         <div class="informe-detallado">
             <button onclick="mostrarDashboard()" class="btn-back">
@@ -556,7 +565,7 @@ function abrirInformeSanitarioAlbergue() {
             <div id="resultado-san-alb"></div>
         </div>
     `;
-    
+
     const hoy = new Date().toISOString().split('T')[0];
     document.getElementById('san-alb-fecha-fin').value = hoy;
     document.getElementById('san-alb-fecha-fin').max = hoy;
@@ -565,10 +574,10 @@ function abrirInformeSanitarioAlbergue() {
 function toggleFechasSanAlb(checkbox) {
     const inicio = document.getElementById('san-alb-fecha-inicio');
     const fin = document.getElementById('san-alb-fecha-fin');
-    
+
     inicio.disabled = checkbox.checked;
     fin.disabled = checkbox.checked;
-    
+
     if (!checkbox.checked) {
         fin.value = new Date().toISOString().split('T')[0];
     }
@@ -580,66 +589,66 @@ async function generarInformeSanitarioAlbergue() {
     const fechaInicio = document.getElementById('san-alb-fecha-inicio').value;
     const fechaFin = document.getElementById('san-alb-fecha-fin').value;
     const resultado = document.getElementById('resultado-san-alb');
-    
+
     if (!albergueId) {
         alert('Selecciona un albergue');
         return;
     }
-    
+
     if (!todasFechas && (!fechaInicio || !fechaFin)) {
         alert('Selecciona un rango de fechas');
         return;
     }
-    
+
     resultado.innerHTML = '<div class="loading-spinner"><i class="fa-solid fa-spinner fa-spin"></i> Generando informe...</div>';
-    
+
     try {
         const { collection, getDocs } = window.parent.firebaseModules;
         const db = window.parent.db;
-        
+
         const albergue = alberguesGlobales.find(a => a.id === albergueId);
         const personasSnap = await getDocs(collection(db, "albergues", albergueId, "personas"));
-        
+
         let intervenciones = [];
         let personasAtendidas = new Set();
         let tipologias = {};
         let urgencias = 0;
         let derivaciones = 0;
-        
+
         for (const personaDoc of personasSnap.docs) {
             const personaData = personaDoc.data();
             const intervencionesSnap = await getDocs(
                 collection(db, "albergues", albergueId, "personas", personaDoc.id, "intervenciones")
             );
-            
+
             intervencionesSnap.forEach(intDoc => {
                 const interv = intDoc.data();
-                
+
                 if (interv.tipo !== 'Sanitaria') return;
-                
-                const fechaInterv = interv.fecha.toDate();
-                
+
+                const fechaInterv = safeDate(interv.fecha);
+
                 if (!todasFechas) {
                     const inicio = new Date(fechaInicio);
                     const fin = new Date(fechaFin);
                     fin.setHours(23, 59, 59);
-                    
+
                     if (fechaInterv < inicio || fechaInterv > fin) return;
                 }
-                
+
                 personasAtendidas.add(personaDoc.id);
-                
+
                 const subtipo = interv.subtipo || 'Sin especificar';
                 tipologias[subtipo] = (tipologias[subtipo] || 0) + 1;
-                
+
                 if (subtipo.includes('Urgente') || subtipo.includes('Primeros Auxilios')) {
                     urgencias++;
                 }
-                
+
                 if (subtipo.includes('Derivación')) {
                     derivaciones++;
                 }
-                
+
                 intervenciones.push({
                     personaNombre: personaData.nombre + ' ' + (personaData.ap1 || ''),
                     personaDni: personaData.docNum || 'S/D',
@@ -650,7 +659,7 @@ async function generarInformeSanitarioAlbergue() {
                 });
             });
         }
-        
+
         let personasConAtenciones = {};
         intervenciones.forEach(interv => {
             const key = interv.personaDni;
@@ -664,17 +673,17 @@ async function generarInformeSanitarioAlbergue() {
             }
             personasConAtenciones[key].count++;
         });
-        
+
         const personasArray = Object.values(personasConAtenciones).sort((a, b) => b.count - a.count);
         const promedio = personasAtendidas.size > 0 ? (intervenciones.length / personasAtendidas.size).toFixed(2) : 0;
-        
+
         let html = `
             <div class="informe-resultado">
                 <div class="informe-header">
                     <h2><i class="fa-solid fa-hospital"></i> ${albergue.nombre}</h2>
                     <p class="informe-periodo">
-                        ${todasFechas ? 'Todo el histórico' : 
-                        `${new Date(fechaInicio).toLocaleDateString('es-ES')} - ${new Date(fechaFin).toLocaleDateString('es-ES')}`}
+                        ${todasFechas ? 'Todo el histórico' :
+                `${new Date(fechaInicio).toLocaleDateString('es-ES')} - ${new Date(fechaFin).toLocaleDateString('es-ES')}`}
                     </p>
                 </div>
                 
@@ -697,7 +706,7 @@ async function generarInformeSanitarioAlbergue() {
                     <h3><i class="fa-solid fa-chart-pie"></i> Distribución por Tipo</h3>
                     <div class="chart-bars">
         `;
-        
+
         const tiposOrdenados = Object.entries(tipologias).sort((a, b) => b[1] - a[1]);
         tiposOrdenados.forEach(([tipo, count]) => {
             const porcentaje = ((count / intervenciones.length) * 100).toFixed(1);
@@ -712,7 +721,7 @@ async function generarInformeSanitarioAlbergue() {
                 </div>
             `;
         });
-        
+
         html += `
                     </div>
                 </div>
@@ -730,7 +739,7 @@ async function generarInformeSanitarioAlbergue() {
                         </thead>
                         <tbody>
         `;
-        
+
         personasArray.slice(0, 10).forEach((persona) => {
             html += `
                 <tr>
@@ -741,7 +750,7 @@ async function generarInformeSanitarioAlbergue() {
                 </tr>
             `;
         });
-        
+
         html += `
                         </tbody>
                     </table>
@@ -774,10 +783,10 @@ async function generarInformeSanitarioAlbergue() {
                 </div>
             </div>
         `;
-        
+
         resultado.innerHTML = html;
-        
-    } catch(e) {
+
+    } catch (e) {
         console.error('Error:', e);
         resultado.innerHTML = `<div class="error-message"><i class="fa-solid fa-circle-exclamation"></i> Error: ${e.message}</div>`;
     }
@@ -785,7 +794,7 @@ async function generarInformeSanitarioAlbergue() {
 
 function abrirInformeSanitarioPersona() {
     const zona = document.getElementById('zona-opciones-informe');
-    
+
     zona.innerHTML = `
         <div class="informe-detallado">
             <button onclick="mostrarDashboard()" class="btn-back">
@@ -808,30 +817,30 @@ function abrirInformeSanitarioPersona() {
 async function buscarPersonaSanitario() {
     const busqueda = document.getElementById('search-san-persona').value.toLowerCase().trim();
     const resultados = document.getElementById('results-san-persona');
-    
+
     if (busqueda.length < 2) {
         resultados.innerHTML = '';
         resultados.style.display = 'none';
         return;
     }
-    
+
     resultados.innerHTML = '<div class="loading-spinner"><i class="fa-solid fa-spinner fa-spin"></i></div>';
     resultados.style.display = 'block';
-    
+
     try {
         const { collection, getDocs } = window.parent.firebaseModules;
         const db = window.parent.db;
-        
+
         let personasEncontradas = [];
-        
+
         for (const albergue of alberguesGlobales) {
             const personasSnap = await getDocs(collection(db, "albergues", albergue.id, "personas"));
-            
+
             personasSnap.forEach(docSnap => {
                 const persona = docSnap.data();
                 const nombreCompleto = `${persona.nombre} ${persona.ap1 || ''} ${persona.ap2 || ''}`.toLowerCase();
                 const docNum = (persona.docNum || '').toLowerCase();
-                
+
                 if (nombreCompleto.includes(busqueda) || docNum.includes(busqueda)) {
                     personasEncontradas.push({
                         id: docSnap.id,
@@ -842,12 +851,12 @@ async function buscarPersonaSanitario() {
                 }
             });
         }
-        
+
         if (personasEncontradas.length === 0) {
             resultados.innerHTML = '<div class="search-no-results">No se encontraron personas</div>';
             return;
         }
-        
+
         let html = '<div class="search-results">';
         personasEncontradas.forEach(persona => {
             html += `
@@ -864,10 +873,10 @@ async function buscarPersonaSanitario() {
             `;
         });
         html += '</div>';
-        
+
         resultados.innerHTML = html;
-        
-    } catch(e) {
+
+    } catch (e) {
         console.error('Error:', e);
         resultados.innerHTML = `<div class="error-message">Error: ${e.message}</div>`;
     }
@@ -877,39 +886,39 @@ async function generarInformeSanitarioPersona(personaId, albergueId) {
     const resultado = document.getElementById('resultado-san-persona');
     document.getElementById('results-san-persona').innerHTML = '';
     document.getElementById('results-san-persona').style.display = 'none';
-    
+
     resultado.innerHTML = '<div class="loading-spinner"><i class="fa-solid fa-spinner fa-spin"></i> Cargando historial...</div>';
-    
+
     try {
         const { collection, getDocs, doc, getDoc } = window.parent.firebaseModules;
         const db = window.parent.db;
-        
+
         const albergue = alberguesGlobales.find(a => a.id === albergueId);
         const personaSnap = await getDoc(doc(db, "albergues", albergueId, "personas", personaId));
         const persona = personaSnap.data();
-        
+
         const intervencionesSnap = await getDocs(
             collection(db, "albergues", albergueId, "personas", personaId, "intervenciones")
         );
-        
+
         let intervenciones = [];
         let tipologias = {};
-        
+
         intervencionesSnap.forEach(docSnap => {
             const interv = docSnap.data();
             if (interv.tipo === 'Sanitaria') {
                 intervenciones.push({
                     ...interv,
-                    fecha: interv.fecha.toDate()
+                    fecha: safeDate(interv.fecha)
                 });
-                
+
                 const subtipo = interv.subtipo || 'Sin especificar';
                 tipologias[subtipo] = (tipologias[subtipo] || 0) + 1;
             }
         });
-        
+
         intervenciones.sort((a, b) => b.fecha - a.fecha);
-        
+
         let html = `
             <div class="informe-resultado">
                 <div class="informe-header">
@@ -927,14 +936,14 @@ async function generarInformeSanitarioPersona(personaId, albergueId) {
                     </div>
                 </div>
         `;
-        
+
         if (Object.keys(tipologias).length > 0) {
             html += `
                 <div class="informe-section">
                     <h3><i class="fa-solid fa-chart-pie"></i> Atenciones por Tipo</h3>
                     <div class="chart-bars">
             `;
-            
+
             const tiposOrdenados = Object.entries(tipologias).sort((a, b) => b[1] - a[1]);
             tiposOrdenados.forEach(([tipo, count]) => {
                 html += `
@@ -947,19 +956,19 @@ async function generarInformeSanitarioPersona(personaId, albergueId) {
                     </div>
                 `;
             });
-            
+
             html += `
                     </div>
                 </div>
             `;
         }
-        
+
         html += `
                 <div class="informe-section">
                     <h3><i class="fa-solid fa-clock-rotate-left"></i> Historial Completo</h3>
                     <div class="historial-timeline">
         `;
-        
+
         if (intervenciones.length === 0) {
             html += '<p class="no-data">No hay atenciones sanitarias registradas</p>';
         } else {
@@ -968,7 +977,7 @@ async function generarInformeSanitarioPersona(personaId, albergueId) {
                     <div class="historial-item">
                         <div class="historial-header">
                             <strong>${interv.subtipo}</strong>
-                            <span>${interv.fecha.toLocaleDateString('es-ES')} ${interv.fecha.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'})}</span>
+                            <span>${interv.fecha.toLocaleDateString('es-ES')} ${interv.fecha.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
                         </div>
                         <div class="historial-content">
                             <p><strong>Motivo:</strong> ${interv.motivo}</p>
@@ -979,7 +988,7 @@ async function generarInformeSanitarioPersona(personaId, albergueId) {
                 `;
             });
         }
-        
+
         html += `
                     </div>
                 </div>
@@ -991,10 +1000,10 @@ async function generarInformeSanitarioPersona(personaId, albergueId) {
                 </div>
             </div>
         `;
-        
+
         resultado.innerHTML = html;
-        
-    } catch(e) {
+
+    } catch (e) {
         console.error('Error:', e);
         resultado.innerHTML = `<div class="error-message">Error: ${e.message}</div>`;
     }
@@ -1010,12 +1019,12 @@ async function generarInformeSanitarioPersona(personaId, albergueId) {
 
 function abrirInformeEntregasAlbergue() {
     const zona = document.getElementById('zona-opciones-informe');
-    
+
     let alberguesOptions = '<option value="">-- Selecciona un albergue --</option>';
     alberguesGlobales.forEach(alb => {
         alberguesOptions += `<option value="${alb.id}">${alb.nombre}</option>`;
     });
-    
+
     zona.innerHTML = `
         <div class="informe-detallado">
             <button onclick="mostrarDashboard()" class="btn-back">
@@ -1050,7 +1059,7 @@ function abrirInformeEntregasAlbergue() {
             <div id="resultado-ent-alb"></div>
         </div>
     `;
-    
+
     const hoy = new Date().toISOString().split('T')[0];
     document.getElementById('ent-alb-fecha-fin').value = hoy;
     document.getElementById('ent-alb-fecha-fin').max = hoy;
@@ -1059,10 +1068,10 @@ function abrirInformeEntregasAlbergue() {
 function toggleFechasEntAlb(checkbox) {
     const inicio = document.getElementById('ent-alb-fecha-inicio');
     const fin = document.getElementById('ent-alb-fecha-fin');
-    
+
     inicio.disabled = checkbox.checked;
     fin.disabled = checkbox.checked;
-    
+
     if (!checkbox.checked) {
         fin.value = new Date().toISOString().split('T')[0];
     }
@@ -1074,61 +1083,61 @@ async function generarInformeEntregasAlbergue() {
     const fechaInicio = document.getElementById('ent-alb-fecha-inicio').value;
     const fechaFin = document.getElementById('ent-alb-fecha-fin').value;
     const resultado = document.getElementById('resultado-ent-alb');
-    
+
     if (!albergueId) {
         alert('Selecciona un albergue');
         return;
     }
-    
+
     if (!todasFechas && (!fechaInicio || !fechaFin)) {
         alert('Selecciona un rango de fechas');
         return;
     }
-    
+
     resultado.innerHTML = '<div class="loading-spinner"><i class="fa-solid fa-spinner fa-spin"></i> Generando informe...</div>';
-    
+
     try {
         const { collection, getDocs } = window.parent.firebaseModules;
         const db = window.parent.db;
-        
+
         const albergue = alberguesGlobales.find(a => a.id === albergueId);
         const personasSnap = await getDocs(collection(db, "albergues", albergueId, "personas"));
-        
+
         let entregas = [];
         let personasBeneficiadas = new Set();
         let categorias = {};
         let materialesEntregados = {};
         let totalArticulos = 0;
-        
+
         for (const personaDoc of personasSnap.docs) {
             const personaData = personaDoc.data();
             const intervencionesSnap = await getDocs(
                 collection(db, "albergues", albergueId, "personas", personaDoc.id, "intervenciones")
             );
-            
+
             intervencionesSnap.forEach(intDoc => {
                 const interv = intDoc.data();
-                
+
                 if (interv.tipo !== 'Entregas') return;
-                
-                const fechaInterv = interv.fecha.toDate();
-                
+
+                const fechaInterv = safeDate(interv.fecha);
+
                 if (!todasFechas) {
                     const inicio = new Date(fechaInicio);
                     const fin = new Date(fechaFin);
                     fin.setHours(23, 59, 59);
-                    
+
                     if (fechaInterv < inicio || fechaInterv > fin) return;
                 }
-                
+
                 personasBeneficiadas.add(personaDoc.id);
-                
+
                 const subtipo = interv.subtipo || 'Sin especificar';
                 categorias[subtipo] = (categorias[subtipo] || 0) + 1;
-                
+
                 if (interv.datosEstructurados) {
                     const datos = interv.datosEstructurados;
-                    
+
                     if (datos.contenido_kit) {
                         const items = datos.contenido_kit.split(',').map(item => item.trim());
                         items.forEach(item => {
@@ -1136,7 +1145,7 @@ async function generarInformeEntregasAlbergue() {
                             totalArticulos++;
                         });
                     }
-                    
+
                     if (datos.tipo_ropa) {
                         const items = datos.tipo_ropa.split(',').map(item => item.trim());
                         items.forEach(item => {
@@ -1144,14 +1153,14 @@ async function generarInformeEntregasAlbergue() {
                             totalArticulos++;
                         });
                     }
-                    
+
                     if (datos.tipo_manta) {
                         const cantidad = parseInt(datos.cantidad_manta) || 1;
                         materialesEntregados[datos.tipo_manta] = (materialesEntregados[datos.tipo_manta] || 0) + cantidad;
                         totalArticulos += cantidad;
                     }
                 }
-                
+
                 entregas.push({
                     personaNombre: personaData.nombre + ' ' + (personaData.ap1 || ''),
                     personaDni: personaData.docNum || 'S/D',
@@ -1161,7 +1170,7 @@ async function generarInformeEntregasAlbergue() {
                 });
             });
         }
-        
+
         let personasConEntregas = {};
         entregas.forEach(entrega => {
             const key = entrega.personaDni;
@@ -1175,16 +1184,16 @@ async function generarInformeEntregasAlbergue() {
             }
             personasConEntregas[key].count++;
         });
-        
+
         const personasArray = Object.values(personasConEntregas).sort((a, b) => b.count - a.count);
-        
+
         let html = `
             <div class="informe-resultado">
                 <div class="informe-header">
                     <h2><i class="fa-solid fa-box"></i> ${albergue.nombre}</h2>
                     <p class="informe-periodo">
-                        ${todasFechas ? 'Todo el histórico' : 
-                        `${new Date(fechaInicio).toLocaleDateString('es-ES')} - ${new Date(fechaFin).toLocaleDateString('es-ES')}`}
+                        ${todasFechas ? 'Todo el histórico' :
+                `${new Date(fechaInicio).toLocaleDateString('es-ES')} - ${new Date(fechaFin).toLocaleDateString('es-ES')}`}
                     </p>
                 </div>
                 
@@ -1207,7 +1216,7 @@ async function generarInformeEntregasAlbergue() {
                     <h3><i class="fa-solid fa-chart-pie"></i> Entregas por Categoría</h3>
                     <div class="chart-bars">
         `;
-        
+
         const categoriasOrdenadas = Object.entries(categorias).sort((a, b) => b[1] - a[1]);
         categoriasOrdenadas.forEach(([cat, count]) => {
             const porcentaje = ((count / entregas.length) * 100).toFixed(1);
@@ -1221,7 +1230,7 @@ async function generarInformeEntregasAlbergue() {
                 </div>
             `;
         });
-        
+
         html += `
                     </div>
                 </div>
@@ -1230,7 +1239,7 @@ async function generarInformeEntregasAlbergue() {
                     <h3><i class="fa-solid fa-box-open"></i> Inventario de Materiales</h3>
                     <div class="materiales-grid">
         `;
-        
+
         const materialesOrdenados = Object.entries(materialesEntregados).sort((a, b) => b[1] - a[1]);
         materialesOrdenados.forEach(([material, cantidad]) => {
             html += `
@@ -1243,7 +1252,7 @@ async function generarInformeEntregasAlbergue() {
                 </div>
             `;
         });
-        
+
         html += `
                     </div>
                 </div>
@@ -1261,7 +1270,7 @@ async function generarInformeEntregasAlbergue() {
                         </thead>
                         <tbody>
         `;
-        
+
         personasArray.slice(0, 10).forEach(persona => {
             html += `
                 <tr>
@@ -1272,7 +1281,7 @@ async function generarInformeEntregasAlbergue() {
                 </tr>
             `;
         });
-        
+
         html += `
                         </tbody>
                     </table>
@@ -1285,10 +1294,10 @@ async function generarInformeEntregasAlbergue() {
                 </div>
             </div>
         `;
-        
+
         resultado.innerHTML = html;
-        
-    } catch(e) {
+
+    } catch (e) {
         console.error('Error:', e);
         resultado.innerHTML = `<div class="error-message">Error: ${e.message}</div>`;
     }
@@ -1296,7 +1305,7 @@ async function generarInformeEntregasAlbergue() {
 
 function abrirInformeEntregasPersona() {
     const zona = document.getElementById('zona-opciones-informe');
-    
+
     zona.innerHTML = `
         <div class="informe-detallado">
             <button onclick="mostrarDashboard()" class="btn-back">
@@ -1319,30 +1328,30 @@ function abrirInformeEntregasPersona() {
 async function buscarPersonaEntregas() {
     const busqueda = document.getElementById('search-ent-persona').value.toLowerCase().trim();
     const resultados = document.getElementById('results-ent-persona');
-    
+
     if (busqueda.length < 2) {
         resultados.innerHTML = '';
         resultados.style.display = 'none';
         return;
     }
-    
+
     resultados.innerHTML = '<div class="loading-spinner"><i class="fa-solid fa-spinner fa-spin"></i></div>';
     resultados.style.display = 'block';
-    
+
     try {
         const { collection, getDocs } = window.parent.firebaseModules;
         const db = window.parent.db;
-        
+
         let personasEncontradas = [];
-        
+
         for (const albergue of alberguesGlobales) {
             const personasSnap = await getDocs(collection(db, "albergues", albergue.id, "personas"));
-            
+
             personasSnap.forEach(docSnap => {
                 const persona = docSnap.data();
                 const nombreCompleto = `${persona.nombre} ${persona.ap1 || ''} ${persona.ap2 || ''}`.toLowerCase();
                 const docNum = (persona.docNum || '').toLowerCase();
-                
+
                 if (nombreCompleto.includes(busqueda) || docNum.includes(busqueda)) {
                     personasEncontradas.push({
                         id: docSnap.id,
@@ -1353,12 +1362,12 @@ async function buscarPersonaEntregas() {
                 }
             });
         }
-        
+
         if (personasEncontradas.length === 0) {
             resultados.innerHTML = '<div class="search-no-results">No se encontraron personas</div>';
             return;
         }
-        
+
         let html = '<div class="search-results">';
         personasEncontradas.forEach(persona => {
             html += `
@@ -1375,10 +1384,10 @@ async function buscarPersonaEntregas() {
             `;
         });
         html += '</div>';
-        
+
         resultados.innerHTML = html;
-        
-    } catch(e) {
+
+    } catch (e) {
         console.error('Error:', e);
         resultados.innerHTML = `<div class="error-message">Error: ${e.message}</div>`;
     }
@@ -1388,39 +1397,39 @@ async function generarInformeEntregasPersona(personaId, albergueId) {
     const resultado = document.getElementById('resultado-ent-persona');
     document.getElementById('results-ent-persona').innerHTML = '';
     document.getElementById('results-ent-persona').style.display = 'none';
-    
+
     resultado.innerHTML = '<div class="loading-spinner"><i class="fa-solid fa-spinner fa-spin"></i> Cargando historial...</div>';
-    
+
     try {
         const { collection, getDocs, doc, getDoc } = window.parent.firebaseModules;
         const db = window.parent.db;
-        
+
         const albergue = alberguesGlobales.find(a => a.id === albergueId);
         const personaSnap = await getDoc(doc(db, "albergues", albergueId, "personas", personaId));
         const persona = personaSnap.data();
-        
+
         const intervencionesSnap = await getDocs(
             collection(db, "albergues", albergueId, "personas", personaId, "intervenciones")
         );
-        
+
         let entregas = [];
         let categorias = {};
-        
+
         intervencionesSnap.forEach(docSnap => {
             const interv = docSnap.data();
             if (interv.tipo === 'Entregas') {
                 entregas.push({
                     ...interv,
-                    fecha: interv.fecha.toDate()
+                    fecha: safeDate(interv.fecha)
                 });
-                
+
                 const subtipo = interv.subtipo || 'Sin especificar';
                 categorias[subtipo] = (categorias[subtipo] || 0) + 1;
             }
         });
-        
+
         entregas.sort((a, b) => b.fecha - a.fecha);
-        
+
         let html = `
             <div class="informe-resultado">
                 <div class="informe-header">
@@ -1438,14 +1447,14 @@ async function generarInformeEntregasPersona(personaId, albergueId) {
                     </div>
                 </div>
         `;
-        
+
         if (Object.keys(categorias).length > 0) {
             html += `
                 <div class="informe-section">
                     <h3><i class="fa-solid fa-chart-pie"></i> Entregas por Tipo</h3>
                     <div class="chart-bars">
             `;
-            
+
             const tiposOrdenados = Object.entries(categorias).sort((a, b) => b[1] - a[1]);
             tiposOrdenados.forEach(([tipo, count]) => {
                 html += `
@@ -1458,19 +1467,19 @@ async function generarInformeEntregasPersona(personaId, albergueId) {
                     </div>
                 `;
             });
-            
+
             html += `
                     </div>
                 </div>
             `;
         }
-        
+
         html += `
                 <div class="informe-section">
                     <h3><i class="fa-solid fa-clock-rotate-left"></i> Historial Completo</h3>
                     <div class="historial-timeline">
         `;
-        
+
         if (entregas.length === 0) {
             html += '<p class="no-data">No hay entregas registradas</p>';
         } else {
@@ -1479,7 +1488,7 @@ async function generarInformeEntregasPersona(personaId, albergueId) {
                     <div class="historial-item">
                         <div class="historial-header">
                             <strong>${entrega.subtipo}</strong>
-                            <span>${entrega.fecha.toLocaleDateString('es-ES')} ${entrega.fecha.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'})}</span>
+                            <span>${entrega.fecha.toLocaleDateString('es-ES')} ${entrega.fecha.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
                         </div>
                         <div class="historial-content">
                             <p><strong>Motivo:</strong> ${entrega.motivo}</p>
@@ -1490,7 +1499,7 @@ async function generarInformeEntregasPersona(personaId, albergueId) {
                 `;
             });
         }
-        
+
         html += `
                     </div>
                 </div>
@@ -1502,10 +1511,10 @@ async function generarInformeEntregasPersona(personaId, albergueId) {
                 </div>
             </div>
         `;
-        
+
         resultado.innerHTML = html;
-        
-    } catch(e) {
+
+    } catch (e) {
         console.error('Error:', e);
         resultado.innerHTML = `<div class="error-message">Error: ${e.message}</div>`;
     }
@@ -1521,12 +1530,12 @@ async function generarInformeEntregasPersona(personaId, albergueId) {
 
 function abrirInformePsicosocialAlbergue() {
     const zona = document.getElementById('zona-opciones-informe');
-    
+
     let alberguesOptions = '<option value="">-- Selecciona un albergue --</option>';
     alberguesGlobales.forEach(alb => {
         alberguesOptions += `<option value="${alb.id}">${alb.nombre}</option>`;
     });
-    
+
     zona.innerHTML = `
         <div class="informe-detallado">
             <button onclick="mostrarDashboard()" class="btn-back">
@@ -1561,7 +1570,7 @@ function abrirInformePsicosocialAlbergue() {
             <div id="resultado-psi-alb"></div>
         </div>
     `;
-    
+
     const hoy = new Date().toISOString().split('T')[0];
     document.getElementById('psi-alb-fecha-fin').value = hoy;
     document.getElementById('psi-alb-fecha-fin').max = hoy;
@@ -1570,10 +1579,10 @@ function abrirInformePsicosocialAlbergue() {
 function toggleFechasPsiAlb(checkbox) {
     const inicio = document.getElementById('psi-alb-fecha-inicio');
     const fin = document.getElementById('psi-alb-fecha-fin');
-    
+
     inicio.disabled = checkbox.checked;
     fin.disabled = checkbox.checked;
-    
+
     if (!checkbox.checked) {
         fin.value = new Date().toISOString().split('T')[0];
     }
@@ -1585,56 +1594,56 @@ async function generarInformePsicosocialAlbergue() {
     const fechaInicio = document.getElementById('psi-alb-fecha-inicio').value;
     const fechaFin = document.getElementById('psi-alb-fecha-fin').value;
     const resultado = document.getElementById('resultado-psi-alb');
-    
+
     if (!albergueId) {
         alert('Selecciona un albergue');
         return;
     }
-    
+
     if (!todasFechas && (!fechaInicio || !fechaFin)) {
         alert('Selecciona un rango de fechas');
         return;
     }
-    
+
     resultado.innerHTML = '<div class="loading-spinner"><i class="fa-solid fa-spinner fa-spin"></i> Generando informe...</div>';
-    
+
     try {
         const { collection, getDocs } = window.parent.firebaseModules;
         const db = window.parent.db;
-        
+
         const albergue = alberguesGlobales.find(a => a.id === albergueId);
         const personasSnap = await getDocs(collection(db, "albergues", albergueId, "personas"));
-        
+
         let intervenciones = [];
         let personasAtendidas = new Set();
         let tipologias = {};
-        
+
         for (const personaDoc of personasSnap.docs) {
             const personaData = personaDoc.data();
             const intervencionesSnap = await getDocs(
                 collection(db, "albergues", albergueId, "personas", personaDoc.id, "intervenciones")
             );
-            
+
             intervencionesSnap.forEach(intDoc => {
                 const interv = intDoc.data();
-                
+
                 if (interv.tipo !== 'Psicosocial') return;
-                
-                const fechaInterv = interv.fecha.toDate();
-                
+
+                const fechaInterv = safeDate(interv.fecha);
+
                 if (!todasFechas) {
                     const inicio = new Date(fechaInicio);
                     const fin = new Date(fechaFin);
                     fin.setHours(23, 59, 59);
-                    
+
                     if (fechaInterv < inicio || fechaInterv > fin) return;
                 }
-                
+
                 personasAtendidas.add(personaDoc.id);
-                
+
                 const subtipo = interv.subtipo || 'Sin especificar';
                 tipologias[subtipo] = (tipologias[subtipo] || 0) + 1;
-                
+
                 intervenciones.push({
                     personaNombre: personaData.nombre + ' ' + (personaData.ap1 || ''),
                     personaDni: personaData.docNum || 'S/D',
@@ -1644,7 +1653,7 @@ async function generarInformePsicosocialAlbergue() {
                 });
             });
         }
-        
+
         let personasConAtenciones = {};
         intervenciones.forEach(interv => {
             const key = interv.personaDni;
@@ -1658,17 +1667,17 @@ async function generarInformePsicosocialAlbergue() {
             }
             personasConAtenciones[key].count++;
         });
-        
+
         const personasArray = Object.values(personasConAtenciones).sort((a, b) => b.count - a.count);
         const promedio = personasAtendidas.size > 0 ? (intervenciones.length / personasAtendidas.size).toFixed(2) : 0;
-        
+
         let html = `
             <div class="informe-resultado">
                 <div class="informe-header">
                     <h2><i class="fa-solid fa-heart"></i> ${albergue.nombre}</h2>
                     <p class="informe-periodo">
-                        ${todasFechas ? 'Todo el histórico' : 
-                        `${new Date(fechaInicio).toLocaleDateString('es-ES')} - ${new Date(fechaFin).toLocaleDateString('es-ES')}`}
+                        ${todasFechas ? 'Todo el histórico' :
+                `${new Date(fechaInicio).toLocaleDateString('es-ES')} - ${new Date(fechaFin).toLocaleDateString('es-ES')}`}
                     </p>
                 </div>
                 
@@ -1691,7 +1700,7 @@ async function generarInformePsicosocialAlbergue() {
                     <h3><i class="fa-solid fa-chart-pie"></i> Distribución por Tipo</h3>
                     <div class="chart-bars">
         `;
-        
+
         const tiposOrdenados = Object.entries(tipologias).sort((a, b) => b[1] - a[1]);
         tiposOrdenados.forEach(([tipo, count]) => {
             const porcentaje = ((count / intervenciones.length) * 100).toFixed(1);
@@ -1705,7 +1714,7 @@ async function generarInformePsicosocialAlbergue() {
                 </div>
             `;
         });
-        
+
         html += `
                     </div>
                 </div>
@@ -1723,7 +1732,7 @@ async function generarInformePsicosocialAlbergue() {
                         </thead>
                         <tbody>
         `;
-        
+
         personasArray.slice(0, 10).forEach(persona => {
             html += `
                 <tr>
@@ -1734,7 +1743,7 @@ async function generarInformePsicosocialAlbergue() {
                 </tr>
             `;
         });
-        
+
         html += `
                         </tbody>
                     </table>
@@ -1747,10 +1756,10 @@ async function generarInformePsicosocialAlbergue() {
                 </div>
             </div>
         `;
-        
+
         resultado.innerHTML = html;
-        
-    } catch(e) {
+
+    } catch (e) {
         console.error('Error:', e);
         resultado.innerHTML = `<div class="error-message">Error: ${e.message}</div>`;
     }
@@ -1758,7 +1767,7 @@ async function generarInformePsicosocialAlbergue() {
 
 function abrirInformePsicosocialPersona() {
     const zona = document.getElementById('zona-opciones-informe');
-    
+
     zona.innerHTML = `
         <div class="informe-detallado">
             <button onclick="mostrarDashboard()" class="btn-back">
@@ -1781,30 +1790,30 @@ function abrirInformePsicosocialPersona() {
 async function buscarPersonaPsicosocial() {
     const busqueda = document.getElementById('search-psi-persona').value.toLowerCase().trim();
     const resultados = document.getElementById('results-psi-persona');
-    
+
     if (busqueda.length < 2) {
         resultados.innerHTML = '';
         resultados.style.display = 'none';
         return;
     }
-    
+
     resultados.innerHTML = '<div class="loading-spinner"><i class="fa-solid fa-spinner fa-spin"></i></div>';
     resultados.style.display = 'block';
-    
+
     try {
         const { collection, getDocs } = window.parent.firebaseModules;
         const db = window.parent.db;
-        
+
         let personasEncontradas = [];
-        
+
         for (const albergue of alberguesGlobales) {
             const personasSnap = await getDocs(collection(db, "albergues", albergue.id, "personas"));
-            
+
             personasSnap.forEach(docSnap => {
                 const persona = docSnap.data();
                 const nombreCompleto = `${persona.nombre} ${persona.ap1 || ''} ${persona.ap2 || ''}`.toLowerCase();
                 const docNum = (persona.docNum || '').toLowerCase();
-                
+
                 if (nombreCompleto.includes(busqueda) || docNum.includes(busqueda)) {
                     personasEncontradas.push({
                         id: docSnap.id,
@@ -1815,12 +1824,12 @@ async function buscarPersonaPsicosocial() {
                 }
             });
         }
-        
+
         if (personasEncontradas.length === 0) {
             resultados.innerHTML = '<div class="search-no-results">No se encontraron personas</div>';
             return;
         }
-        
+
         let html = '<div class="search-results">';
         personasEncontradas.forEach(persona => {
             html += `
@@ -1837,10 +1846,10 @@ async function buscarPersonaPsicosocial() {
             `;
         });
         html += '</div>';
-        
+
         resultados.innerHTML = html;
-        
-    } catch(e) {
+
+    } catch (e) {
         console.error('Error:', e);
         resultados.innerHTML = `<div class="error-message">Error: ${e.message}</div>`;
     }
@@ -1850,39 +1859,39 @@ async function generarInformePsicosocialPersona(personaId, albergueId) {
     const resultado = document.getElementById('resultado-psi-persona');
     document.getElementById('results-psi-persona').innerHTML = '';
     document.getElementById('results-psi-persona').style.display = 'none';
-    
+
     resultado.innerHTML = '<div class="loading-spinner"><i class="fa-solid fa-spinner fa-spin"></i> Cargando historial...</div>';
-    
+
     try {
         const { collection, getDocs, doc, getDoc } = window.parent.firebaseModules;
         const db = window.parent.db;
-        
+
         const albergue = alberguesGlobales.find(a => a.id === albergueId);
         const personaSnap = await getDoc(doc(db, "albergues", albergueId, "personas", personaId));
         const persona = personaSnap.data();
-        
+
         const intervencionesSnap = await getDocs(
             collection(db, "albergues", albergueId, "personas", personaId, "intervenciones")
         );
-        
+
         let intervenciones = [];
         let tipologias = {};
-        
+
         intervencionesSnap.forEach(docSnap => {
             const interv = docSnap.data();
             if (interv.tipo === 'Psicosocial') {
                 intervenciones.push({
                     ...interv,
-                    fecha: interv.fecha.toDate()
+                    fecha: safeDate(interv.fecha)
                 });
-                
+
                 const subtipo = interv.subtipo || 'Sin especificar';
                 tipologias[subtipo] = (tipologias[subtipo] || 0) + 1;
             }
         });
-        
+
         intervenciones.sort((a, b) => b.fecha - a.fecha);
-        
+
         let html = `
             <div class="informe-resultado">
                 <div class="informe-header">
@@ -1900,14 +1909,14 @@ async function generarInformePsicosocialPersona(personaId, albergueId) {
                     </div>
                 </div>
         `;
-        
+
         if (Object.keys(tipologias).length > 0) {
             html += `
                 <div class="informe-section">
                     <h3><i class="fa-solid fa-chart-pie"></i> Atenciones por Tipo</h3>
                     <div class="chart-bars">
             `;
-            
+
             const tiposOrdenados = Object.entries(tipologias).sort((a, b) => b[1] - a[1]);
             tiposOrdenados.forEach(([tipo, count]) => {
                 html += `
@@ -1920,19 +1929,19 @@ async function generarInformePsicosocialPersona(personaId, albergueId) {
                     </div>
                 `;
             });
-            
+
             html += `
                     </div>
                 </div>
             `;
         }
-        
+
         html += `
                 <div class="informe-section">
                     <h3><i class="fa-solid fa-clock-rotate-left"></i> Historial Completo</h3>
                     <div class="historial-timeline">
         `;
-        
+
         if (intervenciones.length === 0) {
             html += '<p class="no-data">No hay atenciones psicosociales registradas</p>';
         } else {
@@ -1941,7 +1950,7 @@ async function generarInformePsicosocialPersona(personaId, albergueId) {
                     <div class="historial-item">
                         <div class="historial-header">
                             <strong>${interv.subtipo}</strong>
-                            <span>${interv.fecha.toLocaleDateString('es-ES')} ${interv.fecha.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'})}</span>
+                            <span>${interv.fecha.toLocaleDateString('es-ES')} ${interv.fecha.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
                         </div>
                         <div class="historial-content">
                             <p><strong>Motivo:</strong> ${interv.motivo}</p>
@@ -1952,7 +1961,7 @@ async function generarInformePsicosocialPersona(personaId, albergueId) {
                 `;
             });
         }
-        
+
         html += `
                     </div>
                 </div>
@@ -1964,10 +1973,10 @@ async function generarInformePsicosocialPersona(personaId, albergueId) {
                 </div>
             </div>
         `;
-        
+
         resultado.innerHTML = html;
-        
-    } catch(e) {
+
+    } catch (e) {
         console.error('Error:', e);
         resultado.innerHTML = `<div class="error-message">Error: ${e.message}</div>`;
     }
@@ -1982,12 +1991,12 @@ async function generarInformePsicosocialPersona(personaId, albergueId) {
 
 function abrirInformeGestionAlbergue() {
     const zona = document.getElementById('zona-opciones-informe');
-    
+
     let alberguesOptions = '<option value="">-- Selecciona un albergue --</option>';
     alberguesGlobales.forEach(alb => {
         alberguesOptions += `<option value="${alb.id}">${alb.nombre}</option>`;
     });
-    
+
     zona.innerHTML = `
         <div class="informe-detallado">
             <button onclick="mostrarDashboard()" class="btn-back">
@@ -2022,7 +2031,7 @@ function abrirInformeGestionAlbergue() {
             <div id="resultado-gest-alb"></div>
         </div>
     `;
-    
+
     const hoy = new Date().toISOString().split('T')[0];
     document.getElementById('gest-alb-fecha-fin').value = hoy;
     document.getElementById('gest-alb-fecha-fin').max = hoy;
@@ -2031,10 +2040,10 @@ function abrirInformeGestionAlbergue() {
 function toggleFechasGestAlb(checkbox) {
     const inicio = document.getElementById('gest-alb-fecha-inicio');
     const fin = document.getElementById('gest-alb-fecha-fin');
-    
+
     inicio.disabled = checkbox.checked;
     fin.disabled = checkbox.checked;
-    
+
     if (!checkbox.checked) {
         fin.value = new Date().toISOString().split('T')[0];
     }
@@ -2046,30 +2055,30 @@ async function generarInformeGestionAlbergue() {
     const fechaInicio = document.getElementById('gest-alb-fecha-inicio').value;
     const fechaFin = document.getElementById('gest-alb-fecha-fin').value;
     const resultado = document.getElementById('resultado-gest-alb');
-    
+
     if (!albergueId) {
         alert('Selecciona un albergue');
         return;
     }
-    
+
     if (!todasFechas && (!fechaInicio || !fechaFin)) {
         alert('Selecciona un rango de fechas');
         return;
     }
-    
+
     resultado.innerHTML = '<div class="loading-spinner"><i class="fa-solid fa-spinner fa-spin"></i> Generando informe...</div>';
-    
+
     try {
         const { collection, getDocs } = window.parent.firebaseModules;
         const db = window.parent.db;
-        
+
         const albergue = alberguesGlobales.find(a => a.id === albergueId);
         const personasSnap = await getDocs(collection(db, "albergues", albergueId, "personas"));
-        
+
         let personasActivas = [];
         let personasInactivas = [];
         let totalPersonas = 0;
-        
+
         // Estadísticas demográficas
         let edades = {
             bebes: 0,      // 0-2
@@ -2078,38 +2087,40 @@ async function generarInformeGestionAlbergue() {
             adultos: 0,    // 18-64
             mayores: 0     // 65+
         };
-        
+
         let sumaEstancia = 0;
         let contadorEstancia = 0;
         let entradas = 0;
         let salidas = 0;
-        
+
         const hoy = new Date();
         const inicioRango = todasFechas ? null : new Date(fechaInicio);
         const finRango = todasFechas ? null : new Date(fechaFin);
         if (finRango) finRango.setHours(23, 59, 59);
-        
+
         personasSnap.forEach(docSnap => {
             const persona = docSnap.data();
             totalPersonas++;
-            
-            const fechaIngreso = persona.fechaIngreso?.toDate();
-            const fechaSalida = persona.fechaSalida?.toDate();
+
+            const fechaIngreso = safeDate(persona.fechaIngreso);
+            const fechaSalida = safeDate(persona.fechaSalida);
             const estado = persona.estado || 'ingresado';
-            
+
             // Calcular edad
             let edad = null;
             if (persona.fechaNac) {
-                const fechaNac = persona.fechaNac.toDate();
-                edad = Math.floor((hoy - fechaNac) / (365.25 * 24 * 60 * 60 * 1000));
-                
+                const fechaNac = safeDate(persona.fechaNac);
+                if (fechaNac) {
+                    edad = Math.floor((hoy - fechaNac) / (365.25 * 24 * 60 * 60 * 1000));
+                }
+
                 if (edad <= 2) edades.bebes++;
                 else if (edad <= 12) edades.ninos++;
                 else if (edad <= 17) edades.adolescentes++;
                 else if (edad <= 64) edades.adultos++;
                 else edades.mayores++;
             }
-            
+
             // Calcular estancia
             let diasEstancia = 0;
             if (fechaIngreso) {
@@ -2118,7 +2129,7 @@ async function generarInformeGestionAlbergue() {
                 sumaEstancia += diasEstancia;
                 contadorEstancia++;
             }
-            
+
             // Contar entradas y salidas en el período
             if (!todasFechas) {
                 if (fechaIngreso && fechaIngreso >= inicioRango && fechaIngreso <= finRango) {
@@ -2128,7 +2139,7 @@ async function generarInformeGestionAlbergue() {
                     salidas++;
                 }
             }
-            
+
             const personaData = {
                 nombre: `${persona.nombre} ${persona.ap1 || ''} ${persona.ap2 || ''}`.trim(),
                 dni: persona.docNum || 'S/D',
@@ -2140,29 +2151,29 @@ async function generarInformeGestionAlbergue() {
                 familia: persona.familia || 'Individual',
                 estado: estado
             };
-            
+
             if (estado === 'ingresado') {
                 personasActivas.push(personaData);
             } else {
                 personasInactivas.push(personaData);
             }
         });
-        
+
         // Ordenar por fecha de ingreso (más reciente primero)
         personasActivas.sort((a, b) => b.fechaIngreso - a.fechaIngreso);
         personasInactivas.sort((a, b) => (b.fechaSalida || 0) - (a.fechaSalida || 0));
-        
+
         const estanciaMedia = contadorEstancia > 0 ? (sumaEstancia / contadorEstancia).toFixed(1) : 0;
         const tasaOcupacion = albergue.capacidad > 0 ? ((personasActivas.length / albergue.capacidad) * 100).toFixed(1) : 0;
-        
+
         // Generar HTML
         let html = `
             <div class="informe-resultado">
                 <div class="informe-header">
                     <h2><i class="fa-solid fa-building"></i> ${albergue.nombre}</h2>
                     <p class="informe-periodo">
-                        ${todasFechas ? 'Todo el histórico' : 
-                        `${inicioRango.toLocaleDateString('es-ES')} - ${finRango.toLocaleDateString('es-ES')}`}
+                        ${todasFechas ? 'Todo el histórico' :
+                `${inicioRango.toLocaleDateString('es-ES')} - ${finRango.toLocaleDateString('es-ES')}`}
                     </p>
                 </div>
                 
@@ -2196,17 +2207,17 @@ async function generarInformeGestionAlbergue() {
                     </div>
                 </div>
         `;
-        
+
         // Demografía por edad
         const totalConEdad = edades.bebes + edades.ninos + edades.adolescentes + edades.adultos + edades.mayores;
-        
+
         if (totalConEdad > 0) {
             html += `
                 <div class="informe-section">
                     <h3><i class="fa-solid fa-users"></i> Demografía por Edad</h3>
                     <div class="chart-bars">
             `;
-            
+
             const categorias = [
                 { label: 'Bebés (0-2 años)', count: edades.bebes },
                 { label: 'Niños (3-12 años)', count: edades.ninos },
@@ -2214,7 +2225,7 @@ async function generarInformeGestionAlbergue() {
                 { label: 'Adultos (18-64)', count: edades.adultos },
                 { label: 'Mayores (65+)', count: edades.mayores }
             ];
-            
+
             categorias.forEach(cat => {
                 const porcentaje = ((cat.count / totalConEdad) * 100).toFixed(1);
                 html += `
@@ -2227,18 +2238,18 @@ async function generarInformeGestionAlbergue() {
                     </div>
                 `;
             });
-            
+
             html += `
                     </div>
                 </div>
             `;
         }
-        
+
         // Movimientos en el período
         if (!todasFechas) {
             const balance = entradas - salidas;
             const balanceClass = balance > 0 ? 'positivo' : balance < 0 ? 'negativo' : 'neutro';
-            
+
             html += `
                 <div class="informe-section">
                     <h3><i class="fa-solid fa-right-left"></i> Movimientos en el Período</h3>
@@ -2268,7 +2279,7 @@ async function generarInformeGestionAlbergue() {
                 </div>
             `;
         }
-        
+
         // Listado de personas activas
         html += `
             <div class="informe-section">
@@ -2286,7 +2297,7 @@ async function generarInformeGestionAlbergue() {
                     </thead>
                     <tbody>
         `;
-        
+
         if (personasActivas.length === 0) {
             html += `
                 <tr>
@@ -2307,13 +2318,13 @@ async function generarInformeGestionAlbergue() {
                 `;
             });
         }
-        
+
         html += `
                     </tbody>
                 </table>
             </div>
         `;
-        
+
         // Listado de personas que han salido
         html += `
             <div class="informe-section">
@@ -2331,7 +2342,7 @@ async function generarInformeGestionAlbergue() {
                     </thead>
                     <tbody>
         `;
-        
+
         if (personasInactivas.length === 0) {
             html += `
                 <tr>
@@ -2352,7 +2363,7 @@ async function generarInformeGestionAlbergue() {
                 `;
             });
         }
-        
+
         html += `
                     </tbody>
                 </table>
@@ -2365,10 +2376,10 @@ async function generarInformeGestionAlbergue() {
             </div>
         </div>
         `;
-        
+
         resultado.innerHTML = html;
-        
-    } catch(e) {
+
+    } catch (e) {
         console.error('Error:', e);
         resultado.innerHTML = `<div class="error-message"><i class="fa-solid fa-circle-exclamation"></i> Error: ${e.message}</div>`;
     }

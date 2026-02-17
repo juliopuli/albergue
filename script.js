@@ -2292,6 +2292,7 @@ window.abrirSeleccionCama = async function () {
     window.mostrarGridCamas();
 };
 window.guardarCama = async function (n) {
+    alert("DEBUG: guardarCama " + n);
     if (!personaEnGestion) return;
 
     // 1. Detectar si es un cambio de cama
@@ -4028,3 +4029,9 @@ window.rescatarDeGlobalDirecto = async function () {
         alert("Error al ingresar: " + e.message);
     }
 };
+
+// DEBUG: Confirmación de carga
+setTimeout(() => {
+    if (window.showToast) window.showToast("DEBUG: V.5.2.5 LOADED OK");
+    console.log("DEBUG: V.5.2.5 LOADED OK");
+}, 2000);

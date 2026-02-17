@@ -2654,6 +2654,45 @@ window.limpiarDerivaciones = async function () {
     }
 };
 
+// Diagnostic Scan
+window.escanearDerivaciones = async function () {
+    window.sysLog("🔍 Iniciando escaneo profundo...", "info");
+    const permitidas = window.getDerivacionesPermitidas();
+    window.sysLog(`Rol: ${currentUserData?.rol}, Permitidas: ${JSON.stringify(permitidas)}`, "info");
+
+    let totalEncontradas = 0;
+
+    try {
+        const alberguesSnap = await getDocs(collection(db, "albergues"));
+
+        for (const albDoc of alberguesSnap.docs) {
+            const personasSnap = await getDocs(collection(db, "albergues", albDoc.id, "personas"));
+
+            for (const persDoc of personasSnap.docs) {
+                const historialSnap = await getDocs(collection(db, "albergues", albDoc.id, "personas", persDoc.id, "historial"));
+
+                historialSnap.forEach(histDoc => {
+                    const log = histDoc.data();
+                    if (log.estado === 'pendiente') {
+                        const esVisible = permitidas.includes(log.accion);
+                        window.sysLog(
+                            `[DETECTADO] Alb: ${albDoc.data().nombre} | Pers: ${persDoc.data().nombre} | ID: ${histDoc.id} | Acción: "${log.accion}" | Visible: ${esVisible}`,
+                            esVisible ? "error" : "warn"
+                        );
+                        if (esVisible) totalEncontradas++;
+                    }
+                });
+            }
+        }
+        window.sysLog(`🏁 Escaneo completado. Total visibles para ti: ${totalEncontradas}`, "success");
+        if (totalEncontradas > 0) {
+            window.sysLog("💡 Usa el botón FIX DERIV. para eliminar estas entradas si son erróneas.", "info");
+        }
+    } catch (e) {
+        window.sysLog("Error escaneo: " + e.message, "error");
+    }
+};
+
 // Count pending derivations
 window.contarDerivacionesPendientes = async function () {
     if (!currentUserData) return 0;

@@ -3645,6 +3645,7 @@ window.cargarDerivacionesAlbergue = async function () {
                     nombre: persData.nombre,
                     ap1: persData.ap1 || '',
                     docNum: persData.docNum || '',
+                    noLocalizacion: persData.noLocalizacion || false,
                     derivaciones: derivacionesPendientes
                 });
             }
@@ -3692,18 +3693,42 @@ window.cargarDerivacionesAlbergue = async function () {
                     tipoLabel = 'Entregas';
                 }
 
-                html += `
-                    <div class="derivacion-item ${tipoClass}" onclick="window.navegarADerivacion('${persona.id}', '${tipoLabel}')">
+                const esAdmin = currentUserData && ['admin', 'super_admin'].includes(currentUserData.rol);
+
+                if (persona.noLocalizacion && !esAdmin) {
+                    // PERSONA PROTEGIDA para no-admins: sin nombre, sin onclick
+                    html += `
+                    <div class="derivacion-item ${tipoClass} search-item-protegida" style="cursor:default;">
                         <div class="derivacion-header">
-                            <div class="derivacion-nombre">${persona.nombre} ${persona.ap1}</div>
+                            <div class="derivacion-nombre" style="color:#dc2626;">
+                                <i class="fa-solid fa-shield-halved"></i> Contacte con un administrador
+                            </div>
                             <div class="derivacion-tipo-badge ${tipoBadge}">${tipoLabel}</div>
                         </div>
                         <div class="derivacion-info">
-                            <i class="fa-regular fa-calendar"></i> ${fechaStr} | 
+                            <i class="fa-regular fa-calendar"></i> ${fechaStr} |
+                            <i class="fa-solid fa-user"></i> ${deriv.usuario}
+                        </div>
+                        ${deriv.detalle ? `<div class="derivacion-motivo">Solicitud pendiente</div>` : ''}
+                    </div>`;
+                } else {
+                    // PERSONA NORMAL (o admin viendo protegida)
+                    const nombreDisplay = persona.noLocalizacion
+                        ? `<i class="fa-solid fa-shield-halved" style="color:#dc2626;"></i> <span style="color:#dc2626;">${persona.nombre} ${persona.ap1}</span>`
+                        : `${persona.nombre} ${persona.ap1}`;
+                    html += `
+                    <div class="derivacion-item ${tipoClass}${persona.noLocalizacion ? ' search-item-protegida' : ''}" onclick="window.navegarADerivacion('${persona.id}', '${tipoLabel}')">
+                        <div class="derivacion-header">
+                            <div class="derivacion-nombre">${nombreDisplay}</div>
+                            <div class="derivacion-tipo-badge ${tipoBadge}">${tipoLabel}</div>
+                        </div>
+                        <div class="derivacion-info">
+                            <i class="fa-regular fa-calendar"></i> ${fechaStr} |
                             <i class="fa-solid fa-user"></i> ${deriv.usuario}
                         </div>
                         ${deriv.detalle ? `<div class="derivacion-motivo">${deriv.detalle}</div>` : ''}
                     </div>`;
+                }
             });
         });
 
@@ -4266,6 +4291,6 @@ window.rescatarDeGlobalDirecto = async function () {
 
 // DEBUG: Confirmación de carga
 setTimeout(() => {
-    if (window.showToast) window.showToast("V.5.2.18 LOADED OK");
-    console.log("DEBUG: V.5.2.18 LOADED OK");
+    if (window.showToast) window.showToast("V.5.2.19 LOADED OK");
+    console.log("DEBUG: V.5.2.19 LOADED OK");
 }, 2000);

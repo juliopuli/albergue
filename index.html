@@ -5,9 +5,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Albergue Pro - V.5.2.17</title>
+    <title>Albergue Pro - V.5.2.18</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css?v=5.2.17">
+    <link rel="stylesheet" href="style.css?v=5.2.18">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -15,7 +15,7 @@
 
 <body>
 
-    <div class="version-tag">V.5.2.17</div>
+    <div class="version-tag">V.5.2.18</div>
 
     <div id="toast" style="visibility: hidden;">Guardado automático</div>
     <div id="loading-overlay" class="hidden">
@@ -134,10 +134,14 @@
                             <div>
                                 <h2 id="interv-nombre" style="color:var(--primary); margin:0;">Nombre Apellido</h2>
                                 <p id="interv-doc" style="font-weight:bold; color:#666; margin:5px 0;">DNI: ...</p>
-                                <div style="display:flex; gap:5px;">
+                                <div style="display:flex; gap:5px; flex-wrap:wrap;">
                                     <span class="badge badge-active" id="interv-estado">ESTADO</span>
                                     <span class="badge" id="interv-presencia"
                                         style="background:#e2e8f0; color:#334155;">...</span>
+                                    <span class="badge hidden" id="interv-protegida"
+                                        style="background:#fef2f2; color:#991b1b; border:1px solid #dc2626;">
+                                        <i class="fa-solid fa-shield-halved"></i> Persona Protegida
+                                    </span>
                                 </div>
                             </div>
                             <button class="secondary" style="padding:8px 15px;"
@@ -1238,7 +1242,7 @@
         window.EmailAuthProvider = EmailAuthProvider;
     </script>
 
-    <script type="module" src="script.js?v=5.2.17"></script>
+    <script type="module" src="script.js?v=5.2.18"></script>
 
     <!-- Modal Duplicados -->
     <div id="modal-duplicados" class="modal-overlay hidden"

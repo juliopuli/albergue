@@ -1536,7 +1536,41 @@ function resetScannerUI() {
 window.onScanSuccess = function (decodedText, decodedResult) { if (html5QrCode) html5QrCode.stop().then(() => { window.sysLog(`QR Leído: ${decodedText}`, "success"); html5QrCode.clear(); resetScannerUI(); try { const url = new URL(decodedText); const aid = url.searchParams.get("aid"); const pid = url.searchParams.get("pid"); if (!aid || !pid) throw new Error("QR inválido"); if (currentAlbergueId && aid !== currentAlbergueId) { if (confirm(`Este QR es de otro albergue. ¿Quieres cambiar a ese albergue?`)) { window.cambiarAlberguePorQR(aid, pid); return; } else { return; } } if (!currentAlbergueId) { window.cambiarAlberguePorQR(aid, pid); return; } window.procesarLecturaPersona(pid); } catch (e) { alert("QR no válido o formato incorrecto."); } }); };
 window.cambiarAlberguePorQR = async function (aid, pid) { window.sysLog(`Cambiando albergue por QR a: ${aid}`, "warn"); currentAlbergueId = aid; window.safeShow('loading-overlay'); try { const dS = await getDoc(doc(db, "albergues", aid)); if (dS.exists()) { currentAlbergueData = dS.data(); totalCapacidad = parseInt(currentAlbergueData.capacidad || 0); } else { alert("Albergue no existe"); window.safeHide('loading-overlay'); return; } if (unsubscribePersonas) unsubscribePersonas(); unsubscribePersonas = onSnapshot(collection(db, "albergues", aid, "personas"), s => { listaPersonasCache = []; camasOcupadas = {}; s.forEach(d => { const p = d.data(); p.id = d.id; listaPersonasCache.push(p); if (p.estado === 'ingresado') { if (p.cama) camasOcupadas[p.cama] = p.nombre; } }); const target = listaPersonasCache.find(p => p.id === pid); if (target) { window.safeHide('loading-overlay'); window.navegar('intervencion'); window.cargarInterfazIntervencion(target); } }); window.conectarListenersBackground(aid); } catch (e) { console.error(e); window.safeHide('loading-overlay'); } };
 window.procesarLecturaPersona = function (pid) { const targetPerson = listaPersonasCache.find(p => p.id === pid); if (targetPerson) { window.cargarInterfazIntervencion(targetPerson); } else { getDoc(doc(db, "albergues", currentAlbergueId, "personas", pid)).then(docSnap => { if (docSnap.exists()) { const pData = { id: docSnap.id, ...docSnap.data() }; window.cargarInterfazIntervencion(pData); } else { alert("Persona no encontrada en este albergue."); } }); } };
-window.cargarInterfazIntervencion = function (persona) { if (!persona) return; personaEnGestion = persona; window.safeHide('view-scan-ready'); window.safeHide('reader'); window.safeHide('btn-stop-camera'); window.safeShow('view-scan-result'); window.safeShow('btn-exit-focused'); window.el('interv-nombre').innerText = `${persona.nombre} ${persona.ap1 || ""}`; window.el('interv-doc').innerText = persona.docNum || "Sin Documento"; window.el('interv-estado').innerText = (persona.estado || "Desconocido").toUpperCase(); const presencia = persona.presencia || 'dentro'; const badgePresencia = window.el('interv-presencia'); badgePresencia.innerText = presencia.toUpperCase(); if (presencia === 'dentro') { badgePresencia.style.backgroundColor = '#dcfce7'; badgePresencia.style.color = '#166534'; } else { badgePresencia.style.backgroundColor = '#fee2e2'; badgePresencia.style.color = '#991b1b'; } if (currentAlbergueData) { const hName = window.el('interv-albergue-name'); if (hName) hName.innerText = currentAlbergueData.nombre || "ALBERGUE"; } };
+window.cargarInterfazIntervencion = function (persona) {
+    if (!persona) return;
+    personaEnGestion = persona;
+    window.safeHide('view-scan-ready');
+    window.safeHide('reader');
+    window.safeHide('btn-stop-camera');
+    window.safeShow('view-scan-result');
+    window.safeShow('btn-exit-focused');
+    window.el('interv-nombre').innerText = `${persona.nombre} ${persona.ap1 || ''}`;
+    window.el('interv-doc').innerText = persona.docNum || 'Sin Documento';
+    window.el('interv-estado').innerText = (persona.estado || 'Desconocido').toUpperCase();
+    const presencia = persona.presencia || 'dentro';
+    const badgePresencia = window.el('interv-presencia');
+    badgePresencia.innerText = presencia.toUpperCase();
+    if (presencia === 'dentro') {
+        badgePresencia.style.backgroundColor = '#dcfce7';
+        badgePresencia.style.color = '#166534';
+    } else {
+        badgePresencia.style.backgroundColor = '#fee2e2';
+        badgePresencia.style.color = '#991b1b';
+    }
+    // Badge Persona Protegida
+    const badgeProtegida = window.el('interv-protegida');
+    if (badgeProtegida) {
+        if (persona.noLocalizacion) {
+            badgeProtegida.classList.remove('hidden');
+        } else {
+            badgeProtegida.classList.add('hidden');
+        }
+    }
+    if (currentAlbergueData) {
+        const hName = window.el('interv-albergue-name');
+        if (hName) hName.innerText = currentAlbergueData.nombre || 'ALBERGUE';
+    }
+};
 window.resetIntervencion = function () {
     window.sysLog("Reseteando interfaz de intervención", "info");
 
@@ -4232,6 +4266,6 @@ window.rescatarDeGlobalDirecto = async function () {
 
 // DEBUG: Confirmación de carga
 setTimeout(() => {
-    if (window.showToast) window.showToast("V.5.2.17 LOADED OK");
-    console.log("DEBUG: V.5.2.17 LOADED OK");
+    if (window.showToast) window.showToast("V.5.2.18 LOADED OK");
+    console.log("DEBUG: V.5.2.18 LOADED OK");
 }, 2000);

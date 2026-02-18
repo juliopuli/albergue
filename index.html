@@ -5,9 +5,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Albergue Pro - V.5.2.15</title>
+    <title>Albergue Pro - V.5.2.16</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css?v=5.2.15">
+    <link rel="stylesheet" href="style.css?v=5.2.16">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -15,7 +15,7 @@
 
 <body>
 
-    <div class="version-tag">V.5.2.15</div>
+    <div class="version-tag">V.5.2.16</div>
 
     <div id="toast" style="visibility: hidden;">Guardado automático</div>
     <div id="loading-overlay" class="hidden">
@@ -337,6 +337,11 @@
                                 <div class="banner-prefiliacion hidden" id="banner-prefiliacion"><i
                                         class="fa-solid fa-clipboard-list"></i> PERSONA EN PRE-FILIACIÓN (PENDIENTE DE
                                     INGRESO)</div>
+                                <div id="banner-protegida" class="hidden"
+                                    style="background:#fef2f2;border-left:4px solid #dc2626;border-radius:8px;padding:12px 16px;margin-bottom:12px;color:#991b1b;font-weight:600;display:flex;align-items:center;gap:10px;">
+                                    <i class="fa-solid fa-shield-halved" style="font-size:1.2rem;"></i>
+                                    <span>PERSONA PROTEGIDA — No confirmes ni niegues su presencia a terceros</span>
+                                </div>
                                 <h3 id="gestion-nombre-titulo" style="color:var(--primary);">Nombre</h3>
                                 <p style="margin-bottom:15px;">Estado: <span id="gestion-estado"
                                         class="badge">...</span> <strong id="gestion-cama-info"></strong></p>
@@ -1233,7 +1238,7 @@
         window.EmailAuthProvider = EmailAuthProvider;
     </script>
 
-    <script type="module" src="script.js?v=5.2.15"></script>
+    <script type="module" src="script.js?v=5.2.16"></script>
 
     <!-- Modal Duplicados -->
     <div id="modal-duplicados" class="modal-overlay hidden"

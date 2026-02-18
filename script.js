@@ -2149,12 +2149,20 @@ window.buscarPersonaEnAlbergue = function () {
     } else {
         localHits.forEach(p => {
             if (p.noLocalizacion && !esAdmin) {
-                // Persona protegida: mostrar fila bloqueada
+                // No-admin: fila bloqueada
                 res.innerHTML += `<div class="search-item search-item-protegida">
                     <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
                         <div><i class="fa-solid fa-shield-halved" style="color:#dc2626;"></i> <strong style="color:#dc2626;">Contacte con un administrador</strong>
                         <div style="font-size:0.8rem;color:#dc2626;opacity:0.8;">Acceso restringido</div></div>
                         <i class="fa-solid fa-lock" style="color:#dc2626;"></i>
+                    </div></div>`;
+            } else if (p.noLocalizacion && esAdmin) {
+                // Admin: fila roja clicable
+                res.innerHTML += `<div class="search-item search-item-protegida" style="cursor:pointer;" onclick="window.seleccionarPersona('${p.id}', false)">
+                    <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
+                        <div><i class="fa-solid fa-shield-halved" style="color:#dc2626;"></i> <strong style="color:#dc2626;">${p.nombre} ${p.ap1 || ''}</strong> <span style="font-size:0.75rem;">(Local 🔴)</span>
+                        <div style="font-size:0.8rem;color:#dc2626;opacity:0.8;">📄 ${p.docNum || '-'} — Persona protegida</div></div>
+                        <i class="fa-solid fa-shield-halved" style="color:#dc2626;"></i>
                     </div></div>`;
             } else {
                 const dc = p.estado === 'ingresado' ? 'dot-green' : 'dot-red';
@@ -2168,11 +2176,20 @@ window.buscarPersonaEnAlbergue = function () {
         });
         globalHits.forEach(p => {
             if (p.noLocalizacion && !esAdmin) {
+                // No-admin: fila bloqueada
                 res.innerHTML += `<div class="search-item search-item-protegida">
                     <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
                         <div><i class="fa-solid fa-shield-halved" style="color:#dc2626;"></i> <strong style="color:#dc2626;">Contacte con un administrador</strong>
                         <div style="font-size:0.8rem;color:#dc2626;opacity:0.8;">Acceso restringido</div></div>
                         <i class="fa-solid fa-lock" style="color:#dc2626;"></i>
+                    </div></div>`;
+            } else if (p.noLocalizacion && esAdmin) {
+                // Admin: fila roja clicable
+                res.innerHTML += `<div class="search-item search-item-protegida" style="cursor:pointer;" onclick="window.seleccionarPersona('${p.id}', true)">
+                    <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
+                        <div><i class="fa-solid fa-shield-halved" style="color:#dc2626;"></i> <strong style="color:#dc2626;">${p.nombre} ${p.ap1 || ''}</strong> <span style="font-size:0.75rem;">(Pre-Filiación 🔴)</span>
+                        <div style="font-size:0.8rem;color:#dc2626;opacity:0.8;">📋 ${p.docNum || '-'} — Persona protegida</div></div>
+                        <i class="fa-solid fa-shield-halved" style="color:#dc2626;"></i>
                     </div></div>`;
             } else {
                 res.innerHTML += `<div class="search-item" onclick="window.seleccionarPersona('${p.id}', true)">
@@ -2237,6 +2254,21 @@ window.seleccionarPersona = function (pid, isGlobal) {
     isGlobalEdit = isGlobal;
     window.safeHide('resultados-busqueda');
     window.safeShow('panel-gestion-persona');
+
+    // BANNER PERSONA PROTEGIDA
+    const bannerProtegida = window.el('banner-protegida');
+    if (bannerProtegida) {
+        if (p.noLocalizacion) {
+            bannerProtegida.classList.remove('hidden');
+            // Fondo rojo en el panel
+            const panel = window.el('panel-gestion-persona');
+            if (panel) panel.style.borderLeft = '6px solid #dc2626';
+        } else {
+            bannerProtegida.classList.add('hidden');
+            const panel = window.el('panel-gestion-persona');
+            if (panel) panel.style.borderLeft = '';
+        }
+    }
 
     if (window.el('gestion-nombre-titulo')) window.el('gestion-nombre-titulo').innerText = p.nombre;
     if (window.el('gestion-estado')) window.el('gestion-estado').innerText = isGlobal ? "EN PRE-FILIACIÓN" : p.estado.toUpperCase();
@@ -2946,13 +2978,19 @@ window.buscarParaIntervencion = function (tipo) {
     } else {
         let html = '';
         hits.forEach(p => {
-            // PROTECCIÓN: persona no localizable
-            if (p.noLocalizacion && !esAdmin) {
-                html += `<div class="search-item search-item-protegida">
+            // PROTECCIÓN: persona no localizable — todos ven con fondo rojo, todos pueden seleccionar
+            if (p.noLocalizacion) {
+                const isPrefil = !p.estado || p.estado !== 'ingresado';
+                const hasBed = p.cama ? `Cama ${p.cama}` : (isPrefil ? "Pre-Filiada" : "Sin Cama");
+                const onclickAttr = isPrefil ? '' : `onclick="window.abrirFormularioIntervencion('${p.id}', '${tipo}')"`;
+                const buttonHtml = isPrefil
+                    ? '<button class="btn-icon-small" style="background:#ccc;color:#666;">No Disponible</button>'
+                    : '<button class="btn-icon-small" style="background:#dc2626;color:white;">Seleccionar</button>';
+                html += `<div class="search-item search-item-protegida" style="cursor:pointer;" ${onclickAttr}>
                     <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
-                        <div><i class="fa-solid fa-shield-halved" style="color:#dc2626;"></i> <strong style="color:#dc2626;">Contacte con un administrador</strong>
-                        <div style="font-size:0.8rem;color:#dc2626;opacity:0.8;">Acceso restringido</div></div>
-                        <i class="fa-solid fa-lock" style="color:#dc2626;"></i>
+                        <div><i class="fa-solid fa-shield-halved" style="color:#dc2626;"></i> <strong style="color:#dc2626;">${p.nombre} ${p.ap1 || ''}</strong>
+                        <div style="font-size:0.8rem;color:#dc2626;opacity:0.8;">${p.docNum || '-'} | ${hasBed} — Persona protegida</div></div>
+                        ${buttonHtml}
                     </div></div>`;
                 return;
             }
@@ -4180,6 +4218,6 @@ window.rescatarDeGlobalDirecto = async function () {
 
 // DEBUG: Confirmación de carga
 setTimeout(() => {
-    if (window.showToast) window.showToast("V.5.2.15 LOADED OK");
-    console.log("DEBUG: V.5.2.15 LOADED OK");
+    if (window.showToast) window.showToast("V.5.2.16 LOADED OK");
+    console.log("DEBUG: V.5.2.16 LOADED OK");
 }, 2000);

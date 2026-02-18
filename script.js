@@ -2510,7 +2510,7 @@ window.guardarCama = async function (n) {
     }
 };
 
-window.cerrarMapaCamas = function () { highlightedFamilyId = null; window.safeHide('modal-cama'); };
+window.cerrarMapaCamas = function () { highlightedFamilyId = null; modoMapaGeneral = true; window.safeHide('modal-cama'); };
 window.mostrarGridCamas = function () {
     const g = window.el('grid-camas');
     g.innerHTML = "";
@@ -2650,7 +2650,7 @@ window.mostrarGridCamas = function () {
                 if (highlightedFamilyId === occ.familiaId) highlightedFamilyId = null;
                 else highlightedFamilyId = occ.familiaId;
                 window.mostrarGridCamas();
-            } else if (!window.modoMapaGeneral) {
+            } else if (!modoMapaGeneral) {
                 // Si está libre y estamos asignando, guardar
                 window.guardarCama(n);
             }
@@ -4052,6 +4052,6 @@ window.rescatarDeGlobalDirecto = async function () {
 
 // DEBUG: Confirmación de carga
 setTimeout(() => {
-    if (window.showToast) window.showToast("V.5.2.12 LOADED OK");
-    console.log("DEBUG: V.5.2.12 LOADED OK");
+    if (window.showToast) window.showToast("V.5.2.13 LOADED OK");
+    console.log("DEBUG: V.5.2.13 LOADED OK");
 }, 2000);

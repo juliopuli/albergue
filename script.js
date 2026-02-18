@@ -1740,19 +1740,23 @@ window.mostrarResultadosIntervencion = function (personas) {
             ? '<span class="badge badge-active">Activo</span>'
             : '<span class="badge badge-inactive">Inactivo</span>';
 
-        html += '<div class="user-card-item" onclick="window.seleccionarPersonaIntervencion(\'' + p.id + '\', \'' + p.albergueId + '\')" style="cursor:pointer;">';
-        html += '<div><strong style="font-size:1.1rem;">' + nombreCompleto + '</strong></div>';
-
-        // NUEVO: Mostrar albergue
-        html += '<div style="color:#9333ea; font-size:0.85rem; margin-top:3px;">';
-        html += '<i class="fa-solid fa-building"></i> ' + (p.albergueNombre || 'Albergue');
-        html += '</div>';
-
-        html += '<div style="color:#666; font-size:0.9rem; margin-top:5px;">';
-        html += '<i class="fa-solid fa-id-card"></i> ' + (p.docNum || 'Sin documento');
-        html += '</div>';
-        html += '<div style="margin-top:8px;">' + estadoBadge + '</div>';
-        html += '</div>';
+        if (p.noLocalizacion) {
+            // PERSONA PROTEGIDA: fondo rojo, clicable para todos (entrada/salida/derivación permitida)
+            html += '<div class="user-card-item search-item-protegida" onclick="window.seleccionarPersonaIntervencion(\'' + p.id + '\', \'' + p.albergueId + '\')" style="cursor:pointer;border-left:4px solid #dc2626;">';
+            html += '<div style="display:flex;align-items:center;gap:8px;"><i class="fa-solid fa-shield-halved" style="color:#dc2626;"></i><strong style="font-size:1.1rem;color:#dc2626;">' + nombreCompleto + '</strong></div>';
+            html += '<div style="color:#dc2626; font-size:0.8rem; margin-top:3px; opacity:0.85;">Persona protegida</div>';
+            html += '<div style="color:#9333ea; font-size:0.85rem; margin-top:3px;"><i class="fa-solid fa-building"></i> ' + (p.albergueNombre || 'Albergue') + '</div>';
+            html += '<div style="color:#666; font-size:0.9rem; margin-top:5px;"><i class="fa-solid fa-id-card"></i> ' + (p.docNum || 'Sin documento') + '</div>';
+            html += '<div style="margin-top:8px;">' + estadoBadge + '</div>';
+            html += '</div>';
+        } else {
+            html += '<div class="user-card-item" onclick="window.seleccionarPersonaIntervencion(\'' + p.id + '\', \'' + p.albergueId + '\')" style="cursor:pointer;">';
+            html += '<div><strong style="font-size:1.1rem;">' + nombreCompleto + '</strong></div>';
+            html += '<div style="color:#9333ea; font-size:0.85rem; margin-top:3px;"><i class="fa-solid fa-building"></i> ' + (p.albergueNombre || 'Albergue') + '</div>';
+            html += '<div style="color:#666; font-size:0.9rem; margin-top:5px;"><i class="fa-solid fa-id-card"></i> ' + (p.docNum || 'Sin documento') + '</div>';
+            html += '<div style="margin-top:8px;">' + estadoBadge + '</div>';
+            html += '</div>';
+        }
     });
 
     html += '</div>';
@@ -2978,8 +2982,18 @@ window.buscarParaIntervencion = function (tipo) {
     } else {
         let html = '';
         hits.forEach(p => {
-            // PROTECCIÓN: persona no localizable — todos ven con fondo rojo, todos pueden seleccionar
-            if (p.noLocalizacion) {
+            // PROTECCIÓN: persona no localizable — bloqueada para no-admins en sanitario/psicosocial/entregas
+            if (p.noLocalizacion && !esAdmin) {
+                html += `<div class="search-item search-item-protegida">
+                    <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
+                        <div><i class="fa-solid fa-shield-halved" style="color:#dc2626;"></i> <strong style="color:#dc2626;">Contacte con un administrador</strong>
+                        <div style="font-size:0.8rem;color:#dc2626;opacity:0.8;">Acceso restringido</div></div>
+                        <i class="fa-solid fa-lock" style="color:#dc2626;"></i>
+                    </div></div>`;
+                return;
+            }
+            // Admin ve persona protegida con fondo rojo pero puede seleccionarla
+            if (p.noLocalizacion && esAdmin) {
                 const isPrefil = !p.estado || p.estado !== 'ingresado';
                 const hasBed = p.cama ? `Cama ${p.cama}` : (isPrefil ? "Pre-Filiada" : "Sin Cama");
                 const onclickAttr = isPrefil ? '' : `onclick="window.abrirFormularioIntervencion('${p.id}', '${tipo}')"`;
@@ -4218,6 +4232,6 @@ window.rescatarDeGlobalDirecto = async function () {
 
 // DEBUG: Confirmación de carga
 setTimeout(() => {
-    if (window.showToast) window.showToast("V.5.2.16 LOADED OK");
-    console.log("DEBUG: V.5.2.16 LOADED OK");
+    if (window.showToast) window.showToast("V.5.2.17 LOADED OK");
+    console.log("DEBUG: V.5.2.17 LOADED OK");
 }, 2000);

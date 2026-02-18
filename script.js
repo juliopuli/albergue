@@ -2552,9 +2552,9 @@ window.mostrarGridCamas = function () {
         }
     });
 
-    // ⭐ PRE-CALCULAR CAMA ACTUAL
+    // ⭐ PRE-CALCULAR CAMA ACTUAL (solo en modo asignación, no en mapa general)
     let camaActual = null;
-    if (personaEnGestion && personaEnGestion.cama) {
+    if (!modoMapaGeneral && personaEnGestion && personaEnGestion.cama) {
         camaActual = String(personaEnGestion.cama).trim();
     }
 

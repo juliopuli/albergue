@@ -2929,6 +2929,9 @@ window.buscarParaIntervencion = function (tipo) {
     const txt = window.safeVal(`search-${tipo}`).toLowerCase().trim();
     const res = window.el(`res-${tipo}`);
     if (txt.length < 2) { window.safeHide(res); return; }
+
+    const esAdmin = currentUserData && ['admin', 'super_admin'].includes(currentUserData.rol);
+
     const localHits = listaPersonasCache.filter(p => {
         const full = `${p.nombre} ${p.ap1 || ''} ${p.ap2 || ''}`.toLowerCase();
         return full.includes(txt) || (p.docNum || "").toLowerCase().includes(txt);
@@ -2943,6 +2946,16 @@ window.buscarParaIntervencion = function (tipo) {
     } else {
         let html = '';
         hits.forEach(p => {
+            // PROTECCIÓN: persona no localizable
+            if (p.noLocalizacion && !esAdmin) {
+                html += `<div class="search-item search-item-protegida">
+                    <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
+                        <div><i class="fa-solid fa-shield-halved" style="color:#dc2626;"></i> <strong style="color:#dc2626;">Contacte con un administrador</strong>
+                        <div style="font-size:0.8rem;color:#dc2626;opacity:0.8;">Acceso restringido</div></div>
+                        <i class="fa-solid fa-lock" style="color:#dc2626;"></i>
+                    </div></div>`;
+                return;
+            }
             const isPrefil = !p.estado || p.estado !== 'ingresado';
             const hasBed = p.cama ? `Cama ${p.cama}` : (isPrefil ? "Pre-Filiada" : "Sin Cama");
             const onclickAttr = isPrefil ? '' : `onclick="window.abrirFormularioIntervencion('${p.id}', '${tipo}')"`;
@@ -2958,6 +2971,7 @@ window.buscarParaIntervencion = function (tipo) {
     res.style.visibility = 'visible';
     res.style.opacity = '1';
 };
+
 window.abrirFormularioIntervencion = async function (pid, tipo) {
     const p = listaPersonasCache.find(function (x) { return x.id === pid; });
     if (!p) return;
@@ -4166,6 +4180,6 @@ window.rescatarDeGlobalDirecto = async function () {
 
 // DEBUG: Confirmación de carga
 setTimeout(() => {
-    if (window.showToast) window.showToast("V.5.2.14 LOADED OK");
-    console.log("DEBUG: V.5.2.14 LOADED OK");
+    if (window.showToast) window.showToast("V.5.2.15 LOADED OK");
+    console.log("DEBUG: V.5.2.15 LOADED OK");
 }, 2000);

@@ -2514,7 +2514,7 @@ window.mostrarGridCamas = function () {
         }
     });
 
-    // Pre-calcular cama actual como string para comparación segura
+  // Pre-calcular cama actual como string para comparación segura
     let camaActual = null;
     if (window.personaEnGestion && window.personaEnGestion.cama) {
         camaActual = window.personaEnGestion.cama.toString();
@@ -2528,32 +2528,23 @@ window.mostrarGridCamas = function () {
         const occ = listaPersonasCache.find(p => p.cama === n);
 
         // Base classes
-        let cls = "bed-item"; // Nueva clase base (estilo tarjeta)
+        let cls = "bed-item";
         let iconHtml = '';
         let bodyHtml = '';
-        let statusClass = '';
 
-        // Determinación de estado y contenido
-        if (occ && highlightedFamilyId && occ.familiaId === highlightedFamilyId) {
-            cls += " bed-family-highlight";
-        }
+        // ⭐ PRIORIDAD 1: VERIFICAR SI ES TU CAMA (ANTES de verificar ocupación)
+        const esTuCama = (camaActual === n);
 
-        // FIX: Comparación segura e incondicional (si es tu cama, se marca SIEMPRE)
-        // Log para debuggear la cama específica
-        if (n === camaActual) {
-            console.log(`DEBUG: Renderizando TU CAMA ${n}. Coincide!`);
-        }
-
-        if (camaActual === n) {
-            // Caso: TU CAMA (Prioridad máxima)
+        if (esTuCama) {
+            // CASO: TU CAMA (Prioridad máxima - se marca SIEMPRE)
             cls += " bed-current";
-            statusClass = "Tu selección";
             iconHtml = '<i class="fa-solid fa-check-circle"></i>';
             bodyHtml = `<div class="bed-occupant-name">TU CAMA</div>`;
+            
         } else if (occName) {
-            // Caso: Ocupada por otro (o por ti si falló el if anterior, pero no debería)
+            // CASO: Ocupada por OTRA persona
             cls += " bed-busy";
-            // ... resto del bloque ocupada ...
+            
             if (occ) {
                 // Icono según presencia
                 const presencia = occ.presencia || 'dentro';
@@ -2576,25 +2567,31 @@ window.mostrarGridCamas = function () {
                 bodyHtml = `<div class="bed-occupant-name">Ocupada</div>`;
                 iconHtml = '<i class="fa-solid fa-lock"></i>';
             }
+            
         } else {
-            // Caso: Libre
+            // CASO: Libre
             cls += " bed-free";
-            iconHtml = '<i class="fa-regular fa-circle"></i>'; // Círculo vacío
+            iconHtml = '<i class="fa-regular fa-circle"></i>';
 
             if (shadowMap[n]) {
                 cls += " bed-shadow";
-                iconHtml = '<i class="fa-solid fa-people-arrows"></i>'; // Icono de agrupación
+                iconHtml = '<i class="fa-solid fa-people-arrows"></i>';
                 bodyHtml = `<div class="bed-occupant-name" style="font-size:0.8rem; opacity:0.7;">Reserva Familiar</div>`;
             } else {
                 bodyHtml = `<div class="bed-occupant-name" style="color:var(--success); font-weight:normal;">Libre</div>`;
             }
         }
 
+        // Resaltar familia si aplica
+        if (occ && highlightedFamilyId && occ.familiaId === highlightedFamilyId) {
+            cls += " bed-family-highlight";
+        }
+
         // Construcción del elemento DOM
         const d = document.createElement('div');
         d.className = cls;
 
-        // Estructura interna HTML (Header + Body)
+        // Estructura interna HTML
         d.innerHTML = `
             <div class="bed-header">
                 <span>${n}</span>
@@ -2607,7 +2604,6 @@ window.mostrarGridCamas = function () {
 
         // Eventos
         d.onclick = () => {
-            console.log("Click Cama:", n, "Ocupada:", !!occ, "ModoGeneral:", window.modoMapaGeneral);
             if (occ) {
                 // Si está ocupada, toggle highlight de familia
                 if (highlightedFamilyId === occ.familiaId) highlightedFamilyId = null;
@@ -2615,7 +2611,6 @@ window.mostrarGridCamas = function () {
                 window.mostrarGridCamas();
             } else if (!window.modoMapaGeneral) {
                 // Si está libre y estamos asignando, guardar
-                console.log("Llamando a guardarCama(" + n + ")");
                 window.guardarCama(n);
             }
         };
@@ -2626,7 +2621,6 @@ window.mostrarGridCamas = function () {
 
         g.appendChild(d);
     }
-
     window.safeShow('modal-cama');
 };
 window.abrirModalInfoCama = function (p) { window.el('info-cama-num').innerText = p.cama; window.el('info-nombre-completo').innerText = p.nombre; window.el('info-telefono').innerText = p.telefono || "No consta"; const bh = window.el('btn-historial-cama'); if (['admin', 'super_admin'].includes(currentUserData.rol)) { window.safeShow('btn-historial-cama'); bh.onclick = () => window.verHistorial(p.id); } else { window.safeHide('btn-historial-cama'); } const c = window.el('info-familia-detalle'); const fam = listaPersonasCache.filter(x => x.familiaId === p.familiaId); let h = `<table class="fam-table"><thead><tr><th>Nombre</th><th>DNI/Tel</th><th>Cama</th></tr></thead><tbody>`; fam.forEach(f => { const isCurrent = f.id === p.id ? 'fam-row-current' : ''; h += `<tr class="${isCurrent}"><td>${f.nombre} ${f.ap1 || ''}</td><td><small>${f.docNum || '-'}<br>${f.telefono || '-'}</small></td><td><strong>${f.cama || '-'}</strong></td></tr>`; }); h += `</tbody></table>`; c.innerHTML = h; window.safeShow('modal-bed-info'); };

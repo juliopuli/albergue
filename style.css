@@ -2295,3 +2295,15 @@ body.focused-mode .app-nav {
 .bed-current:hover {
     transform: scale(1.08);
 }
+
+/* PERSONA PROTEGIDA: fila de búsqueda bloqueada */
+.search-item-protegida {
+    background: #fef2f2;
+    border-left: 4px solid #dc2626;
+    cursor: not-allowed;
+    opacity: 0.9;
+}
+
+.search-item-protegida:hover {
+    background: #fee2e2;
+}

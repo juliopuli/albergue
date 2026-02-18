@@ -2126,7 +2126,66 @@ window.eliminarPersonaGlobal = async function () {
     }
 };
 
-window.buscarPersonaEnAlbergue = function () { const txt = window.safeVal('buscador-persona').toLowerCase().trim(); const res = window.el('resultados-busqueda'); if (txt.length < 2) { window.safeHide('resultados-busqueda'); return; } const localHits = listaPersonasCache.filter(p => { if (p.estado === 'salida') return false; const full = `${p.nombre} ${p.ap1 || ''} ${p.ap2 || ''}`.toLowerCase(); return full.includes(txt) || (p.docNum || "").toLowerCase().includes(txt); }); const globalHits = listaGlobalPrefiliacion.filter(p => { const full = `${p.nombre} ${p.ap1 || ''} ${p.ap2 || ''}`.toLowerCase(); return full.includes(txt) || (p.docNum || "").toLowerCase().includes(txt); }); res.innerHTML = ""; if (localHits.length === 0 && globalHits.length === 0) { res.innerHTML = `<div class="search-item" style="color:#666">No encontrado</div>`; } else { localHits.forEach(p => { const dc = p.estado === 'ingresado' ? 'dot-green' : 'dot-red'; res.innerHTML += `<div class="search-item" onclick="window.seleccionarPersona('${p.id}', false)"><div style="display:flex;justify-content:space-between;width:100%;align-items:center;"><div><strong>${p.nombre} ${p.ap1 || ''}</strong> (Local)<div style="font-size:0.8rem;color:#666;">📄 ${p.docNum || '-'}</div></div><div class="status-dot ${dc}" title="${p.estado.toUpperCase()}"></div></div></div>`; }); globalHits.forEach(p => { res.innerHTML += `<div class="search-item" onclick="window.seleccionarPersona('${p.id}', true)"><div style="display:flex;justify-content:space-between;width:100%;align-items:center;"><div><strong>${p.nombre} ${p.ap1 || ''}</strong> (Pre-Filiación)<div style="font-size:0.8rem;color:#666;">📋 ${p.docNum || '-'}</div></div><div class="status-dot dot-cloud" title="EN PRE-FILIACIÓN"></div></div></div>`; }); } window.safeShow('resultados-busqueda'); };
+window.buscarPersonaEnAlbergue = function () {
+    const txt = window.safeVal('buscador-persona').toLowerCase().trim();
+    const res = window.el('resultados-busqueda');
+    if (txt.length < 2) { window.safeHide('resultados-busqueda'); return; }
+
+    const esAdmin = currentUserData && ['admin', 'super_admin'].includes(currentUserData.rol);
+
+    const localHits = listaPersonasCache.filter(p => {
+        if (p.estado === 'salida') return false;
+        const full = `${p.nombre} ${p.ap1 || ''} ${p.ap2 || ''}`.toLowerCase();
+        return full.includes(txt) || (p.docNum || '').toLowerCase().includes(txt);
+    });
+    const globalHits = listaGlobalPrefiliacion.filter(p => {
+        const full = `${p.nombre} ${p.ap1 || ''} ${p.ap2 || ''}`.toLowerCase();
+        return full.includes(txt) || (p.docNum || '').toLowerCase().includes(txt);
+    });
+
+    res.innerHTML = '';
+    if (localHits.length === 0 && globalHits.length === 0) {
+        res.innerHTML = `<div class="search-item" style="color:#666">No encontrado</div>`;
+    } else {
+        localHits.forEach(p => {
+            if (p.noLocalizacion && !esAdmin) {
+                // Persona protegida: mostrar fila bloqueada
+                res.innerHTML += `<div class="search-item search-item-protegida">
+                    <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
+                        <div><i class="fa-solid fa-shield-halved" style="color:#dc2626;"></i> <strong style="color:#dc2626;">Contacte con un administrador</strong>
+                        <div style="font-size:0.8rem;color:#dc2626;opacity:0.8;">Acceso restringido</div></div>
+                        <i class="fa-solid fa-lock" style="color:#dc2626;"></i>
+                    </div></div>`;
+            } else {
+                const dc = p.estado === 'ingresado' ? 'dot-green' : 'dot-red';
+                res.innerHTML += `<div class="search-item" onclick="window.seleccionarPersona('${p.id}', false)">
+                    <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
+                        <div><strong>${p.nombre} ${p.ap1 || ''}</strong> (Local)
+                        <div style="font-size:0.8rem;color:#666;">📄 ${p.docNum || '-'}</div></div>
+                        <div class="status-dot ${dc}" title="${p.estado.toUpperCase()}"></div>
+                    </div></div>`;
+            }
+        });
+        globalHits.forEach(p => {
+            if (p.noLocalizacion && !esAdmin) {
+                res.innerHTML += `<div class="search-item search-item-protegida">
+                    <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
+                        <div><i class="fa-solid fa-shield-halved" style="color:#dc2626;"></i> <strong style="color:#dc2626;">Contacte con un administrador</strong>
+                        <div style="font-size:0.8rem;color:#dc2626;opacity:0.8;">Acceso restringido</div></div>
+                        <i class="fa-solid fa-lock" style="color:#dc2626;"></i>
+                    </div></div>`;
+            } else {
+                res.innerHTML += `<div class="search-item" onclick="window.seleccionarPersona('${p.id}', true)">
+                    <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
+                        <div><strong>${p.nombre} ${p.ap1 || ''}</strong> (Pre-Filiación)
+                        <div style="font-size:0.8rem;color:#666;">📋 ${p.docNum || '-'}</div></div>
+                        <div class="status-dot dot-cloud" title="EN PRE-FILIACIÓN"></div>
+                    </div></div>`;
+            }
+        });
+    }
+    window.safeShow('resultados-busqueda');
+};
 window.seleccionarPersona = function (pid, isGlobal) {
     if (typeof pid !== 'string') pid = pid.id;
     console.log("DEBUG: seleccionarPersona called", pid, isGlobal);
@@ -2155,6 +2214,13 @@ window.seleccionarPersona = function (pid, isGlobal) {
 
     if (!p) {
         console.error("DEBUG: Persona not found", pid);
+        return;
+    }
+
+    // PROTECCIÓN: bloquear acceso a personas no localizables para no-admins
+    const esAdmin = currentUserData && ['admin', 'super_admin'].includes(currentUserData.rol);
+    if (p.noLocalizacion && !esAdmin) {
+        alert('Acceso restringido. Contacte con un administrador.');
         return;
     }
 
@@ -2587,23 +2653,29 @@ window.mostrarGridCamas = function () {
             cls += " bed-busy";
 
             if (occ) {
-                // Icono según presencia
-                const presencia = occ.presencia || 'dentro';
-                if (presencia === 'dentro') {
+                // ⭐ PERSONA PROTEGIDA: ocultar nombre para todos
+                if (occ.noLocalizacion) {
                     cls += " bed-status-in";
-                    iconHtml = '<i class="fa-solid fa-user" title="En el albergue"></i>';
+                    iconHtml = '<i class="fa-solid fa-lock" title="Persona protegida"></i>';
+                    bodyHtml = `<div class="bed-occupant-name">Ocupada 🔒</div>`;
                 } else {
-                    cls += " bed-status-out";
-                    iconHtml = '<i class="fa-solid fa-person-walking-arrow-right" title="Fuera del albergue"></i>';
+                    // Icono según presencia
+                    const presencia = occ.presencia || 'dentro';
+                    if (presencia === 'dentro') {
+                        cls += " bed-status-in";
+                        iconHtml = '<i class="fa-solid fa-user" title="En el albergue"></i>';
+                    } else {
+                        cls += " bed-status-out";
+                        iconHtml = '<i class="fa-solid fa-person-walking-arrow-right" title="Fuera del albergue"></i>';
+                    }
+                    // Contenido del cuerpo
+                    bodyHtml = `
+                        <div class="bed-occupant-name" title="${occ.nombre} ${occ.ap1 || ''}">${occ.nombre}</div>
+                        <div class="bed-occupant-detail">
+                            <i class="fa-solid fa-phone"></i> ${occ.telefono || '-'}
+                        </div>
+                    `;
                 }
-
-                // Contenido del cuerpo
-                bodyHtml = `
-                    <div class="bed-occupant-name" title="${occ.nombre} ${occ.ap1 || ''}">${occ.nombre}</div>
-                    <div class="bed-occupant-detail">
-                        <i class="fa-solid fa-phone"></i> ${occ.telefono || '-'}
-                    </div>
-                `;
             } else {
                 bodyHtml = `<div class="bed-occupant-name">Ocupada</div>`;
                 iconHtml = '<i class="fa-solid fa-lock"></i>';
@@ -2664,7 +2736,49 @@ window.mostrarGridCamas = function () {
     }
     window.safeShow('modal-cama');
 };
-window.abrirModalInfoCama = function (p) { window.el('info-cama-num').innerText = p.cama; window.el('info-nombre-completo').innerText = p.nombre; window.el('info-telefono').innerText = p.telefono || "No consta"; const bh = window.el('btn-historial-cama'); if (['admin', 'super_admin'].includes(currentUserData.rol)) { window.safeShow('btn-historial-cama'); bh.onclick = () => window.verHistorial(p.id); } else { window.safeHide('btn-historial-cama'); } const c = window.el('info-familia-detalle'); const fam = listaPersonasCache.filter(x => x.familiaId === p.familiaId); let h = `<table class="fam-table"><thead><tr><th>Nombre</th><th>DNI/Tel</th><th>Cama</th></tr></thead><tbody>`; fam.forEach(f => { const isCurrent = f.id === p.id ? 'fam-row-current' : ''; h += `<tr class="${isCurrent}"><td>${f.nombre} ${f.ap1 || ''}</td><td><small>${f.docNum || '-'}<br>${f.telefono || '-'}</small></td><td><strong>${f.cama || '-'}</strong></td></tr>`; }); h += `</tbody></table>`; c.innerHTML = h; window.safeShow('modal-bed-info'); };
+window.abrirModalInfoCama = function (p) {
+    const esAdmin = currentUserData && ['admin', 'super_admin'].includes(currentUserData.rol);
+
+    // PERSONA PROTEGIDA
+    if (p.noLocalizacion) {
+        if (!esAdmin) return; // No-admins: no abrir el modal
+        // Admins: abrir modal con alerta roja
+        window.el('info-cama-num').innerText = p.cama;
+        window.el('info-nombre-completo').innerText = '🔴 PERSONA PROTEGIDA';
+        window.el('info-telefono').innerText = '— Acceso restringido —';
+        window.el('info-nombre-completo').style.color = '#dc2626';
+        const bh = window.el('btn-historial-cama');
+        window.safeShow('btn-historial-cama');
+        bh.onclick = () => window.verHistorial(p.id);
+        const c = window.el('info-familia-detalle');
+        c.innerHTML = `<div style="background:#fef2f2;border:2px solid #dc2626;border-radius:10px;padding:15px;text-align:center;color:#991b1b;">
+            <i class="fa-solid fa-shield-halved" style="font-size:2rem;margin-bottom:8px;"></i><br>
+            <strong>Esta persona no desea ser localizada.</strong><br>
+            <small>No confirmes ni niegues su presencia a terceros.</small>
+        </div>`;
+        window.safeShow('modal-bed-info');
+        return;
+    }
+
+    // PERSONA NORMAL
+    window.el('info-nombre-completo').style.color = '';
+    window.el('info-cama-num').innerText = p.cama;
+    window.el('info-nombre-completo').innerText = p.nombre;
+    window.el('info-telefono').innerText = p.telefono || 'No consta';
+    const bh = window.el('btn-historial-cama');
+    if (esAdmin) { window.safeShow('btn-historial-cama'); bh.onclick = () => window.verHistorial(p.id); }
+    else { window.safeHide('btn-historial-cama'); }
+    const c = window.el('info-familia-detalle');
+    const fam = listaPersonasCache.filter(x => x.familiaId === p.familiaId);
+    let h = `<table class="fam-table"><thead><tr><th>Nombre</th><th>DNI/Tel</th><th>Cama</th></tr></thead><tbody>`;
+    fam.forEach(f => {
+        const isCurrent = f.id === p.id ? 'fam-row-current' : '';
+        h += `<tr class="${isCurrent}"><td>${f.nombre} ${f.ap1 || ''}</td><td><small>${f.docNum || '-'}<br>${f.telefono || '-'}</small></td><td><strong>${f.cama || '-'}</strong></td></tr>`;
+    });
+    h += `</tbody></table>`;
+    c.innerHTML = h;
+    window.safeShow('modal-bed-info');
+};
 window.liberarCamaMantener = async function () { if (!personaEnGestion) return; if (!confirm(`¿Liberar cama de ${personaEnGestion.nombre}?`)) return; try { await updateDoc(doc(db, "albergues", currentAlbergueId, "personas", personaEnGestion.id), { cama: null }); window.registrarLog(personaEnGestion.id, "Liberar Cama", "Se mantiene en albergue"); window.sysLog("Cama liberada.", "success"); if (!modoMapaGeneral) window.cerrarMapaCamas(); } catch (e) { window.sysLog("Error liberando cama: " + e.message, "error"); } };
 window.abrirModalFamiliar = function () { window.limpiarFormulario('fam'); window.safeShow('modal-add-familiar'); if (window.el('fam-tipo-doc')) window.el('fam-tipo-doc').value = "MENOR"; window.verificarMenor('fam'); };
 window.cerrarModalFamiliar = function () { window.safeHide('modal-add-familiar'); };
@@ -4052,6 +4166,6 @@ window.rescatarDeGlobalDirecto = async function () {
 
 // DEBUG: Confirmación de carga
 setTimeout(() => {
-    if (window.showToast) window.showToast("V.5.2.13 LOADED OK");
-    console.log("DEBUG: V.5.2.13 LOADED OK");
+    if (window.showToast) window.showToast("V.5.2.14 LOADED OK");
+    console.log("DEBUG: V.5.2.14 LOADED OK");
 }, 2000);

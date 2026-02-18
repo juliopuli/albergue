@@ -2978,27 +2978,52 @@ window.buscarParaVincular = function () {
     const t = window.safeVal('search-vincular').toLowerCase().trim();
     const r = window.el('resultados-vincular');
     r.innerHTML = '';
-    if (t.length < 2) { r.classList.add('hidden'); return; }
+
+    // Si hay menos de 2 caracteres, ocultar y salir
+    if (t.length < 2) {
+        r.classList.add('hidden');
+        return;
+    }
+
     const hits = listaPersonasCache.filter(p => {
         if (p.id === personaEnGestion.id) return false;
         const full = `${p.nombre || ''} ${p.ap1 || ''} ${p.ap2 || ''}`.toLowerCase();
         return full.includes(t) || (p.docNum || '').toLowerCase().includes(t);
     });
+
     if (hits.length === 0) {
-        r.innerHTML = "<div class='search-item'>Sin resultados</div>";
+        r.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #94a3b8;">
+                <i class="fa-solid fa-users-slash" style="font-size: 3rem; margin-bottom: 15px; display: block; opacity: 0.5;"></i>
+                No se encontraron familiares con ese criterio.
+            </div>`;
     } else {
         hits.forEach(p => {
             const d = document.createElement('div');
-            d.className = 'search-item';
-            d.style.cursor = 'pointer';
+            // Estilos de tarjeta inline para asegurar consistencia sin depender de clases externas complejas
+            d.style.cssText = 'background:white; border:1px solid #e2e8f0; border-radius:12px; padding:15px; cursor:pointer; transition:all 0.2s; display:flex; justify-content:space-between; align-items:center;';
+            d.onmouseover = function () { this.style.borderColor = 'var(--primary)'; this.style.boxShadow = '0 4px 12px rgba(79, 70, 229, 0.1)'; this.style.transform = 'translateY(-2px)'; };
+            d.onmouseout = function () { this.style.borderColor = '#e2e8f0'; this.style.boxShadow = 'none'; this.style.transform = 'translateY(0)'; };
+
+            const estadoColor = p.estado === 'ingresado' ? '#10b981' : '#ef4444';
+            const estadoTexto = (p.estado || '').toUpperCase();
+
             d.innerHTML = `
-                <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
-                    <div>
-                        <strong>${p.nombre} ${p.ap1 || ''} ${p.ap2 || ''}</strong>
-                        <div style="font-size:0.8rem;color:#666;">📄 ${p.docNum || 'Sin documento'}</div>
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div style="width:40px; height:40px; background:#e0e7ff; border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--primary); font-weight:bold; font-size:1.1rem;">
+                        ${(p.nombre || '?').charAt(0).toUpperCase()}
                     </div>
-                    <div class="status-dot ${p.estado === 'ingresado' ? 'dot-green' : 'dot-red'}" title="${(p.estado || '').toUpperCase()}"></div>
+                    <div>
+                        <div style="font-weight:700; color:#1e293b; font-size:1.05rem;">${p.nombre} ${p.ap1 || ''}</div>
+                        <div style="font-size:0.85rem; color:#64748b; margin-top:2px;">
+                            <i class="fa-regular fa-id-card"></i> ${p.docNum || 'Sin doc.'}
+                        </div>
+                    </div>
+                </div>
+                <div style="text-align:right;">
+                     <div style="display:inline-block; width:12px; height:12px; background:${estadoColor}; border-radius:50%; box-shadow:0 0 4px ${estadoColor};" title="${estadoTexto}"></div>
                 </div>`;
+
             d.onclick = () => window.vincularAFamilia(p);
             r.appendChild(d);
         });
@@ -4348,6 +4373,6 @@ window.rescatarDeGlobalDirecto = async function () {
 
 // DEBUG: Confirmación de carga
 setTimeout(() => {
-    if (window.showToast) window.showToast("V.5.2.22 LOADED OK");
-    console.log("DEBUG: V.5.2.22 LOADED OK");
+    if (window.showToast) window.showToast("V.5.2.23 LOADED OK");
+    console.log("DEBUG: V.5.2.23 LOADED OK");
 }, 2000);

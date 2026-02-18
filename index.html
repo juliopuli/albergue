@@ -5,9 +5,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Albergue Pro - V.5.2.22</title>
+    <title>Albergue Pro - V.5.2.23</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css?v=5.2.22">
+    <link rel="stylesheet" href="style.css?v=5.2.23">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -15,7 +15,7 @@
 
 <body>
 
-    <div class="version-tag">V.5.2.22</div>
+    <div class="version-tag">V.5.2.23</div>
 
     <div id="toast" style="visibility: hidden;">Guardado automático</div>
     <div id="loading-overlay" class="hidden">
@@ -721,16 +721,30 @@
 
     <div id="modal-vincular-familia" class="modal-overlay hidden" style="z-index: 2000;"
         onclick="if(event.target===this)this.classList.add('hidden')">
-        <div class="modal-content modern-modal">
+        <div class="modal-content modern-modal" style="max-width: 800px; height: 85vh;">
             <span class="close-modal"
                 onclick="document.getElementById('modal-vincular-familia').classList.add('hidden')">&times;</span>
             <div class="modal-header-fixed">
-                <h3>Unir a Familia</h3>
+                <h3><i class="fa-solid fa-users-rays" style="color:var(--primary);"></i> Unir a Familia</h3>
             </div>
-            <div class="modal-scroll-wrapper">
-                <input type="text" id="search-vincular" placeholder="Buscar..." onkeyup="window.buscarParaVincular()"
-                    autocomplete="off">
-                <div id="resultados-vincular" class="search-results hidden"></div>
+            <div class="modal-scroll-wrapper" style="display:flex; flex-direction:column;">
+                <div style="position:relative; margin-bottom: 20px;">
+                    <i class="fa-solid fa-magnifying-glass"
+                        style="position:absolute; left:15px; top:50%; transform:translateY(-50%); color:#94a3b8; font-size:1.2rem;"></i>
+                    <input type="text" id="search-vincular"
+                        placeholder="Buscar familiar por nombre, apellido o documento..."
+                        onkeyup="window.buscarParaVincular()" autocomplete="off"
+                        style="padding: 15px 15px 15px 45px; font-size: 1.1rem; border: 2px solid #e2e8f0; border-radius: 12px; background:#f8fafc; width:100%;">
+                </div>
+
+                <h4
+                    style="margin-bottom:10px; color:#64748b; font-size:0.9rem; text-transform:uppercase; letter-spacing:1px;">
+                    Resultados de Búsqueda</h4>
+
+                <div id="resultados-vincular" class="hidden"
+                    style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:15px; padding-bottom:20px;">
+                    <!-- Los resultados se inyectarán aquí como tarjetas -->
+                </div>
             </div>
         </div>
     </div>
@@ -1242,7 +1256,7 @@
         window.EmailAuthProvider = EmailAuthProvider;
     </script>
 
-    <script type="module" src="script.js?v=5.2.22"></script>
+    <script type="module" src="script.js?v=5.2.23"></script>
 
     <!-- Modal Duplicados -->
     <div id="modal-duplicados" class="modal-overlay hidden"

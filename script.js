@@ -2400,15 +2400,17 @@ window.abrirSeleccionCama = async function () {
     window.mostrarGridCamas();
 };
 window.guardarCama = async function (n) {
-    alert("DEBUG: guardarCama " + n);
     if (!personaEnGestion) return;
 
     // 1. Detectar si es un cambio de cama
     const camaAnterior = personaEnGestion.cama;
     const esCambio = camaAnterior && camaAnterior !== n;
+    const esPrefiliacion = personaEnGestionEsGlobal;
 
     // 2. Confirmación
-    let confirmarMsg = `¿Asignar cama ${n} a ${personaEnGestion.nombre}?`;
+    let confirmarMsg = esPrefiliacion
+        ? `¿Ingresar a ${personaEnGestion.nombre} y asignarle la cama ${n}?`
+        : `¿Asignar cama ${n} a ${personaEnGestion.nombre}?`;
 
     if (esCambio) {
         confirmarMsg = `⚠️ CAMBIO DE CAMA\n\n¿Mover a ${personaEnGestion.nombre}\nde la Cama ${camaAnterior} a la Cama ${n}?`;
@@ -2420,26 +2422,55 @@ window.guardarCama = async function (n) {
         const batch = writeBatch(db);
         const albRef = doc(db, "albergues", currentAlbergueId, "personas", personaEnGestion.id);
 
-        // Datos a actualizar
-        const updateData = {
-            cama: n,
-            estado: 'ingresado',
-            fechaIngreso: personaEnGestion.fechaIngreso || new Date()
-        };
+        const accion = esPrefiliacion ? "Ingreso desde Pre-Filiación" : (esCambio ? "Cambio de Cama" : "Ingreso / Asignación Cama");
+        const detalle = esPrefiliacion ? `Ingresado desde Pre-Filiación, cama ${n}` : (esCambio ? `De cama ${camaAnterior} a ${n}` : `Asignada cama ${n}`);
 
-        batch.update(albRef, updateData);
+        if (esPrefiliacion) {
+            // CASO PRE-FILIACIÓN: el documento NO existe en albergues/.../personas/
+            // Hay que CREAR el documento (set) y ELIMINAR del pool_prefiliacion (delete)
 
-        // Log
-        const logRef = collection(db, "albergues", currentAlbergueId, "personas", personaEnGestion.id, "historial");
-        const accion = esCambio ? "Cambio de Cama" : "Ingreso / Asignación Cama";
-        const detalle = esCambio ? `De cama ${camaAnterior} a ${n}` : `Asignada cama ${n}`;
+            // Construir datos completos del nuevo documento
+            const personaData = { ...personaEnGestion };
+            delete personaData.id; // Firestore no necesita el id dentro del doc
+            personaData.cama = n;
+            personaData.estado = 'ingresado';
+            personaData.fechaIngreso = new Date();
+            personaData.origenAlbergueId = currentAlbergueId;
 
-        batch.set(doc(logRef), {
-            fecha: new Date(),
-            usuario: currentUserData.nombre,
-            accion: accion,
-            detalle: detalle
-        });
+            // Crear en albergues/.../personas/
+            batch.set(albRef, personaData);
+
+            // Eliminar del pool de pre-filiación
+            const poolRef = doc(db, "pool_prefiliacion", personaEnGestion.id);
+            batch.delete(poolRef);
+
+            // Log de historial
+            const logRef = collection(db, "albergues", currentAlbergueId, "personas", personaEnGestion.id, "historial");
+            batch.set(doc(logRef), {
+                fecha: new Date(),
+                usuario: currentUserData.nombre,
+                accion: accion,
+                detalle: detalle
+            });
+
+        } else {
+            // CASO LOCAL: el documento YA existe, solo actualizar
+            const updateData = {
+                cama: n,
+                estado: 'ingresado',
+                fechaIngreso: personaEnGestion.fechaIngreso || new Date()
+            };
+            batch.update(albRef, updateData);
+
+            // Log de historial
+            const logRef = collection(db, "albergues", currentAlbergueId, "personas", personaEnGestion.id, "historial");
+            batch.set(doc(logRef), {
+                fecha: new Date(),
+                usuario: currentUserData.nombre,
+                accion: accion,
+                detalle: detalle
+            });
+        }
 
         await batch.commit();
 
@@ -2447,23 +2478,30 @@ window.guardarCama = async function (n) {
         personaEnGestion.cama = n;
         personaEnGestion.estado = 'ingresado';
 
-        // Actualizar array local para reflejar cambio inmediato
-        const pIndex = listaPersonasCache.findIndex(p => p.id === personaEnGestion.id);
-        if (pIndex >= 0) {
-            listaPersonasCache[pIndex].cama = n;
-            listaPersonasCache[pIndex].estado = 'ingresado';
+        if (esPrefiliacion) {
+            // Mover de la lista global al caché local
+            listaGlobalPrefiliacion = listaGlobalPrefiliacion.filter(p => p.id !== personaEnGestion.id);
+            listaPersonasCache.push({ ...personaEnGestion });
+            personaEnGestionEsGlobal = false;
+        } else {
+            // Actualizar array local para reflejar cambio inmediato
+            const pIndex = listaPersonasCache.findIndex(p => p.id === personaEnGestion.id);
+            if (pIndex >= 0) {
+                listaPersonasCache[pIndex].cama = n;
+                listaPersonasCache[pIndex].estado = 'ingresado';
+            }
         }
 
         // Registrar en mapa de ocupación
         if (esCambio) delete camasOcupadas[camaAnterior];
         camasOcupadas[n] = personaEnGestion.nombre;
 
-        window.showToast("Cama asignada correctamente");
+        window.showToast(esPrefiliacion ? "Persona ingresada y cama asignada" : "Cama asignada correctamente");
         window.sysLog(detalle, "success");
 
         window.cerrarMapaCamas();
 
-        // Actualizar panel de gestión
+        // Actualizar panel de gestión (ahora es persona local)
         window.seleccionarPersona(personaEnGestion.id, false);
 
     } catch (e) {
@@ -2514,12 +2552,12 @@ window.mostrarGridCamas = function () {
         }
     });
 
-  // ⭐ PRE-CALCULAR CAMA ACTUAL - CORRECCIÓN V5.2.11
+    // ⭐ PRE-CALCULAR CAMA ACTUAL - CORRECCIÓN V5.2.11
     let camaActual = null;
     if (window.personaEnGestion && window.personaEnGestion.cama) {
         camaActual = String(window.personaEnGestion.cama).trim();
     }
-    
+
     if (camaActual) {
         window.sysLog(`MAPA CAMAS: Resaltando cama actual: ${camaActual}`, "info");
     }
@@ -2543,11 +2581,11 @@ window.mostrarGridCamas = function () {
             cls += " bed-current";
             iconHtml = '<i class="fa-solid fa-check-circle"></i>';
             bodyHtml = `<div class="bed-occupant-name">TU CAMA</div>`;
-            
+
         } else if (occName) {
             // CASO: Ocupada por OTRA persona
             cls += " bed-busy";
-            
+
             if (occ) {
                 // Icono según presencia
                 const presencia = occ.presencia || 'dentro';
@@ -2570,7 +2608,7 @@ window.mostrarGridCamas = function () {
                 bodyHtml = `<div class="bed-occupant-name">Ocupada</div>`;
                 iconHtml = '<i class="fa-solid fa-lock"></i>';
             }
-            
+
         } else {
             // CASO: Libre
             cls += " bed-free";
@@ -4014,6 +4052,6 @@ window.rescatarDeGlobalDirecto = async function () {
 
 // DEBUG: Confirmación de carga
 setTimeout(() => {
-    if (window.showToast) window.showToast("DEBUG: V.5.2.9 LOADED OK");
-    console.log("DEBUG: V.5.2.6 LOADED OK");
+    if (window.showToast) window.showToast("V.5.2.11 LOADED OK");
+    console.log("DEBUG: V.5.2.11 LOADED OK");
 }, 2000);

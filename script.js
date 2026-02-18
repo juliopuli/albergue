@@ -2214,13 +2214,24 @@ window.buscarPersonaEnAlbergue = function () {
         });
         globalHits.forEach(p => {
             if (p.noLocalizacion && !esAdmin) {
-                // No-admin: fila bloqueada
-                res.innerHTML += `<div class="search-item search-item-protegida">
+                const esAlbergue = currentUserData && currentUserData.rol === 'albergue';
+                if (esAlbergue) {
+                    // Perfil albergue: puede incorporarla, fila roja clicable
+                    res.innerHTML += `<div class="search-item search-item-protegida" style="cursor:pointer;" onclick="window.seleccionarPersona('${p.id}', true)">
+                    <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
+                        <div><i class="fa-solid fa-shield-halved" style="color:#dc2626;"></i> <strong style="color:#dc2626;">${p.nombre} ${p.ap1 || ''}</strong> <span style="font-size:0.75rem;">(Pre-Filiación 🔴)</span>
+                        <div style="font-size:0.8rem;color:#dc2626;opacity:0.8;">📋 ${p.docNum || '-'} — Persona protegida</div></div>
+                        <i class="fa-solid fa-shield-halved" style="color:#dc2626;"></i>
+                    </div></div>`;
+                } else {
+                    // Resto de no-admins: bloqueada
+                    res.innerHTML += `<div class="search-item search-item-protegida">
                     <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
                         <div><i class="fa-solid fa-shield-halved" style="color:#dc2626;"></i> <strong style="color:#dc2626;">Contacte con un administrador</strong>
                         <div style="font-size:0.8rem;color:#dc2626;opacity:0.8;">Acceso restringido</div></div>
                         <i class="fa-solid fa-lock" style="color:#dc2626;"></i>
                     </div></div>`;
+                }
             } else if (p.noLocalizacion && esAdmin) {
                 // Admin: fila roja clicable
                 res.innerHTML += `<div class="search-item search-item-protegida" style="cursor:pointer;" onclick="window.seleccionarPersona('${p.id}', true)">
@@ -2238,6 +2249,7 @@ window.buscarPersonaEnAlbergue = function () {
                     </div></div>`;
             }
         });
+
     }
     window.safeShow('resultados-busqueda');
 };
@@ -2274,7 +2286,9 @@ window.seleccionarPersona = function (pid, isGlobal) {
 
     // PROTECCIÓN: bloquear acceso a personas no localizables para no-admins
     const esAdmin = currentUserData && ['admin', 'super_admin'].includes(currentUserData.rol);
-    if (p.noLocalizacion && !esAdmin) {
+    const esAlbergue = currentUserData && currentUserData.rol === 'albergue';
+    // El perfil albergue puede incorporar personas protegidas desde pre-filiación global
+    if (p.noLocalizacion && !esAdmin && !(esAlbergue && isGlobal)) {
         alert('Acceso restringido. Contacte con un administrador.');
         return;
     }
@@ -4291,6 +4305,6 @@ window.rescatarDeGlobalDirecto = async function () {
 
 // DEBUG: Confirmación de carga
 setTimeout(() => {
-    if (window.showToast) window.showToast("V.5.2.19 LOADED OK");
-    console.log("DEBUG: V.5.2.19 LOADED OK");
+    if (window.showToast) window.showToast("V.5.2.20 LOADED OK");
+    console.log("DEBUG: V.5.2.20 LOADED OK");
 }, 2000);

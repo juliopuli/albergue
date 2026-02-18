@@ -789,18 +789,7 @@ button.dark {
     color: #be123c;
 }
 
-/* TU CAMA: Índigo Suave */
-.bed-current {
-    background: linear-gradient(145deg, #e0e7ff 0%, #c7d2fe 100%) !important;
-    color: #3730a3 !important;
-    border: 2px solid #6366f1 !important;
-    transform: scale(1.02);
-}
-
-.bed-current .bed-header {
-    background: rgba(99, 102, 241, 0.1);
-    color: #312e81;
-}
+/* TU CAMA: ver definición al final del archivo */
 
 /* FAMILIA SELECCIONADA: Naranja Suave */
 .bed-family-highlight {
@@ -2282,55 +2271,7 @@ body.focused-mode .app-nav {
     margin-right: 8px;
 }
 
-/* --- NEW: BED CURRENT HIGHLIGHT (V.5.2.5) --- */
-/* --- NEW: BED CURRENT HIGHLIGHT (V.5.2.8) --- */
-.bed-current {
-    background-color: #fef9c3 !important;
-    /* Yellow 100 */
-    border: 4px solid #ca8a04 !important;
-    /* Yellow 600 */
-    color: #854d0e !important;
-    /* Yellow 800 */
-    transform: scale(1.1) !important;
-    box-shadow: 0 0 20px rgba(202, 138, 4, 0.5) !important;
-    z-index: 100 !important;
-    animation: pulseBed 2s infinite !important;
-    font-weight: bold !important;
-}
-
-@keyframes pulseBed {
-    0% {
-        box-shadow: 0 0 0 0 rgba(202, 138, 4, 0.7);
-    }
-
-    70% {
-        box-shadow: 0 0 0 10px rgba(202, 138, 4, 0);
-    }
-
-    100% {
-        box-shadow: 0 0 0 0 rgba(202, 138, 4, 0);
-    }
-}
-
-.bed-current::after {
-    content: '\f00c';
-    /* FontAwesome Check */
-    font-family: "Font Awesome 6 Free";
-    font-weight: 900;
-    position: absolute;
-    top: -10px;
-    right: -10px;
-    background: #10b981;
-    color: white;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.8rem;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
+/* --- BED CURRENT HIGHLIGHT (definición consolidada abajo) --- */
 /* Resaltar TU CAMA */
 .bed-current {
     border: 3px solid #8b5cf6 !important;

@@ -2552,10 +2552,10 @@ window.mostrarGridCamas = function () {
         }
     });
 
-    // ⭐ PRE-CALCULAR CAMA ACTUAL - CORRECCIÓN V5.2.11
+    // ⭐ PRE-CALCULAR CAMA ACTUAL
     let camaActual = null;
-    if (window.personaEnGestion && window.personaEnGestion.cama) {
-        camaActual = String(window.personaEnGestion.cama).trim();
+    if (personaEnGestion && personaEnGestion.cama) {
+        camaActual = String(personaEnGestion.cama).trim();
     }
 
     if (camaActual) {
@@ -4052,6 +4052,6 @@ window.rescatarDeGlobalDirecto = async function () {
 
 // DEBUG: Confirmación de carga
 setTimeout(() => {
-    if (window.showToast) window.showToast("V.5.2.11 LOADED OK");
-    console.log("DEBUG: V.5.2.11 LOADED OK");
+    if (window.showToast) window.showToast("V.5.2.12 LOADED OK");
+    console.log("DEBUG: V.5.2.12 LOADED OK");
 }, 2000);

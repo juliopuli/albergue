@@ -2514,12 +2514,15 @@ window.mostrarGridCamas = function () {
         }
     });
 
-  // Pre-calcular cama actual como string para comparación segura
+  // ⭐ PRE-CALCULAR CAMA ACTUAL - CORRECCIÓN V5.2.11
     let camaActual = null;
     if (window.personaEnGestion && window.personaEnGestion.cama) {
-        camaActual = window.personaEnGestion.cama.toString();
+        camaActual = String(window.personaEnGestion.cama).trim();
     }
-    console.log("DEBUG: Renderizando CAMAS. Cama Actual Usuario:", camaActual);
+    
+    if (camaActual) {
+        window.sysLog(`MAPA CAMAS: Resaltando cama actual: ${camaActual}`, "info");
+    }
 
     // 2. Generar TARJETAS de cama
     for (let i = 1; i <= totalCapacidad; i++) {
@@ -2533,7 +2536,7 @@ window.mostrarGridCamas = function () {
         let bodyHtml = '';
 
         // ⭐ PRIORIDAD 1: VERIFICAR SI ES TU CAMA (ANTES de verificar ocupación)
-        const esTuCama = (camaActual === n);
+        const esTuCama = camaActual && (camaActual === n);
 
         if (esTuCama) {
             // CASO: TU CAMA (Prioridad máxima - se marca SIEMPRE)

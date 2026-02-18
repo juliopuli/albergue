@@ -2825,22 +2825,34 @@ window.abrirModalInfoCama = function (p) {
 
     // PERSONA PROTEGIDA
     if (p.noLocalizacion) {
-        if (!esAdmin) return; // No-admins: no abrir el modal
-        // Admins: abrir modal con alerta roja
-        window.el('info-cama-num').innerText = p.cama;
-        window.el('info-nombre-completo').innerText = '🔴 PERSONA PROTEGIDA';
-        window.el('info-telefono').innerText = '— Acceso restringido —';
-        window.el('info-nombre-completo').style.color = '#dc2626';
-        const bh = window.el('btn-historial-cama');
-        window.safeShow('btn-historial-cama');
-        bh.onclick = () => window.verHistorial(p.id);
-        const c = window.el('info-familia-detalle');
-        c.innerHTML = `<div style="background:#fef2f2;border:2px solid #dc2626;border-radius:10px;padding:15px;text-align:center;color:#991b1b;">
-            <i class="fa-solid fa-shield-halved" style="font-size:2rem;margin-bottom:8px;"></i><br>
-            <strong>Esta persona no desea ser localizada.</strong><br>
-            <small>No confirmes ni niegues su presencia a terceros.</small>
-        </div>`;
-        window.safeShow('modal-bed-info');
+        if (esAdmin) {
+            // Admins: modal completo con alerta roja
+            window.el('info-cama-num').innerText = p.cama;
+            window.el('info-nombre-completo').innerText = '🔴 PERSONA PROTEGIDA';
+            window.el('info-telefono').innerText = '— Acceso restringido —';
+            window.el('info-nombre-completo').style.color = '#dc2626';
+            const bh = window.el('btn-historial-cama');
+            window.safeShow('btn-historial-cama');
+            bh.onclick = () => window.verHistorial(p.id);
+            const c = window.el('info-familia-detalle');
+            c.innerHTML = `<div style="background:#fef2f2;border:2px solid #dc2626;border-radius:10px;padding:15px;text-align:center;color:#991b1b;">
+                <i class="fa-solid fa-shield-halved" style="font-size:2rem;margin-bottom:8px;"></i><br>
+                <strong>Esta persona no desea ser localizada.</strong><br>
+                <small>No confirmes ni niegues su presencia a terceros.</small>
+            </div>`;
+            window.safeShow('modal-bed-info');
+        } else {
+            // No-admins (incluido albergue): modal simplificado, sin datos sensibles
+            window.el('info-cama-num').innerText = p.cama;
+            window.el('info-nombre-completo').innerText = 'Cama ocupada 🔒';
+            window.el('info-nombre-completo').style.color = '#dc2626';
+            window.el('info-telefono').innerText = '—';
+            window.safeHide('btn-historial-cama');
+            window.el('info-familia-detalle').innerHTML = `<div style="text-align:center;color:#dc2626;padding:10px;">
+                <i class="fa-solid fa-shield-halved"></i> Contacte con un administrador
+            </div>`;
+            window.safeShow('modal-bed-info');
+        }
         return;
     }
 
@@ -4305,6 +4317,6 @@ window.rescatarDeGlobalDirecto = async function () {
 
 // DEBUG: Confirmación de carga
 setTimeout(() => {
-    if (window.showToast) window.showToast("V.5.2.20 LOADED OK");
-    console.log("DEBUG: V.5.2.20 LOADED OK");
+    if (window.showToast) window.showToast("V.5.2.21 LOADED OK");
+    console.log("DEBUG: V.5.2.21 LOADED OK");
 }, 2000);

@@ -1213,7 +1213,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail, updatePassword, reauthenticateWithCredential, EmailAuthProvider, confirmPasswordReset } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
         import { getFirestore, collection, addDoc, getDocs, getDoc, doc, setDoc, updateDoc, deleteDoc, query, where, onSnapshot, serverTimestamp, orderBy, writeBatch, increment } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -1254,6 +1254,7 @@
         window.updatePassword = updatePassword;
         window.reauthenticateWithCredential = reauthenticateWithCredential;
         window.EmailAuthProvider = EmailAuthProvider;
+        window.confirmPasswordReset = confirmPasswordReset;
     </script>
 
     <script type="module" src="script.js?v=5.2.23"></script>

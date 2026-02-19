@@ -4376,3 +4376,81 @@ setTimeout(() => {
     if (window.showToast) window.showToast("V.5.2.23 LOADED OK");
     console.log("DEBUG: V.5.2.23 LOADED OK");
 }, 2000);
+
+// ============================================
+// LOGICA DE RECUPERACIÓN DE CONTRASEÑA (CUSTOM)
+// ============================================
+document.addEventListener('DOMContentLoaded', function () {
+    console.log("APP INITIALIZED - Checking URL Params");
+    const urlParams = new URLSearchParams(window.location.search);
+    const mode = urlParams.get('mode');
+    const oobCode = urlParams.get('oobCode');
+
+    if (mode === 'resetPassword' && oobCode) {
+        console.log("Modo recuperación de contraseña detectado");
+        // Ocultar login y app shell
+        const loginScreen = document.getElementById('login-screen');
+        if (loginScreen) {
+            loginScreen.classList.add('hidden');
+            loginScreen.style.display = 'none'; // Force hide
+        }
+
+        const appShell = document.getElementById('app-shell');
+        if (appShell) appShell.classList.add('hidden');
+
+        // Mostrar modal
+        const modal = document.getElementById('modal-custom-resetpass');
+        if (modal) {
+            modal.classList.remove('hidden');
+            // Asegurar que esté visible por encima de todo
+            modal.style.display = 'flex';
+            modal.style.zIndex = '9999';
+            modal.dataset.oobCode = oobCode;
+        }
+
+        const btn = document.getElementById('btn-set-newpass');
+        if (btn) btn.onclick = window.confirmarCambioPassCustom;
+    }
+});
+
+window.confirmarCambioPassCustom = async function () {
+    const modal = document.getElementById('modal-custom-resetpass');
+    const oobCode = modal.dataset.oobCode;
+    const newPassInput = document.getElementById('reset-pass-new-pw');
+    const feedback = document.getElementById('resetpass-custom-feedback');
+    const btn = document.getElementById('btn-set-newpass');
+
+    const newPass = newPassInput.value;
+
+    feedback.innerText = "";
+    if (!newPass || newPass.length < 6) {
+        feedback.style.color = "red";
+        feedback.innerText = "La contraseña debe tener al menos 6 caracteres.";
+        return;
+    }
+
+    btn.disabled = true;
+    feedback.innerText = "Actualizando...";
+
+    try {
+        // Usar la función exportada desde index.html
+        if (window.confirmPasswordReset) {
+            await window.confirmPasswordReset(auth, oobCode, newPass);
+            feedback.style.color = "green";
+            feedback.innerText = "✅ Contraseña actualizada. Redirigiendo...";
+
+            setTimeout(() => {
+                // Recargar la página limpia de parámetros
+                window.location.href = window.location.origin + window.location.pathname;
+            }, 3000);
+        } else {
+            throw new Error("Función confirmPasswordReset no disponible");
+        }
+
+    } catch (e) {
+        console.error(e);
+        feedback.style.color = "red";
+        feedback.innerText = "Error: " + (e.message || "Código inválido o expirado");
+        btn.disabled = false;
+    }
+};

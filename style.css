@@ -1,8 +1,8 @@
 /* --- 1. VARIABLES & RESET ---  */
 :root {
-    --primary: #4f46e5;
-    --primary-dark: #4338ca;
-    --bg-body: #f8fafc;
+    --primary: #e11d48;
+    --primary-dark: #be123c;
+    --bg-body: #fdfdfd;
     --surface: #ffffff;
     --text-main: #1e293b;
     --text-light: #64748b;
@@ -117,11 +117,11 @@ body {
 }
 
 .role-albergue {
-    background-color: #3b82f6;
+    background-color: var(--emergencia-red);
 }
 
 .role-sanitario {
-    background-color: #e11d48;
+    background-color: var(--primary);
 }
 
 .role-psicosocial {
@@ -156,7 +156,7 @@ body {
 }
 
 .btn-icon {
-    background: #e0e7ff;
+    background: #ffe4e6;
     color: var(--primary);
     border: none;
     padding: 8px 12px;
@@ -222,7 +222,7 @@ body {
 .nav-item:hover,
 .nav-item.active {
     color: var(--primary);
-    background: #e0e7ff;
+    background: #ffe4e6;
 }
 
 .nav-item.active::after {
@@ -369,7 +369,7 @@ body {
     border: 2px solid var(--ent-border);
 }
 
-/* Banner Pre-Filiación */
+/* Banner Pre-FiliaciÃ³n */
 .banner-prefiliacion {
     background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
     color: white;
@@ -508,7 +508,7 @@ button.dark {
 }
 
 .btn-icon {
-    background: #e0e7ff;
+    background: #ffe4e6;
     color: var(--primary);
     border: none;
     padding: 8px 12px;
@@ -552,7 +552,7 @@ button.dark {
 .user-avatar-circle {
     width: 40px;
     height: 40px;
-    background: #e0e7ff;
+    background: #ffe4e6;
     color: var(--primary);
     border-radius: 50%;
     display: flex;
@@ -647,9 +647,9 @@ button.dark {
     line-height: 1.4;
 }
 
-/* Colores específicos para cada tipo de tarjeta */
+/* Colores especÃ­ficos para cada tipo de tarjeta */
 .mto-card-albergue .mto-card-icon {
-    background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, #6366f1 100%);
     color: white;
 }
 
@@ -658,7 +658,7 @@ button.dark {
     color: white;
 }
 
-/* Tarjeta de Pre-Filiación en Mantenimiento */
+/* Tarjeta de Pre-FiliaciÃ³n en Mantenimiento */
 .mto-card-prefiliacion .mto-card-icon {
     background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
     color: white;
@@ -692,7 +692,7 @@ button.dark {
 }
 
 /* CAMAS */
-/* CAMAS (Rediseño Moderno v2) */
+/* CAMAS (RediseÃ±o Moderno v2) */
 .bed-grid {
     display: grid;
     gap: 15px;
@@ -721,7 +721,7 @@ button.dark {
     z-index: 10;
 }
 
-/* Header de la tarjeta (Número y Estado) */
+/* Header de la tarjeta (NÃºmero y Estado) */
 .bed-header {
     padding: 8px 12px;
     display: flex;
@@ -735,7 +735,7 @@ button.dark {
     border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
-/* Cuerpo de la tarjeta (Información ocupante) */
+/* Cuerpo de la tarjeta (InformaciÃ³n ocupante) */
 .bed-body {
     padding: 10px 12px;
     flex: 1;
@@ -794,7 +794,7 @@ button.dark {
     color: #be123c;
 }
 
-/* TU CAMA: ver definición al final del archivo */
+/* TU CAMA: ver definiciÃ³n al final del archivo */
 
 /* FAMILIA SELECCIONADA: Naranja Suave */
 .bed-family-highlight {
@@ -848,14 +848,14 @@ button.dark {
 }
 
 .fam-row-current {
-    background-color: #e0e7ff;
+    background-color: #ffe4e6;
     font-weight: bold;
     color: var(--primary);
     border-radius: 6px;
 }
 
 /* ============================================ */
-/* NUEVOS CAMPOS: INTOLERANCIA + NO LOCALIZACIÓN */
+/* NUEVOS CAMPOS: INTOLERANCIA + NO LOCALIZACIÃ“N */
 /* ============================================ */
 
 /* Contenedor del campo de intolerancia (se muestra/oculta) */
@@ -921,7 +921,7 @@ button.dark {
     user-select: none;
 }
 
-/* Animación de entrada */
+/* AnimaciÃ³n de entrada */
 @keyframes slideDown {
     from {
         opacity: 0;
@@ -991,7 +991,7 @@ button.dark {
 }
 
 .tab-btn.active {
-    background: #e0e7ff;
+    background: #ffe4e6;
     color: var(--primary);
 }
 
@@ -1216,7 +1216,7 @@ button.dark {
 }
 
 .log-type-nav {
-    color: #3b82f6;
+    color: var(--emergencia-red);
 }
 
 /* MODALS */
@@ -1241,13 +1241,13 @@ button.dark {
     border-radius: 16px;
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
     max-height: 95vh;
-    /* Sube el máximo a casi toda la pantalla */
+    /* Sube el mÃ¡ximo a casi toda la pantalla */
     min-height: 320px;
     /* Asegura altura incluso con poco contenido */
     overflow-y: auto;
     position: relative;
     box-sizing: border-box;
-    /* Añade esto si no estaba ya */
+    /* AÃ±ade esto si no estaba ya */
     overscroll-behavior: contain;
 }
 
@@ -1361,10 +1361,10 @@ button.dark {
     max-height: 85vh;
     overflow-y: scroll;
     display: block;
-    /* ⭐ Añadido */
+    /* â­ AÃ±adido */
 }
 
-/* Botón público deshabilitado */
+/* BotÃ³n pÃºblico deshabilitado */
 #btn-continuar-public:disabled {
     background: #cbd5e1 !important;
     color: #94a3b8 !important;
@@ -1425,7 +1425,7 @@ button.dark {
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, #06b6d4 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1472,7 +1472,7 @@ button.dark {
     font-size: 2rem;
     color: var(--primary);
     margin-bottom: 10px;
-    background: #e0e7ff;
+    background: #ffe4e6;
     width: 60px;
     height: 60px;
     border-radius: 50%;
@@ -1730,24 +1730,24 @@ body.focused-mode .app-nav {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
-/* NUEVOS COLORES PARA INTERVENCIONES - Coinciden con botones de derivación */
+/* NUEVOS COLORES PARA INTERVENCIONES - Coinciden con botones de derivaciÃ³n */
 .hist-type-san {
     border-left: 4px solid #fda4af;
-    /* Rosa claro - mismo que botón sanitario */
+    /* Rosa claro - mismo que botÃ³n sanitario */
     background-color: #ffe4e6;
     /* Fondo rosa muy claro */
 }
 
 .hist-type-psi {
     border-left: 4px solid #d8b4fe;
-    /* Morado claro - mismo que botón psicosocial */
+    /* Morado claro - mismo que botÃ³n psicosocial */
     background-color: #f3e8ff;
     /* Fondo morado muy claro */
 }
 
 .hist-type-ent {
     border-left: 4px solid #fdba74;
-    /* Naranja claro - mismo que botón entregas */
+    /* Naranja claro - mismo que botÃ³n entregas */
     background-color: #fff7ed;
     /* Fondo naranja muy claro */
 }
@@ -1809,13 +1809,13 @@ body.focused-mode .app-nav {
     justify-content: center;
     width: 50px;
     height: 50px;
-    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
+    box-shadow: 0 2px 8px rgba(225, 29, 72, 0.3);
 }
 
 .notification-badge:hover {
     background: var(--primary-dark);
     transform: scale(1.1);
-    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.5);
+    box-shadow: 0 4px 12px rgba(225, 29, 72, 0.5);
 }
 
 .notification-badge.has-notifications {
@@ -1826,11 +1826,11 @@ body.focused-mode .app-nav {
 
     0%,
     100% {
-        box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
+        box-shadow: 0 2px 8px rgba(225, 29, 72, 0.3);
     }
 
     50% {
-        box-shadow: 0 2px 16px rgba(79, 70, 229, 0.6), 0 0 20px rgba(79, 70, 229, 0.4);
+        box-shadow: 0 2px 16px rgba(225, 29, 72, 0.6), 0 0 20px rgba(225, 29, 72, 0.4);
     }
 }
 
@@ -2002,7 +2002,7 @@ body.focused-mode .app-nav {
 
 .albergue-card-activo:hover {
     transform: translateY(-3px);
-    box-shadow: 0 8px 20px rgba(79, 70, 229, 0.15);
+    box-shadow: 0 8px 20px rgba(225, 29, 72, 0.15);
     border-color: var(--primary);
 }
 
@@ -2090,7 +2090,7 @@ body.focused-mode .app-nav {
     padding: 30px 20px;
 }
 
-/* Animación de entrada para el check */
+/* AnimaciÃ³n de entrada para el check */
 @keyframes scaleIn {
     0% {
         transform: scale(0);
@@ -2107,7 +2107,7 @@ body.focused-mode .app-nav {
     }
 }
 
-/* SUBFORMULARIOS DINÁMICOS */
+/* SUBFORMULARIOS DINÃMICOS */
 .subform-container {
     background: #f8fafc;
     border: 2px dashed #cbd5e1;
@@ -2184,7 +2184,7 @@ body.focused-mode .app-nav {
     align-items: center !important;
 }
 
-/* Para infografía de camas (si usa modal) */
+/* Para infografÃ­a de camas (si usa modal) */
 #modal-bed-info {
     justify-content: center !important;
     align-items: center !important;
@@ -2202,17 +2202,17 @@ body.focused-mode .app-nav {
     align-items: center !important;
 }
 
-/* Carnet QR: Ya está bien, mantener */
+/* Carnet QR: Ya estÃ¡ bien, mantener */
 #carnet-qrcode-display {
     padding: 5px !important;
     margin: 10px auto !important;
     border-width: 2px !important;
 }
 
-/* Infografía de camas: Más padding, borde bonito y espacio */
+/* InfografÃ­a de camas: MÃ¡s padding, borde bonito y espacio */
 #modal-bed-info .modal-content {
     padding: 50px !important;
-    /* Más espacio interno para no pegar */
+    /* MÃ¡s espacio interno para no pegar */
     max-width: 1100px !important;
     border-radius: 20px !important;
     box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25) !important;
@@ -2220,21 +2220,21 @@ body.focused-mode .app-nav {
     /* Borde azul bonito */
 }
 
-/* Título de infografía más grande y centrado */
+/* TÃ­tulo de infografÃ­a mÃ¡s grande y centrado */
 #modal-bed-info h3 {
     font-size: 1.8rem !important;
     margin-bottom: 30px !important;
-    /* Más margen abajo */
+    /* MÃ¡s margen abajo */
     text-align: center !important;
     /* Centrado */
 }
 
-/* Botones en infografía con más margen y centrados */
+/* Botones en infografÃ­a con mÃ¡s margen y centrados */
 #modal-bed-info button {
     margin-top: 20px !important;
-    /* Más margen arriba */
+    /* MÃ¡s margen arriba */
     padding: 15px 25px !important;
-    /* Botones más grandes */
+    /* Botones mÃ¡s grandes */
     display: block !important;
     margin-left: auto !important;
     margin-right: auto !important;
@@ -2242,7 +2242,7 @@ body.focused-mode .app-nav {
 }
 
 /* ============================================
-   SISTEMA DE DETECCIÓN DE DUPLICADOS
+   SISTEMA DE DETECCIÃ“N DE DUPLICADOS
    ============================================ */
 
 .alert-warning {
@@ -2276,11 +2276,11 @@ body.focused-mode .app-nav {
     margin-right: 8px;
 }
 
-/* --- BED CURRENT HIGHLIGHT (definición consolidada abajo) --- */
+/* --- BED CURRENT HIGHLIGHT (definiciÃ³n consolidada abajo) --- */
 /* Resaltar TU CAMA */
 .bed-current {
     border: 3px solid #8b5cf6 !important;
-    box-shadow: 0 0 20px rgba(139, 92, 246, 0.5) !important;
+    box-shadow: 0 0 20px rgba(225, 29, 72, 0.5) !important;
     background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%) !important;
     transform: scale(1.05);
     z-index: 10;
@@ -2301,7 +2301,7 @@ body.focused-mode .app-nav {
     transform: scale(1.08);
 }
 
-/* PERSONA PROTEGIDA: fila de búsqueda bloqueada */
+/* PERSONA PROTEGIDA: fila de bÃºsqueda bloqueada */
 .search-item-protegida {
     background: #fef2f2;
     border-left: 4px solid #dc2626;
@@ -2312,15 +2312,23 @@ body.focused-mode .app-nav {
 .search-item-protegida:hover {
     background: #fee2e2;
 }
+
 /* --- LOGIN SCREEN EMERGENCY THEME --- */
 @keyframes fadeInLogin {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 #login-screen {
     background: var(--emergencia-bg);
-    background-image: 
+    background-image:
         radial-gradient(at 0% 0%, rgba(225, 29, 72, 0.05) 0px, transparent 50%),
         radial-gradient(at 100% 100%, rgba(225, 29, 72, 0.05) 0px, transparent 50%);
     display: flex;

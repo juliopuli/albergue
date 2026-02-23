@@ -29,6 +29,11 @@
     --cloud-border: #7dd3fc;
     --cloud-text: #0284c7;
     --radius: 12px;
+    /* EMERGENCY THEME (RED & WHITE) */
+    --emergencia-red: #e11d48;
+    --emergencia-bg: #fdfdfd;
+    --emergencia-text: #1e293b;
+    --emergencia-input-bg: #ffffff;
 }
 
 * {
@@ -2306,4 +2311,98 @@ body.focused-mode .app-nav {
 
 .search-item-protegida:hover {
     background: #fee2e2;
+}
+/* --- LOGIN SCREEN EMERGENCY THEME --- */
+@keyframes fadeInLogin {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+#login-screen {
+    background: var(--emergencia-bg);
+    background-image: 
+        radial-gradient(at 0% 0%, rgba(225, 29, 72, 0.05) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(225, 29, 72, 0.05) 0px, transparent 50%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    width: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+}
+
+#login-screen .card {
+    width: 100%;
+    max-width: 400px;
+    padding: 40px;
+    text-align: center;
+    border: 1px solid rgba(229, 231, 235, 0.8);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+    animation: fadeInLogin 0.6s ease-out;
+}
+
+#login-screen .card h1 {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--emergencia-red) !important;
+    margin-bottom: 8px !important;
+}
+
+#login-screen .login-icon {
+    font-size: 3rem;
+    color: var(--emergencia-red);
+    margin-bottom: 15px;
+    display: block;
+}
+
+#login-screen .hero-subtitle-login {
+    color: var(--text-light);
+    font-size: 0.95rem;
+    margin-bottom: 30px;
+}
+
+#login-screen input {
+    background: var(--emergencia-input-bg);
+    border: 1.5px solid #e2e8f0;
+    padding: 14px;
+    transition: all 0.3s;
+    font-size: 1rem;
+}
+
+#login-screen input:focus {
+    border-color: var(--emergencia-red);
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(225, 29, 72, 0.1);
+}
+
+#login-screen button.primary {
+    background: var(--emergencia-red);
+    padding: 14px;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    margin-top: 10px;
+    box-shadow: 0 4px 6px -1px rgba(225, 29, 72, 0.2);
+}
+
+#login-screen button.primary:hover {
+    background: #be123c;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 12px -1px rgba(225, 29, 72, 0.3);
+}
+
+#login-screen .forgot-password {
+    margin-top: 20px;
+    color: var(--text-light);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+#login-screen .forgot-password:hover {
+    color: var(--emergencia-red);
+    text-decoration: underline;
 }
